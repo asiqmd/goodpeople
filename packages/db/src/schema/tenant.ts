@@ -1,6 +1,8 @@
-import { TENANT_ROLES, type Address } from '@gp/shared';
+import { TENANT_ROLES, USER_LANGUAGES, type Address } from '@gp/shared';
+import { sql } from 'drizzle-orm';
 import {
   boolean,
+  check,
   index,
   jsonb,
   pgEnum,
@@ -18,6 +20,7 @@ import { tenants } from './platform.js';
 // composite foreign key: the database then refuses links to another tenant's rows.
 
 export const tenantRole = pgEnum('tenant_role', TENANT_ROLES);
+export const userLanguage = pgEnum('user_language', USER_LANGUAGES);
 
 export const tenantUsers = pgTable(
   'tenant_users',
@@ -26,16 +29,27 @@ export const tenantUsers = pgTable(
     tenantId: uuid('tenant_id')
       .notNull()
       .references(() => tenants.id, { onDelete: 'cascade' }),
-    email: text('email').notNull(),
+    /** A login has an email, a mobile number (signs in by SMS code) or both. */
+    email: text('email'),
+    phone: text('phone'),
     name: text('name').notNull(),
-    passwordHash: text('password_hash').notNull(),
+    /** Null for a login that only signs in by SMS code. */
+    passwordHash: text('password_hash'),
     role: tenantRole('role').notNull(),
+    language: userLanguage('language').notNull().default('en'),
+    /** Two-step sign-in: the authenticator secret (field-encrypted) and hashed recovery codes. */
+    mfaSecretEnc: text('mfa_secret_enc'),
+    mfaEnabledAt: timestamp('mfa_enabled_at', { withTimezone: true }),
+    mfaRecoveryCodes: text('mfa_recovery_codes').array().notNull().default([]),
+    lastSignInAt: timestamp('last_sign_in_at', { withTimezone: true }),
     /** Set when the person leaves; a disabled login cannot sign in or refresh. */
     disabledAt: timestamp('disabled_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     unique('tenant_users_tenant_email_uq').on(t.tenantId, t.email),
+    unique('tenant_users_tenant_phone_uq').on(t.tenantId, t.phone),
+    check('tenant_users_contact_ck', sql`${t.email} is not null or ${t.phone} is not null`),
     unique('tenant_users_tenant_id_uq').on(t.tenantId, t.id),
   ],
 );

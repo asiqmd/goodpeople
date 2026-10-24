@@ -1,4 +1,4 @@
-import { todayIn, type MonthSummaryView, type OrgSnapshot } from '@gp/shared';
+import { can, todayIn, type MonthSummaryView, type OrgSnapshot } from '@gp/shared';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -8,12 +8,12 @@ import { Badge, buttonClass, Card, inputClass } from '@/components/ui';
 import { currentTenantUser, load } from '@/lib/api';
 import { MONTH, shiftMonth } from '@/lib/month';
 import { treeOrder } from '@/lib/org';
-import { isHrRole } from '@/lib/roles';
 
 export default async function AttendanceSummaryPage({
   searchParams,
 }: PageProps<'/workspace/attendance/summary'>) {
-  if (!isHrRole((await currentTenantUser())?.role)) redirect('/workspace/attendance');
+  if (!can((await currentTenantUser())?.role, 'attendance.manage'))
+    redirect('/workspace/attendance');
   const t = await getTranslations('attendance');
   const format = await getFormatter();
   const sp = await searchParams;

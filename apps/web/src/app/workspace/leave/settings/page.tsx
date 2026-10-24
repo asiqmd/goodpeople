@@ -1,5 +1,5 @@
 import {
-  HR_ROLES,
+  can,
   todayIn,
   type HolidayCalendarView,
   type HolidayYearView,
@@ -37,7 +37,7 @@ export default async function LeaveSettingsPage({
   searchParams,
 }: PageProps<'/workspace/leave/settings'>) {
   const user = await currentTenantUser();
-  if (!user || !(HR_ROLES as readonly string[]).includes(user.role)) redirect('/workspace');
+  if (!can(user?.role, 'leave.manage')) redirect('/workspace');
   const sp = await searchParams;
   const thisYear = Number(todayIn().slice(0, 4));
   const year = Number(sp.year) >= 2020 && Number(sp.year) <= 2100 ? Number(sp.year) : thisYear;

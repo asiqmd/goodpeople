@@ -4,16 +4,19 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { approvalSteps, type Tx } from '@gp/db';
+import { approvalSteps, tenantUsers, type Tx } from '@gp/db';
 import type { ApprovalItem, ApprovalSubject, DecisionInput } from '@gp/shared';
 import { and, asc, count, eq, gt, inArray, not, or, type SQL } from 'drizzle-orm';
 import type { AuthUser } from '../../common/auth-user.js';
 import { TenantDb } from '../../db/db.module.js';
 import { RegularizationsService } from '../attendance/regularizations.service.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
-import { employeeOfUser, isHr } from '../employees/employee.queries.js';
+import { userCan } from '../../common/roles.js';
+import { employeeOfUser } from '../employees/employee.queries.js';
 import { LeaveRequestsService } from '../leave/leave-requests.service.js';
 import { SeparationsService } from '../lifecycle/separations.service.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
+import { noticeDecided, noticeRequested } from './approval-notices.js';
 import { cancelOpenSteps, type ApprovalSubjectHandler } from './approval-steps.js';
 
 /**
@@ -29,6 +32,7 @@ export class ApprovalsService {
   constructor(
     private readonly tenantDb: TenantDb,
     private readonly audit: TenantAuditService,
+    private readonly notifications: NotificationsService,
     leave: LeaveRequestsService,
     regularizations: RegularizationsService,
     separations: SeparationsService,
@@ -49,7 +53,7 @@ export class ApprovalsService {
     const mine = me
       ? and(eq(approvalSteps.kind, 'manager'), eq(approvalSteps.approverEmployeeId, me.id))
       : undefined;
-    const hr = isHr(user) ? eq(approvalSteps.kind, 'hr') : undefined;
+    const hr = userCan(user, 'approvals.hr') ? eq(approvalSteps.kind, 'hr') : undefined;
     if (!mine && !hr) return null;
     return and(
       eq(approvalSteps.status, 'pending'),
@@ -109,7 +113,9 @@ export class ApprovalsService {
         throw new ForbiddenException('You cannot decide your own request');
       }
       const allowed =
-        step.kind === 'hr' ? isHr(user) : me !== null && me.id === step.approverEmployeeId;
+        step.kind === 'hr'
+          ? userCan(user, 'approvals.hr')
+          : me !== null && me.id === step.approverEmployeeId;
       if (!allowed) throw new ForbiddenException('This approval is not yours to decide');
 
       await tx
@@ -122,9 +128,28 @@ export class ApprovalsService {
         })
         .where(eq(approvalSteps.id, stepId));
 
+      const subjectRef = { type: step.subjectType as ApprovalSubject, id: step.subjectId };
+      const conclude = async (final: 'approved' | 'rejected') => {
+        await handler.finalize(tx, step.subjectId, final, user.id);
+        const [decider] = await tx
+          .select({ name: tenantUsers.name })
+          .from(tenantUsers)
+          .where(eq(tenantUsers.id, user.id));
+        await noticeDecided(
+          tx,
+          this.notifications,
+          subjectRef,
+          await handler.summarize(tx, step.subjectId),
+          {
+            outcome: final,
+            by: decider?.name ?? '',
+            comment: input.comment ?? null,
+          },
+        );
+      };
       if (outcome === 'rejected') {
         await cancelOpenSteps(tx, step.subjectId, ['waiting']);
-        await handler.finalize(tx, step.subjectId, 'rejected', user.id);
+        await conclude('rejected');
       } else {
         const [next] = await tx
           .select()
@@ -143,8 +168,14 @@ export class ApprovalsService {
             .update(approvalSteps)
             .set({ status: 'pending' })
             .where(eq(approvalSteps.id, next.id));
+          await noticeRequested(
+            tx,
+            this.notifications,
+            subjectRef,
+            await handler.summarize(tx, step.subjectId),
+          );
         } else {
-          await handler.finalize(tx, step.subjectId, 'approved', user.id);
+          await conclude('approved');
         }
       }
       await this.audit.record(tx, {

@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../account/account_screen.dart';
 import '../api/api_models.dart';
 import '../attendance/attendance_screen.dart';
+import '../attendance/offline_punch_queue.dart';
 import '../auth/auth_controller.dart';
 import '../documents/documents_screen.dart';
 import '../l10n/app_localizations.dart';
 import '../leave/leave_screen.dart';
+import '../notifications/inbox_screen.dart';
+import '../notifications/notification_providers.dart';
 import '../profile/profile_screen.dart';
+import '../team/team_providers.dart';
+import '../team/team_screen.dart';
+import '../ui/format.dart';
 import '../ui/language_menu.dart';
 import '../ui/load_error_view.dart';
 import '../ui/notice_card.dart';
@@ -26,6 +33,11 @@ class HomeScreen extends ConsumerWidget {
   static const leaveKey = ValueKey('home-leave');
   static const attendanceKey = ValueKey('home-attendance');
   static const documentsKey = ValueKey('home-documents');
+  static const teamKey = ValueKey('home-team');
+  static const accountKey = ValueKey('home-account');
+  static const inboxKey = ValueKey('home-inbox');
+  static const inboxBadgeKey = ValueKey('home-inbox-badge');
+  static const refusedPunchKey = ValueKey('home-refused-punch');
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -36,6 +48,7 @@ class HomeScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(access.value?.tenant.name ?? session.tenant.name),
         actions: [
+          const _InboxButton(),
           const LanguageMenuButton(),
           IconButton(
             tooltip: l10n.signOut,
@@ -64,22 +77,66 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-class _AccessDetails extends StatelessWidget {
+/// The bell: opens the inbox, with the unread count as a badge.
+class _InboxButton extends ConsumerWidget {
+  const _InboxButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final unread = ref.watch(notificationInboxProvider).value?.unread ?? 0;
+    return IconButton(
+      key: HomeScreen.inboxKey,
+      tooltip: l10n.notificationsUnread(unread),
+      onPressed: () => Navigator.of(context).push(InboxScreen.route()),
+      icon: Badge(
+        key: HomeScreen.inboxBadgeKey,
+        isLabelVisible: unread > 0,
+        label: Text(unread > 99 ? '99+' : formatNumber(l10n, unread)),
+        child: Icon(
+          unread > 0 ? Icons.notifications : Icons.notifications_none,
+        ),
+      ),
+    );
+  }
+}
+
+class _AccessDetails extends ConsumerWidget {
   const _AccessDetails({required this.view, required this.user});
 
   final TenantAccessView view;
   final AuthUser user;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final tenant = view.tenant;
+    final hasTeam = ref.watch(hasTeamProvider);
+    final refusedPunches = ref
+        .watch(offlinePunchQueueProvider)
+        .refusedFor(user.id);
 
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
         AccessBanner(state: view.access.accessState),
+        if (refusedPunches.isNotEmpty) ...[
+          Semantics(
+            button: true,
+            child: GestureDetector(
+              key: HomeScreen.refusedPunchKey,
+              onTap: () => Navigator.of(context).push(AttendanceScreen.route()),
+              child: NoticeCard(
+                icon: Icons.cloud_off_outlined,
+                message: l10n.homePunchRefused,
+                background: theme.colorScheme.errorContainer,
+                foreground: theme.colorScheme.onErrorContainer,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
         Card.outlined(
           margin: EdgeInsets.zero,
           child: Padding(
@@ -153,6 +210,24 @@ class _AccessDetails extends StatelessWidget {
             onTap: () => Navigator.of(context).push(DocumentsScreen.route()),
           ),
         ],
+        if (hasTeam) ...[
+          const SizedBox(height: 12),
+          _ShortcutCard(
+            key: HomeScreen.teamKey,
+            icon: Icons.groups_outlined,
+            title: l10n.teamTitle,
+            subtitle: l10n.teamSubtitle,
+            onTap: () => Navigator.of(context).push(TeamScreen.route()),
+          ),
+        ],
+        const SizedBox(height: 12),
+        _ShortcutCard(
+          key: HomeScreen.accountKey,
+          icon: Icons.manage_accounts_outlined,
+          title: l10n.accountTitle,
+          subtitle: l10n.accountSubtitle,
+          onTap: () => Navigator.of(context).push(AccountScreen.route()),
+        ),
         const SizedBox(height: 24),
         Text(l10n.yourModules, style: theme.textTheme.titleMedium),
         const SizedBox(height: 8),
@@ -264,7 +339,7 @@ class _ModuleTile extends StatelessWidget {
 }
 
 /// A tappable card on the home screen that opens a section, such as My
-/// profile, Leave, Attendance or My documents.
+/// profile, Leave, Attendance, My documents, Team or Account.
 class _ShortcutCard extends StatelessWidget {
   const _ShortcutCard({
     super.key,

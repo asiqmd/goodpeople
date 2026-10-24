@@ -44,7 +44,10 @@ export class JwtAuthGuard implements CanActivate {
     const [scheme, token] = req.headers.authorization?.split(' ') ?? [];
     if (scheme !== 'Bearer' || !token) throw new UnauthorizedException('Missing access token');
     try {
-      req.user = toAuthUser(await this.jwt.verifyAsync<AccessTokenPayload>(token));
+      const payload = await this.jwt.verifyAsync<AccessTokenPayload & { typ?: string }>(token);
+      // Only access tokens carry no type; anything else (a second-step token) is refused.
+      if (payload.typ) throw new Error('Not an access token');
+      req.user = toAuthUser(payload);
     } catch {
       throw new UnauthorizedException('Invalid or expired access token');
     }

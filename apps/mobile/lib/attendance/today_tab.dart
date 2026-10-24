@@ -9,10 +9,12 @@ import '../leave/leave_widgets.dart';
 import '../ui/format.dart';
 import '../ui/load_error_view.dart';
 import '../ui/notice_card.dart';
+import '../util/uuid.dart';
 import 'attendance_providers.dart';
 import 'attendance_widgets.dart';
 import 'camera_service.dart';
 import 'location_service.dart';
+import 'offline_punch_queue.dart';
 
 /// Today for the signed-in employee: the shift, how the day stands, the
 /// punches so far, and a Punch in / Punch out button.
@@ -22,8 +24,16 @@ import 'location_service.dart';
 /// the location is sent when it can be read, and the punch goes without it
 /// otherwise. When the workspace asks for a selfie, the front camera opens
 /// first; no photo, no punch.
+///
+/// A punch that cannot reach the server is kept on the phone and sent later
+/// (see [offlinePunchQueueProvider]); the tab says how many are waiting, and
+/// why any the API later refused were not recorded, offering a correction
+/// for that day through [onCorrect].
 class TodayTab extends ConsumerStatefulWidget {
-  const TodayTab({super.key});
+  const TodayTab({super.key, this.onCorrect});
+
+  /// Opens the correction form for a day (a UTC-midnight date).
+  final ValueChanged<DateTime>? onCorrect;
 
   static const dayCardKey = ValueKey('attendance-today-day');
   static const punchButtonKey = ValueKey('attendance-punch');
@@ -33,6 +43,15 @@ class TodayTab extends ConsumerStatefulWidget {
   static const punchErrorKey = ValueKey('attendance-punch-error');
   static const openSettingsKey = ValueKey('attendance-open-settings');
   static const punchesKey = ValueKey('attendance-today-punches');
+  static const waitingKey = ValueKey('attendance-punches-waiting');
+  static const sendNowKey = ValueKey('attendance-punches-send-now');
+
+  static ValueKey<String> refusedKey(String clientId) =>
+      ValueKey('attendance-punch-refused-$clientId');
+  static ValueKey<String> refusedCorrectKey(String clientId) =>
+      ValueKey('attendance-punch-refused-correct-$clientId');
+  static ValueKey<String> refusedDismissKey(String clientId) =>
+      ValueKey('attendance-punch-refused-dismiss-$clientId');
 
   static ValueKey<String> punchKey(String punchId) =>
       ValueKey('attendance-punch-$punchId');
@@ -52,6 +71,7 @@ class _TodayTabState extends ConsumerState<TodayTab> {
   bool _capturing = false;
   bool _locating = false;
   bool _punching = false;
+  bool _sendingWaiting = false;
 
   /// Why the last punch failed: an [ApiException], a [LocationUnavailable],
   /// a [CameraUnavailable], a [SelfieNotSent] or anything else.
@@ -129,10 +149,14 @@ class _TodayTabState extends ConsumerState<TodayTab> {
       _punching = true;
     });
 
+    // Chosen before the first attempt, so a resend from the offline queue is
+    // recognised even if this attempt reached the server.
+    final clientId = uuidV4();
+    final punchedAt = DateTime.now().toUtc();
     try {
       final after = await container
           .read(authProvider.notifier)
-          .punch(location: location, selfie: selfie);
+          .punch(location: location, selfie: selfie, clientId: clientId);
       // Once the screen has closed the day is not needed; showing it would
       // only load it again.
       if (mounted) container.read(attendanceTodayProvider.notifier).show(after);
@@ -149,6 +173,33 @@ class _TodayTabState extends ConsumerState<TodayTab> {
     } on SessionExpiredException {
       // AuthGate is already showing the login screen.
     } on Object catch (error) {
+      // No answer: keep the punch and send it when the connection is back.
+      if (error is ApiException && error.kind == ApiErrorKind.network) {
+        if (container.read(authProvider) case SignedIn(:final user)) {
+          await container
+              .read(offlinePunchQueueProvider.notifier)
+              .add(
+                QueuedPunch(
+                  clientId: clientId,
+                  punchedAt: punchedAt,
+                  userId: user.id,
+                  timeZone: today.timeZone,
+                  location: location,
+                ),
+                selfie: selfie,
+              );
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text(
+                l10n.punchSavedOffline(
+                  formatInstantClock(l10n, punchedAt, today.timeZone),
+                ),
+              ),
+            ),
+          );
+          return;
+        }
+      }
       if (mounted) {
         setState(() {
           _error = error;
@@ -171,10 +222,46 @@ class _TodayTabState extends ConsumerState<TodayTab> {
     }
   }
 
+  Future<void> _sendWaiting() async {
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final queue = ref.read(offlinePunchQueueProvider.notifier);
+    setState(() => _sendingWaiting = true);
+    try {
+      final sent = await queue.send();
+      if (!mounted) return;
+      final stillWaiting = switch (ref.read(authProvider)) {
+        SignedIn(:final user) =>
+          ref.read(offlinePunchQueueProvider).waitingFor(user.id).isNotEmpty,
+        SignedOut() => false,
+      };
+      // One the API refused shows its own card instead.
+      final text = sent > 0
+          ? l10n.punchesSent(sent)
+          : stillWaiting
+          ? l10n.networkError
+          : null;
+      if (text != null) {
+        messenger
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(text)));
+      }
+    } finally {
+      if (mounted) setState(() => _sendingWaiting = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final today = ref.watch(attendanceTodayProvider);
+    final userId = switch (ref.watch(authProvider)) {
+      SignedIn(:final user) => user.id,
+      SignedOut() => '',
+    };
+    final queue = ref.watch(offlinePunchQueueProvider);
+    final waiting = queue.waitingFor(userId);
+    final refused = queue.refusedFor(userId);
 
     return RefreshIndicator(
       onRefresh: () =>
@@ -189,7 +276,20 @@ class _TodayTabState extends ConsumerState<TodayTab> {
               spacing: 16,
               children: [
                 _DayCard(view: view),
-                _punchPanel(context, view),
+                for (final refusal in refused)
+                  _RefusedPunchCard(
+                    refusal: refusal,
+                    timeZone: view.timeZone,
+                    onCorrect: widget.onCorrect,
+                  ),
+                _punchPanel(context, view, waiting: _waitingOn(waiting, view)),
+                if (waiting.isNotEmpty)
+                  _WaitingPunches(
+                    punches: waiting,
+                    timeZone: view.timeZone,
+                    sending: _sendingWaiting,
+                    onSend: _sendWaiting,
+                  ),
                 _PunchList(view: view),
               ],
             ),
@@ -212,7 +312,24 @@ class _TodayTabState extends ConsumerState<TodayTab> {
     );
   }
 
-  Widget _punchPanel(BuildContext context, MyAttendanceToday today) {
+  /// How many of [waiting] were taken on the day [view] shows.
+  static int _waitingOn(List<QueuedPunch> waiting, MyAttendanceToday view) {
+    final day = view.day.date;
+    return waiting.where((punch) {
+      final local = wallClock(punch.punchedAt, punch.timeZone ?? view.timeZone);
+      return local.year == day.year &&
+          local.month == day.month &&
+          local.day == day.day;
+    }).length;
+  }
+
+  /// [waiting]: the day's punches on the phone, not sent yet. Each one turns
+  /// the next direction round, as it will once it arrives.
+  Widget _punchPanel(
+    BuildContext context,
+    MyAttendanceToday today, {
+    required int waiting,
+  }) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
@@ -241,7 +358,12 @@ class _TodayTabState extends ConsumerState<TodayTab> {
       children: [
         if (selfPunch.canPunch) ...[
           _PunchButton(
-            direction: today.nextDirection,
+            direction: waiting.isOdd
+                ? switch (today.nextDirection) {
+                    PunchDirection.punchOut => PunchDirection.punchIn,
+                    _ => PunchDirection.punchOut,
+                  }
+                : today.nextDirection,
             label: _capturing
                 ? l10n.punchTakingPhoto
                 : _locating
@@ -310,6 +432,120 @@ class _TodayTabState extends ConsumerState<TodayTab> {
               ),
             ),
         ],
+      ],
+    );
+  }
+}
+
+/// Punches kept on the phone until the connection is back, with a button
+/// to try now.
+class _WaitingPunches extends StatelessWidget {
+  const _WaitingPunches({
+    required this.punches,
+    required this.timeZone,
+    required this.sending,
+    required this.onSend,
+  });
+
+  final List<QueuedPunch> punches;
+  final String timeZone;
+  final bool sending;
+  final VoidCallback onSend;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final times = [
+      for (final punch in punches)
+        formatInstantClock(l10n, punch.punchedAt, punch.timeZone ?? timeZone),
+    ];
+    return Column(
+      key: TodayTab.waitingKey,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        NoticeCard(
+          icon: Icons.cloud_upload_outlined,
+          title: l10n.punchesWaiting(punches.length),
+          message: l10n.punchesWaitingBody(times.join(', ')),
+          background: scheme.secondaryContainer,
+          foreground: scheme.onSecondaryContainer,
+        ),
+        Align(
+          alignment: AlignmentDirectional.centerEnd,
+          child: TextButton.icon(
+            key: TodayTab.sendNowKey,
+            onPressed: sending ? null : onSend,
+            icon: sending
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.sync),
+            label: Text(l10n.punchesSendNow),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// A punch taken without a connection that the API refused when it was
+/// sent: why, and a way to ask for a correction of that day instead.
+class _RefusedPunchCard extends ConsumerWidget {
+  const _RefusedPunchCard({
+    required this.refusal,
+    required this.timeZone,
+    required this.onCorrect,
+  });
+
+  final RefusedPunch refusal;
+  final String timeZone;
+  final ValueChanged<DateTime>? onCorrect;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final punch = refusal.punch;
+    final zone = punch.timeZone ?? timeZone;
+    final local = wallClock(punch.punchedAt, zone);
+    final day = DateTime.utc(local.year, local.month, local.day);
+    final onCorrect = this.onCorrect;
+    return Column(
+      key: TodayTab.refusedKey(punch.clientId),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        NoticeCard(
+          icon: Icons.cloud_off_outlined,
+          title: l10n.punchRefusedTitle(
+            formatInstantClock(l10n, punch.punchedAt, zone),
+            formatShortDate(l10n, day),
+          ),
+          message: attendanceErrorText(l10n, refusal.error),
+          details: [l10n.punchRefusedHint],
+          background: scheme.errorContainer,
+          foreground: scheme.onErrorContainer,
+        ),
+        Wrap(
+          alignment: WrapAlignment.end,
+          children: [
+            TextButton(
+              key: TodayTab.refusedDismissKey(punch.clientId),
+              onPressed: () => ref
+                  .read(offlinePunchQueueProvider.notifier)
+                  .dismiss(punch.clientId),
+              child: Text(l10n.dismiss),
+            ),
+            if (onCorrect != null)
+              TextButton.icon(
+                key: TodayTab.refusedCorrectKey(punch.clientId),
+                onPressed: () => onCorrect(day),
+                icon: const Icon(Icons.edit_calendar_outlined),
+                label: Text(l10n.correctionRequest),
+              ),
+          ],
+        ),
       ],
     );
   }

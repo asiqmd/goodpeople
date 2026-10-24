@@ -26,7 +26,7 @@ import {
   type LetterTemplateView,
 } from '@gp/shared';
 import { CurrentUser, type AuthUser } from '../../common/auth-user.js';
-import { HrOnly, TenantRolesGuard } from '../../common/roles.js';
+import { Permits, TenantRolesGuard } from '../../common/roles.js';
 import { openApiBody, zod } from '../../common/zod.js';
 import { TenantDb } from '../../db/db.module.js';
 import { fileResponse } from '../documents/documents.controller.js';
@@ -49,13 +49,13 @@ export class LettersController {
   ) {}
 
   @Get('letter-templates')
-  @HrOnly()
+  @Permits('documents.manage')
   templates(): Promise<LetterTemplateView[]> {
     return this.letters.templates();
   }
 
   @Patch('letter-templates/:id')
-  @HrOnly()
+  @Permits('documents.manage')
   @ApiBody(openApiBody(letterTemplateUpdateSchema))
   updateTemplate(
     @CurrentUser() user: AuthUser,
@@ -66,7 +66,7 @@ export class LettersController {
   }
 
   @Post('letter-templates/:id/reset')
-  @HrOnly()
+  @Permits('documents.manage')
   resetTemplate(
     @CurrentUser() user: AuthUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -75,7 +75,7 @@ export class LettersController {
   }
 
   @Post('employees/:id/letters/preview')
-  @HrOnly()
+  @Permits('documents.manage')
   @HttpCode(200)
   @ApiBody(openApiBody(letterGenerateSchema))
   preview(
@@ -87,7 +87,7 @@ export class LettersController {
 
   /** Issues a numbered letter as a PDF in the employee's documents. */
   @Post('employees/:id/letters')
-  @HrOnly()
+  @Permits('documents.manage')
   @ApiBody(openApiBody(letterGenerateSchema))
   generate(
     @CurrentUser() user: AuthUser,
@@ -99,7 +99,7 @@ export class LettersController {
 
   /** A printable PDF of photo ID cards, four people to a page. */
   @Post('id-cards')
-  @HrOnly()
+  @Permits('documents.manage')
   @HttpCode(200)
   @ApiBody(openApiBody(idCardsSchema))
   async idCards(@Body(zod(idCardsSchema)) body: IdCardsInput): Promise<StreamableFile> {
@@ -112,7 +112,7 @@ export class LettersController {
   }
 
   @Get('employees/:id/service-book')
-  @HrOnly()
+  @Permits('documents.manage')
   async serviceBook(
     @Param('id', ParseUUIDPipe) id: string,
     @Query('language') language?: string,

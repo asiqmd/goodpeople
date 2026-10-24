@@ -12,8 +12,9 @@ import {
   type PunchView,
   type SelfPunchInput,
   type VoidPunchInput,
+  OFFLINE_PUNCH_MAX_HOURS,
 } from '@gp/shared';
-import { and, desc, eq, isNotNull, isNull } from 'drizzle-orm';
+import { and, desc, eq, isNotNull, isNull, lte } from 'drizzle-orm';
 import type { AuthUser } from '../../common/auth-user.js';
 import { badRequest, conflict, forbidden } from '../../common/errors.js';
 import { currentTenantId } from '../../common/request-context.js';
@@ -61,6 +62,30 @@ export class PunchesService {
         .where(eq(employees.id, me.id))
         .for('update');
       if (me.status !== 'active') throw forbidden('separated', 'Separated employees cannot punch');
+      // A resend from the app's offline queue: already recorded, nothing to do.
+      if (input.clientId) {
+        const [seen] = await tx
+          .select({ id: attendancePunches.id })
+          .from(attendancePunches)
+          .where(eq(attendancePunches.clientId, input.clientId));
+        if (seen) return;
+      }
+      const punchedAt = input.punchedAt ? new Date(input.punchedAt) : new Date();
+      const offline = input.punchedAt !== undefined;
+      if (offline) {
+        if (input.source !== 'mobile') {
+          throw badRequest('offline_mobile_only', 'Only the mobile app sends punches later');
+        }
+        if (punchedAt.getTime() > Date.now() + 2 * 60_000) {
+          throw badRequest('future_punch', 'A punch cannot be in the future');
+        }
+        if (Date.now() - punchedAt.getTime() > OFFLINE_PUNCH_MAX_HOURS * 3_600_000) {
+          throw badRequest(
+            'offline_punch_too_old',
+            `Punches recorded offline must arrive within ${OFFLINE_PUNCH_MAX_HOURS} hours; ask for a correction instead`,
+          );
+        }
+      }
       const settings = await settingsOf(tx);
       if (settings.selfPunch === 'off') {
         throw forbidden('self_punch_disabled', 'Punching from the app is turned off');
@@ -99,10 +124,21 @@ export class PunchesService {
       const [last] = await tx
         .select({ punchedAt: attendancePunches.punchedAt })
         .from(attendancePunches)
-        .where(and(eq(attendancePunches.employeeId, me.id), isNull(attendancePunches.voidedAt)))
+        .where(
+          and(
+            eq(attendancePunches.employeeId, me.id),
+            isNull(attendancePunches.voidedAt),
+            // An offline punch is compared with what was recorded around its own time.
+            offline
+              ? lte(attendancePunches.punchedAt, new Date(punchedAt.getTime() + 60_000))
+              : undefined,
+          ),
+        )
         .orderBy(desc(attendancePunches.punchedAt))
         .limit(1);
-      if (last && Date.now() - last.punchedAt.getTime() < 60_000) {
+      if (last && Math.abs(punchedAt.getTime() - last.punchedAt.getTime()) < 60_000) {
+        // A double tap saved offline is dropped quietly; the queue must not get stuck on it.
+        if (offline) return;
         throw conflict('too_soon', 'You punched less than a minute ago');
       }
       const today = (await punchesOf(tx, me.id, day.opensAt, day.closesAt)).filter(
@@ -112,7 +148,7 @@ export class PunchesService {
         ? await this.documents.save(tx, {
             employeeId: me.id,
             category: 'punch_selfie',
-            title: `Punch ${new Date().toISOString()}`,
+            title: `Punch ${punchedAt.toISOString()}`,
             fileName: selfie.originalname || 'selfie.jpg',
             bytes: selfie.buffer,
             source: 'upload',
@@ -123,9 +159,12 @@ export class PunchesService {
       await tx.insert(attendancePunches).values({
         tenantId: currentTenantId(),
         employeeId: me.id,
-        punchedAt: new Date(),
+        punchedAt,
         source: input.source,
-        direction: today.length % 2 === 0 ? 'in' : 'out',
+        // The order of punches decides in and out; a late arrival's place is not known here.
+        direction: offline ? 'unknown' : today.length % 2 === 0 ? 'in' : 'out',
+        offline,
+        clientId: input.clientId ?? null,
         latitude: input.latitude ?? null,
         longitude: input.longitude ?? null,
         accuracyM: input.accuracyM ?? null,
@@ -136,7 +175,7 @@ export class PunchesService {
       });
       await this.processor.process(tx, {
         employeeIds: [me.id],
-        ...daysAround(new Date(), timeZone),
+        ...daysAround(punchedAt, timeZone),
       });
     });
     return this.attendance.today(user);

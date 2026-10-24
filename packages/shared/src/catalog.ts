@@ -57,7 +57,15 @@ export const PLATFORM_ROLES = [
 ] as const;
 export type PlatformRole = (typeof PLATFORM_ROLES)[number];
 
-export const TENANT_ROLES = ['tenant_admin', 'hr_admin', 'employee'] as const;
+/** Role templates: each is a named set of permissions (see permissions.ts). */
+export const TENANT_ROLES = [
+  'tenant_admin',
+  'hr_admin',
+  'hr_officer',
+  'attendance_officer',
+  'auditor',
+  'employee',
+] as const;
 export type TenantRole = (typeof TENANT_ROLES)[number];
 
 export const INDUSTRY_TEMPLATES = ['group', 'rmg', 'corporate', 'ngo', 'other'] as const;

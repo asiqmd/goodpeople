@@ -1,0 +1,37 @@
+# Build context for apps/api/Dockerfile and apps/web/Dockerfile (both build from the root).
+# Keep it small, and keep secrets and local data out of every image.
+
+# Dependencies and build output: the images install and build their own.
+**/node_modules
+**/dist
+**/.next
+**/.turbo
+**/coverage
+**/*.tsbuildinfo
+apps/api/openapi.json
+
+# Secrets and local settings
+.env
+.env.*
+**/.env
+**/.env.*
+**/*.pem
+**/*.key
+
+# Local data: the document store (not apps/api/src/storage, which is code), the Edge Agent's
+# punch queue, logs
+apps/api/storage
+apps/edge-agent/data
+**/*.log
+
+# Not part of the server build: the Flutter app (not a pnpm workspace member), deployment
+# files and docs (changing them should not invalidate the install layer), editor and Git state
+apps/mobile
+infra
+docs
+.git
+.github
+.claude
+.vscode
+.idea
+**/.DS_Store

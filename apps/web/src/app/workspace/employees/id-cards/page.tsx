@@ -1,14 +1,13 @@
-import type { EmployeeListItem, Page } from '@gp/shared';
+import { can, type EmployeeListItem, type Page } from '@gp/shared';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { buttonClass, Card, Field, inputClass } from '@/components/ui';
 import { currentTenantUser, load } from '@/lib/api';
-import { isHrRole } from '@/lib/roles';
 
 /** Tick people and print their photo ID cards (Labour Act s.5). */
 export default async function IdCardsPage() {
-  if (!isHrRole((await currentTenantUser())?.role)) redirect('/workspace');
+  if (!can((await currentTenantUser())?.role, 'employees.read')) redirect('/workspace');
   const t = await getTranslations('lifecycle.idCards');
   const people = await load<Page<EmployeeListItem>>(
     'tenant',

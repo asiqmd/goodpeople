@@ -73,11 +73,10 @@ import {
 } from '@gp/shared';
 import type { z } from 'zod';
 import { CurrentUser, type AuthUser, type AuthedRequest } from '../../common/auth-user.js';
-import { HrOnly, TenantRolesGuard } from '../../common/roles.js';
+import { Permits, TenantRolesGuard, userCan } from '../../common/roles.js';
 import { openApiBody, zod } from '../../common/zod.js';
 import { Public } from '../auth/jwt-auth.guard.js';
 import { AccessStateGuard, FeatureGuard, RequireFeature } from '../entitlements/guards.js';
-import { isHr } from '../employees/employee.queries.js';
 import { AttendanceService } from './attendance.service.js';
 import { DevicesService } from './devices.service.js';
 import { EdgeAgentGuard } from './edge-agent.guard.js';
@@ -164,13 +163,13 @@ export class AttendanceController {
 
   @Get('attendance/shifts')
   listShifts(@CurrentUser() user: AuthUser): Promise<ShiftView[]> {
-    return this.shifts.list(isHr(user));
+    return this.shifts.list(userCan(user, 'attendance.manage'));
   }
 
   // ── HR ─────────────────────────────────────────────────────────────────────
 
   @Get('attendance/summary')
-  @HrOnly()
+  @Permits('attendance.manage')
   summary(
     @Query(zod(attendanceMonthQuerySchema)) query: z.infer<typeof attendanceMonthQuerySchema>,
   ): Promise<MonthSummaryView> {
@@ -178,7 +177,7 @@ export class AttendanceController {
   }
 
   @Get('attendance/regularizations')
-  @HrOnly()
+  @Permits('attendance.manage')
   allRegularizations(
     @Query(zod(regularizationListQuerySchema))
     query: z.infer<typeof regularizationListQuerySchema>,
@@ -187,7 +186,7 @@ export class AttendanceController {
   }
 
   @Post('attendance/process')
-  @HrOnly()
+  @Permits('attendance.manage')
   @ApiBody(openApiBody(attendanceProcessSchema))
   process(
     @CurrentUser() user: AuthUser,
@@ -197,13 +196,13 @@ export class AttendanceController {
   }
 
   @Get('attendance/settings')
-  @HrOnly()
+  @Permits('attendance.manage')
   settings(): Promise<AttendanceSettingsView> {
     return this.attendance.settings();
   }
 
   @Patch('attendance/settings')
-  @HrOnly()
+  @Permits('attendance.manage')
   @ApiBody(openApiBody(attendanceSettingsSchema))
   updateSettings(
     @CurrentUser() user: AuthUser,
@@ -213,7 +212,7 @@ export class AttendanceController {
   }
 
   @Post('attendance/shifts')
-  @HrOnly()
+  @Permits('attendance.manage')
   @ApiBody(openApiBody(shiftInputSchema))
   createShift(
     @CurrentUser() user: AuthUser,
@@ -223,7 +222,7 @@ export class AttendanceController {
   }
 
   @Patch('attendance/shifts/:id')
-  @HrOnly()
+  @Permits('attendance.manage')
   @ApiBody(openApiBody(shiftUpdateSchema))
   updateShift(
     @CurrentUser() user: AuthUser,
@@ -234,7 +233,7 @@ export class AttendanceController {
   }
 
   @Post('attendance/shift-assignments')
-  @HrOnly()
+  @Permits('attendance.manage')
   @ApiBody(openApiBody(shiftAssignmentSchema))
   assignShift(
     @CurrentUser() user: AuthUser,
@@ -244,7 +243,7 @@ export class AttendanceController {
   }
 
   @Get('attendance/roster')
-  @HrOnly()
+  @Permits('attendance.manage')
   roster(
     @Query(zod(rosterQuerySchema)) query: z.infer<typeof rosterQuerySchema>,
   ): Promise<RosterView> {
@@ -252,7 +251,7 @@ export class AttendanceController {
   }
 
   @Post('attendance/roster')
-  @HrOnly()
+  @Permits('attendance.manage')
   @ApiBody(openApiBody(rosterInputSchema))
   setRoster(
     @CurrentUser() user: AuthUser,
@@ -262,7 +261,7 @@ export class AttendanceController {
   }
 
   @Post('attendance/roster/clear')
-  @HrOnly()
+  @Permits('attendance.manage')
   @ApiBody(openApiBody(rosterClearSchema))
   clearRoster(
     @CurrentUser() user: AuthUser,
@@ -272,14 +271,14 @@ export class AttendanceController {
   }
 
   @Get('attendance/agents')
-  @HrOnly()
+  @Permits('attendance.manage')
   agents(): Promise<EdgeAgentView[]> {
     return this.devices.agents();
   }
 
   /** Returns the agent's token once; it cannot be shown again. */
   @Post('attendance/agents')
-  @HrOnly()
+  @Permits('attendance.manage')
   @ApiBody(openApiBody(edgeAgentInputSchema))
   createAgent(
     @CurrentUser() user: AuthUser,
@@ -289,7 +288,7 @@ export class AttendanceController {
   }
 
   @Post('attendance/agents/:id/revoke')
-  @HrOnly()
+  @Permits('attendance.manage')
   revokeAgent(
     @CurrentUser() user: AuthUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -298,13 +297,13 @@ export class AttendanceController {
   }
 
   @Get('attendance/devices')
-  @HrOnly()
+  @Permits('attendance.manage')
   listDevices(): Promise<DeviceView[]> {
     return this.devices.devices();
   }
 
   @Patch('attendance/devices/:id')
-  @HrOnly()
+  @Permits('attendance.manage')
   @ApiBody(openApiBody(deviceUpdateSchema))
   updateDevice(
     @CurrentUser() user: AuthUser,
@@ -315,13 +314,13 @@ export class AttendanceController {
   }
 
   @Get('attendance/unmatched')
-  @HrOnly()
+  @Permits('attendance.manage')
   unmatched(): Promise<UnmatchedPunchGroup[]> {
     return this.devices.unmatched();
   }
 
   @Post('attendance/punches/:id/void')
-  @HrOnly()
+  @Permits('attendance.manage')
   @ApiBody(openApiBody(voidPunchSchema))
   voidPunch(
     @CurrentUser() user: AuthUser,
@@ -334,7 +333,7 @@ export class AttendanceController {
   // ── HR, for one employee ───────────────────────────────────────────────────
 
   @Get('employees/:id/attendance')
-  @HrOnly()
+  @Permits('attendance.manage')
   employee(
     @Param('id', ParseUUIDPipe) id: string,
     @Query(zod(attendanceRangeQuerySchema)) query: Range,
@@ -343,7 +342,7 @@ export class AttendanceController {
   }
 
   @Patch('employees/:id/attendance-profile')
-  @HrOnly()
+  @Permits('attendance.manage')
   @ApiBody(openApiBody(attendanceProfileSchema))
   setProfile(
     @CurrentUser() user: AuthUser,
@@ -354,7 +353,7 @@ export class AttendanceController {
   }
 
   @Post('employees/:id/attendance/punches')
-  @HrOnly()
+  @Permits('attendance.manage')
   @ApiBody(openApiBody(manualPunchSchema))
   manualPunch(
     @CurrentUser() user: AuthUser,

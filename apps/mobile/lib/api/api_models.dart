@@ -8,6 +8,7 @@ library;
 import 'dart:math' as math;
 import 'dart:typed_data';
 
+part 'account_models.dart';
 part 'approval_models.dart';
 part 'attendance_models.dart';
 part 'leave_models.dart';
@@ -20,9 +21,14 @@ abstract interface class WireValue {
   String get wire;
 }
 
+/// A workspace role template. Every role but [employee] is staff, and staff
+/// see everyone's records.
 enum UserRole implements WireValue {
   tenantAdmin('tenant_admin'),
   hrAdmin('hr_admin'),
+  hrOfficer('hr_officer'),
+  attendanceOfficer('attendance_officer'),
+  auditor('auditor'),
   employee('employee'),
   unknown('unknown');
 
@@ -31,6 +37,9 @@ enum UserRole implements WireValue {
   final String wire;
 
   static UserRole fromWire(String value) => _byWire(values, value, unknown);
+
+  /// Sees the HR side of the workspace: everyone's records and team views.
+  bool get isStaff => this != employee && this != unknown;
 }
 
 enum BillingMode implements WireValue {
@@ -101,13 +110,15 @@ class AuthUser {
   factory AuthUser.fromJson(Json json) => AuthUser(
     id: _read<String>(json, 'id'),
     name: _read<String>(json, 'name'),
-    email: _read<String>(json, 'email'),
+    email: _read<String?>(json, 'email'),
     role: UserRole.fromWire(_read<String>(json, 'role')),
   );
 
   final String id;
   final String name;
-  final String email;
+
+  /// `null` for a worker who signs in with a code sent to their mobile.
+  final String? email;
   final UserRole role;
 }
 
@@ -153,8 +164,39 @@ class AuthTokens {
   final int expiresIn;
 }
 
-/// `POST /auth/login` 200 response.
-class LoginResponse {
+/// What `POST /auth/login` answers: a session ([LoginResponse]), or a
+/// [TwoStepChallenge] when the login needs a second step.
+sealed class LoginOutcome {
+  factory LoginOutcome.fromJson(Json json) {
+    if (json['mfaRequired'] == true) {
+      return TwoStepChallenge(mfaToken: _read<String>(json, 'mfaToken'));
+    }
+    if (json['mfaSetupRequired'] == true) {
+      return TwoStepChallenge(
+        mfaToken: _read<String>(json, 'mfaToken'),
+        setupRequired: true,
+      );
+    }
+    return LoginResponse.fromJson(json);
+  }
+}
+
+/// The password was right, and the login needs a second step.
+class TwoStepChallenge implements LoginOutcome {
+  const TwoStepChallenge({required this.mfaToken, this.setupRequired = false});
+
+  /// Short-lived proof of the password, sent with the code to
+  /// `/auth/mfa/verify`. It is not an access token.
+  final String mfaToken;
+
+  /// The role must use two-step sign-in and this login has not set it up
+  /// yet. The app does not enrol; that happens in the web app.
+  final bool setupRequired;
+}
+
+/// A session: `POST /auth/login` (without a second step),
+/// `/auth/mfa/verify` and `/auth/otp/verify` 200 response.
+class LoginResponse implements LoginOutcome {
   const LoginResponse({
     required this.tokens,
     required this.user,
@@ -661,16 +703,26 @@ class PaymentAccount {
 
 /// The workspace login linked to an employee.
 class PortalUser {
-  const PortalUser({required this.id, required this.email, required this.role});
+  const PortalUser({
+    required this.id,
+    required this.role,
+    this.email,
+    this.phone,
+  });
 
   factory PortalUser.fromJson(Json json) => PortalUser(
     id: _read<String>(json, 'id'),
-    email: _read<String>(json, 'email'),
+    email: _read<String?>(json, 'email'),
+    // Missing before sign-in by mobile number.
+    phone: _read<String?>(json, 'phone'),
     role: UserRole.fromWire(_read<String>(json, 'role')),
   );
 
   final String id;
-  final String email;
+
+  /// A login may have an email address, a mobile number or both.
+  final String? email;
+  final String? phone;
   final UserRole role;
 }
 
@@ -866,6 +918,13 @@ String toWireDate(DateTime date) {
   return '${date.year.toString().padLeft(4, '0')}-${two(date.month)}-'
       '${two(date.day)}';
 }
+
+/// [instant] as the API's ISO 8601 timestamp, in UTC to the millisecond,
+/// for example `2026-10-24T02:05:00.000Z`.
+String toWireInstant(DateTime instant) => DateTime.fromMillisecondsSinceEpoch(
+  instant.millisecondsSinceEpoch,
+  isUtc: true,
+).toIso8601String();
 
 /// An ISO 8601 timestamp such as `2026-10-20T08:00:00.000Z`.
 DateTime _readTimestamp(Json json, String key) {

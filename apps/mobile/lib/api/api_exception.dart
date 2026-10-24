@@ -33,6 +33,7 @@ class ApiException implements Exception {
     this.statusCode,
     this.code,
     this.issues = const [],
+    this.retryAfterSeconds,
   });
 
   factory ApiException.fromDio(DioException error) {
@@ -46,6 +47,7 @@ class ApiException implements Exception {
 
     var message = response.statusMessage ?? 'HTTP ${response.statusCode}';
     String? code;
+    int? retryAfterSeconds;
     var issues = const <ApiIssue>[];
     final body = switch (response.data) {
       // A call that downloads a file gets its error body as bytes too.
@@ -55,6 +57,10 @@ class ApiException implements Exception {
     if (body is Map<String, Object?>) {
       if (body['code'] case final String bodyCode when bodyCode.isNotEmpty) {
         code = bodyCode;
+      }
+      // A 429 (`too_many_attempts`) says when to try again.
+      if (body['retryAfterSeconds'] case final num seconds) {
+        retryAfterSeconds = seconds.ceil();
       }
       final bodyMessage = body['message'];
       if (bodyMessage is String && bodyMessage.isNotEmpty) {
@@ -83,6 +89,7 @@ class ApiException implements Exception {
       message: message,
       code: code,
       issues: issues,
+      retryAfterSeconds: retryAfterSeconds,
     );
   }
 
@@ -97,6 +104,9 @@ class ApiException implements Exception {
   /// `leave_not_allowed`.
   final String? code;
   final List<ApiIssue> issues;
+
+  /// Seconds until a refused attempt may be tried again, from a 429 body.
+  final int? retryAfterSeconds;
 
   bool get isUnauthorized => statusCode == 401;
 

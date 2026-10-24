@@ -1,5 +1,5 @@
 import {
-  HR_ROLES,
+  can,
   LOCATION_KINDS,
   ORG_UNIT_KINDS,
   WORKER_CATEGORIES,
@@ -89,7 +89,7 @@ async function Section({
 
 export default async function OrganizationPage() {
   const user = await currentTenantUser();
-  if (!user || !(HR_ROLES as readonly string[]).includes(user.role)) redirect('/workspace');
+  if (!can(user?.role, 'org.manage')) redirect('/workspace');
   const org = await load<OrgSnapshot>('tenant', '/tenant/org');
   const t = await getTranslations('hr');
   const o = (key: string) => t(`org.${key}`);

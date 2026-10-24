@@ -10,7 +10,7 @@ import { useTranslations } from 'next-intl';
 import { useActionState, useState } from 'react';
 import { savePaymentAccounts } from '@/app/actions/hr';
 import type { ActionState } from '@/app/actions/platform';
-import { SubmitButton } from '../forms';
+import { ErrorText, Form, SubmitButton } from '../forms';
 import { Banner, buttonClass, inputClass } from '../ui';
 
 interface Row {
@@ -63,9 +63,13 @@ export function PaymentAccountsForm({
   const label = 'block text-sm font-medium';
 
   return (
-    <form action={action} className="space-y-4">
+    <Form state={state} action={action} className="space-y-4">
       <p className="text-sm text-slate-600">{t('paymentHint')}</p>
-      {state?.error && <Banner tone="red">{state.error}</Banner>}
+      {state?.error && (
+        <Banner tone="red">
+          <ErrorText state={state} />
+        </Banner>
+      )}
       {state?.issues?.length ? (
         <ul className="list-inside list-disc text-xs text-red-600">
           {state.issues.map((i) => (
@@ -213,6 +217,6 @@ export function PaymentAccountsForm({
       <div>
         <SubmitButton>{tf('save')}</SubmitButton>
       </div>
-    </form>
+    </Form>
   );
 }

@@ -1,4 +1,4 @@
-import { todayIn, type LifecycleOverview } from '@gp/shared';
+import { can, todayIn, type LifecycleOverview } from '@gp/shared';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -6,7 +6,6 @@ import { day } from '@/components/leave/leave-views';
 import { DocumentList, SeparationList } from '@/components/lifecycle/lifecycle-views';
 import { Badge, Card } from '@/components/ui';
 import { currentTenantUser, load } from '@/lib/api';
-import { isHrRole } from '@/lib/roles';
 
 const person = (e: { id: string; fullName: string; employeeCode: string }, tab = 'job') => (
   <Link href={`/workspace/employees/${e.id}?tab=${tab}`} className="font-medium hover:underline">
@@ -16,7 +15,7 @@ const person = (e: { id: string; fullName: string; employeeCode: string }, tab =
 
 /** What needs HR's attention: probation ending, people leaving or retiring, documents expiring. */
 export default async function PeopleEventsPage() {
-  if (!isHrRole((await currentTenantUser())?.role)) redirect('/workspace');
+  if (!can((await currentTenantUser())?.role, 'lifecycle.manage')) redirect('/workspace');
   const t = await getTranslations('lifecycle.people');
   const format = await getFormatter();
   const overview = await load<LifecycleOverview>('tenant', '/tenant/lifecycle');

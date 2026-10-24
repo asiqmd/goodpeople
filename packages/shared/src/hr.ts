@@ -75,5 +75,8 @@ export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 export const MFS_PROVIDERS = ['bkash', 'nagad', 'rocket', 'upay'] as const;
 export type MfsProvider = (typeof MFS_PROVIDERS)[number];
 
-/** Tenant roles that manage org structure and employee records. */
+/**
+ * Roles with every HR permission. Prefer `can(role, permission)`; this list remains for the
+ * places that mean "full HR" (defaults when creating a login, tests).
+ */
 export const HR_ROLES = ['tenant_admin', 'hr_admin'] as const;

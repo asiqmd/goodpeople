@@ -33,11 +33,18 @@ import {
   type ApprovalStepRow,
   type ApprovalSubjectHandler,
 } from '../approvals/approval-steps.js';
+import {
+  noticeRequested,
+  separationSummary,
+  type ApprovalSummary,
+} from '../approvals/approval-notices.js';
 import { loadSteps } from '../approvals/approval-views.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 import { employeeRef } from '../attendance/attendance-views.js';
 import { AttendanceProcessor } from '../attendance/processor.service.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
-import { employeeOfUser, inForceOn, isHr } from '../employees/employee.queries.js';
+import { userCan } from '../../common/roles.js';
+import { employeeOfUser, inForceOn } from '../employees/employee.queries.js';
 
 type SeparationRow = typeof separations.$inferSelect;
 
@@ -77,6 +84,7 @@ export class SeparationsService implements ApprovalSubjectHandler<SeparationView
     private readonly tenantDb: TenantDb,
     private readonly attendance: AttendanceProcessor,
     private readonly audit: TenantAuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   /** HR records a separation of any kind; it is approved as it is saved. */
@@ -149,6 +157,12 @@ export class SeparationsService implements ApprovalSubjectHandler<SeparationView
         onDate: today,
         chain: ['manager', 'hr'],
       });
+      await noticeRequested(
+        tx,
+        this.notifications,
+        { type: 'separation', id: row!.id },
+        await this.summarize(tx, row!.id),
+      );
       await this.audit.record(tx, {
         actorUserId: user.id,
         action: 'separation.resign',
@@ -167,7 +181,10 @@ export class SeparationsService implements ApprovalSubjectHandler<SeparationView
       const [row] = await tx.select().from(separations).where(eq(separations.id, id)).for('update');
       if (!row) throw new NotFoundException('Separation not found');
       const me = await employeeOfUser(tx, user.id);
-      if (!isHr(user) && (me?.id !== row.employeeId || row.status !== 'pending')) {
+      if (
+        !userCan(user, 'lifecycle.manage') &&
+        (me?.id !== row.employeeId || row.status !== 'pending')
+      ) {
         throw new ForbiddenException('Only HR can call off an approved separation');
       }
       if (row.status !== 'pending' && row.status !== 'approved') {
@@ -367,6 +384,20 @@ export class SeparationsService implements ApprovalSubjectHandler<SeparationView
   }
 
   // ── Approvals ──────────────────────────────────────────────────────────────
+
+  async summarize(tx: Tx, subjectId: string): Promise<ApprovalSummary> {
+    const [row] = await tx
+      .select({ s: separations, name: employees.fullName })
+      .from(separations)
+      .innerJoin(employees, eq(employees.id, separations.employeeId))
+      .where(eq(separations.id, subjectId));
+    return {
+      employeeId: row!.s.employeeId,
+      personName: row!.name,
+      summary: separationSummary(row!.s.type, row!.s.lastWorkingDay),
+      link: '/workspace/profile',
+    };
+  }
 
   async lockSubject(tx: Tx, subjectId: string) {
     const [row] = await tx

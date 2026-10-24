@@ -14,7 +14,7 @@ import {
   type PunchState,
 } from '@/app/actions/attendance';
 import type { ActionState } from '@/app/actions/platform';
-import { SubmitButton } from '../forms';
+import { ErrorText, Form, SubmitButton } from '../forms';
 import { Banner, buttonClass, Field, inputClass } from '../ui';
 
 /** Error codes the API gives a punch, each with its own explanation. */
@@ -129,7 +129,9 @@ export function PunchButton({
         <Banner tone="red">
           {known ? t(`errors.${state.code as (typeof PUNCH_ERRORS)[number]}`) : state.error}
           {state.code === 'outside_geofence' && state.error && (
-            <span className="block text-xs">{state.error}</span>
+            <span className="block text-xs">
+              <ErrorText state={state} />
+            </span>
           )}
         </Banner>
       )}
@@ -144,12 +146,16 @@ export function RegularizationForm({ date, maxDate }: { date: string; maxDate: s
     undefined,
   );
   return (
-    <form action={action} className="space-y-4">
-      {state?.error && <Banner tone="red">{state.error}</Banner>}
+    <Form state={state} action={action} className="space-y-4">
+      {state?.error && (
+        <Banner tone="red">
+          <ErrorText state={state} />
+        </Banner>
+      )}
       {state?.result && <Banner tone="green">{t('sent')}</Banner>}
       {/* A new key after each request starts the fields afresh. */}
       <CorrectionFields key={state?.result?.id ?? date} date={date} maxDate={maxDate} />
-    </form>
+    </Form>
   );
 }
 
@@ -228,7 +234,7 @@ export function PinForm({ employeeId, pin }: { employeeId: string; pin: string |
     undefined,
   );
   return (
-    <form action={action} className="flex flex-wrap items-end gap-3">
+    <Form state={state} action={action} className="flex flex-wrap items-end gap-3">
       <Field label={t('pin')} hint={t('pinHint')}>
         <input
           name="attendancePin"
@@ -238,11 +244,15 @@ export function PinForm({ employeeId, pin }: { employeeId: string; pin: string |
         />
       </Field>
       <SubmitButton variant="secondary">{t('savePin')}</SubmitButton>
-      {state?.error && <Banner tone="red">{state.error}</Banner>}
+      {state?.error && (
+        <Banner tone="red">
+          <ErrorText state={state} />
+        </Banner>
+      )}
       {state?.result && (
         <Banner tone="green">{t('pinSaved', { count: state.result.linkedPunches })}</Banner>
       )}
-    </form>
+    </Form>
   );
 }
 
@@ -253,8 +263,12 @@ export function ManualPunchForm({ employeeId, maxDate }: { employeeId: string; m
     undefined,
   );
   return (
-    <form action={action} className="space-y-3">
-      {state?.error && <Banner tone="red">{state.error}</Banner>}
+    <Form state={state} action={action} className="space-y-3">
+      {state?.error && (
+        <Banner tone="red">
+          <ErrorText state={state} />
+        </Banner>
+      )}
       {state?.ok && <Banner tone="green">{t('punchAdded')}</Banner>}
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label={t('date')}>
@@ -268,7 +282,7 @@ export function ManualPunchForm({ employeeId, maxDate }: { employeeId: string; m
         <input name="reason" required minLength={3} maxLength={500} className={inputClass} />
       </Field>
       <SubmitButton variant="secondary">{t('addPunch')}</SubmitButton>
-    </form>
+    </Form>
   );
 }
 
@@ -281,7 +295,7 @@ export function VoidPunchForm({ punchId }: { punchId: string }) {
   return (
     <details className="text-xs">
       <summary className="cursor-pointer text-slate-500 hover:text-slate-900">{t('void')}</summary>
-      <form action={action} className="mt-2 flex items-center gap-2">
+      <Form state={state} action={action} className="mt-2 flex items-center gap-2">
         <input
           name="reason"
           required
@@ -290,8 +304,12 @@ export function VoidPunchForm({ punchId }: { punchId: string }) {
           className={`${inputClass} w-56`}
         />
         <SubmitButton variant="secondary">{t('void')}</SubmitButton>
-      </form>
-      {state?.error && <p className="mt-1 text-red-600">{state.error}</p>}
+      </Form>
+      {state?.error && (
+        <p className="mt-1 text-red-600">
+          <ErrorText state={state} />
+        </p>
+      )}
     </details>
   );
 }

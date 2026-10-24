@@ -47,3 +47,78 @@ jobs:
       - run: flutter pub get
       - run: flutter analyze
       - run: flutter test
+
+  # Builds the production images (nothing is pushed) and smoke-tests them the way
+  # infra/docker-compose.prod.yml runs them: setup and migrations from the API image, the API's
+  # /health, a PDF through the non-root Chromium wrapper, and the web app's sign-in page.
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+      - name: Build the API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          tags: good-people-api:ci
+          load: true
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,scope=api,mode=max
+      - name: Build the web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          tags: good-people-web:ci
+          load: true
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,scope=web,mode=max
+      - name: Smoke-test the images
+        run: |
+          retry() { for _ in $(seq 1 30); do "$@" && return 0; sleep 2; done; return 1; }
+          get() { echo "fetch('$1').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"; }
+          owner=postgres://gp_owner:owner-ci@postgres:5432/good_people
+          app=postgres://gp_app:app-ci@postgres:5432/good_people
+          hardening=(--cap-drop ALL --security-opt no-new-privileges:true)
+
+          docker network create gp
+          docker run -d --name postgres --network gp -e POSTGRES_PASSWORD=postgres postgres:17
+          retry docker exec postgres pg_isready -h 127.0.0.1 -U postgres
+
+          docker run --rm --network gp "${hardening[@]}" \
+            -e DATABASE_ADMIN_URL=postgres://postgres:postgres@postgres:5432/postgres \
+            -e DATABASE_OWNER_URL="$owner" -e DATABASE_URL="$app" \
+            good-people-api:ci node node_modules/@gp/db/dist/scripts/setup.js
+          docker run --rm --network gp "${hardening[@]}" -e DATABASE_OWNER_URL="$owner" \
+            good-people-api:ci node node_modules/@gp/db/dist/scripts/migrate.js
+
+          docker run -d --name api --network gp "${hardening[@]}" \
+            -e DATABASE_URL="$app" -e BACKGROUND_JOBS=off \
+            -e JWT_ACCESS_SECRET="$(openssl rand -base64 48)" \
+            -e FIELD_ENCRYPTION_KEY="$(openssl rand -base64 32)" \
+            good-people-api:ci
+          retry docker exec api node -e "$(get http://127.0.0.1:4000/health)"
+
+          # Chromium as the API starts it when not root: CHROME_PATH (the --no-sandbox wrapper).
+          docker exec api node --input-type=module -e "
+            import puppeteer from 'puppeteer-core';
+            if (process.getuid() === 0) throw new Error('the API image runs as root');
+            const browser = await puppeteer.launch({
+              executablePath: process.env.CHROME_PATH, headless: true, args: ['--disable-gpu'],
+            });
+            const page = await browser.newPage();
+            await page.setContent('<p>Good People</p>');
+            const pdf = Buffer.from(await page.pdf());
+            await browser.close();
+            if (pdf.subarray(0, 5).toString() !== '%PDF-') throw new Error('not a PDF');
+            console.log('PDF rendered:', pdf.length, 'bytes as uid', process.getuid());
+          "
+
+          docker run -d --name web --network gp --init "${hardening[@]}" \
+            -e API_URL=http://api:4000 good-people-web:ci
+          retry docker exec web node -e "$(get http://127.0.0.1:3000/login)"
+      - name: Container logs
+        if: failure()
+        run: for c in postgres api web; do echo "::group::$c"; docker logs "$c" || true; echo "::endgroup::"; done

@@ -10,7 +10,11 @@ the user's own requests, approvals and the holiday calendar,
 **Attendance**: punching in and out with the phone's location (and a selfie
 when the workspace asks for one), this month's days and attendance
 corrections, **My documents**: what HR shared and the service book, and
-**Resignation**, from the bottom of My profile. English and Bangla.
+**Resignation**, from the bottom of My profile. Milestone 5 adds sign-in
+with a code texted to a mobile number, two-step sign-in, a **notification
+inbox** with push, punches kept on the phone while offline, a **Team** view
+for managers and HR, and **Account** (password and language). English and
+Bangla.
 
 Needs Flutter 3.47 (Dart 3.13) or newer. Run every command below from
 `apps/mobile`. This app is not part of the pnpm workspace; use `flutter`, not
@@ -32,6 +36,7 @@ flutter run --dart-define=API_BASE_URL=http://10.0.2.2:4000
 | -------------- | ------------------------ | ----------------------- |
 | `API_BASE_URL` | API origin               | `http://localhost:4000` |
 | `APP_ENV`      | `dev`, `staging`, `prod` | `dev`                   |
+| `FIREBASE_API_KEY`, `FIREBASE_APP_ID`, `FIREBASE_MESSAGING_SENDER_ID`, `FIREBASE_PROJECT_ID` | The Firebase project's settings; the app ID differs between the Android and the iOS app | none: push is off |
 
 Environments are dart-defines, not native flavors: one Android and iOS setup
 serves all of them. An unknown `APP_ENV` shows an error instead of the login screen. Outside `prod`, the
@@ -47,11 +52,15 @@ On a physical phone, use your computer's LAN address, for example
 | `lib/config/` | `AppConfig` from the dart-defines |
 | `lib/api/` | Hand-written dio client, models, `ApiException`, token store |
 | `lib/auth/` | Auth state, sign in and out, token refresh, login screen |
-| `lib/home/` | Home screen and the module list |
+| `lib/home/` | Home screen, the module list, and `SessionServices` (what runs while signed in: the offline punch queue, inbox reloads, push, language) |
 | `lib/profile/` | My profile screen and `myEmployeeProvider` |
 | `lib/leave/` | Leave screen, one file per tab, and the leave providers |
 | `lib/attendance/` | Attendance screen, its tabs, the correction form, the providers, `LocationService` and `CameraService` |
-| `lib/approvals/` | The approvals inbox tab (leave, corrections and resignations) and `approvalsProvider`, shared by Leave and Attendance |
+| `lib/approvals/` | The approvals inbox tab (leave, corrections and resignations) and `approvalsProvider`, shared by Leave and Attendance, and `ApprovalsScreen` for notifications |
+| `lib/notifications/` | The inbox screen and `notificationInboxProvider`, which screen each notification opens, and `PushService` (Firebase, or off) |
+| `lib/team/` | The Team screen and its providers |
+| `lib/account/` | Account and the change-password form |
+| `lib/util/` | `uuidV4` |
 | `lib/documents/` | My documents, the in-app image viewer, `myDocumentsProvider` and `FileOpener` |
 | `lib/resignation/` | The resignation screen and form, `mySeparationsProvider` and the status pill |
 | `lib/settings/` | Language choice (in memory) |
@@ -186,6 +195,72 @@ later; the picker opens 60 days ahead) and a reason (3 to 500 characters),
 and after a confirmation sends `POST /tenant/me/resignation`. Refusals by
 `code`: `past_last_day`, `separated`, `separation_open` (the list reloads to
 show the open one) and `not_open` on a withdrawal.
+
+Sign-in: the login screen switches between **Email** (password, as before)
+and **Mobile**. A mobile number (`01712345678`; spaces, dashes and Bangla
+digits are fine) goes to `POST /auth/otp/request`, which answers the same
+whether or not the number has a login, so the screen says "if this number
+has a login". The 6-digit code goes to `POST /auth/otp/verify`; **Send
+again** is enabled 30 seconds after each code. When `POST /auth/login`
+answers `{mfaRequired, mfaToken}`, the screen asks for the authenticator
+code, or a recovery code such as `k7qm-2xpd`, and sends it to
+`POST /auth/mfa/verify`. `{mfaSetupRequired}` (an admin role that must use
+two-step sign-in but has not set it up) says to do that in the web app
+first: the app does not enrol.
+
+Errors: `describeError` (`lib/ui/error_text.dart`) shows a translated
+message for the codes the app can meet anywhere (`too_many_attempts`, with
+the wait from `retryAfterSeconds`, `login_disabled`, `tenant_suspended`,
+`tenant_read_only`, `role_not_allowed`, `feature_not_in_plan`,
+`wrong_password`, the punch refusals, `offline_punch_too_old` and
+`future_punch`), else the API's English message.
+
+Sessions refresh once for all calls that get a 401 together: a refresh
+token works once, and the API takes a second use for a stolen token.
+
+Notifications: the bell on the home screen shows the unread count from
+`GET /tenant/notifications`; titles and bodies arrive in the user's
+language. The inbox reloads when it opens, on pull-to-refresh, when the app
+comes back to the foreground and when a push arrives. Tapping an item marks
+it read (`POST /tenant/notifications/{id}/read`) and opens what it is about:
+a request to decide opens the approvals, a decided one Leave, Attendance or
+My profile by its `link`, documents and letters My documents, a missing
+punch Attendance; probation reminders are only marked read. **Mark all as
+read** posts `/tenant/notifications/read-all`. Changing the app language
+sends `PATCH /account/preferences`, so notifications come in it.
+
+Push: with the four `FIREBASE_*` defines, `FirebasePushService` starts
+Firebase from them (no `google-services.json` or `GoogleService-Info.plist`),
+asks for permission after sign-in, and registers the token with
+`POST /account/devices`; signing out sends `POST /account/devices/remove`.
+A push while the app is open shows its title with **View**; a tapped push
+opens its screen and marks it read. Without the defines push is off and
+nothing else changes. iOS also needs the Push Notifications capability and
+an APNs key in the Firebase project; that is not set up in this repo.
+
+Offline punches: a punch that gets no answer (no connection, a timeout) is
+kept on the phone in `offline_punches/queue.json` in the app's support
+directory, with its photo when it had one, and Today says how many wait.
+Each punch gets a UUID v4 `clientId` before the first attempt; a resend
+sends the same id and `punchedAt` (when it happened), so the API records it
+once. The queue sends when the session starts, when the app comes back to
+the foreground, every minute while it is open and after any call that goes
+through. A 201 removes it; a 4xx other than 401, 408 and 429 (such as
+`offline_punch_too_old` after 72 hours) removes it too and Today, and a
+note on home, say why, with **Request correction** for that day; anything
+else keeps it. Punches belong to the login that took them.
+
+Team: the home screen shows **Team** with the `attendance` module for staff
+roles, and for anyone else when today's `GET /tenant/attendance/daily` has
+someone besides themselves (the API always includes the person). It lists
+each person's status, first in and lateness, with chips by status, and,
+with `leave`, who is on leave this week from `GET /tenant/leave/calendar`.
+
+Account: `GET /account` (name, email, mobile, role, two-step sign-in) and,
+for logins with a password, **Change password**
+(`POST /account/password`, at least 10 characters, with this session's
+refresh token as `keepRefreshToken` so the phone stays signed in while other
+sessions end).
 
 ## Localization
 

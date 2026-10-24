@@ -1,10 +1,12 @@
-import type { EmployeeListItem, OrgSnapshot, Page } from '@gp/shared';
+import { can, type EmployeeListItem, type OrgSnapshot, type Page } from '@gp/shared';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { EmployeeForm } from '@/components/hr/employee-form';
-import { load } from '@/lib/api';
+import { currentTenantUser, load } from '@/lib/api';
 
 export default async function HirePage() {
+  if (!can((await currentTenantUser())?.role, 'employees.write')) redirect('/workspace/employees');
   const [org, people] = await Promise.all([
     load<OrgSnapshot>('tenant', '/tenant/org'),
     load<Page<EmployeeListItem>>('tenant', '/tenant/employees?status=active&pageSize=100'),

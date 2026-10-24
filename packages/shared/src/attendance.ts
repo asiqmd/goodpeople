@@ -3,6 +3,9 @@ import { addDays, type IsoDate } from './dates.js';
 export const PUNCH_SOURCES = ['device', 'web', 'mobile', 'manual', 'regularization'] as const;
 export type PunchSource = (typeof PUNCH_SOURCES)[number];
 
+/** How old a punch the app recorded offline may be when it finally reaches the server. */
+export const OFFLINE_PUNCH_MAX_HOURS = 72;
+
 export const PUNCH_DIRECTIONS = ['in', 'out', 'unknown'] as const;
 export type PunchDirection = (typeof PUNCH_DIRECTIONS)[number];
 

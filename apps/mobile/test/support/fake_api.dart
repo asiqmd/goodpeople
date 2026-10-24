@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/widgets.dart';
@@ -9,7 +10,9 @@ import 'package:good_people/api/good_people_api.dart';
 import 'package:good_people/app.dart';
 import 'package:good_people/attendance/camera_service.dart';
 import 'package:good_people/attendance/location_service.dart';
+import 'package:good_people/attendance/offline_punch_queue.dart';
 import 'package:good_people/documents/file_opener.dart';
+import 'package:good_people/notifications/push_service.dart';
 
 import 'attendance_fixtures.dart';
 import 'leave_fixtures.dart';
@@ -222,9 +225,132 @@ const wrongPassword = ApiException(
   message: 'Wrong workspace, email or password',
 );
 
+/// What the API answers for a wrong or used sign-in code.
+const wrongCode = ApiException(
+  kind: ApiErrorKind.server,
+  statusCode: 401,
+  message: 'Wrong or expired code',
+);
+
+/// What dio reports when the phone has no connection.
+const noConnection = ApiException(
+  kind: ApiErrorKind.network,
+  message: 'The connection errored',
+);
+
+/// The session `/auth/otp/verify` answers for a worker who signs in with
+/// their mobile number: no email.
+const phoneLoginJson = <String, Object?>{
+  'accessToken': 'access-otp',
+  'refreshToken': 'refresh-otp',
+  'expiresIn': 900,
+  'user': {
+    'id': '8e7d6c5b-4a39-4f82-9a7f-6e5d4c3b2a19',
+    'name': 'Rahima Khatun',
+    'email': null,
+    'role': 'employee',
+  },
+  'tenant': {
+    'id': '0b6f2d4a-8c1e-4f7b-a3d9-6e5c4b3a2f10',
+    'name': 'Acme Garments Ltd',
+    'slug': 'acme',
+  },
+};
+
+/// `GET /account` 200 body, as the API contract shapes it.
+Map<String, Object?> accountJson({
+  String? email = 'rahima@acme.test',
+  String? phone = '+8801711000005',
+  String role = 'tenant_admin',
+  bool hasPassword = true,
+  bool mfaEnabled = false,
+}) => {
+  'kind': 'tenant',
+  'id': '5f0c6c1e-2b7a-4c55-9d3e-0a8f3b1d2c01',
+  'name': 'Rahima Akter',
+  'email': email,
+  'phone': phone,
+  'role': role,
+  'language': 'en',
+  'hasPassword': hasPassword,
+  'mfaEnabled': mfaEnabled,
+  'mfaRequired': false,
+  'recoveryCodesLeft': mfaEnabled ? 8 : 0,
+  'permissions': <String>[],
+};
+
+/// One `NotificationView`, as the API contract shapes it.
+Map<String, Object?> notificationJson({
+  required String id,
+  String event = 'approval.requested',
+  String title = 'Leave request from Karim Uddin',
+  String body = 'Casual leave, Oct 29 – Oct 30. Open approvals to decide.',
+  String? link = '/workspace/approvals',
+  String? readAt,
+  String createdAt = '2026-10-24T03:00:00.000Z',
+}) => {
+  'id': id,
+  'event': event,
+  'title': title,
+  'body': body,
+  'link': link,
+  'readAt': readAt,
+  'createdAt': createdAt,
+};
+
+/// `GET /tenant/notifications` 200 body for [items]; unread counted.
+Map<String, Object?> inboxJson([List<Map<String, Object?>> items = const []]) =>
+    {
+      'unread': items.where((item) => item['readAt'] == null).length,
+      'items': items,
+    };
+
+/// One row of `GET /tenant/attendance/daily`.
+Map<String, Object?> teamRowJson({
+  required String id,
+  required String name,
+  required String code,
+  required String date,
+  String status = 'present',
+  String? firstIn = '07:55',
+  int lateMinutes = 0,
+}) => {
+  'employee': {
+    'id': id,
+    'employeeCode': code,
+    'fullName': name,
+    'fullNameBn': null,
+  },
+  'timeZone': 'Asia/Dhaka',
+  'day': dayJson(
+    date: date,
+    status: status,
+    firstIn: firstIn,
+    late: lateMinutes,
+  ),
+};
+
+/// `GET /tenant/attendance/daily` 200 body with [rows], counted by status.
+Map<String, Object?> teamDayJson(String date, List<Map<String, Object?>> rows) {
+  final counts = <String, int>{};
+  for (final row in rows) {
+    final status = (row['day']! as Map<String, Object?>)['status']! as String;
+    counts[status] = (counts[status] ?? 0) + 1;
+  }
+  return {'date': date, 'counts': counts, 'rows': rows};
+}
+
+/// `GET /tenant/leave/calendar` 200 body with [entries].
+Map<String, Object?> leaveCalendarJson(
+  String from,
+  String to, [
+  List<Map<String, Object?>> entries = const [],
+]) => {'from': from, 'to': to, 'holidays': <Object?>[], 'entries': entries};
+
 /// In-memory [GoodPeopleApi] that records calls.
 class FakeGoodPeopleApi implements GoodPeopleApi {
-  LoginResponse loginResponse = LoginResponse.fromJson(loginJson);
+  /// A session, or a [TwoStepChallenge].
+  LoginOutcome loginResponse = LoginResponse.fromJson(loginJson);
 
   /// Thrown by [login] instead of returning [loginResponse].
   Exception? loginError;
@@ -257,7 +383,7 @@ class FakeGoodPeopleApi implements GoodPeopleApi {
   final employeeTokens = <String>[];
 
   @override
-  Future<LoginResponse> login({
+  Future<LoginOutcome> login({
     required String tenant,
     required String email,
     required String password,
@@ -267,6 +393,182 @@ class FakeGoodPeopleApi implements GoodPeopleApi {
     if (loginError case final error?) throw error;
     return loginResponse;
   }
+
+  // ── Sign-in by code and two-step sign-in ──────────────────────────────────
+
+  /// The session [verifyMfa] and [verifyOtp] answer.
+  LoginResponse codeSession = LoginResponse.fromJson(phoneLoginJson);
+
+  /// Thrown, one per call, by [verifyMfa] before it answers.
+  final mfaErrors = <Exception>[];
+  final mfaCodes = <({String mfaToken, String code})>[];
+
+  /// Thrown, one per call, by [requestOtp] before it answers.
+  final otpRequestErrors = <Exception>[];
+  final otpRequests = <({String tenant, String phone})>[];
+
+  /// Thrown, one per call, by [verifyOtp] before it answers.
+  final otpErrors = <Exception>[];
+  final otpCodes = <({String tenant, String phone, String code})>[];
+
+  @override
+  Future<LoginResponse> verifyMfa({
+    required String mfaToken,
+    required String code,
+  }) async {
+    mfaCodes.add((mfaToken: mfaToken, code: code));
+    if (mfaErrors.isNotEmpty) throw mfaErrors.removeAt(0);
+    return codeSession;
+  }
+
+  @override
+  Future<OtpRequestResult> requestOtp({
+    required String tenant,
+    required String phone,
+  }) async {
+    otpRequests.add((tenant: tenant, phone: phone));
+    if (otpRequestErrors.isNotEmpty) throw otpRequestErrors.removeAt(0);
+    return const OtpRequestResult(expiresInSeconds: 300);
+  }
+
+  @override
+  Future<LoginResponse> verifyOtp({
+    required String tenant,
+    required String phone,
+    required String code,
+  }) async {
+    otpCodes.add((tenant: tenant, phone: phone, code: code));
+    if (otpErrors.isNotEmpty) throw otpErrors.removeAt(0);
+    return codeSession;
+  }
+
+  // ── Account ───────────────────────────────────────────────────────────────
+
+  Json account = accountJson();
+
+  /// Thrown by [changePassword] instead of changing it, while set.
+  Exception? passwordError;
+  final passwordChanges =
+      <({String current, String next, String? keepRefreshToken})>[];
+  final languages = <UserLanguage>[];
+  final registeredDevices = <({DevicePlatform platform, String token})>[];
+
+  /// Each push token removed, with the access token it was removed with.
+  final removedDevices = <({String accessToken, String token})>[];
+
+  @override
+  Future<AccountView> fetchAccount(String accessToken) async =>
+      AccountView.fromJson(account);
+
+  @override
+  Future<void> changePassword(
+    String accessToken, {
+    required String currentPassword,
+    required String newPassword,
+    String? keepRefreshToken,
+  }) async {
+    passwordChanges.add((
+      current: currentPassword,
+      next: newPassword,
+      keepRefreshToken: keepRefreshToken,
+    ));
+    if (passwordError case final error?) throw error;
+  }
+
+  @override
+  Future<AccountView> updatePreferences(
+    String accessToken, {
+    required UserLanguage language,
+  }) async {
+    languages.add(language);
+    account = {...account, 'language': language.wire};
+    return AccountView.fromJson(account);
+  }
+
+  @override
+  Future<void> registerDevice(
+    String accessToken, {
+    required DevicePlatform platform,
+    required String token,
+  }) async => registeredDevices.add((platform: platform, token: token));
+
+  @override
+  Future<void> removeDevice(String accessToken, String token) async =>
+      removedDevices.add((accessToken: accessToken, token: token));
+
+  // ── Notifications ─────────────────────────────────────────────────────────
+
+  /// Answered by [fetchNotifications]; reading changes it.
+  Json inbox = inboxJson();
+  var inboxCalls = 0;
+  final readNotificationIds = <String>[];
+  var readAllCalls = 0;
+
+  @override
+  Future<NotificationInbox> fetchNotifications(
+    String accessToken, {
+    bool unreadOnly = false,
+  }) async {
+    inboxCalls++;
+    return NotificationInbox.fromJson(inbox);
+  }
+
+  @override
+  Future<void> markNotificationRead(String accessToken, String id) async {
+    readNotificationIds.add(id);
+    inbox = inboxJson([
+      for (final item in inbox['items']! as List<Object?>)
+        if ((item! as Json)['id'] == id)
+          {...item as Json, 'readAt': '2026-10-24T09:00:00.000Z'}
+        else
+          item as Json,
+    ]);
+  }
+
+  @override
+  Future<void> markAllNotificationsRead(String accessToken) async {
+    readAllCalls++;
+    inbox = inboxJson([
+      for (final item in inbox['items']! as List<Object?>)
+        {...item! as Json, 'readAt': '2026-10-24T09:00:00.000Z'},
+    ]);
+  }
+
+  // ── Teams ─────────────────────────────────────────────────────────────────
+
+  /// Answers [fetchTeamDay] for a `YYYY-MM-DD` date: nobody, by default.
+  Json Function(String date) teamDay = (date) => teamDayJson(date, []);
+  final teamDayDates = <String>[];
+
+  /// Answers [fetchLeaveCalendar] for `YYYY-MM-DD` dates: nobody away.
+  Json Function(String from, String to) leaveCalendar = leaveCalendarJson;
+  final leaveCalendarQueries = <({String from, String to})>[];
+
+  @override
+  Future<TeamDay> fetchTeamDay(
+    String accessToken, {
+    required DateTime date,
+  }) async {
+    teamDayDates.add(toWireDate(date));
+    return TeamDay.fromJson(teamDay(toWireDate(date)));
+  }
+
+  @override
+  Future<LeaveCalendar> fetchLeaveCalendar(
+    String accessToken, {
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    final query = (from: toWireDate(from), to: toWireDate(to));
+    leaveCalendarQueries.add(query);
+    return LeaveCalendar.fromJson(leaveCalendar(query.from, query.to));
+  }
+
+  @override
+  Future<void> logout(String refreshToken) async => loggedOut.add(refreshToken);
+
+  /// Refresh tokens whose sessions were ended with [logout].
+  final loggedOut = <String>[];
 
   @override
   Future<AuthTokens> refresh(String refreshToken) async {
@@ -470,6 +772,10 @@ class FakeGoodPeopleApi implements GoodPeopleApi {
   /// the form's fields when a selfie came with it.
   final punchBodies = <Json>[];
 
+  /// Client ids already recorded: a resend answers today again without a
+  /// second punch, as the API does.
+  final recordedClientIds = <String>{};
+
   /// The selfie sent with each punch, `null` for a JSON punch.
   final punchSelfies = <PunchSelfie?>[];
 
@@ -511,13 +817,18 @@ class FakeGoodPeopleApi implements GoodPeopleApi {
     String accessToken, {
     PunchLocation? location,
     PunchSelfie? selfie,
+    String? clientId,
+    DateTime? punchedAt,
   }) async {
     final body = selfie == null
-        ? selfPunchBody(location)
-        : selfPunchFields(location);
+        ? selfPunchBody(location, clientId: clientId, punchedAt: punchedAt)
+        : selfPunchFields(location, clientId: clientId, punchedAt: punchedAt);
     punchBodies.add(body);
     punchSelfies.add(selfie);
     if (punchErrors.isNotEmpty) throw punchErrors.removeAt(0);
+    if (clientId != null && !recordedClientIds.add(clientId)) {
+      return MyAttendanceToday.fromJson(attendanceToday);
+    }
     attendanceToday = afterPunch(
       attendanceToday,
       body,
@@ -775,8 +1086,86 @@ class FakeLocationService implements LocationService {
   }
 }
 
-/// The real app with [api] in place of the HTTP client.
-Widget appWith(FakeGoodPeopleApi api) => ProviderScope(
-  overrides: [goodPeopleApiProvider.overrideWithValue(api)],
+/// A [PunchQueueStore] in memory, which can also fail like a full disk.
+class MemoryPunchQueueStore implements PunchQueueStore {
+  PunchQueue saved = const PunchQueue();
+  final photos = <String, Uint8List>{};
+  var saves = 0;
+
+  @override
+  Future<PunchQueue> load() async => saved;
+
+  @override
+  Future<void> save(PunchQueue queue) async {
+    saves++;
+    // Through JSON, as the file store keeps it.
+    saved = PunchQueue.fromJson(
+      jsonDecode(jsonEncode(queue.toJson())) as Map<String, Object?>,
+    );
+  }
+
+  @override
+  Future<String> writePhoto(String clientId, Uint8List bytes) async {
+    final name = 'selfie-$clientId.jpg';
+    photos[name] = bytes;
+    return name;
+  }
+
+  @override
+  Future<Uint8List?> readPhoto(String name) async => photos[name];
+
+  @override
+  Future<void> deletePhoto(String name) async => photos.remove(name);
+}
+
+/// A [PushService] that tests drive: a token, and messages to deliver.
+class FakePushService implements PushService {
+  FakePushService({this.token = 'fcm-token-0123456789'});
+
+  /// Returned by [register]; `null` as if the user said no.
+  String? token;
+  var registrations = 0;
+  PushMessage? launchedBy;
+
+  final tokens = StreamController<String>.broadcast();
+  final foreground = StreamController<PushMessage>.broadcast();
+  final opened = StreamController<PushMessage>.broadcast();
+
+  @override
+  DevicePlatform? get platform => DevicePlatform.android;
+
+  @override
+  Future<String?> register() async {
+    registrations++;
+    return token;
+  }
+
+  @override
+  Stream<String> get tokenRefreshes => tokens.stream;
+
+  @override
+  Stream<PushMessage> get foregroundMessages => foreground.stream;
+
+  @override
+  Stream<PushMessage> get openedMessages => opened.stream;
+
+  @override
+  Future<PushMessage?> initialMessage() async => launchedBy;
+}
+
+/// The real app with [api] in place of the HTTP client, a punch queue in
+/// memory and no push.
+Widget appWith(
+  FakeGoodPeopleApi api, {
+  PunchQueueStore? punchQueue,
+  PushService push = const NoPushService(),
+}) => ProviderScope(
+  overrides: [
+    goodPeopleApiProvider.overrideWithValue(api),
+    punchQueueStoreProvider.overrideWithValue(
+      punchQueue ?? MemoryPunchQueueStore(),
+    ),
+    pushServiceProvider.overrideWithValue(push),
+  ],
   child: const GoodPeopleApp(),
 );

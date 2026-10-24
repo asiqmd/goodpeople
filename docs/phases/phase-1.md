@@ -12,12 +12,12 @@ been walked through in the browser.
 | **M2 Rules, holidays & leave**               | BD country-pack rules engine, holiday calendars, leave and approvals           | M1         | Done   |
 | **M3 Attendance**                            | Shifts, punches, Edge Agent, daily processing, regularization                  | M1, M2     | Done   |
 | **M4 Lifecycle & documents**                 | Lifecycle events, documents vault, letters, ID card, service book, bulk import | M1         | Done   |
-| **M5 Notifications, self-service & go-live** | EN/BN templates, phone OTP, mobile v1, hardening                               | M2–M4      | Next   |
+| **M5 Notifications, self-service & go-live** | EN/BN templates, phone OTP, mobile v1, hardening                               | M2–M4      | Done   |
 
 **Carried into later milestones from M1:**
 
-- **API error messages are English only.** The web and mobile apps should translate them from
-  the `code` field (M5).
+- ~~API error messages are English only~~: the web and mobile apps translate them from their
+  `code` in M5 (field-level messages are still English).
 - ~~Back-dated job corrections~~: done in M4.
 - **Upazilas are free text** until the full gazetteer is added to the BD country pack (M2).
 
@@ -30,13 +30,11 @@ been walked through in the browser.
 - **Payroll lock:** processed days can still be recomputed; payroll (Phase 2) adds locking.
 - **Edge Agent:** tested against simulated ZKTeco ADMS and Hikvision traffic, not real
   devices yet. ZKTeco "PUSH 3" registration and Hikvision's older XML events are not handled.
-- **Forms clear after a refused submit** (React's default); keeping the entered values is a
-  cross-cutting fix for M5.
+- ~~Forms clear after a refused submit~~: they keep the entered values since M5.
 
 **Carried into later milestones from M4:**
 
-- **Notifications** for expiring documents, probation ending and separations: M4 lists them on
-  the People events page; email, SMS and push come in M5.
+- ~~Notifications~~ for expiring documents, probation ending and resignations: done in M5.
 - **Final settlement** (dues, wages in lieu of notice, gratuity, the resignation benefit) is
   payroll's job (Phase 2). M4 records the separation and the notice shortfall.
 - **Legal entities have no Bangla name** yet, so letterheads stay in English.
@@ -377,10 +375,132 @@ structures say otherwise.
 - **Mobile:** employees see their documents and service book, resign, and punch with a selfie
   when required; managers approve resignations.
 
-## Later milestones (outline; detailed when each starts)
+## M5: Notifications, self-service & go-live
 
-- **M5:**
-  - Email, SMS and push notification templates (EN/BN), and phone OTP sign-in.
-  - Mobile v1: team view, push and offline queue.
-  - Role templates; performance and security hardening.
-  - Internal go-live checklist.
+### Roles and logins
+
+- **Role templates** are named sets of permissions; routes check permissions, never role names
+  ([ADR 007](../adr/007-notifications-and-sign-in.md)):
+
+  | Role               | Can                                                                              |
+  | ------------------ | -------------------------------------------------------------------------------- |
+  | Workspace admin    | everything, including logins                                                     |
+  | HR admin           | all HR, notification settings and the audit log; not logins                      |
+  | HR officer         | people (with identity numbers), leave, attendance, documents, lifecycle, imports |
+  | Attendance officer | attendance, and the employee list with identity numbers hidden                   |
+  | Auditor            | the employee list (identity hidden) and the audit log; changes nothing           |
+  | Employee           | self-service, and their team's approvals                                         |
+
+- **Users page:** admins add logins (email and password, or a mobile number for employees),
+  link them to employees, change roles, disable logins (signed out at once), and reset
+  passwords or two-step sign-in. Nobody changes their own role, and the last active admin
+  stays an admin.
+
+### Sign-in and security
+
+- **SMS codes:** employees sign in with a six-digit code sent to their mobile, valid five
+  minutes, five guesses, once. The answer never reveals whether a number has a login.
+- **Two-step sign-in:** authenticator apps (TOTP) with eight recovery codes. With
+  `REQUIRE_ADMIN_MFA=on` (production), admins set it up during their first sign-in.
+- **Rate limits** per login and per address on passwords, codes and second steps; the web
+  passes each visitor's address on to the API.
+- **Headers:** a strict content security policy on the web and the API, HSTS, no framing.
+- **Accounts:** everyone changes their own password (other sessions end) and language; the
+  language also decides the language of their notifications.
+- **Forms keep what was typed** after a refused submit, and API errors show in the reader's
+  language from their `code`.
+
+### Notifications
+
+- **Inbox** in the web (a bell with the unread count) and the app.
+- **Channels:** email, SMS and push, chosen per event by HR, with SMS off by default and
+  counted against the plan's monthly credits.
+- **Events:** a request waits for your decision; your request was decided; a document is
+  expiring (30, 7 and 1 days before, and on expiry); probation ends within 14 days; a letter
+  was issued to you; yesterday has one punch only.
+- **Wording:** English and Bangla templates per event, which HR may reword or reset; the SMS
+  editor counts messages (160 Latin or 70 Bangla characters).
+- **Delivery log** with addresses masked, retries with backoff, and "send again".
+
+### Mobile v1
+
+- Sign-in with a password, an SMS code or a second step; API errors translated.
+- Notifications inbox and push (Firebase), registered per device and removed on sign-out.
+- **Offline punches:** a punch without a connection is kept on the phone and sent later with
+  its own time; the server takes each one once and refuses those over 72 hours old.
+- **Team view:** who is in today and who is on leave in the next week, for managers and HR
+  (and colleagues in the same unit, as the web's team pages show).
+- **Account:** password change (this phone stays signed in), and the app's language is saved
+  for notifications. Calls that find the session expired together share one refresh, so a
+  busy home screen no longer looks like a stolen token.
+
+### Performance at 5,000 employees
+
+Measured on a MacBook Air (M-series) against the `scale-test` seed: 5,000 employees and
+185,250 punches over 19 working days (`apps/api/scripts/measure-scale.mjs`, 20 runs each).
+
+| Call                                       | p50                   | p95     |
+| ------------------------------------------ | --------------------- | ------- |
+| Employees, a page of 50 / a search         | 5–11 ms               | 7–14 ms |
+| One employee                               | 3 ms                  | 4 ms    |
+| Attendance, all 5,000 on one day (live)    | 221 ms                | 240 ms  |
+| Attendance, a manager's team               | 16 ms                 | 18 ms   |
+| Attendance summary, the month (5,000 rows) | 443 ms                | 474 ms  |
+| My attendance today; approvals; inbox      | 1–6 ms                | 1–8 ms  |
+| Reprocessing the whole month for everyone  | 15.8 s (120,000 days) |         |
+
+The all-staff daily view was 735 ms before M5: computing days looked each person up in the
+full lists of punches, jobs and leave. Grouping them once made it three times faster. The
+background run every 15 minutes covers two days, about 1.5 s at this size.
+
+### Go-live
+
+- **Go-live checklist page** (`/workspace/setup`): fourteen steps read from the workspace's
+  data (company details, geofences, logins, admins' two-step sign-in, devices reporting,
+  device numbers, holidays, email and SMS delivery).
+- **The internal go-live plan** is in [docs/ops/go-live.md](../ops/go-live.md): four weeks
+  of preparation, a parallel month, cut-over and the two months that end Phase 1.
+- **Production kit:** Dockerfiles, a Compose stack with Caddy, backups that are verified by
+  restoring, `create-super-admin`, and the [runbook](../ops/runbook.md).
+
+### Done when
+
+- **Unit tests:** TOTP against RFC 6238's vectors, recovery codes, SMS segment counting, role
+  permissions.
+- **API end-to-end tests:**
+  - role templates and masked identity numbers
+  - logins: phone-only, temporary passwords, self-protection, the last admin, disabling
+  - SMS sign-in, unknown numbers, wrong guesses and request limits
+  - two-step sign-in, recovery codes, resetting it, and admins required to set it up
+  - password limits and changes
+  - notifications for requests and decisions, in Bangla with the workspace's wording,
+    channel switches, and document reminders sent once
+  - offline punches taken once, and refused when too old
+  - security headers and the go-live checklist
+- **Web:** walked through in English and Bangla: sign-in by SMS code and with a second step,
+  account and users pages, notifications (inbox, channels, wording, log), the checklist, and
+  a refused form keeping its values.
+
+**Carried into later work from M5:**
+
+- **Field-level validation messages** from the API are still English; the banner above them
+  is translated.
+- **Rate limits and the dispatcher live in one API process.** Several instances need Redis,
+  which arrives with payroll's job queue (Phase 2).
+- **The SMS driver** follows SSL Wireless's v3 API and is untested against a live account;
+  push is untested against a live Firebase project.
+- **Custom roles per workspace** wait for field-level permissions (Phase 5).
+- **Docker images** are built and smoke-tested only in CI (Docker is not installed on the
+  development machine).
+- **Mobile builds:** `flutter analyze` and `flutter test` pass, but no Android or iOS build ran
+  here (no Android SDK). iOS push still needs the Push Notifications capability and an APNs key
+  in Firebase.
+- **The app keeps its session in memory**, so restarting it means signing in again. Queued
+  punches survive and are sent at the next sign-in. Secure storage for the refresh token is a
+  follow-up.
+
+## After Phase 1
+
+Phase 1 ends when our organisations have run on it for two months
+([go-live plan](../ops/go-live.md)) and two external design partners are live. Payroll and
+Bangladesh statutory compliance (Phase 2) start from the processed attendance and leave.

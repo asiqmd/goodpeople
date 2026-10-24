@@ -13,6 +13,7 @@ const UNIQUE_MESSAGES: Record<string, string> = {
   employees_tenant_nid_uq: 'Another employee already has this NID',
   employees_user_uq: 'This login is already linked to an employee',
   tenant_users_tenant_email_uq: 'A workspace login with this email already exists',
+  tenant_users_tenant_phone_uq: 'A workspace login with this mobile number already exists',
   employees_tenant_pin_uq: 'Another employee already uses this attendance PIN',
   regularization_requests_pending_uq: 'A correction for this day is already waiting for approval',
   attendance_devices_tenant_serial_uq: 'A device with this serial number is already registered',

@@ -2011,6 +2011,522 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Resignation rejected'**
   String get separationRejected;
+
+  /// Login method switch: sign in with email and password.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get signInWithEmail;
+
+  /// Login method switch: sign in with a code sent to a mobile number.
+  ///
+  /// In en, this message translates to:
+  /// **'Mobile'**
+  String get signInWithPhone;
+
+  /// No description provided for @mobileNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Mobile number'**
+  String get mobileNumber;
+
+  /// Keep the example number in Latin digits.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 01712345678'**
+  String get mobileNumberHint;
+
+  /// No description provided for @mobileNumberRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your mobile number'**
+  String get mobileNumberRequired;
+
+  /// No description provided for @mobileNumberInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a Bangladesh mobile number, e.g. 01712345678'**
+  String get mobileNumberInvalid;
+
+  /// Button: text a sign-in code to the mobile number.
+  ///
+  /// In en, this message translates to:
+  /// **'Send code'**
+  String get sendCode;
+
+  /// No description provided for @otpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the code we sent'**
+  String get otpTitle;
+
+  /// The API answers the same for numbers without a login, so this cannot say for sure that a code was sent.
+  ///
+  /// In en, this message translates to:
+  /// **'If {phone} has a Good People login, a 6-digit code is on its way by SMS. It works for {minutes, plural, one{{minutes} minute} other{{minutes} minutes}}.'**
+  String otpSentBody(String phone, num minutes);
+
+  /// No description provided for @codeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'6-digit code'**
+  String get codeLabel;
+
+  /// No description provided for @codeRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the 6-digit code'**
+  String get codeRequired;
+
+  /// No description provided for @codeWrongOrExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'That code is wrong or has expired. Check it, or ask for a new one.'**
+  String get codeWrongOrExpired;
+
+  /// No description provided for @sendCodeAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Send again'**
+  String get sendCodeAgain;
+
+  /// No description provided for @sendCodeAgainHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Didn\'t get it? You can ask for a new code after {seconds} seconds.'**
+  String sendCodeAgainHint(String seconds);
+
+  /// No description provided for @codeSentAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'A new code is on its way.'**
+  String get codeSentAgain;
+
+  /// No description provided for @useDifferentNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a different number'**
+  String get useDifferentNumber;
+
+  /// No description provided for @twoStepTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Two-step sign-in'**
+  String get twoStepTitle;
+
+  /// No description provided for @twoStepBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the 6-digit code from your authenticator app.'**
+  String get twoStepBody;
+
+  /// Keep the example code as it is.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter one of your recovery codes, like k7qm-2xpd. Each one works once.'**
+  String get twoStepRecoveryBody;
+
+  /// No description provided for @recoveryCodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery code'**
+  String get recoveryCodeLabel;
+
+  /// No description provided for @recoveryCodeInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a recovery code like k7qm-2xpd'**
+  String get recoveryCodeInvalid;
+
+  /// No description provided for @useRecoveryCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a recovery code instead'**
+  String get useRecoveryCode;
+
+  /// No description provided for @useAuthenticatorCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a code from the app instead'**
+  String get useAuthenticatorCode;
+
+  /// No description provided for @twoStepWrongCode.
+  ///
+  /// In en, this message translates to:
+  /// **'That code is wrong or has expired. Try again, or go back and sign in again.'**
+  String get twoStepWrongCode;
+
+  /// No description provided for @verify.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify'**
+  String get verify;
+
+  /// No description provided for @twoStepSetupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up two-step sign-in first'**
+  String get twoStepSetupTitle;
+
+  /// No description provided for @twoStepSetupBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your role must use two-step sign-in. Set it up in the Good People web app, then sign in here.'**
+  String get twoStepSetupBody;
+
+  /// No description provided for @back.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get back;
+
+  /// No description provided for @loginWrongCredentials.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong workspace, email or password'**
+  String get loginWrongCredentials;
+
+  /// No description provided for @errorTooManyAttempts.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many attempts. Please wait a few minutes and try again.'**
+  String get errorTooManyAttempts;
+
+  /// No description provided for @errorTooManyAttemptsWait.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes, plural, one{Too many attempts. Try again in {minutes} minute.} other{Too many attempts. Try again in {minutes} minutes.}}'**
+  String errorTooManyAttemptsWait(num minutes);
+
+  /// No description provided for @errorLoginDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'This login is no longer active. Ask your HR team.'**
+  String get errorLoginDisabled;
+
+  /// No description provided for @errorWrongPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Your current password is not right.'**
+  String get errorWrongPassword;
+
+  /// No description provided for @errorTenantSuspended.
+  ///
+  /// In en, this message translates to:
+  /// **'This workspace is suspended. Contact your administrator.'**
+  String get errorTenantSuspended;
+
+  /// No description provided for @errorTenantReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'This workspace is read-only for now, so changes can\'t be saved.'**
+  String get errorTenantReadOnly;
+
+  /// No description provided for @errorRoleNotAllowed.
+  ///
+  /// In en, this message translates to:
+  /// **'Your role can\'t do this.'**
+  String get errorRoleNotAllowed;
+
+  /// No description provided for @errorFeatureNotInPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Your workspace\'s plan doesn\'t include this.'**
+  String get errorFeatureNotInPlan;
+
+  /// No description provided for @punchErrorOfflineTooOld.
+  ///
+  /// In en, this message translates to:
+  /// **'This punch was saved more than 72 hours ago, so it can\'t be added now. Ask for a correction instead.'**
+  String get punchErrorOfflineTooOld;
+
+  /// No description provided for @punchSavedOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'No connection. Your punch at {time} is saved on this phone and will be sent when you\'re back online.'**
+  String punchSavedOffline(String time);
+
+  /// No description provided for @punchesWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} punch waiting to be sent} other{{count} punches waiting to be sent}}'**
+  String punchesWaiting(num count);
+
+  /// No description provided for @punchesWaitingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Taken without a connection at {times}. The app sends them as soon as it can reach the server.'**
+  String punchesWaitingBody(String times);
+
+  /// No description provided for @punchesSendNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Send now'**
+  String get punchesSendNow;
+
+  /// No description provided for @punchesSent.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} saved punch sent} other{{count} saved punches sent}}'**
+  String punchesSent(num count);
+
+  /// No description provided for @punchRefusedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your punch at {time} on {date} was not recorded'**
+  String punchRefusedTitle(String time, String date);
+
+  /// No description provided for @punchRefusedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'To fix the day, ask for a correction.'**
+  String get punchRefusedHint;
+
+  /// Hides a message the user has read.
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss'**
+  String get dismiss;
+
+  /// No description provided for @homePunchRefused.
+  ///
+  /// In en, this message translates to:
+  /// **'A punch saved without a connection was not recorded. Open Attendance to see why.'**
+  String get homePunchRefused;
+
+  /// No description provided for @notificationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notificationsTitle;
+
+  /// No description provided for @notificationsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No notifications yet.'**
+  String get notificationsEmpty;
+
+  /// No description provided for @notificationsLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load your notifications.'**
+  String get notificationsLoadFailed;
+
+  /// No description provided for @notificationsMarkAllRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all as read'**
+  String get notificationsMarkAllRead;
+
+  /// Tooltip of the bell on the home screen.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Notifications} one{Notifications, {count} unread} other{Notifications, {count} unread}}'**
+  String notificationsUnread(num count);
+
+  /// No description provided for @notificationUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'Unread'**
+  String get notificationUnread;
+
+  /// Action on a notification shown while the app is open.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get pushOpen;
+
+  /// No description provided for @teamTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Team'**
+  String get teamTitle;
+
+  /// No description provided for @teamSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Who is in today, and who is on leave'**
+  String get teamSubtitle;
+
+  /// No description provided for @teamLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load your team.'**
+  String get teamLoadFailed;
+
+  /// No description provided for @teamEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nobody to show here.'**
+  String get teamEmpty;
+
+  /// Filter chip: everyone in the team.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get teamAll;
+
+  /// No description provided for @teamOnLeave.
+  ///
+  /// In en, this message translates to:
+  /// **'On leave this week'**
+  String get teamOnLeave;
+
+  /// No description provided for @teamNoLeave.
+  ///
+  /// In en, this message translates to:
+  /// **'Nobody is on leave this week.'**
+  String get teamNoLeave;
+
+  /// No description provided for @teamLeaveLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load who is on leave.'**
+  String get teamLeaveLoadFailed;
+
+  /// No description provided for @teamNoEmployeeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Team views need an employee record linked to your login.'**
+  String get teamNoEmployeeBody;
+
+  /// No description provided for @accountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get accountTitle;
+
+  /// No description provided for @accountSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in, password and two-step sign-in'**
+  String get accountSubtitle;
+
+  /// No description provided for @accountLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load your account.'**
+  String get accountLoadFailed;
+
+  /// No description provided for @accountName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get accountName;
+
+  /// The login's access role, such as HR admin or Employee.
+  ///
+  /// In en, this message translates to:
+  /// **'Role'**
+  String get accountRole;
+
+  /// No description provided for @accountNotSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get accountNotSet;
+
+  /// A workspace access role from the API.
+  ///
+  /// In en, this message translates to:
+  /// **'{role, select, tenant_admin{Workspace admin} hr_admin{HR admin} hr_officer{HR officer} attendance_officer{Attendance officer} auditor{Auditor} employee{Employee} other{Unknown}}'**
+  String roleName(String role);
+
+  /// No description provided for @accountTwoStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Two-step sign-in'**
+  String get accountTwoStep;
+
+  /// No description provided for @accountTwoStepOn.
+  ///
+  /// In en, this message translates to:
+  /// **'On'**
+  String get accountTwoStepOn;
+
+  /// No description provided for @accountTwoStepOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get accountTwoStepOff;
+
+  /// No description provided for @accountTwoStepRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Required for your role.'**
+  String get accountTwoStepRequired;
+
+  /// No description provided for @accountTwoStepHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn it on or off in the Good People web app.'**
+  String get accountTwoStepHint;
+
+  /// No description provided for @accountNoPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'You sign in with a code sent to your mobile, so there is no password to change.'**
+  String get accountNoPassword;
+
+  /// No description provided for @changePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Change password'**
+  String get changePassword;
+
+  /// No description provided for @currentPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Current password'**
+  String get currentPassword;
+
+  /// No description provided for @currentPasswordRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your current password'**
+  String get currentPasswordRequired;
+
+  /// No description provided for @newPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'New password'**
+  String get newPassword;
+
+  /// No description provided for @newPasswordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'At least 10 characters'**
+  String get newPasswordHint;
+
+  /// No description provided for @confirmNewPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'New password again'**
+  String get confirmNewPassword;
+
+  /// No description provided for @newPasswordTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Use at least 10 characters'**
+  String get newPasswordTooShort;
+
+  /// No description provided for @newPasswordSame.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a password you have not been using'**
+  String get newPasswordSame;
+
+  /// No description provided for @newPasswordMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'The two new passwords are not the same'**
+  String get newPasswordMismatch;
+
+  /// No description provided for @passwordChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Password changed. You stay signed in here; other phones and browsers were signed out.'**
+  String get passwordChanged;
 }
 
 class _AppLocalizationsDelegate

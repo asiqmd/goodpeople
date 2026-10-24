@@ -1,0 +1,228 @@
+# Production stack for one server: Caddy (TLS) in front of the web app and the API,
+# PostgreSQL 17, and optionally MinIO for documents. Read docs/ops/runbook.md first.
+#
+# Settings: copy infra/.env.prod.example to infra/.env (git ignores it) and fill it in. Compose
+# reads that file for every ${...} below; each container gets only the variables listed for it.
+#
+#   docker compose -f infra/docker-compose.prod.yml build
+#   docker compose -f infra/docker-compose.prod.yml run --rm setup     # first deployment only
+#   docker compose -f infra/docker-compose.prod.yml run --rm migrate
+#   docker compose -f infra/docker-compose.prod.yml up -d
+#
+# Profiles, chosen with COMPOSE_PROFILES in infra/.env:
+#   db      PostgreSQL in this stack. Leave it out when the database is managed elsewhere.
+#   minio   MinIO as the document bucket (STORAGE_DRIVER=s3).
+#   setup   the one-off `setup` service; `run --rm setup` enables it by itself.
+
+name: good-people
+
+x-api-image: &api-image ${GP_API_IMAGE:-good-people-api}:${GP_VERSION:-latest}
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: '5'
+
+# The Node containers (setup, migrate, api, web) drop every Linux capability and cannot gain
+# privileges. They need none: they listen on ports above 1024, and Chromium runs without its
+# sandbox (see "Chrome for PDFs" in the runbook).
+
+services:
+  postgres:
+    image: postgres:17
+    profiles: [db]
+    restart: unless-stopped
+    environment:
+      # The superuser. Only `setup`, restores and the backup-role creation use it; the
+      # postgres image refuses to initialise without it.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # Localhost only, for infra/scripts/backup.sh on this server. Never publish it further.
+    ports:
+      - 127.0.0.1:5432:5432
+    shm_size: 256mb
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    logging: *logging
+
+  # Creates the gp_owner and gp_app roles and the database. First deployment and new servers
+  # only; it is the one service that gets the superuser URL.
+  setup:
+    image: *api-image
+    profiles: [setup]
+    command: ['node', 'node_modules/@gp/db/dist/scripts/setup.js']
+    environment:
+      DATABASE_ADMIN_URL: ${DATABASE_ADMIN_URL:-}
+      DATABASE_OWNER_URL: ${DATABASE_OWNER_URL:-}
+      DATABASE_URL: ${DATABASE_URL:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+        required: false
+    healthcheck:
+      disable: true
+    security_opt: ['no-new-privileges:true']
+    cap_drop: [ALL]
+    logging: *logging
+
+  # Applies pending migrations as the owner role, then exits. `up` runs it before it starts the
+  # API; before switching versions, run it by hand to see the result (see the runbook).
+  migrate:
+    image: *api-image
+    command: ['node', 'node_modules/@gp/db/dist/scripts/migrate.js']
+    environment:
+      DATABASE_OWNER_URL: ${DATABASE_OWNER_URL:?DATABASE_OWNER_URL is not set in infra/.env}
+    depends_on:
+      postgres:
+        condition: service_healthy
+        required: false
+    healthcheck:
+      disable: true
+    security_opt: ['no-new-privileges:true']
+    cap_drop: [ALL]
+    logging: *logging
+
+  api:
+    image: *api-image
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+        required: false
+      minio-init:
+        condition: service_completed_successfully
+        required: false
+    environment:
+      - PORT=4000
+      - WEB_ORIGIN=https://${GP_DOMAIN:?GP_DOMAIN is not set in infra/.env}
+      # Caddy is the one proxy in front, so rate limits see the visitor's address.
+      - TRUST_PROXY=1
+      - DATABASE_URL=${DATABASE_URL:?DATABASE_URL is not set in infra/.env}
+      - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET:?JWT_ACCESS_SECRET is not set in infra/.env}
+      - FIELD_ENCRYPTION_KEY=${FIELD_ENCRYPTION_KEY:?FIELD_ENCRYPTION_KEY is not set in infra/.env}
+      - ACCESS_TOKEN_TTL_SECONDS=${ACCESS_TOKEN_TTL_SECONDS:-900}
+      - REFRESH_TOKEN_TTL_DAYS=${REFRESH_TOKEN_TTL_DAYS:-30}
+      - REQUIRE_ADMIN_MFA=${REQUIRE_ADMIN_MFA:-on}
+      # Attendance processing and completing separations run inside the API on timers.
+      # Exactly one API process may have them on: if you run more API containers, set
+      # BACKGROUND_JOBS=off on all but one (see "Background jobs" in the runbook).
+      - BACKGROUND_JOBS=on
+      - ATTENDANCE_JOB_INTERVAL_MINUTES=${ATTENDANCE_JOB_INTERVAL_MINUTES:-15}
+      - STORAGE_DRIVER=${STORAGE_DRIVER:-local}
+      # Optional settings are passed only when infra/.env sets them, so the API's own
+      # defaults apply otherwise (an empty S3_ENDPOINT would fail its URL check).
+      - S3_BUCKET
+      - S3_REGION
+      - S3_ENDPOINT
+      - S3_ACCESS_KEY_ID
+      - S3_SECRET_ACCESS_KEY
+      - S3_FORCE_PATH_STYLE
+      - EMAIL_DRIVER
+      - SMTP_URL
+      - EMAIL_FROM
+      - SMS_DRIVER
+      - SSLWIRELESS_URL
+      - SSLWIRELESS_API_TOKEN
+      - SSLWIRELESS_SID
+      - PUSH_DRIVER
+      - FCM_PROJECT_ID
+      - FCM_CLIENT_EMAIL
+      - FCM_PRIVATE_KEY
+    volumes:
+      # The local document store (STORAGE_DRIVER=local). The directory must exist and belong
+      # to uid 1000, the image's `node` user.
+      - ${GP_DOCUMENTS_DIR:-/srv/good-people/documents}:/data/documents
+    security_opt: ['no-new-privileges:true']
+    cap_drop: [ALL]
+    logging: *logging
+
+  web:
+    image: ${GP_WEB_IMAGE:-good-people-web}:${GP_VERSION:-latest}
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    init: true
+    environment:
+      # Server-to-server over the internal network; the browser never calls the API.
+      API_URL: http://api:4000
+    depends_on: [api]
+    security_opt: ['no-new-privileges:true']
+    cap_drop: [ALL]
+    logging: *logging
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - 80:80
+      - 443:443
+      - 443:443/udp
+    environment:
+      GP_DOMAIN: ${GP_DOMAIN:?GP_DOMAIN is not set in infra/.env}
+      GP_API_DOMAIN: ${GP_API_DOMAIN:?GP_API_DOMAIN is not set in infra/.env}
+      ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL is not set in infra/.env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Certificates and ACME account keys: keep this volume, or Caddy re-issues on start.
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [web, api]
+    logging: *logging
+
+  # Optional document bucket. Its root credentials are the API's S3 keys, and the bucket is
+  # created by minio-init. Not published beyond localhost.
+  minio:
+    image: ${MINIO_IMAGE:-minio/minio:latest}
+    profiles: [minio]
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY_ID:-}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_ACCESS_KEY:-}
+    # Refuse to start with MinIO's default credentials.
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - >-
+        test -n "$$MINIO_ROOT_USER" && test -n "$$MINIO_ROOT_PASSWORD" ||
+        { echo 'Set S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY in infra/.env' >&2; exit 1; };
+        exec minio server /data --console-address :9001
+    volumes:
+      - miniodata:/data
+    ports:
+      - 127.0.0.1:9000:9000
+      - 127.0.0.1:9001:9001
+    logging: *logging
+
+  minio-init:
+    image: ${MINIO_MC_IMAGE:-minio/mc:latest}
+    profiles: [minio]
+    depends_on: [minio]
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY_ID:-}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_ACCESS_KEY:-}
+      S3_BUCKET: ${S3_BUCKET:-}
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - >-
+        test -n "$$S3_BUCKET" || { echo 'Set S3_BUCKET in infra/.env' >&2; exit 1; };
+        tries=0;
+        until mc alias set gp http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD";
+        do tries=$$((tries + 1)); [ "$$tries" -lt 30 ] || exit 1; sleep 2; done;
+        mc mb --ignore-existing "gp/$$S3_BUCKET"
+    logging: *logging
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
+  miniodata:

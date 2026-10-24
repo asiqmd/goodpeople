@@ -249,6 +249,10 @@ export const attendancePunches = pgTable(
     insideGeofence: boolean('inside_geofence'),
     regularizationId: uuid('regularization_id'),
     selfieDocumentId: uuid('selfie_document_id'),
+    /** Recorded by the app without a connection and received later (punchedAt is the phone's). */
+    offline: boolean('offline').notNull().default(false),
+    /** The app's own id for the punch, so a resend from its offline queue is not counted twice. */
+    clientId: uuid('client_id'),
     note: text('note'),
     createdBy: uuid('created_by'),
     createdAt: createdAt(),
@@ -259,6 +263,9 @@ export const attendancePunches = pgTable(
   (t) => [
     // Agents resend after network failures; the same device, user and second is one punch.
     unique('attendance_punches_device_uq').on(t.tenantId, t.deviceId, t.deviceUserId, t.punchedAt),
+    uniqueIndex('attendance_punches_client_uq')
+      .on(t.tenantId, t.clientId)
+      .where(sql`${t.clientId} is not null`),
     index('attendance_punches_employee_idx').on(t.tenantId, t.employeeId, t.punchedAt),
     index('attendance_punches_unmatched_idx')
       .on(t.tenantId, t.deviceUserId)

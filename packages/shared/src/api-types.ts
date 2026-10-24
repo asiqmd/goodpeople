@@ -20,7 +20,8 @@ export interface TokenPair {
 }
 
 export interface TenantSession extends TokenPair {
-  user: { id: string; name: string; email: string; role: TenantRole };
+  /** A worker who signs in by phone may have no email. */
+  user: { id: string; name: string; email: string | null; role: TenantRole };
   tenant: { id: string; name: string; slug: string };
 }
 

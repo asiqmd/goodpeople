@@ -22,15 +22,20 @@ enum LeaveTab { balances, apply, requests, approvals, holidays }
 /// included. Tabs keep their state (a half-filled form survives a
 /// look at the balances), and each loads the first time it is opened.
 class LeaveScreen extends ConsumerStatefulWidget {
-  const LeaveScreen({super.key});
+  const LeaveScreen({super.key, this.initialTab = LeaveTab.balances});
+
+  /// The tab shown first, for example when a notification opens the screen.
+  final LeaveTab initialTab;
 
   static ValueKey<String> tabKey(LeaveTab tab) =>
       ValueKey('leave-tab-${tab.name}');
 
   static const approvalsBadgeKey = ValueKey('leave-approvals-badge');
 
-  static Route<void> route() =>
-      MaterialPageRoute(builder: (context) => const LeaveScreen());
+  static Route<void> route({LeaveTab initialTab = LeaveTab.balances}) =>
+      MaterialPageRoute(
+        builder: (context) => LeaveScreen(initialTab: initialTab),
+      );
 
   @override
   ConsumerState<LeaveScreen> createState() => _LeaveScreenState();
@@ -40,10 +45,10 @@ class _LeaveScreenState extends ConsumerState<LeaveScreen>
     with TickerProviderStateMixin {
   List<LeaveTab> _tabs = const [];
   TabController? _controller;
-  LeaveTab _selected = LeaveTab.balances;
+  late LeaveTab _selected = widget.initialTab;
 
   /// Tabs opened so far. The others are not built, so they load nothing.
-  final _opened = <LeaveTab>{LeaveTab.balances};
+  late final _opened = <LeaveTab>{widget.initialTab};
 
   @override
   void dispose() {

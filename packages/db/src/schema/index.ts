@@ -5,4 +5,5 @@ export * from './hr.js';
 export * from './leave.js';
 export * from './attendance.js';
 export * from './lifecycle.js';
+export * from './notifications.js';
 export * from './rls.js';

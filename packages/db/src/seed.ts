@@ -90,11 +90,8 @@ export interface SeedOptions {
   now?: Date;
 }
 
-/** Idempotent: plans are upserted, users and tenants are only created when missing. */
-export async function seed(db: Database, opts: SeedOptions) {
-  const now = opts.now ?? new Date();
-  const passwordHash = await hashPassword(opts.password);
-
+/** The plan catalogue, which Assign company needs. Idempotent: plans are upserted. */
+export async function upsertPlanCatalog(db: Database): Promise<void> {
   for (const plan of PLAN_CATALOG) {
     await db
       .insert(plans)
@@ -104,6 +101,14 @@ export async function seed(db: Database, opts: SeedOptions) {
         set: { name: plan.name, features: plan.features, limits: plan.limits },
       });
   }
+}
+
+/** Idempotent: plans are upserted, users and tenants are only created when missing. */
+export async function seed(db: Database, opts: SeedOptions) {
+  const now = opts.now ?? new Date();
+  const passwordHash = await hashPassword(opts.password);
+
+  await upsertPlanCatalog(db);
   const planIds = new Map((await db.select().from(plans)).map((p) => [p.code, p.id]));
 
   await db

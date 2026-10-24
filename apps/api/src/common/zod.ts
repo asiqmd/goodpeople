@@ -13,6 +13,7 @@ export function zod<T extends z.ZodType>(schema: T): PipeTransform<unknown, z.in
         statusCode: 400,
         error: 'Bad Request',
         message: 'Validation failed',
+        code: 'validation_failed',
         issues: result.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message })),
       };
       throw new BadRequestException(body);

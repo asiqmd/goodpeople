@@ -8,15 +8,8 @@ import type {
 } from '@gp/shared';
 import { revalidatePath } from 'next/cache';
 import { authedFetch } from '@/lib/api';
-import { nest, toNumber } from '@/lib/form';
+import { fail, nest, toNumber } from '@/lib/form';
 import type { ActionState } from './platform';
-
-const fail = (result: {
-  error: { message: string; issues?: { path: string; message: string }[] };
-}) => ({
-  error: result.error.message,
-  issues: result.error.issues,
-});
 
 /** Live day count and problems for the apply form. Never writes. */
 export async function previewLeave(

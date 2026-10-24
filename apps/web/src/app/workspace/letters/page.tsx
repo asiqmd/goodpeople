@@ -1,13 +1,12 @@
-import { MERGE_FIELDS, type LetterTemplateView } from '@gp/shared';
+import { can, MERGE_FIELDS, type LetterTemplateView } from '@gp/shared';
 import { getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import { LetterTemplateForm } from '@/components/lifecycle/lifecycle-forms';
 import { Badge, Card } from '@/components/ui';
 import { currentTenantUser, load } from '@/lib/api';
-import { isHrRole } from '@/lib/roles';
 
 export default async function LetterTemplatesPage() {
-  if (!isHrRole((await currentTenantUser())?.role)) redirect('/workspace');
+  if (!can((await currentTenantUser())?.role, 'documents.manage')) redirect('/workspace');
   const t = await getTranslations('lifecycle.letters');
   const templates = await load<LetterTemplateView[]>('tenant', '/tenant/letter-templates');
   return (

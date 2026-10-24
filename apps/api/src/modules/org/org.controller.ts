@@ -33,7 +33,7 @@ import {
 } from '@gp/shared';
 import type { z } from 'zod';
 import { CurrentTenant, CurrentUser, type AuthUser } from '../../common/auth-user.js';
-import { HrOnly, TenantRolesGuard } from '../../common/roles.js';
+import { Permits, TenantRolesGuard } from '../../common/roles.js';
 import { openApiBody, zod } from '../../common/zod.js';
 import { AccessStateGuard, FeatureGuard, RequireFeature } from '../entitlements/guards.js';
 import { OrgService } from './org.service.js';
@@ -51,7 +51,7 @@ export class OrgController {
 
   /** Every org list in one call, for the org screens and employee forms. */
   @Get('org')
-  @HrOnly()
+  @Permits('employees.read')
   snapshot(): Promise<OrgSnapshot> {
     return this.org.snapshot();
   }
@@ -67,7 +67,7 @@ export class OrgController {
   }
 
   @Post('legal-entities')
-  @HrOnly()
+  @Permits('org.manage')
   @ApiBody(openApiBody(legalEntityInputSchema))
   createLegalEntity(
     @CurrentUser() actor: AuthUser,
@@ -78,7 +78,7 @@ export class OrgController {
   }
 
   @Patch('legal-entities/:id')
-  @HrOnly()
+  @Permits('org.manage')
   @ApiBody(openApiBody(legalEntityUpdateSchema))
   updateLegalEntity(
     @CurrentUser() actor: AuthUser,
@@ -89,7 +89,7 @@ export class OrgController {
   }
 
   @Post('locations')
-  @HrOnly()
+  @Permits('org.manage')
   @ApiBody(openApiBody(locationInputSchema))
   createLocation(
     @CurrentUser() actor: AuthUser,
@@ -99,7 +99,7 @@ export class OrgController {
   }
 
   @Patch('locations/:id')
-  @HrOnly()
+  @Permits('org.manage')
   @ApiBody(openApiBody(locationUpdateSchema))
   updateLocation(
     @CurrentUser() actor: AuthUser,
@@ -110,7 +110,7 @@ export class OrgController {
   }
 
   @Post('org-units')
-  @HrOnly()
+  @Permits('org.manage')
   @ApiBody(openApiBody(orgUnitInputSchema))
   createOrgUnit(
     @CurrentUser() actor: AuthUser,
@@ -120,7 +120,7 @@ export class OrgController {
   }
 
   @Patch('org-units/:id')
-  @HrOnly()
+  @Permits('org.manage')
   @ApiBody(openApiBody(orgUnitUpdateSchema))
   updateOrgUnit(
     @CurrentUser() actor: AuthUser,
@@ -131,7 +131,7 @@ export class OrgController {
   }
 
   @Post('designations')
-  @HrOnly()
+  @Permits('org.manage')
   @ApiBody(openApiBody(designationInputSchema))
   createDesignation(
     @CurrentUser() actor: AuthUser,
@@ -141,7 +141,7 @@ export class OrgController {
   }
 
   @Patch('designations/:id')
-  @HrOnly()
+  @Permits('org.manage')
   @ApiBody(openApiBody(designationUpdateSchema))
   updateDesignation(
     @CurrentUser() actor: AuthUser,
@@ -152,7 +152,7 @@ export class OrgController {
   }
 
   @Post('grades')
-  @HrOnly()
+  @Permits('org.manage')
   @ApiBody(openApiBody(gradeInputSchema))
   createGrade(
     @CurrentUser() actor: AuthUser,
@@ -162,7 +162,7 @@ export class OrgController {
   }
 
   @Patch('grades/:id')
-  @HrOnly()
+  @Permits('org.manage')
   @ApiBody(openApiBody(gradeUpdateSchema))
   updateGrade(
     @CurrentUser() actor: AuthUser,
@@ -173,7 +173,7 @@ export class OrgController {
   }
 
   @Post('cost-centres')
-  @HrOnly()
+  @Permits('org.manage')
   @ApiBody(openApiBody(costCentreInputSchema))
   createCostCentre(
     @CurrentUser() actor: AuthUser,
@@ -183,7 +183,7 @@ export class OrgController {
   }
 
   @Patch('cost-centres/:id')
-  @HrOnly()
+  @Permits('org.manage')
   @ApiBody(openApiBody(costCentreUpdateSchema))
   updateCostCentre(
     @CurrentUser() actor: AuthUser,

@@ -24,15 +24,20 @@ enum AttendanceTab { today, month, corrections, approvals }
 /// badge. Tabs keep their state, and each loads the first time it is
 /// opened.
 class AttendanceScreen extends ConsumerStatefulWidget {
-  const AttendanceScreen({super.key});
+  const AttendanceScreen({super.key, this.initialTab = AttendanceTab.today});
+
+  /// The tab shown first, for example when a notification opens the screen.
+  final AttendanceTab initialTab;
 
   static ValueKey<String> tabKey(AttendanceTab tab) =>
       ValueKey('attendance-tab-${tab.name}');
 
   static const approvalsBadgeKey = ValueKey('attendance-approvals-badge');
 
-  static Route<void> route() =>
-      MaterialPageRoute(builder: (context) => const AttendanceScreen());
+  static Route<void> route({AttendanceTab initialTab = AttendanceTab.today}) =>
+      MaterialPageRoute(
+        builder: (context) => AttendanceScreen(initialTab: initialTab),
+      );
 
   @override
   ConsumerState<AttendanceScreen> createState() => _AttendanceScreenState();
@@ -42,10 +47,10 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen>
     with TickerProviderStateMixin {
   List<AttendanceTab> _tabs = const [];
   TabController? _controller;
-  AttendanceTab _selected = AttendanceTab.today;
+  late AttendanceTab _selected = widget.initialTab;
 
   /// Tabs opened so far. The others are not built, so they load nothing.
-  final _opened = <AttendanceTab>{AttendanceTab.today};
+  late final _opened = <AttendanceTab>{widget.initialTab};
 
   @override
   void dispose() {
@@ -92,15 +97,17 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen>
     if (index >= 0) _controller?.animateTo(index);
   }
 
-  /// Opens the correction form, for [day] when it comes from the month. A
-  /// sent correction shows under Corrections.
-  Future<void> _requestCorrection({AttendanceDay? day}) async {
+  /// Opens the correction form, for [day] when it comes from the month, or
+  /// for [date] (a punch the API refused). A sent correction shows under
+  /// Corrections.
+  Future<void> _requestCorrection({AttendanceDay? day, DateTime? date}) async {
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final shift =
         day?.shift ?? ref.read(attendanceTodayProvider).value?.day.shift;
-    final created = await Navigator.of(context)
-        .push(CorrectionFormScreen.route(date: day?.date, shift: shift));
+    final created = await Navigator.of(
+      context,
+    ).push(CorrectionFormScreen.route(date: day?.date ?? date, shift: shift));
     if (created == null || !mounted) return;
     messenger.showSnackBar(SnackBar(content: Text(l10n.correctionSent)));
     _show(AttendanceTab.corrections);
@@ -166,7 +173,9 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen>
   }
 
   Widget _body(AttendanceTab tab) => switch (tab) {
-    AttendanceTab.today => const TodayTab(),
+    AttendanceTab.today => TodayTab(
+      onCorrect: (date) => _requestCorrection(date: date),
+    ),
     AttendanceTab.month => MonthTab(
       onCorrect: (day) => _requestCorrection(day: day),
     ),

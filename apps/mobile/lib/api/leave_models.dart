@@ -630,3 +630,79 @@ class HolidayYear {
   final num festivalDaysRequired;
   final StatutoryRule? festivalRule;
 }
+
+/// The leave type inside a calendar entry, without its id.
+class CalendarLeaveType {
+  const CalendarLeaveType({
+    required this.code,
+    required this.name,
+    this.nameBn,
+  });
+
+  factory CalendarLeaveType.fromJson(Json json) => CalendarLeaveType(
+    code: _read<String>(json, 'code'),
+    name: _read<String>(json, 'name'),
+    nameBn: _read<String?>(json, 'nameBn'),
+  );
+
+  final String code;
+  final String name;
+  final String? nameBn;
+}
+
+/// Someone's pending or approved leave, on the team calendar.
+class LeaveCalendarEntry {
+  const LeaveCalendarEntry({
+    required this.requestId,
+    required this.employee,
+    required this.leaveType,
+    required this.startDate,
+    required this.endDate,
+    required this.status,
+  });
+
+  factory LeaveCalendarEntry.fromJson(Json json) => LeaveCalendarEntry(
+    requestId: _read<String>(json, 'requestId'),
+    employee: EmployeeRef.fromJson(_read<Json>(json, 'employee')),
+    leaveType: CalendarLeaveType.fromJson(_read<Json>(json, 'leaveType')),
+    startDate: _readDate(json, 'startDate'),
+    endDate: _readDate(json, 'endDate'),
+    status: LeaveRequestStatus.fromWire(_read<String>(json, 'status')),
+  );
+
+  final String requestId;
+  final EmployeeRef employee;
+  final CalendarLeaveType leaveType;
+  final DateTime startDate;
+  final DateTime endDate;
+
+  /// Pending or approved; the calendar leaves out the rest.
+  final LeaveRequestStatus status;
+
+  /// Whether the leave covers [date] (a UTC-midnight calendar date).
+  bool covers(DateTime date) =>
+      !date.isBefore(startDate) && !date.isAfter(endDate);
+}
+
+/// `GET /tenant/leave/calendar?from=&to=` 200 response (the API's
+/// `LeaveCalendarView`), at most 62 days, scoped like the team day.
+class LeaveCalendar {
+  const LeaveCalendar({
+    required this.from,
+    required this.to,
+    required this.holidays,
+    required this.entries,
+  });
+
+  factory LeaveCalendar.fromJson(Json json) => LeaveCalendar(
+    from: _readDate(json, 'from'),
+    to: _readDate(json, 'to'),
+    holidays: _readList(json, 'holidays', Holiday.fromJson),
+    entries: _readList(json, 'entries', LeaveCalendarEntry.fromJson),
+  );
+
+  final DateTime from;
+  final DateTime to;
+  final List<Holiday> holidays;
+  final List<LeaveCalendarEntry> entries;
+}

@@ -13,15 +13,92 @@ import 'api_models.dart';
 /// `tool/gen_api.sh` in Phase 0. Every method throws [ApiException] on
 /// failure. Tests replace this with a fake through [goodPeopleApiProvider].
 abstract interface class GoodPeopleApi {
-  /// `POST /auth/login`. [tenant] is the workspace slug.
-  Future<LoginResponse> login({
+  /// `POST /auth/login`. [tenant] is the workspace slug. A login with
+  /// two-step sign-in answers a [TwoStepChallenge] instead of a session.
+  /// Too many wrong passwords get a 429 with code `too_many_attempts`.
+  Future<LoginOutcome> login({
     required String tenant,
     required String email,
     required String password,
   });
 
+  /// `POST /auth/mfa/verify`: the second step, with a 6-digit code from an
+  /// authenticator app or a recovery code such as `k7qm-2xpd`. A wrong or
+  /// expired code gets a 401.
+  Future<LoginResponse> verifyMfa({
+    required String mfaToken,
+    required String code,
+  });
+
+  /// `POST /auth/otp/request`: texts a sign-in code to an employee's
+  /// mobile [phone], for example `01712345678`. The API answers the same
+  /// for a number with no login, and sends nothing then.
+  Future<OtpRequestResult> requestOtp({
+    required String tenant,
+    required String phone,
+  });
+
+  /// `POST /auth/otp/verify`. A wrong or expired code gets a 401
+  /// ("Wrong or expired code"); a code works once.
+  Future<LoginResponse> verifyOtp({
+    required String tenant,
+    required String phone,
+    required String code,
+  });
+
   /// `POST /auth/refresh`. The returned refresh token replaces the old one.
   Future<AuthTokens> refresh(String refreshToken);
+
+  /// `POST /auth/logout`: ends the session on the server.
+  Future<void> logout(String refreshToken);
+
+  // ── Account ───────────────────────────────────────────────────────────────
+
+  /// `GET /account`: the signed-in login.
+  Future<AccountView> fetchAccount(String accessToken);
+
+  /// `POST /account/password` (204). Every other session of the login ends;
+  /// the one holding [keepRefreshToken] stays signed in. A wrong current
+  /// password gets a 400.
+  Future<void> changePassword(
+    String accessToken, {
+    required String currentPassword,
+    required String newPassword,
+    String? keepRefreshToken,
+  });
+
+  /// `PATCH /account/preferences`: the language notifications are written
+  /// in.
+  Future<AccountView> updatePreferences(
+    String accessToken, {
+    required UserLanguage language,
+  });
+
+  /// `POST /account/devices` (204): this phone's push token, so the login's
+  /// notifications reach it.
+  Future<void> registerDevice(
+    String accessToken, {
+    required DevicePlatform platform,
+    required String token,
+  });
+
+  /// `POST /account/devices/remove` (204), on sign-out.
+  Future<void> removeDevice(String accessToken, String token);
+
+  // ── Notifications ─────────────────────────────────────────────────────────
+
+  /// `GET /tenant/notifications`, only unread ones with [unreadOnly].
+  Future<NotificationInbox> fetchNotifications(
+    String accessToken, {
+    bool unreadOnly = false,
+  });
+
+  /// `POST /tenant/notifications/{id}/read` (204). Someone else's
+  /// notification gets a 404.
+  Future<void> markNotificationRead(String accessToken, String id);
+
+  /// `POST /tenant/notifications/read-all` (204).
+  Future<void> markAllNotificationsRead(String accessToken);
 
   /// `GET /tenant/access` with `Authorization: Bearer <accessToken>`.
   Future<TenantAccessView> getTenantAccess(String accessToken);
@@ -108,10 +185,18 @@ abstract interface class GoodPeopleApi {
   /// With a [selfie] the punch goes as a multipart form, the photo in the
   /// `selfie` field; without one, as JSON. A photo over 2 MB gets a 413, one
   /// that is not an image a 415 with code `unsupported_file`.
+  ///
+  /// [clientId] (a UUID v4) lets the API recognise a resend: one it has
+  /// already recorded answers 201 again without counting twice. A punch
+  /// from the offline queue also sends [punchedAt]; the API refuses one
+  /// older than 72 hours with 400 `offline_punch_too_old`, and one in the
+  /// future with `future_punch`.
   Future<MyAttendanceToday> punch(
     String accessToken, {
     PunchLocation? location,
     PunchSelfie? selfie,
+    String? clientId,
+    DateTime? punchedAt,
   });
 
   /// `GET /tenant/me/attendance?from=&to=`: the employee's days, at most 62
@@ -140,6 +225,22 @@ abstract interface class GoodPeopleApi {
     String accessToken,
     String regularizationId,
   );
+
+  // ── Teams ─────────────────────────────────────────────────────────────────
+  // Scoped by the API: HR sees everyone, anyone else themselves, their
+  // reports and their unit. A login with no employee record and no HR role
+  // gets a 404.
+
+  /// `GET /tenant/attendance/daily?date=`: everyone's day.
+  Future<TeamDay> fetchTeamDay(String accessToken, {required DateTime date});
+
+  /// `GET /tenant/leave/calendar?from=&to=`: pending and approved leave, at
+  /// most 62 days at a time.
+  Future<LeaveCalendar> fetchLeaveCalendar(
+    String accessToken, {
+    required DateTime from,
+    required DateTime to,
+  });
 
   // ── Documents and lifecycle ───────────────────────────────────────────────
   // Part of `core_hr`. The `/tenant/me/...` calls answer 404 for a login with
@@ -194,7 +295,7 @@ class DioGoodPeopleApi implements GoodPeopleApi {
   final Dio _dio;
 
   @override
-  Future<LoginResponse> login({
+  Future<LoginOutcome> login({
     required String tenant,
     required String email,
     required String password,
@@ -202,6 +303,43 @@ class DioGoodPeopleApi implements GoodPeopleApi {
     () => _dio.post<Object?>(
       '/auth/login',
       data: {'tenant': tenant, 'email': email, 'password': password},
+    ),
+    LoginOutcome.fromJson,
+  );
+
+  @override
+  Future<LoginResponse> verifyMfa({
+    required String mfaToken,
+    required String code,
+  }) => _call(
+    () => _dio.post<Object?>(
+      '/auth/mfa/verify',
+      data: {'mfaToken': mfaToken, 'code': code},
+    ),
+    LoginResponse.fromJson,
+  );
+
+  @override
+  Future<OtpRequestResult> requestOtp({
+    required String tenant,
+    required String phone,
+  }) => _call(
+    () => _dio.post<Object?>(
+      '/auth/otp/request',
+      data: {'tenant': tenant, 'phone': phone},
+    ),
+    OtpRequestResult.fromJson,
+  );
+
+  @override
+  Future<LoginResponse> verifyOtp({
+    required String tenant,
+    required String phone,
+    required String code,
+  }) => _call(
+    () => _dio.post<Object?>(
+      '/auth/otp/verify',
+      data: {'tenant': tenant, 'phone': phone, 'code': code},
     ),
     LoginResponse.fromJson,
   );
@@ -213,6 +351,108 @@ class DioGoodPeopleApi implements GoodPeopleApi {
       data: {'refreshToken': refreshToken},
     ),
     AuthTokens.fromJson,
+  );
+
+  @override
+  Future<void> logout(String refreshToken) => _send(
+    () => _dio.post<Object?>(
+      '/auth/logout',
+      data: {'refreshToken': refreshToken},
+    ),
+    (_) {},
+  );
+
+  @override
+  Future<AccountView> fetchAccount(String accessToken) => _call(
+    () => _dio.get<Object?>('/account', options: _bearer(accessToken)),
+    AccountView.fromJson,
+  );
+
+  @override
+  Future<void> changePassword(
+    String accessToken, {
+    required String currentPassword,
+    required String newPassword,
+    String? keepRefreshToken,
+  }) => _send(
+    () => _dio.post<Object?>(
+      '/account/password',
+      data: {
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+        'keepRefreshToken': ?keepRefreshToken,
+      },
+      options: _bearer(accessToken),
+    ),
+    (_) {},
+  );
+
+  @override
+  Future<AccountView> updatePreferences(
+    String accessToken, {
+    required UserLanguage language,
+  }) => _call(
+    () => _dio.patch<Object?>(
+      '/account/preferences',
+      data: {'language': language.wire},
+      options: _bearer(accessToken),
+    ),
+    AccountView.fromJson,
+  );
+
+  @override
+  Future<void> registerDevice(
+    String accessToken, {
+    required DevicePlatform platform,
+    required String token,
+  }) => _send(
+    () => _dio.post<Object?>(
+      '/account/devices',
+      data: {'platform': platform.wire, 'token': token},
+      options: _bearer(accessToken),
+    ),
+    (_) {},
+  );
+
+  @override
+  Future<void> removeDevice(String accessToken, String token) => _send(
+    () => _dio.post<Object?>(
+      '/account/devices/remove',
+      data: {'token': token},
+      options: _bearer(accessToken),
+    ),
+    (_) {},
+  );
+
+  @override
+  Future<NotificationInbox> fetchNotifications(
+    String accessToken, {
+    bool unreadOnly = false,
+  }) => _call(
+    () => _dio.get<Object?>(
+      '/tenant/notifications',
+      queryParameters: {if (unreadOnly) 'unread': 'true'},
+      options: _bearer(accessToken),
+    ),
+    NotificationInbox.fromJson,
+  );
+
+  @override
+  Future<void> markNotificationRead(String accessToken, String id) => _send(
+    () => _dio.post<Object?>(
+      '/tenant/notifications/${Uri.encodeComponent(id)}/read',
+      options: _bearer(accessToken),
+    ),
+    (_) {},
+  );
+
+  @override
+  Future<void> markAllNotificationsRead(String accessToken) => _send(
+    () => _dio.post<Object?>(
+      '/tenant/notifications/read-all',
+      options: _bearer(accessToken),
+    ),
+    (_) {},
   );
 
   @override
@@ -347,15 +587,21 @@ class DioGoodPeopleApi implements GoodPeopleApi {
     String accessToken, {
     PunchLocation? location,
     PunchSelfie? selfie,
+    String? clientId,
+    DateTime? punchedAt,
   }) => _call(
     () => _dio.post<Object?>(
       '/tenant/me/attendance/punch',
       // Built per call: a FormData can be sent only once, and a refreshed
       // session sends the punch again.
       data: selfie == null
-          ? selfPunchBody(location)
+          ? selfPunchBody(location, clientId: clientId, punchedAt: punchedAt)
           : FormData.fromMap({
-              ...selfPunchFields(location),
+              ...selfPunchFields(
+                location,
+                clientId: clientId,
+                punchedAt: punchedAt,
+              ),
               'selfie': MultipartFile.fromBytes(
                 selfie.bytes,
                 filename: selfie.fileName,
@@ -415,6 +661,31 @@ class DioGoodPeopleApi implements GoodPeopleApi {
       options: _bearer(accessToken),
     ),
     Regularization.fromJson,
+  );
+
+  @override
+  Future<TeamDay> fetchTeamDay(String accessToken, {required DateTime date}) =>
+      _call(
+        () => _dio.get<Object?>(
+          '/tenant/attendance/daily',
+          queryParameters: {'date': toWireDate(date)},
+          options: _bearer(accessToken),
+        ),
+        TeamDay.fromJson,
+      );
+
+  @override
+  Future<LeaveCalendar> fetchLeaveCalendar(
+    String accessToken, {
+    required DateTime from,
+    required DateTime to,
+  }) => _call(
+    () => _dio.get<Object?>(
+      '/tenant/leave/calendar',
+      queryParameters: {'from': toWireDate(from), 'to': toWireDate(to)},
+      options: _bearer(accessToken),
+    ),
+    LeaveCalendar.fromJson,
   );
 
   @override

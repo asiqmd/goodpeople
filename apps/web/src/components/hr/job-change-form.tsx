@@ -13,7 +13,7 @@ import { useActionState, useEffect, useRef, useState } from 'react';
 import { changeJob } from '@/app/actions/hr';
 import type { ActionState } from '@/app/actions/platform';
 import { treeOrder } from '@/lib/org';
-import { issueFor, SubmitButton } from '../forms';
+import { ErrorText, Form, issueFor, SubmitButton } from '../forms';
 import { Banner, Field, inputClass } from '../ui';
 
 const CLEAR = '__clear';
@@ -53,8 +53,12 @@ export function JobChangeForm({
   const remove = <option value={CLEAR}>{t('remove')}</option>;
 
   return (
-    <form ref={form} action={action} className="space-y-4">
-      {state?.error && <Banner tone="red">{state.error}</Banner>}
+    <Form ref={form} state={state} action={action} className="space-y-4">
+      {state?.error && (
+        <Banner tone="red">
+          <ErrorText state={state} />
+        </Banner>
+      )}
       {state?.ok && <Banner tone="green">{t('changeRecorded')}</Banner>}
       <div className="grid gap-4 sm:grid-cols-3">
         <Field label={t('event')} error={err('event')}>
@@ -192,6 +196,6 @@ export function JobChangeForm({
         </Field>
       </div>
       <SubmitButton>{t('recordChange')}</SubmitButton>
-    </form>
+    </Form>
   );
 }

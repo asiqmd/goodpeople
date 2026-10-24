@@ -24,7 +24,7 @@ import {
   type HolidayState,
 } from '@/app/actions/leave';
 import type { ActionState } from '@/app/actions/platform';
-import { issueFor, SubmitButton } from '../forms';
+import { ErrorText, Form, issueFor, SubmitButton } from '../forms';
 import { Banner, buttonClass, Field, inputClass } from '../ui';
 
 function Messages({ state, saved }: { state: ActionState<unknown>; saved: string }) {
@@ -32,7 +32,7 @@ function Messages({ state, saved }: { state: ActionState<unknown>; saved: string
     <>
       {state?.error && (
         <Banner tone="red">
-          {state.error}
+          <ErrorText state={state} />
           {state.issues?.length ? (
             <ul className="mt-1 list-inside list-disc">
               {state.issues.map((i) => (
@@ -186,7 +186,7 @@ export function LeaveTypeForm({ type }: { type: LeaveTypeView }) {
     undefined,
   );
   return (
-    <form action={action} className="space-y-3">
+    <Form state={state} action={action} className="space-y-3">
       <Messages state={state} saved={t('saved')} />
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Field label={t('name')} error={issueFor(state, 'name')}>
@@ -199,7 +199,7 @@ export function LeaveTypeForm({ type }: { type: LeaveTypeView }) {
         <Check name="isActive" label={t('active')} defaultChecked={type.isActive} />
       </div>
       <SubmitButton variant="secondary">{t('save')}</SubmitButton>
-    </form>
+    </Form>
   );
 }
 
@@ -212,7 +212,7 @@ export function NewLeaveTypeForm() {
     if (state?.ok) form.current?.reset();
   }, [state]);
   return (
-    <form ref={form} action={action} className="space-y-3">
+    <Form ref={form} state={state} action={action} className="space-y-3">
       <Messages state={state} saved={t('saved')} />
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Field label={t('code')} error={issueFor(state, 'code')}>
@@ -250,13 +250,18 @@ export function NewLeaveTypeForm() {
         </div>
       </div>
       <SubmitButton variant="secondary">{t('addType')}</SubmitButton>
-    </form>
+    </Form>
   );
 }
 
 function HolidayResult({ state }: { state: HolidayState }) {
   const t = useTranslations('leave.settings');
-  if (state?.error) return <Banner tone="red">{state.error}</Banner>;
+  if (state?.error)
+    return (
+      <Banner tone="red">
+        <ErrorText state={state} />
+      </Banner>
+    );
   if (!state?.ok) return null;
   const r = state.result;
   return (
@@ -280,7 +285,7 @@ export function AddHolidayForm({ calendarId }: { calendarId: string }) {
     if (state?.ok) form.current?.reset();
   }, [state]);
   return (
-    <form ref={form} action={action} className="space-y-3">
+    <Form ref={form} state={state} action={action} className="space-y-3">
       <HolidayResult state={state} />
       <div className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <Field label={t('date')}>
@@ -304,7 +309,7 @@ export function AddHolidayForm({ calendarId }: { calendarId: string }) {
         <Check name="isTentative" label={t('isTentative')} defaultChecked={false} />
       </div>
       <SubmitButton variant="secondary">{t('addHoliday')}</SubmitButton>
-    </form>
+    </Form>
   );
 }
 
@@ -318,14 +323,18 @@ export function HolidayActions({ holiday }: { holiday: HolidayView }) {
   const [deleting, startDelete] = useTransition();
   return (
     <div className="flex flex-wrap items-center justify-end gap-2">
-      {state?.error && <span className="text-xs text-red-600">{state.error}</span>}
+      {state?.error && (
+        <span className="text-xs text-red-600">
+          <ErrorText state={state} />
+        </span>
+      )}
       {state?.ok && state.result?.recalculated ? (
         <span className="text-xs text-brand-700">
           {t('recalculated', { count: state.result.recalculated })}
         </span>
       ) : null}
       {holiday.isTentative && (
-        <form action={confirm} className="flex items-center gap-2">
+        <Form state={state} action={confirm} className="flex items-center gap-2">
           <input
             name="date"
             type="date"
@@ -333,7 +342,7 @@ export function HolidayActions({ holiday }: { holiday: HolidayView }) {
             className={`${inputClass} w-40 py-1`}
           />
           <button className={buttonClass.secondary}>{t('confirmDate')}</button>
-        </form>
+        </Form>
       )}
       <button
         type="button"
@@ -354,10 +363,10 @@ export function ImportHolidaysButton({ calendarId, year }: { calendarId: string;
     undefined,
   );
   return (
-    <form action={action} className="space-y-2">
+    <Form state={state} action={action} className="space-y-2">
       <HolidayResult state={state} />
       <SubmitButton variant="secondary">{t('import', { year })}</SubmitButton>
-    </form>
+    </Form>
   );
 }
 
@@ -365,14 +374,14 @@ export function NewCalendarForm() {
   const t = useTranslations('leave.settings');
   const [state, action] = useActionState<ActionState, FormData>(createCalendar, undefined);
   return (
-    <form action={action} className="flex flex-wrap items-end gap-3">
+    <Form state={state} action={action} className="flex flex-wrap items-end gap-3">
       <Messages state={state} saved={t('saved')} />
       <Field label={t('newCalendar')}>
         <input name="name" required minLength={2} className={inputClass} />
       </Field>
       <Check name="isDefault" label={t('makeDefault')} defaultChecked={false} />
       <SubmitButton variant="secondary">{t('create')}</SubmitButton>
-    </form>
+    </Form>
   );
 }
 
@@ -389,7 +398,11 @@ export function LocationCalendarForm({
     undefined,
   );
   return (
-    <form action={action} className="grid items-end gap-3 sm:grid-cols-[1fr_2fr_auto]">
+    <Form
+      state={state}
+      action={action}
+      className="grid items-end gap-3 sm:grid-cols-[1fr_2fr_auto]"
+    >
       <Field label={t('calendar')}>
         <select
           name="holidayCalendarId"
@@ -420,10 +433,14 @@ export function LocationCalendarForm({
       </fieldset>
       <div className="flex items-center gap-2">
         {state?.ok && <span className="text-xs text-brand-700">✓</span>}
-        {state?.error && <span className="text-xs text-red-600">{state.error}</span>}
+        {state?.error && (
+          <span className="text-xs text-red-600">
+            <ErrorText state={state} />
+          </span>
+        )}
         <SubmitButton variant="secondary">{t('save')}</SubmitButton>
       </div>
-    </form>
+    </Form>
   );
 }
 
@@ -446,7 +463,7 @@ export function AdjustLeaveForm({
     if (state?.ok) form.current?.reset();
   }, [state]);
   return (
-    <form ref={form} action={action} className="space-y-3">
+    <Form ref={form} state={state} action={action} className="space-y-3">
       <p className="text-sm text-slate-600">{t('adjustHint')}</p>
       <Messages state={state} saved={t('adjust')} />
       <input type="hidden" name="year" value={year} />
@@ -476,6 +493,6 @@ export function AdjustLeaveForm({
         </Field>
       </div>
       <SubmitButton variant="secondary">{t('adjust')}</SubmitButton>
-    </form>
+    </Form>
   );
 }

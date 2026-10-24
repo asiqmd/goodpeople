@@ -26,9 +26,16 @@ import {
   type ApprovalStepRow,
   type ApprovalSubjectHandler,
 } from '../approvals/approval-steps.js';
+import {
+  correctionSummary,
+  noticeRequested,
+  type ApprovalSummary,
+} from '../approvals/approval-notices.js';
 import { loadSteps } from '../approvals/approval-views.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
-import { employeeOfUser, isHr } from '../employees/employee.queries.js';
+import { userCan } from '../../common/roles.js';
+import { employeeOfUser } from '../employees/employee.queries.js';
 import { timeZoneOf } from './attendance.service.js';
 import { employeeRef, toDayView } from './attendance-views.js';
 import { AttendanceProcessor, settingsOf, type ComputedDay } from './processor.service.js';
@@ -49,6 +56,7 @@ export class RegularizationsService implements ApprovalSubjectHandler<Regulariza
     private readonly tenantDb: TenantDb,
     private readonly processor: AttendanceProcessor,
     private readonly audit: TenantAuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async apply(user: AuthUser, input: RegularizationInput): Promise<RegularizationView> {
@@ -110,6 +118,14 @@ export class RegularizationsService implements ApprovalSubjectHandler<Regulariza
         chain: settings.regularizationChain,
       });
       if (!someoneDecides) await this.finalize(tx, row!.id, 'approved', user.id);
+      else {
+        await noticeRequested(
+          tx,
+          this.notifications,
+          { type: 'regularization', id: row!.id },
+          await this.summarize(tx, row!.id),
+        );
+      }
       await this.audit.record(tx, {
         actorUserId: user.id,
         action: 'attendance.regularization.apply',
@@ -156,7 +172,7 @@ export class RegularizationsService implements ApprovalSubjectHandler<Regulariza
         .for('update');
       if (!row) throw new NotFoundException('Correction not found');
       const me = await employeeOfUser(tx, user.id);
-      if (me?.id !== row.employeeId && !isHr(user)) {
+      if (me?.id !== row.employeeId && !userCan(user, 'attendance.manage')) {
         throw new ForbiddenException('You can only cancel your own corrections');
       }
       if (row.status !== 'pending')
@@ -228,6 +244,20 @@ export class RegularizationsService implements ApprovalSubjectHandler<Regulariza
   }
 
   // ── Approvals ──────────────────────────────────────────────────────────────
+
+  async summarize(tx: Tx, subjectId: string): Promise<ApprovalSummary> {
+    const [row] = await tx
+      .select({ r: regularizationRequests, name: employees.fullName })
+      .from(regularizationRequests)
+      .innerJoin(employees, eq(employees.id, regularizationRequests.employeeId))
+      .where(eq(regularizationRequests.id, subjectId));
+    return {
+      employeeId: row!.r.employeeId,
+      personName: row!.name,
+      summary: correctionSummary(row!.r.kind, row!.r.date),
+      link: '/workspace/attendance',
+    };
+  }
 
   async lockSubject(tx: Tx, subjectId: string) {
     const [row] = await tx

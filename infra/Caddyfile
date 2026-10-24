@@ -1,0 +1,50 @@
+# TLS reverse proxy for infra/docker-compose.prod.yml.
+#
+# Caddy obtains and renews Let's Encrypt certificates by itself. Before the first start, point
+# DNS for both names at this server and open ports 80 and 443. The names come from infra/.env:
+#
+#   GP_DOMAIN       the web app, e.g. hr.example.com
+#   GP_API_DOMAIN   the API, e.g. api.hr.example.com
+#
+# The web app calls the API from its server over the internal network (API_URL=http://api:4000),
+# so browsers never need the API. It is public only for the mobile app and the Edge Agents at
+# the sites.
+
+{
+	email {$ACME_EMAIL}
+}
+
+(common) {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+	# Documents are at most 10 MB and imports 5 MB.
+	request_body {
+		max_size 20MB
+	}
+	log {
+		output stdout
+		format json
+	}
+}
+
+{$GP_DOMAIN} {
+	import common
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+	}
+	reverse_proxy web:3000
+}
+
+{$GP_API_DOMAIN} {
+	import common
+	# The OpenAPI pages (/docs, /docs-json) are for developers, who have them locally. Remove
+	# these two lines to publish them.
+	@docs path /docs*
+	respond @docs 404
+	reverse_proxy api:4000
+}

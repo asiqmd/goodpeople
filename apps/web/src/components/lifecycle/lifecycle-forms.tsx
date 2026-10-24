@@ -32,14 +32,14 @@ import {
   uploadImport,
 } from '@/app/actions/lifecycle';
 import type { ActionState } from '@/app/actions/platform';
-import { SubmitButton } from '../forms';
+import { ErrorText, Form, SubmitButton } from '../forms';
 import { Banner, buttonClass, Field, inputClass } from '../ui';
 
 function Errors({ state }: { state: ActionState<unknown> }) {
   if (!state?.error) return null;
   return (
     <Banner tone="red">
-      {state.error}
+      <ErrorText state={state} />
       {state.issues?.length ? (
         <ul className="mt-1 list-inside list-disc">
           {state.issues.map((i) => (
@@ -60,7 +60,7 @@ export function UploadDocumentForm({ employeeId }: { employeeId: string }) {
     undefined,
   );
   return (
-    <form action={action} className="space-y-4">
+    <Form state={state} action={action} className="space-y-4">
       <Errors state={state} />
       {state?.result && <Banner tone="green">{t('uploaded')}</Banner>}
       <div key={state?.result?.id} className="grid gap-4 sm:grid-cols-2">
@@ -99,7 +99,7 @@ export function UploadDocumentForm({ employeeId }: { employeeId: string }) {
         {t('share')}
       </label>
       <SubmitButton>{t('upload')}</SubmitButton>
-    </form>
+    </Form>
   );
 }
 
@@ -163,7 +163,7 @@ export function IssueLetterForm({
   const template = active.find((x) => x.id === templateId);
 
   return (
-    <form ref={form} action={action} className="space-y-4">
+    <Form ref={form} state={state} action={action} className="space-y-4">
       <Errors state={state} />
       {state?.result && (
         <Banner tone="green">
@@ -239,7 +239,7 @@ export function IssueLetterForm({
           />
         </div>
       )}
-    </form>
+    </Form>
   );
 }
 
@@ -251,7 +251,7 @@ export function LetterTemplateForm({ template }: { template: LetterTemplateView 
   );
   const [pending, start] = useTransition();
   return (
-    <form action={action} className="space-y-3">
+    <Form state={state} action={action} className="space-y-3">
       <Errors state={state} />
       {state?.ok && <Banner tone="green">{t('saved')}</Banner>}
       <div className="grid gap-3 sm:grid-cols-2">
@@ -291,7 +291,7 @@ export function LetterTemplateForm({ template }: { template: LetterTemplateView 
           </button>
         )}
       </div>
-    </form>
+    </Form>
   );
 }
 
@@ -304,7 +304,7 @@ export function RecordSeparationForm({ employeeId, today }: { employeeId: string
     undefined,
   );
   return (
-    <form action={action} className="space-y-4">
+    <Form state={state} action={action} className="space-y-4">
       <Errors state={state} />
       {state?.result && <Banner tone="green">{t('recorded')}</Banner>}
       <div className="grid gap-4 sm:grid-cols-3">
@@ -335,7 +335,7 @@ export function RecordSeparationForm({ employeeId, today }: { employeeId: string
       </Field>
       <p className="text-xs text-slate-500">{t('recordHint')}</p>
       <SubmitButton>{t('record')}</SubmitButton>
-    </form>
+    </Form>
   );
 }
 
@@ -343,7 +343,7 @@ export function ResignForm({ today }: { today: string }) {
   const t = useTranslations('lifecycle.separation');
   const [state, action] = useActionState<ActionState<SeparationView>, FormData>(resign, undefined);
   return (
-    <form action={action} className="space-y-4">
+    <Form state={state} action={action} className="space-y-4">
       <Errors state={state} />
       {state?.result && <Banner tone="green">{t('resignationSent')}</Banner>}
       <p className="text-sm text-slate-600">{t('resignHint')}</p>
@@ -356,7 +356,7 @@ export function ResignForm({ today }: { today: string }) {
         </Field>
       </div>
       <SubmitButton variant="secondary">{t('resign')}</SubmitButton>
-    </form>
+    </Form>
   );
 }
 
@@ -390,7 +390,7 @@ export function ExtendProbationForm({
     undefined,
   );
   return (
-    <form action={action} className="space-y-3">
+    <Form state={state} action={action} className="space-y-3">
       <Errors state={state} />
       {state?.ok && <Banner tone="green">{t('extended')}</Banner>}
       <div className="grid gap-3 sm:grid-cols-2">
@@ -402,7 +402,7 @@ export function ExtendProbationForm({
         </Field>
       </div>
       <SubmitButton variant="secondary">{t('extend')}</SubmitButton>
-    </form>
+    </Form>
   );
 }
 
@@ -454,7 +454,7 @@ export function CorrectJobForm({
       <summary className="cursor-pointer text-xs font-medium text-brand-700">
         {t('correct')}
       </summary>
-      <form action={action} className="mt-3 space-y-3 rounded-lg bg-slate-50 p-3">
+      <Form state={state} action={action} className="mt-3 space-y-3 rounded-lg bg-slate-50 p-3">
         <Errors state={state} />
         {state?.ok && <Banner tone="green">{t('corrected')}</Banner>}
         <div className="grid gap-3 sm:grid-cols-2">
@@ -517,7 +517,7 @@ export function CorrectJobForm({
           <input name="reason" required minLength={3} className={inputClass} />
         </Field>
         <SubmitButton variant="secondary">{t('saveCorrection')}</SubmitButton>
-      </form>
+      </Form>
     </details>
   );
 }
@@ -538,7 +538,7 @@ export function ImportEmployeesForm() {
 
   return (
     <div className="space-y-4">
-      <form action={action} className="flex flex-wrap items-end gap-3">
+      <Form state={state} action={action} className="flex flex-wrap items-end gap-3">
         <Field label={t('file')}>
           <input
             name="file"
@@ -549,7 +549,7 @@ export function ImportEmployeesForm() {
           />
         </Field>
         <SubmitButton>{t('check')}</SubmitButton>
-      </form>
+      </Form>
       <Errors state={state} />
       <Errors state={committed} />
       {batch && (

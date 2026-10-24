@@ -177,7 +177,13 @@ export interface EmployeeDetail {
   currentJob: JobAssignmentView | null;
   nominees: NomineeView[];
   paymentAccounts: PaymentAccountView[];
-  portalUser: { id: string; email: string; role: TenantRole } | null;
+  portalUser: {
+    id: string;
+    email: string | null;
+    phone: string | null;
+    role: TenantRole;
+    disabled: boolean;
+  } | null;
   createdAt: string;
   updatedAt: string;
 }

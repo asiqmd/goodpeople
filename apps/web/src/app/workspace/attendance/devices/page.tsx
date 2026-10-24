@@ -1,10 +1,11 @@
-import type {
-  DeviceView,
-  EdgeAgentView,
-  EmployeeListItem,
-  OrgSnapshot,
-  Page,
-  UnmatchedPunchGroup,
+import {
+  can,
+  type DeviceView,
+  type EdgeAgentView,
+  type EmployeeListItem,
+  type OrgSnapshot,
+  type Page,
+  type UnmatchedPunchGroup,
 } from '@gp/shared';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
@@ -17,10 +18,10 @@ import {
 } from '@/components/attendance/setup-forms';
 import { Badge, Card } from '@/components/ui';
 import { currentTenantUser, load } from '@/lib/api';
-import { isHrRole } from '@/lib/roles';
 
 export default async function DevicesPage() {
-  if (!isHrRole((await currentTenantUser())?.role)) redirect('/workspace/attendance');
+  if (!can((await currentTenantUser())?.role, 'attendance.manage'))
+    redirect('/workspace/attendance');
   const t = await getTranslations('attendance.devices');
   const ts = await getTranslations('attendance.setup');
   const format = await getFormatter();

@@ -27,3 +27,11 @@ export function rows(value: Record<string, any> | undefined): Record<string, any
 
 export const toNumber = (value: unknown) =>
   value === undefined || value === '' ? undefined : Number(value);
+
+/** A refused API call as form state: its message, its code (for translating) and field issues. */
+export const fail = (result: {
+  error: { message: string; code?: string; issues?: { path: string; message: string }[] };
+}) => ({ error: result.error.message, code: result.error.code, issues: result.error.issues });
+
+/** A notification event as a message key: next-intl keys cannot contain dots. */
+export const eventKey = (event: string) => event.replace('.', '_');

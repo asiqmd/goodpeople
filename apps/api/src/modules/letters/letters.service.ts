@@ -37,6 +37,7 @@ import type { AuthUser } from '../../common/auth-user.js';
 import { currentTenantId } from '../../common/request-context.js';
 import { TenantDb } from '../../db/db.module.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 import { DocumentsService } from '../documents/documents.service.js';
 import { inForceOn } from '../employees/employee.queries.js';
 import { PdfService } from './pdf.service.js';
@@ -124,6 +125,7 @@ export class LettersService {
     private readonly vault: DocumentsService,
     private readonly pdf: PdfService,
     private readonly audit: TenantAuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // ── Templates ──────────────────────────────────────────────────────────────
@@ -355,6 +357,15 @@ export class LettersService {
         entityId: row.id,
         after: { employeeId, template: template.code, language: template.language, refNo },
       });
+      if (input.visibleToEmployee) {
+        await this.notifications.notify(tx, {
+          event: 'letter.issued',
+          recipients: [{ employeeId }],
+          values: { 'letter.title': template.name },
+          link: '/workspace/profile',
+          data: { documentId: row.id },
+        });
+      }
       return (await this.vault.load(tx, eq(documents.id, row.id)))[0]!;
     });
   }

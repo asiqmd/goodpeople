@@ -420,6 +420,7 @@ class Punch {
     required this.source,
     required this.direction,
     required this.voided,
+    this.offline = false,
     this.device,
     this.distanceM,
     this.insideGeofence,
@@ -437,6 +438,8 @@ class Punch {
     insideGeofence: _read<bool?>(json, 'insideGeofence'),
     note: _read<String?>(json, 'note'),
     voided: _read<bool>(json, 'voided'),
+    // Missing before offline punches.
+    offline: _read<bool?>(json, 'offline') ?? false,
     // Missing before selfie punches; read as none.
     selfieDocumentId: _read<String?>(json, 'selfieDocumentId'),
   );
@@ -459,6 +462,9 @@ class Punch {
 
   /// Voided by HR: kept on record but not counted.
   final bool voided;
+
+  /// Recorded by the app without a connection and received later.
+  final bool offline;
 
   /// The photo taken with an app punch, a document HR can read.
   final String? selfieDocumentId;
@@ -604,7 +610,15 @@ class PunchSelfie {
 /// `POST /tenant/me/attendance/punch` body from the mobile app. Without a
 /// [location] no coordinates are sent, which only the `anywhere` mode
 /// accepts.
-Json selfPunchBody(PunchLocation? location) => {
+///
+/// [clientId] is the app's id for the punch, so a resend is recognised
+/// instead of counted twice. A punch sent later, from the offline queue,
+/// also says when it happened ([punchedAt]); the API needs the id with it.
+Json selfPunchBody(
+  PunchLocation? location, {
+  String? clientId,
+  DateTime? punchedAt,
+}) => {
   'source': 'mobile',
   if (location != null) ...{
     'latitude': location.latitude,
@@ -613,12 +627,22 @@ Json selfPunchBody(PunchLocation? location) => {
       // The API takes 0 to 100 km.
       'accuracyM': accuracy.clamp(0, 100000),
   },
+  'clientId': ?clientId,
+  if (punchedAt != null) 'punchedAt': toWireInstant(punchedAt),
 };
 
 /// The same fields as [selfPunchBody] as text, for the multipart form a
 /// punch with a selfie is sent as. The API reads the numbers back.
-Map<String, String> selfPunchFields(PunchLocation? location) => {
-  for (final MapEntry(:key, :value) in selfPunchBody(location).entries)
+Map<String, String> selfPunchFields(
+  PunchLocation? location, {
+  String? clientId,
+  DateTime? punchedAt,
+}) => {
+  for (final MapEntry(:key, :value) in selfPunchBody(
+    location,
+    clientId: clientId,
+    punchedAt: punchedAt,
+  ).entries)
     key: '$value',
 };
 
@@ -708,4 +732,47 @@ class RegularizationDraft {
     },
     'reason': reason,
   };
+}
+
+/// One person's day in a team view.
+class TeamDayRow {
+  const TeamDayRow({
+    required this.employee,
+    required this.timeZone,
+    required this.day,
+  });
+
+  factory TeamDayRow.fromJson(Json json) => TeamDayRow(
+    employee: EmployeeRef.fromJson(_read<Json>(json, 'employee')),
+    timeZone: _read<String>(json, 'timeZone'),
+    day: AttendanceDay.fromJson(_read<Json>(json, 'day')),
+  );
+
+  final EmployeeRef employee;
+  final String timeZone;
+  final AttendanceDay day;
+}
+
+/// `GET /tenant/attendance/daily?date=` 200 response (the API's
+/// `TeamDayView`). HR sees everyone; anyone else sees themselves, their
+/// reports and their unit.
+class TeamDay {
+  const TeamDay({required this.date, required this.counts, required this.rows});
+
+  factory TeamDay.fromJson(Json json) => TeamDay(
+    date: _readDate(json, 'date'),
+    counts: {
+      for (final MapEntry(:key, :value) in _read<Json>(json, 'counts').entries)
+        if (value is int) AttendanceStatus.fromWire(key): value,
+    },
+    rows: _readList(json, 'rows', TeamDayRow.fromJson),
+  );
+
+  final DateTime date;
+
+  /// People per status. Statuses nobody has are left out.
+  final Map<AttendanceStatus, int> counts;
+
+  /// By name.
+  final List<TeamDayRow> rows;
 }

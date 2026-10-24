@@ -22,7 +22,7 @@ import {
 } from '@gp/shared';
 import type { z } from 'zod';
 import { CurrentUser, type AuthUser } from '../../common/auth-user.js';
-import { HrOnly, TenantRolesGuard } from '../../common/roles.js';
+import { Permits, TenantRolesGuard } from '../../common/roles.js';
 import { openApiBody, zod } from '../../common/zod.js';
 import { AccessStateGuard, FeatureGuard, RequireFeature } from '../entitlements/guards.js';
 import { LifecycleService } from './lifecycle.service.js';
@@ -41,13 +41,13 @@ export class LifecycleController {
   ) {}
 
   @Get('lifecycle')
-  @HrOnly()
+  @Permits('lifecycle.manage')
   overview(): Promise<LifecycleOverview> {
     return this.lifecycle.overview();
   }
 
   @Post('employees/:id/probation/extend')
-  @HrOnly()
+  @Permits('lifecycle.manage')
   @ApiBody(openApiBody(probationExtensionSchema))
   extendProbation(
     @CurrentUser() user: AuthUser,
@@ -58,7 +58,7 @@ export class LifecycleController {
   }
 
   @Get('separations')
-  @HrOnly()
+  @Permits('lifecycle.manage')
   list(
     @Query(zod(separationListQuerySchema)) query: z.infer<typeof separationListQuerySchema>,
   ): Promise<SeparationView[]> {
@@ -66,14 +66,14 @@ export class LifecycleController {
   }
 
   @Get('employees/:id/separations')
-  @HrOnly()
+  @Permits('lifecycle.manage')
   forEmployee(@Param('id', ParseUUIDPipe) id: string): Promise<SeparationView[]> {
     return this.separations.forEmployee(id);
   }
 
   /** HR records a separation; it stands approved and completes after the last working day. */
   @Post('employees/:id/separations')
-  @HrOnly()
+  @Permits('lifecycle.manage')
   @ApiBody(openApiBody(separationInputSchema))
   record(
     @CurrentUser() user: AuthUser,

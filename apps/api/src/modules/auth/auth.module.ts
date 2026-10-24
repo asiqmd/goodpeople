@@ -5,6 +5,8 @@ import { APP_CONFIG, type AppConfig } from '../../config.js';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
+import { MfaService } from './mfa.service.js';
+import { RateLimiter } from '../../common/rate-limit.js';
 
 @Module({
   imports: [
@@ -14,6 +16,7 @@ import { JwtAuthGuard } from './jwt-auth.guard.js';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, { provide: APP_GUARD, useClass: JwtAuthGuard }],
+  providers: [AuthService, MfaService, RateLimiter, { provide: APP_GUARD, useClass: JwtAuthGuard }],
+  exports: [AuthService, MfaService, RateLimiter],
 })
 export class AuthModule {}

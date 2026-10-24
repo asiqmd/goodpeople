@@ -42,6 +42,10 @@ export const platformUsers = pgTable('platform_users', {
   name: text('name').notNull(),
   passwordHash: text('password_hash').notNull(),
   role: platformRole('role').notNull(),
+  mfaSecretEnc: text('mfa_secret_enc'),
+  mfaEnabledAt: timestamptz('mfa_enabled_at'),
+  mfaRecoveryCodes: text('mfa_recovery_codes').array().notNull().default([]),
+  lastSignInAt: timestamptz('last_sign_in_at'),
   createdAt: createdAt(),
 });
 

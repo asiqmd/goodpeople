@@ -21,6 +21,7 @@ import 'package:good_people/auth/auth_controller.dart';
 import 'package:good_people/home/home_screen.dart';
 import 'package:good_people/leave/leave_providers.dart';
 import 'package:good_people/settings/locale_controller.dart';
+import 'package:good_people/util/uuid.dart';
 
 import 'support/fake_api.dart';
 
@@ -243,6 +244,9 @@ void main() {
         'latitude': 24.0024,
         'longitude': 90.4265,
         'accuracyM': 12.0,
+        // Chosen before sending, so a resend from the offline queue is
+        // recognised.
+        'clientId': matches(uuidV4Pattern),
       });
       // No photo asked for: no camera, and JSON as before.
       expect(camera.calls, 0);
@@ -383,7 +387,10 @@ void main() {
       await punch(tester);
 
       expect(location.timeLimits, [TodayTab.optionalFixTime]);
-      expect(api.punchBodies.single, {'source': 'mobile'});
+      expect(api.punchBodies.single, {
+        'source': 'mobile',
+        'clientId': matches(uuidV4Pattern),
+      });
       expect(find.byKey(TodayTab.punchErrorKey), findsNothing);
       expect(findText('Punched out'), findsOneWidget);
     });
@@ -479,6 +486,7 @@ void main() {
         'latitude': '24.0024',
         'longitude': '90.4265',
         'accuracyM': '12.0',
+        'clientId': matches(uuidV4Pattern),
       });
       expect(findText('Punched out'), findsOneWidget);
       expect(find.byKey(TodayTab.punchErrorKey), findsNothing);

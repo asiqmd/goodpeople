@@ -1,5 +1,7 @@
 import {
+  can,
   todayIn,
+  type Permission,
   type EmployeeDetail,
   type EmployeeListItem,
   type JobAssignmentView,
@@ -41,10 +43,22 @@ import {
 } from '@/components/lifecycle/lifecycle-forms';
 import { DocumentList, SeparationList } from '@/components/lifecycle/lifecycle-views';
 import { buttonClass, Card } from '@/components/ui';
-import { authedFetch, load } from '@/lib/api';
+import { authedFetch, currentTenantUser, load } from '@/lib/api';
 import { MONTH, monthRange, shiftMonth } from '@/lib/month';
 
 const TABS = ['profile', 'job', 'documents', 'nominees', 'payment', 'leave', 'attendance'] as const;
+
+/** What each tab needs: read-only roles (attendance officer, auditor) see the profile only. */
+const TAB_PERMISSION: Record<(typeof TABS)[number] | 'edit', Permission> = {
+  profile: 'employees.read',
+  edit: 'employees.write',
+  job: 'employees.write',
+  documents: 'documents.manage',
+  nominees: 'employees.write',
+  payment: 'employees.write',
+  leave: 'leave.manage',
+  attendance: 'attendance.manage',
+};
 
 export default async function EmployeePage({
   params,
@@ -52,8 +66,13 @@ export default async function EmployeePage({
 }: PageProps<'/workspace/employees/[id]'>) {
   const { id } = await params;
   const sp = await searchParams;
+  const role = (await currentTenantUser())?.role;
+  const tabs = TABS.filter((name) => can(role, TAB_PERMISSION[name]));
   const tabParam = sp.tab;
-  const tab = typeof tabParam === 'string' ? tabParam : 'profile';
+  const asked = (
+    typeof tabParam === 'string' ? tabParam : 'profile'
+  ) as keyof typeof TAB_PERMISSION;
+  const tab = TAB_PERMISSION[asked] && can(role, TAB_PERMISSION[asked]) ? asked : 'profile';
   const result = await authedFetch<EmployeeDetail>('tenant', `/tenant/employees/${id}`);
   if (!result.ok) notFound();
   const employee = result.data;
@@ -74,7 +93,7 @@ export default async function EmployeePage({
       </div>
 
       <nav className="flex gap-1 border-b border-slate-200">
-        {TABS.map((name) => (
+        {tabs.map((name) => (
           <Link
             key={name}
             href={`/workspace/employees/${id}?tab=${name}`}
@@ -100,11 +119,13 @@ export default async function EmployeePage({
 
       {tab === 'profile' && (
         <>
-          <div className="flex justify-end">
-            <Link href={`/workspace/employees/${id}?tab=edit`} className={buttonClass.secondary}>
-              {t('detail.edit')}
-            </Link>
-          </div>
+          {can(role, 'employees.write') && (
+            <div className="flex justify-end">
+              <Link href={`/workspace/employees/${id}?tab=edit`} className={buttonClass.secondary}>
+                {t('detail.edit')}
+              </Link>
+            </div>
+          )}
           <PersonalDetails employee={employee} />
         </>
       )}

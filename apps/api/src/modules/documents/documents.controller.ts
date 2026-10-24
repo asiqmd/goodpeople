@@ -27,7 +27,7 @@ import {
 } from '@gp/shared';
 import type { z } from 'zod';
 import { CurrentUser, type AuthUser } from '../../common/auth-user.js';
-import { HrOnly, TenantRolesGuard } from '../../common/roles.js';
+import { Permits, TenantRolesGuard } from '../../common/roles.js';
 import { openApiBody, zod } from '../../common/zod.js';
 import { AccessStateGuard, FeatureGuard, RequireFeature } from '../entitlements/guards.js';
 import { DocumentsService } from './documents.service.js';
@@ -55,13 +55,13 @@ export class DocumentsController {
   constructor(private readonly documents: DocumentsService) {}
 
   @Get('employees/:id/documents')
-  @HrOnly()
+  @Permits('documents.manage')
   forEmployee(@Param('id', ParseUUIDPipe) id: string): Promise<DocumentView[]> {
     return this.documents.forEmployee(id);
   }
 
   @Post('employees/:id/documents')
-  @HrOnly()
+  @Permits('documents.manage')
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_DOCUMENT_BYTES, files: 1 } }))
   upload(
@@ -79,7 +79,7 @@ export class DocumentsController {
   }
 
   @Get('documents/expiring')
-  @HrOnly()
+  @Permits('documents.manage')
   expiring(
     @Query(zod(expiringQuerySchema)) query: z.infer<typeof expiringQuerySchema>,
   ): Promise<DocumentView[]> {
@@ -102,7 +102,7 @@ export class DocumentsController {
   }
 
   @Patch('documents/:id')
-  @HrOnly()
+  @Permits('documents.manage')
   @ApiBody(openApiBody(documentUpdateSchema))
   update(
     @CurrentUser() user: AuthUser,
@@ -113,7 +113,7 @@ export class DocumentsController {
   }
 
   @Delete('documents/:id')
-  @HrOnly()
+  @Permits('documents.manage')
   @HttpCode(204)
   remove(@CurrentUser() user: AuthUser, @Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return this.documents.remove(user, id);

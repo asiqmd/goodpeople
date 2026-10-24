@@ -98,6 +98,8 @@ export interface PunchView {
   id: string;
   punchedAt: string;
   source: PunchSource;
+  /** Recorded by the app without a connection and received later. */
+  offline: boolean;
   direction: PunchDirection;
   device: { id: string; name: string } | null;
   distanceM: number | null;

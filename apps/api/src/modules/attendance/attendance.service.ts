@@ -13,18 +13,19 @@ import {
 import { bdWorkLimits } from '@gp/country-packs';
 import {
   addDays,
-  todayIn,
-  weekdayOf,
   type AttendanceProcessInput,
   type AttendanceRangeView,
   type AttendanceSettingsInput,
   type AttendanceSettingsView,
   type AttendanceStatus,
   type EmployeeAttendanceView,
+  groupBy,
   type MonthSummaryView,
   type MyAttendanceToday,
   type PunchView,
   type TeamDayView,
+  todayIn,
+  weekdayOf,
 } from '@gp/shared';
 import { and, asc, eq, gte, inArray, isNull, lt, lte, or } from 'drizzle-orm';
 import type { AuthUser } from '../../common/auth-user.js';
@@ -337,12 +338,13 @@ export class AttendanceService {
             )
         : [];
       const weeklyMax = bdWorkLimits(from).weeklyMaxMinutes;
+      const daysOf = groupBy(rows, (r) => r.employeeId);
       return {
         month: query.month,
         from,
         to,
         rows: people.map((person) => {
-          const days = rows.filter((r) => r.employeeId === person.id && r.status !== 'pending');
+          const days = (daysOf.get(person.id) ?? []).filter((r) => r.status !== 'pending');
           const weeks = new Map<string, number>();
           for (const d of days) {
             // Weeks run Saturday to Friday, the usual working week in Bangladesh.

@@ -49,12 +49,11 @@ import {
 } from '@gp/shared';
 import type { z } from 'zod';
 import { CurrentUser, type AuthUser } from '../../common/auth-user.js';
-import { HrOnly, TenantRolesGuard } from '../../common/roles.js';
+import { Permits, TenantRolesGuard, userCan } from '../../common/roles.js';
 import { openApiBody, zod } from '../../common/zod.js';
 import { AccessStateGuard, FeatureGuard, RequireFeature } from '../entitlements/guards.js';
 import { EmployeeLeaveService, type EmployeeLeaveSummary } from './employee-leave.service.js';
 import { HolidaysService } from './holidays.service.js';
-import { isHr } from '../employees/employee.queries.js';
 import { LeaveRequestsService } from './leave-requests.service.js';
 import { LeaveTypesService } from './leave-types.service.js';
 
@@ -81,11 +80,11 @@ export class LeaveController {
 
   @Get('leave/types')
   leaveTypes(@CurrentUser() user: AuthUser): Promise<LeaveTypeView[]> {
-    return this.types.list(isHr(user));
+    return this.types.list(userCan(user, 'leave.manage'));
   }
 
   @Post('leave/types')
-  @HrOnly()
+  @Permits('leave.manage')
   @ApiBody(openApiBody(leaveTypeInputSchema))
   createType(
     @CurrentUser() user: AuthUser,
@@ -95,7 +94,7 @@ export class LeaveController {
   }
 
   @Patch('leave/types/:id')
-  @HrOnly()
+  @Permits('leave.manage')
   @ApiBody(openApiBody(leaveTypeUpdateSchema))
   updateType(
     @CurrentUser() user: AuthUser,
@@ -106,7 +105,7 @@ export class LeaveController {
   }
 
   @Post('leave/types/defaults')
-  @HrOnly()
+  @Permits('leave.manage')
   provisionDefaults(@CurrentUser() user: AuthUser): Promise<LeaveTypeView[]> {
     return this.types.provisionDefaults(user);
   }
@@ -155,7 +154,7 @@ export class LeaveController {
   }
 
   @Get('leave/requests')
-  @HrOnly()
+  @Permits('leave.manage')
   allRequests(
     @Query(zod(leaveListQuerySchema)) query: z.infer<typeof leaveListQuerySchema>,
   ): Promise<LeaveRequestView[]> {
@@ -173,7 +172,7 @@ export class LeaveController {
   // ── HR, for one employee ───────────────────────────────────────────────────
 
   @Get('employees/:id/leave')
-  @HrOnly()
+  @Permits('leave.manage')
   employeeSummary(
     @Param('id', ParseUUIDPipe) id: string,
     @Query(zod(leaveYearQuerySchema)) query: z.infer<typeof leaveYearQuerySchema>,
@@ -182,7 +181,7 @@ export class LeaveController {
   }
 
   @Post('employees/:id/leave/preview')
-  @HrOnly()
+  @Permits('leave.manage')
   @ApiBody(openApiBody(leavePreviewSchema))
   previewFor(
     @CurrentUser() user: AuthUser,
@@ -193,7 +192,7 @@ export class LeaveController {
   }
 
   @Post('employees/:id/leave/requests')
-  @HrOnly()
+  @Permits('leave.manage')
   @ApiBody(openApiBody(leaveRequestInputSchema))
   applyFor(
     @CurrentUser() user: AuthUser,
@@ -204,7 +203,7 @@ export class LeaveController {
   }
 
   @Post('employees/:id/leave/adjustments')
-  @HrOnly()
+  @Permits('leave.manage')
   @ApiBody(openApiBody(leaveAdjustmentSchema))
   adjust(
     @CurrentUser() user: AuthUser,
@@ -230,7 +229,7 @@ export class HolidaysController {
   }
 
   @Post('holiday-calendars')
-  @HrOnly()
+  @Permits('leave.manage')
   @ApiBody(openApiBody(holidayCalendarInputSchema))
   createCalendar(
     @CurrentUser() user: AuthUser,
@@ -240,7 +239,7 @@ export class HolidaysController {
   }
 
   @Patch('holiday-calendars/:id')
-  @HrOnly()
+  @Permits('leave.manage')
   @ApiBody(openApiBody(holidayCalendarUpdateSchema))
   updateCalendar(
     @CurrentUser() user: AuthUser,
@@ -267,7 +266,7 @@ export class HolidaysController {
   }
 
   @Post('holiday-calendars/:id/holidays')
-  @HrOnly()
+  @Permits('leave.manage')
   @ApiBody(openApiBody(holidayInputSchema))
   add(
     @CurrentUser() user: AuthUser,
@@ -278,7 +277,7 @@ export class HolidaysController {
   }
 
   @Post('holiday-calendars/:id/import-bd')
-  @HrOnly()
+  @Permits('leave.manage')
   @ApiBody(openApiBody(importHolidaysSchema))
   importBd(
     @CurrentUser() user: AuthUser,
@@ -289,7 +288,7 @@ export class HolidaysController {
   }
 
   @Patch('holidays/:id')
-  @HrOnly()
+  @Permits('leave.manage')
   @ApiBody(openApiBody(holidayUpdateSchema))
   update(
     @CurrentUser() user: AuthUser,
@@ -300,7 +299,7 @@ export class HolidaysController {
   }
 
   @Delete('holidays/:id')
-  @HrOnly()
+  @Permits('leave.manage')
   remove(
     @CurrentUser() user: AuthUser,
     @Param('id', ParseUUIDPipe) id: string,

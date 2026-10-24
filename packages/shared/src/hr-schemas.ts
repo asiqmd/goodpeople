@@ -223,9 +223,19 @@ export const hireEmployeeSchema = z
     /** Creates a workspace login linked to this employee. */
     portalAccess: z
       .object({
-        email: z.email(),
+        email: z.email().optional(),
+        /** Lets the person sign in with a code sent by SMS to this number. */
+        phone: bdMobileSchema.optional(),
         role: z.enum(TENANT_ROLES).default('employee'),
         password: z.string().min(10).optional(),
+      })
+      .refine((p) => p.email || p.phone, {
+        message: 'Give an email address, a mobile number or both',
+        path: ['email'],
+      })
+      .refine((p) => p.email || p.role === 'employee', {
+        message: 'Staff roles sign in with an email address and password',
+        path: ['email'],
       })
       .optional(),
   })

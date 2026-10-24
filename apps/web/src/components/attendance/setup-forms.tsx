@@ -26,7 +26,7 @@ import {
   updateShift,
 } from '@/app/actions/attendance';
 import type { ActionState } from '@/app/actions/platform';
-import { SubmitButton } from '../forms';
+import { ErrorText, Form, SubmitButton } from '../forms';
 import { Banner, buttonClass, Field, inputClass } from '../ui';
 
 function Messages({ state, saved }: { state: ActionState<unknown>; saved: string }) {
@@ -34,7 +34,7 @@ function Messages({ state, saved }: { state: ActionState<unknown>; saved: string
     <>
       {state?.error && (
         <Banner tone="red">
-          {state.error}
+          <ErrorText state={state} />
           {state.issues?.length ? (
             <ul className="mt-1 list-inside list-disc">
               {state.issues.map((i) => (
@@ -76,7 +76,7 @@ export function AttendanceSettingsForm({ settings }: { settings: AttendanceSetti
     undefined,
   );
   return (
-    <form action={action} className="space-y-4">
+    <Form state={state} action={action} className="space-y-4">
       <Messages state={state} saved={t('saved')} />
       <div className="grid gap-4 sm:grid-cols-3">
         <Field label={t('selfPunch')} hint={t('selfPunchHint')}>
@@ -128,7 +128,7 @@ export function AttendanceSettingsForm({ settings }: { settings: AttendanceSetti
         defaultChecked={settings.requireSelfie}
       />
       <SubmitButton>{t('save')}</SubmitButton>
-    </form>
+    </Form>
   );
 }
 
@@ -153,7 +153,7 @@ export function ShiftForm({ shift }: { shift?: ShiftView }) {
     </Field>
   );
   return (
-    <form action={action} className="space-y-4">
+    <Form state={state} action={action} className="space-y-4">
       <Messages state={state} saved={t('saved')} />
       <div className="grid gap-4 sm:grid-cols-4">
         {!shift && (
@@ -213,7 +213,7 @@ export function ShiftForm({ shift }: { shift?: ShiftView }) {
         {shift?.isDefault && <input type="hidden" name="isActive" value="on" />}
       </div>
       <SubmitButton>{shift ? t('save') : t('addShift')}</SubmitButton>
-    </form>
+    </Form>
   );
 }
 
@@ -248,7 +248,7 @@ export function AssignShiftForm({
   const t = useTranslations('attendance.setup');
   const [state, action] = useActionState<ActionState, FormData>(assignShift, undefined);
   return (
-    <form action={action} className="space-y-4">
+    <Form state={state} action={action} className="space-y-4">
       <Messages state={state} saved={t('assigned')} />
       <EmployeePicker employees={employees} />
       <div className="grid gap-4 sm:grid-cols-2">
@@ -272,7 +272,7 @@ export function AssignShiftForm({
         </Field>
       </div>
       <SubmitButton>{t('assign')}</SubmitButton>
-    </form>
+    </Form>
   );
 }
 
@@ -293,7 +293,7 @@ export function RosterForm({
   const [state, action] = useActionState<ActionState, FormData>(setRoster, undefined);
   const [clearState, clear] = useActionState<ActionState, FormData>(clearRoster, undefined);
   return (
-    <form action={action} className="space-y-4">
+    <Form state={state} action={action} className="space-y-4">
       <Messages state={state} saved={t('rostered')} />
       <Messages state={clearState} saved={t('cleared')} />
       <EmployeePicker employees={employees} />
@@ -331,7 +331,7 @@ export function RosterForm({
           {t('clearRoster')}
         </button>
       </div>
-    </form>
+    </Form>
   );
 }
 
@@ -343,7 +343,7 @@ export function NewAgentForm() {
   );
   return (
     <div className="space-y-3">
-      <form action={action} className="flex flex-wrap items-end gap-3">
+      <Form state={state} action={action} className="flex flex-wrap items-end gap-3">
         <Field label={t('agentName')}>
           <input
             name="name"
@@ -354,8 +354,12 @@ export function NewAgentForm() {
           />
         </Field>
         <SubmitButton>{t('addAgent')}</SubmitButton>
-      </form>
-      {state?.error && <Banner tone="red">{state.error}</Banner>}
+      </Form>
+      {state?.error && (
+        <Banner tone="red">
+          <ErrorText state={state} />
+        </Banner>
+      )}
       {state?.result && (
         <Banner tone="amber">
           <p className="font-medium">{t('tokenOnce')}</p>
@@ -399,7 +403,7 @@ export function DeviceForm({
     undefined,
   );
   return (
-    <form action={action} className="flex flex-wrap items-end gap-3">
+    <Form state={state} action={action} className="flex flex-wrap items-end gap-3">
       <Field label={t('deviceName')}>
         <input name="name" required defaultValue={device.name} className={`${inputClass} w-56`} />
       </Field>
@@ -418,9 +422,13 @@ export function DeviceForm({
         </select>
       </Field>
       <SubmitButton variant="secondary">{t('save')}</SubmitButton>
-      {state?.error && <span className="text-xs text-red-600">{state.error}</span>}
+      {state?.error && (
+        <span className="text-xs text-red-600">
+          <ErrorText state={state} />
+        </span>
+      )}
       {state?.ok && <span className="text-xs text-brand-700">{t('saved')}</span>}
-    </form>
+    </Form>
   );
 }
 
@@ -428,7 +436,7 @@ export function ReprocessForm({ from, to }: { from: string; to: string }) {
   const t = useTranslations('attendance.setup');
   const [state, action] = useActionState<ActionState, FormData>(reprocessAttendance, undefined);
   return (
-    <form action={action} className="space-y-3">
+    <Form state={state} action={action} className="space-y-3">
       <Messages state={state} saved={t('reprocessed')} />
       <div className="flex flex-wrap items-end gap-3">
         <Field label={t('from')}>
@@ -439,7 +447,7 @@ export function ReprocessForm({ from, to }: { from: string; to: string }) {
         </Field>
         <SubmitButton variant="secondary">{t('reprocess')}</SubmitButton>
       </div>
-    </form>
+    </Form>
   );
 }
 
@@ -458,7 +466,7 @@ export function ClaimPinForm({ pin, employees }: { pin: string; employees: Emplo
     );
   }
   return (
-    <form action={action} className="flex items-center gap-2">
+    <Form state={state} action={action} className="flex items-center gap-2">
       <input type="hidden" name="attendancePin" value={pin} />
       <select
         name="employeeId"
@@ -476,7 +484,11 @@ export function ClaimPinForm({ pin, employees }: { pin: string; employees: Emplo
         ))}
       </select>
       <SubmitButton variant="secondary">{t('claim')}</SubmitButton>
-      {state?.error && <span className="text-xs text-red-600">{state.error}</span>}
-    </form>
+      {state?.error && (
+        <span className="text-xs text-red-600">
+          <ErrorText state={state} />
+        </span>
+      )}
+    </Form>
   );
 }

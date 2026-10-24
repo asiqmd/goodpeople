@@ -1,4 +1,5 @@
 import {
+  can,
   ATTENDANCE_STATUSES,
   addDays,
   todayIn,
@@ -11,7 +12,6 @@ import { clock, hm, StatusBadge } from '@/components/attendance/attendance-views
 import { day } from '@/components/leave/leave-views';
 import { buttonClass, Card, inputClass } from '@/components/ui';
 import { authedFetch, currentTenantUser, load } from '@/lib/api';
-import { isHrRole } from '@/lib/roles';
 import { treeOrder } from '@/lib/org';
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -26,7 +26,7 @@ export default async function TeamAttendancePage({
   const date = typeof sp.date === 'string' && DATE.test(sp.date) ? sp.date : today;
   const unit = typeof sp.unit === 'string' ? sp.unit : '';
   const status = typeof sp.status === 'string' ? sp.status : '';
-  const isHr = isHrRole((await currentTenantUser())?.role);
+  const isHr = can((await currentTenantUser())?.role, 'employees.read');
   const query = new URLSearchParams({ date, ...(unit ? { orgUnitId: unit } : {}) });
   const result = await authedFetch<TeamDayView>('tenant', `/tenant/attendance/daily?${query}`);
   if (!result.ok) {

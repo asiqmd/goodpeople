@@ -1346,4 +1346,355 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get separationRejected => 'পদত্যাগ প্রত্যাখ্যান করা হয়েছে';
+
+  @override
+  String get signInWithEmail => 'ইমেইল';
+
+  @override
+  String get signInWithPhone => 'মোবাইল';
+
+  @override
+  String get mobileNumber => 'মোবাইল নম্বর';
+
+  @override
+  String get mobileNumberHint => 'যেমন: 01712345678';
+
+  @override
+  String get mobileNumberRequired => 'আপনার মোবাইল নম্বর লিখুন';
+
+  @override
+  String get mobileNumberInvalid =>
+      'বাংলাদেশের একটি মোবাইল নম্বর লিখুন, যেমন: 01712345678';
+
+  @override
+  String get sendCode => 'কোড পাঠান';
+
+  @override
+  String get otpTitle => 'পাঠানো কোডটি লিখুন';
+
+  @override
+  String otpSentBody(String phone, num minutes) {
+    final intl.NumberFormat minutesNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String minutesString = minutesNumberFormat.format(minutes);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: '$minutesString মিনিট',
+    );
+    return '$phone নম্বরে গুড পিপলের লগইন থাকলে, এসএমএসে একটি ৬ সংখ্যার কোড পাঠানো হচ্ছে। কোডটি $_temp0 পর্যন্ত কাজ করবে।';
+  }
+
+  @override
+  String get codeLabel => '৬ সংখ্যার কোড';
+
+  @override
+  String get codeRequired => '৬ সংখ্যার কোডটি লিখুন';
+
+  @override
+  String get codeWrongOrExpired =>
+      'কোডটি ভুল অথবা এর মেয়াদ শেষ হয়ে গেছে। আবার দেখে লিখুন, অথবা নতুন কোড চান।';
+
+  @override
+  String get sendCodeAgain => 'আবার পাঠান';
+
+  @override
+  String sendCodeAgainHint(String seconds) {
+    return 'কোড পাননি? $seconds সেকেন্ড পরে নতুন কোড চাইতে পারবেন।';
+  }
+
+  @override
+  String get codeSentAgain => 'নতুন একটি কোড পাঠানো হচ্ছে।';
+
+  @override
+  String get useDifferentNumber => 'অন্য নম্বর ব্যবহার করুন';
+
+  @override
+  String get twoStepTitle => 'দুই ধাপে সাইন ইন';
+
+  @override
+  String get twoStepBody =>
+      'আপনার অথেনটিকেটর অ্যাপে দেখানো ৬ সংখ্যার কোডটি লিখুন।';
+
+  @override
+  String get twoStepRecoveryBody =>
+      'আপনার রিকভারি কোডগুলোর একটি লিখুন, যেমন: k7qm-2xpd। প্রতিটি কোড একবারই কাজ করে।';
+
+  @override
+  String get recoveryCodeLabel => 'রিকভারি কোড';
+
+  @override
+  String get recoveryCodeInvalid => 'k7qm-2xpd-এর মতো একটি রিকভারি কোড লিখুন';
+
+  @override
+  String get useRecoveryCode => 'এর বদলে রিকভারি কোড ব্যবহার করুন';
+
+  @override
+  String get useAuthenticatorCode => 'এর বদলে অ্যাপের কোড ব্যবহার করুন';
+
+  @override
+  String get twoStepWrongCode =>
+      'কোডটি ভুল অথবা এর মেয়াদ শেষ হয়ে গেছে। আবার চেষ্টা করুন, অথবা পেছনে গিয়ে আবার সাইন ইন করুন।';
+
+  @override
+  String get verify => 'যাচাই করুন';
+
+  @override
+  String get twoStepSetupTitle => 'আগে দুই ধাপে সাইন ইন চালু করুন';
+
+  @override
+  String get twoStepSetupBody =>
+      'আপনার ভূমিকার জন্য দুই ধাপে সাইন ইন বাধ্যতামূলক। গুড পিপলের ওয়েব অ্যাপে এটি চালু করুন, তারপর এখানে সাইন ইন করুন।';
+
+  @override
+  String get back => 'ফিরে যান';
+
+  @override
+  String get loginWrongCredentials => 'ওয়ার্কস্পেস, ইমেইল অথবা পাসওয়ার্ড ভুল';
+
+  @override
+  String get errorTooManyAttempts =>
+      'অনেকবার চেষ্টা করা হয়েছে। কয়েক মিনিট অপেক্ষা করে আবার চেষ্টা করুন।';
+
+  @override
+  String errorTooManyAttemptsWait(num minutes) {
+    final intl.NumberFormat minutesNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String minutesString = minutesNumberFormat.format(minutes);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other:
+          'অনেকবার চেষ্টা করা হয়েছে। $minutesString মিনিট পরে আবার চেষ্টা করুন।',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get errorLoginDisabled =>
+      'এই লগইনটি আর সক্রিয় নেই। আপনার এইচআর টিমের সাথে যোগাযোগ করুন।';
+
+  @override
+  String get errorWrongPassword => 'আপনার বর্তমান পাসওয়ার্ডটি সঠিক নয়।';
+
+  @override
+  String get errorTenantSuspended =>
+      'এই ওয়ার্কস্পেসটি স্থগিত করা হয়েছে। আপনার অ্যাডমিনের সাথে যোগাযোগ করুন।';
+
+  @override
+  String get errorTenantReadOnly =>
+      'এই ওয়ার্কস্পেসটি এখন শুধু দেখার জন্য খোলা, তাই কোনো পরিবর্তন সংরক্ষণ করা যাবে না।';
+
+  @override
+  String get errorRoleNotAllowed => 'আপনার ভূমিকায় এটি করার অনুমতি নেই।';
+
+  @override
+  String get errorFeatureNotInPlan => 'আপনার ওয়ার্কস্পেসের প্ল্যানে এটি নেই।';
+
+  @override
+  String get punchErrorOfflineTooOld =>
+      'এই পাঞ্চটি ৭২ ঘণ্টারও বেশি আগে সংরক্ষণ করা হয়েছিল, তাই এখন আর যোগ করা যাবে না। এর বদলে সংশোধনের আবেদন করুন।';
+
+  @override
+  String punchSavedOffline(String time) {
+    return 'ইন্টারনেট সংযোগ নেই। $time-এর পাঞ্চটি এই ফোনে রাখা আছে, সংযোগ ফিরলেই পাঠানো হবে।';
+  }
+
+  @override
+  String punchesWaiting(num count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countStringটি পাঞ্চ পাঠানোর অপেক্ষায়',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String punchesWaitingBody(String times) {
+    return 'সংযোগ ছাড়া নেওয়া হয়েছে: $times। সার্ভারে পৌঁছানো গেলেই অ্যাপ নিজে থেকে এগুলো পাঠিয়ে দেবে।';
+  }
+
+  @override
+  String get punchesSendNow => 'এখনই পাঠান';
+
+  @override
+  String punchesSent(num count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'রাখা $countStringটি পাঞ্চ পাঠানো হয়েছে',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String punchRefusedTitle(String time, String date) {
+    return '$date তারিখের $time-এর পাঞ্চটি রেকর্ড হয়নি';
+  }
+
+  @override
+  String get punchRefusedHint => 'দিনটি ঠিক করতে সংশোধনের আবেদন করুন।';
+
+  @override
+  String get dismiss => 'ঠিক আছে';
+
+  @override
+  String get homePunchRefused =>
+      'সংযোগ ছাড়া রাখা একটি পাঞ্চ রেকর্ড হয়নি। কারণ জানতে হাজিরা খুলুন।';
+
+  @override
+  String get notificationsTitle => 'নোটিফিকেশন';
+
+  @override
+  String get notificationsEmpty => 'এখনো কোনো নোটিফিকেশন নেই।';
+
+  @override
+  String get notificationsLoadFailed => 'আপনার নোটিফিকেশন লোড করা যায়নি।';
+
+  @override
+  String get notificationsMarkAllRead => 'সবগুলো পড়া হয়েছে বলে চিহ্নিত করুন';
+
+  @override
+  String notificationsUnread(num count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'নোটিফিকেশন, $countStringটি অপঠিত',
+      zero: 'নোটিফিকেশন',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get notificationUnread => 'অপঠিত';
+
+  @override
+  String get pushOpen => 'দেখুন';
+
+  @override
+  String get teamTitle => 'টিম';
+
+  @override
+  String get teamSubtitle => 'আজ কে এসেছেন, আর কে ছুটিতে আছেন';
+
+  @override
+  String get teamLoadFailed => 'আপনার টিমের তথ্য লোড করা যায়নি।';
+
+  @override
+  String get teamEmpty => 'এখানে দেখানোর মতো কেউ নেই।';
+
+  @override
+  String get teamAll => 'সবাই';
+
+  @override
+  String get teamOnLeave => 'এই সপ্তাহে ছুটিতে';
+
+  @override
+  String get teamNoLeave => 'এই সপ্তাহে কেউ ছুটিতে নেই।';
+
+  @override
+  String get teamLeaveLoadFailed => 'কে ছুটিতে আছেন, তা লোড করা যায়নি।';
+
+  @override
+  String get teamNoEmployeeBody =>
+      'টিমের তথ্য দেখতে আপনার লগইনের সাথে একটি কর্মী রেকর্ড যুক্ত থাকতে হয়।';
+
+  @override
+  String get accountTitle => 'অ্যাকাউন্ট';
+
+  @override
+  String get accountSubtitle => 'সাইন ইন, পাসওয়ার্ড ও দুই ধাপে সাইন ইন';
+
+  @override
+  String get accountLoadFailed => 'আপনার অ্যাকাউন্টের তথ্য লোড করা যায়নি।';
+
+  @override
+  String get accountName => 'নাম';
+
+  @override
+  String get accountRole => 'ভূমিকা';
+
+  @override
+  String get accountNotSet => 'দেওয়া নেই';
+
+  @override
+  String roleName(String role) {
+    String _temp0 = intl.Intl.selectLogic(role, {
+      'tenant_admin': 'ওয়ার্কস্পেস অ্যাডমিন',
+      'hr_admin': 'এইচআর অ্যাডমিন',
+      'hr_officer': 'এইচআর কর্মকর্তা',
+      'attendance_officer': 'হাজিরা কর্মকর্তা',
+      'auditor': 'নিরীক্ষক',
+      'employee': 'কর্মী',
+      'other': 'অজানা',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get accountTwoStep => 'দুই ধাপে সাইন ইন';
+
+  @override
+  String get accountTwoStepOn => 'চালু';
+
+  @override
+  String get accountTwoStepOff => 'বন্ধ';
+
+  @override
+  String get accountTwoStepRequired => 'আপনার ভূমিকার জন্য বাধ্যতামূলক।';
+
+  @override
+  String get accountTwoStepHint =>
+      'গুড পিপলের ওয়েব অ্যাপ থেকে এটি চালু বা বন্ধ করুন।';
+
+  @override
+  String get accountNoPassword =>
+      'আপনি মোবাইলে পাঠানো কোড দিয়ে সাইন ইন করেন, তাই বদলানোর মতো কোনো পাসওয়ার্ড নেই।';
+
+  @override
+  String get changePassword => 'পাসওয়ার্ড বদলান';
+
+  @override
+  String get currentPassword => 'বর্তমান পাসওয়ার্ড';
+
+  @override
+  String get currentPasswordRequired => 'আপনার বর্তমান পাসওয়ার্ড লিখুন';
+
+  @override
+  String get newPassword => 'নতুন পাসওয়ার্ড';
+
+  @override
+  String get newPasswordHint => 'কমপক্ষে ১০টি অক্ষর';
+
+  @override
+  String get confirmNewPassword => 'নতুন পাসওয়ার্ড আবার লিখুন';
+
+  @override
+  String get newPasswordTooShort => 'কমপক্ষে ১০টি অক্ষর ব্যবহার করুন';
+
+  @override
+  String get newPasswordSame =>
+      'এমন একটি পাসওয়ার্ড বেছে নিন যা আপনি এখন ব্যবহার করছেন না';
+
+  @override
+  String get newPasswordMismatch => 'দুটি নতুন পাসওয়ার্ড মিলছে না';
+
+  @override
+  String get passwordChanged =>
+      'পাসওয়ার্ড বদলানো হয়েছে। এই ফোনে আপনি সাইন ইন থাকবেন; অন্য ফোন ও ব্রাউজার থেকে সাইন আউট করে দেওয়া হয়েছে।';
 }

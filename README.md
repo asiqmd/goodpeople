@@ -21,8 +21,14 @@ A multi-tenant HR and payroll platform, built for Bangladesh first and ready to 
     statutory notice (employees resign through approvals), back-dated job changes, an
     encrypted documents vault, English and Bangla letters, ID cards and service books as PDFs,
     Excel bulk import, and selfie punches.
+  - **Phase 1 M5 (notifications, self-service & go-live):** role templates with permissions,
+    workspace logins, sign-in by SMS code for employees and two-step sign-in for admins, an
+    inbox with email, SMS and push in English and Bangla, forms that keep what was typed,
+    security headers and rate limits, a measured 5,000-employee workspace, a production
+    deployment kit, and the go-live checklist. The mobile app gains a team view, push and an
+    offline punch queue.
 - **Next:**
-  - Phase 1 M5: notifications, self-service and go-live.
+  - Our own organisations go live: [docs/ops/go-live.md](docs/ops/go-live.md).
   - Then payroll (Phase 2).
   - The plan is in [docs/phases/phase-1.md](docs/phases/phase-1.md).
 
@@ -31,10 +37,12 @@ A multi-tenant HR and payroll platform, built for Bangladesh first and ready to 
 ```
 apps/
   api/       NestJS 12 (ESM) modular monolith: auth, tenancy, entitlements, platform admin, org,
-             employees, leave, attendance, approvals, documents, lifecycle, letters, imports
+             employees, leave, attendance, approvals, documents, lifecycle, letters, imports,
+             accounts and users, notifications, setup checklist
   web/       Next.js 16: Super Admin console (/platform) and workspace app (/workspace), en/bn
-  mobile/    Flutter app: sign-in, profile, documents, leave, attendance (location and selfie
-             punching), resignation, approvals, en/bn
+  mobile/    Flutter app: sign-in (password or SMS code), profile, documents, leave, attendance
+             (location and selfie punching, offline queue), resignation, approvals, team view,
+             notifications and push, en/bn
   edge-agent/  On-site service that buffers ZKTeco and Hikvision punches (see its README)
 packages/
   shared/    Contract shared by API and web: billing modes, plans, resolveAccess(), zod schemas
@@ -42,7 +50,8 @@ packages/
   db/        Drizzle schema, SQL migrations (incl. RLS), setup/migrate/seed scripts
   config/    Shared TypeScript config
 docs/adr/    Architecture decisions
-infra/       Docker Compose for local services (optional)
+docs/ops/    Production runbook and the go-live checklist
+infra/       Docker Compose for local services, and the production stack (Caddy, backups)
 ```
 
 ## Prerequisites
@@ -84,6 +93,9 @@ pnpm --filter @gp/web dev
 | Paid, payment overdue → read-only                          | `/login`          | `acme-garments` | `admin@acme-garments.test` |
 | Trial on the Starter plan                                  | `/login`          | `trial-co`      | `admin@trial-co.test`      |
 
+In development, email, SMS and push are written to the API's log (`EMAIL_DRIVER=log` and so
+on), so a sign-in code for an employee login with a mobile number shows up there.
+
 The seed tracks attendance from 1 October 2026, with device punches for 1–23 October:
 the Gazipur factory on the day shift, Narayanganj on a day/night roster, the head office
 punching from the web. Device user 1010 is left unmatched on purpose, to try claiming it.
@@ -96,6 +108,16 @@ cd apps/mobile && flutter analyze && flutter test
 ```
 
 `pnpm test` includes the Edge Agent's tests.
+
+**At scale:** `pnpm --filter @gp/db seed:scale` adds a `scale-test` workspace with 5,000
+employees and a month of punches; `SEED_PASSWORD=… node apps/api/scripts/measure-scale.mjs`
+then times the busiest API calls against it.
+
+## Production
+
+[docs/ops/runbook.md](docs/ops/runbook.md) installs the Docker stack in `infra/` (Caddy with
+TLS, the API, the web app, backups), creates the first super admin without demo data
+(`create-super-admin`), and covers upgrades and restores.
 
 ## How the subscription bypass works
 

@@ -9,9 +9,10 @@ import {
   orgUnits,
   type Tx,
 } from '@gp/db';
-import { HR_ROLES, type JobAssignmentView } from '@gp/shared';
+import type { JobAssignmentView } from '@gp/shared';
 import { and, desc, eq, gte, inArray, isNull, lte, or, type SQL } from 'drizzle-orm';
 import type { AuthUser } from '../../common/auth-user.js';
+import { userCan } from '../../common/roles.js';
 import { alias, type AnyPgColumn } from 'drizzle-orm/pg-core';
 
 /** The job assignment in force on a date: started on or before it and not ended before it. */
@@ -81,8 +82,6 @@ export function currentOf(history: JobAssignmentView[], today: string): JobAssig
 
 type EmployeeRow = typeof employees.$inferSelect;
 
-export const isHr = (user: AuthUser) => (HR_ROLES as readonly string[]).includes(user.role);
-
 /** The employee record linked to a workspace login, if any. */
 export async function employeeOfUser(tx: Tx, userId: string): Promise<EmployeeRow | null> {
   const [row] = await tx.select().from(employees).where(eq(employees.userId, userId));
@@ -107,8 +106,8 @@ export const employeesInUnits = (tx: Tx, units: string[], onDate: string) =>
     .where(and(inArray(jobAssignments.orgUnitId, units), inForceOn(onDate)));
 
 /**
- * Whose team-level data a user may see, as a condition on an employee id column. HR sees
- * everyone (or one unit and below); others see themselves, their direct reports and
+ * Whose team-level data a user may see, as a condition on an employee id column. Anyone who
+ * may read every employee sees everyone (or one unit and below); others see themselves, their direct reports and
  * colleagues in their own unit. null: the user has no employee record and is not HR.
  */
 export async function teamScope(
@@ -117,7 +116,7 @@ export async function teamScope(
   employeeId: AnyPgColumn,
   options: { onDate: string; orgUnitId?: string },
 ): Promise<SQL | undefined | null> {
-  if (isHr(user)) {
+  if (userCan(user, 'employees.read')) {
     if (!options.orgUnitId) return undefined;
     const units = await unitAndBelow(tx, options.orgUnitId);
     return inArray(employeeId, employeesInUnits(tx, units, options.onDate));

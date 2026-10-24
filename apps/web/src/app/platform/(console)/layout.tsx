@@ -23,6 +23,9 @@ export default async function ConsoleLayout({ children }: LayoutProps<'/platform
               <Link href="/platform/audit" className="hover:text-slate-900">
                 {t('audit')}
               </Link>
+              <Link href="/platform/account" className="hover:text-slate-900">
+                {t('account')}
+              </Link>
             </nav>
           </div>
           <div className="flex items-center gap-4">

@@ -117,6 +117,7 @@ export function toPunchView(
     id: p.id,
     punchedAt: p.punchedAt.toISOString(),
     source: p.source,
+    offline: p.offline,
     direction: p.direction,
     device,
     distanceM: p.distanceM,

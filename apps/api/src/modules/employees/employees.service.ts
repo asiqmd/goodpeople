@@ -252,8 +252,11 @@ export class EmployeesService {
     });
   }
 
-  async get(id: string): Promise<EmployeeDetail> {
-    const detail = await this.tenantDb.run((tx) => this.detail(tx, eq(employees.id, id)));
+  /** `revealIdentity` false masks identity numbers to their last four digits. */
+  async get(id: string, revealIdentity = true): Promise<EmployeeDetail> {
+    const detail = await this.tenantDb.run((tx) =>
+      this.detail(tx, eq(employees.id, id), revealIdentity),
+    );
     if (!detail) throw new NotFoundException('Employee not found');
     return detail;
   }
@@ -280,7 +283,8 @@ export class EmployeesService {
   ): Promise<HireResult> {
     const limit = tenant.access.limits.max_employees;
     const portal = input.portalAccess;
-    const password = portal
+    // A login with only a mobile number signs in by SMS code and has no password.
+    const password = portal?.email
       ? (portal.password ?? randomBytes(12).toString('base64url'))
       : undefined;
     const passwordHash = password ? await hashPassword(password) : undefined;
@@ -292,7 +296,7 @@ export class EmployeesService {
 
     return {
       employee: await this.get(id),
-      ...(portal && !portal.password ? { temporaryPassword: password } : {}),
+      ...(password && !portal?.password ? { temporaryPassword: password } : {}),
     };
   }
 
@@ -324,9 +328,10 @@ export class EmployeesService {
             .insert(tenantUsers)
             .values({
               tenantId,
-              email: portal.email.toLowerCase(),
+              email: portal.email?.toLowerCase() ?? null,
+              phone: portal.phone ?? null,
               name: input.fullName,
-              passwordHash: passwordHash!,
+              passwordHash: passwordHash ?? null,
               role: portal.role,
             })
             .returning({ id: tenantUsers.id })
@@ -372,7 +377,9 @@ export class EmployeesService {
         fullName: input.fullName,
         joinedOn: input.joinedOn,
         job: input.job,
-        portalAccess: portal ? { email: portal.email, role: portal.role } : null,
+        portalAccess: portal
+          ? { email: portal.email ?? null, phone: portal.phone ?? null, role: portal.role }
+          : null,
       },
     });
     return row!.id;
@@ -644,7 +651,7 @@ export class EmployeesService {
 
   // ── helpers ────────────────────────────────────────────────────────────────
 
-  private async detail(tx: Tx, where: SQL): Promise<EmployeeDetail | null> {
+  private async detail(tx: Tx, where: SQL, revealIdentity = true): Promise<EmployeeDetail | null> {
     const [e] = await tx.select().from(employees).where(where);
     if (!e) return null;
     const today = todayIn();
@@ -662,7 +669,13 @@ export class EmployeesService {
         .orderBy(asc(employeePaymentAccounts.createdAt)),
       e.userId
         ? await tx
-            .select({ id: tenantUsers.id, email: tenantUsers.email, role: tenantUsers.role })
+            .select({
+              id: tenantUsers.id,
+              email: tenantUsers.email,
+              phone: tenantUsers.phone,
+              role: tenantUsers.role,
+              disabledAt: tenantUsers.disabledAt,
+            })
             .from(tenantUsers)
             .where(eq(tenantUsers.id, e.userId))
         : [],
@@ -689,10 +702,14 @@ export class EmployeesService {
       permanentAddress: e.permanentAddress,
       emergencyContact: e.emergencyContact,
       identity: {
-        nid: this.decrypt(e.nidEnc, CIPHER_FIELDS.nid),
-        birthRegistration: this.decrypt(e.birthRegistrationEnc, CIPHER_FIELDS.birthRegistration),
-        passport: this.decrypt(e.passportEnc, CIPHER_FIELDS.passport),
-        tin: this.decrypt(e.tinEnc, CIPHER_FIELDS.tin),
+        nid: this.reveal(e.nidEnc, CIPHER_FIELDS.nid, revealIdentity),
+        birthRegistration: this.reveal(
+          e.birthRegistrationEnc,
+          CIPHER_FIELDS.birthRegistration,
+          revealIdentity,
+        ),
+        passport: this.reveal(e.passportEnc, CIPHER_FIELDS.passport, revealIdentity),
+        tin: this.reveal(e.tinEnc, CIPHER_FIELDS.tin, revealIdentity),
       },
       joinedOn: e.joinedOn,
       probationEndsOn: e.probationEndsOn,
@@ -702,7 +719,15 @@ export class EmployeesService {
       currentJob: currentOf(history, today),
       nominees: nominees.map(toNomineeView),
       paymentAccounts: accounts.map(toPaymentAccountView),
-      portalUser: user ?? null,
+      portalUser: user
+        ? {
+            id: user.id,
+            email: user.email,
+            phone: user.phone,
+            role: user.role,
+            disabled: !!user.disabledAt,
+          }
+        : null,
       createdAt: e.createdAt.toISOString(),
       updatedAt: e.updatedAt.toISOString(),
     };
@@ -761,6 +786,12 @@ export class EmployeesService {
 
   private encrypt(value: string, field: CipherField) {
     return this.cipher.encrypt(value, { tenantId: currentTenantId(), field });
+  }
+
+  /** An identity number in clear, or only its last four digits for roles without the permission. */
+  private reveal(value: string | null, field: CipherField, reveal: boolean) {
+    const plain = this.decrypt(value, field);
+    return plain === null || reveal ? plain : `••••${plain.slice(-4)}`;
   }
 
   private decrypt(value: string | null, field: CipherField) {

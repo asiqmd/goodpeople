@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useActionState, useState } from 'react';
 import { saveNominees } from '@/app/actions/hr';
 import type { ActionState } from '@/app/actions/platform';
-import { SubmitButton } from '../forms';
+import { ErrorText, Form, SubmitButton } from '../forms';
 import { Banner, buttonClass, inputClass } from '../ui';
 
 interface Row {
@@ -35,9 +35,13 @@ export function NomineesForm({
     setRows((all) => all.map((r) => (r.key === key ? { ...r, ...patch } : r)));
 
   return (
-    <form action={action} className="space-y-4">
+    <Form state={state} action={action} className="space-y-4">
       <p className="text-sm text-slate-600">{t('nomineesHint')}</p>
-      {state?.error && <Banner tone="red">{state.error}</Banner>}
+      {state?.error && (
+        <Banner tone="red">
+          <ErrorText state={state} />
+        </Banner>
+      )}
       {state?.ok && <Banner tone="green">{tf('saved')}</Banner>}
       {rows.length === 0 && <p className="text-sm text-slate-500">{t('noNominees')}</p>}
       {rows.map((row, i) => (
@@ -109,6 +113,6 @@ export function NomineesForm({
         </span>
       </div>
       <SubmitButton>{tf('save')}</SubmitButton>
-    </form>
+    </Form>
   );
 }

@@ -11,7 +11,7 @@ import {
 import { useTranslations } from 'next-intl';
 import { useActionState, useRef, useState } from 'react';
 import { addGrant, assignCompany, updateBilling, type ActionState } from '@/app/actions/platform';
-import { issueFor, SubmitButton } from './forms';
+import { ErrorText, Form, issueFor, SubmitButton } from './forms';
 import { Banner, buttonClass, Field, inputClass } from './ui';
 
 function ReasonField({ state }: { state: ActionState<unknown> }) {
@@ -127,10 +127,12 @@ function AssignCompanyForm({
   }
 
   return (
-    <form action={action} className="mt-6 grid gap-4 sm:grid-cols-2">
+    <Form state={state} action={action} className="mt-6 grid gap-4 sm:grid-cols-2">
       {state?.error && (
         <div className="sm:col-span-2">
-          <Banner tone="red">{state.error}</Banner>
+          <Banner tone="red">
+            <ErrorText state={state} />
+          </Banner>
         </div>
       )}
       <Field label={t('name')} error={issueFor(state, 'name')}>
@@ -196,7 +198,7 @@ function AssignCompanyForm({
         </button>
         <SubmitButton>{t('assignCompany')}</SubmitButton>
       </div>
-    </form>
+    </Form>
   );
 }
 
@@ -214,8 +216,12 @@ export function BillingForm({
     undefined,
   );
   return (
-    <form action={action} className="space-y-4">
-      {state?.error && <Banner tone="red">{state.error}</Banner>}
+    <Form state={state} action={action} className="space-y-4">
+      {state?.error && (
+        <Banner tone="red">
+          <ErrorText state={state} />
+        </Banner>
+      )}
       {state?.ok && <Banner tone="green">✓</Banner>}
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label={t('billingMode')}>
@@ -235,7 +241,7 @@ export function BillingForm({
       </Field>
       <ReasonField state={state} />
       <SubmitButton>{tc('save')}</SubmitButton>
-    </form>
+    </Form>
   );
 }
 
@@ -247,8 +253,12 @@ export function GrantForm({ tenantId }: { tenantId: string }) {
     undefined,
   );
   return (
-    <form action={action} className="space-y-4">
-      {state?.error && <Banner tone="red">{state.error}</Banner>}
+    <Form state={state} action={action} className="space-y-4">
+      {state?.error && (
+        <Banner tone="red">
+          <ErrorText state={state} />
+        </Banner>
+      )}
       {state?.ok && <Banner tone="green">✓</Banner>}
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label={t('feature')}>
@@ -266,6 +276,6 @@ export function GrantForm({ tenantId }: { tenantId: string }) {
       </div>
       <ReasonField state={state} />
       <SubmitButton variant="secondary">{t('addGrant')}</SubmitButton>
-    </form>
+    </Form>
   );
 }

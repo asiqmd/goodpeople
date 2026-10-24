@@ -1,4 +1,5 @@
 import {
+  can,
   addDays,
   todayIn,
   type AttendanceSettingsView,
@@ -17,7 +18,6 @@ import {
 import { day } from '@/components/leave/leave-views';
 import { Badge, Card } from '@/components/ui';
 import { currentTenantUser, load } from '@/lib/api';
-import { isHrRole } from '@/lib/roles';
 
 /** Rule values here are numbers or lists of rest intervals. */
 const ruleValue = (value: unknown) =>
@@ -28,7 +28,8 @@ const ruleValue = (value: unknown) =>
     : String(value);
 
 export default async function AttendanceSettingsPage() {
-  if (!isHrRole((await currentTenantUser())?.role)) redirect('/workspace/attendance');
+  if (!can((await currentTenantUser())?.role, 'attendance.manage'))
+    redirect('/workspace/attendance');
   const t = await getTranslations('attendance');
   const format = await getFormatter();
   const locale = await getLocale();

@@ -1,4 +1,5 @@
 import {
+  can,
   addDays,
   todayIn,
   type EmployeeListItem,
@@ -13,14 +14,14 @@ import { SetupTabs } from '@/components/attendance/setup-tabs';
 import { AssignShiftForm, RosterForm } from '@/components/attendance/setup-forms';
 import { buttonClass, Card, inputClass } from '@/components/ui';
 import { currentTenantUser, load } from '@/lib/api';
-import { isHrRole } from '@/lib/roles';
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 export default async function RosterPage({
   searchParams,
 }: PageProps<'/workspace/attendance/roster'>) {
-  if (!isHrRole((await currentTenantUser())?.role)) redirect('/workspace/attendance');
+  if (!can((await currentTenantUser())?.role, 'attendance.manage'))
+    redirect('/workspace/attendance');
   const t = await getTranslations('attendance');
   const format = await getFormatter();
   const sp = await searchParams;

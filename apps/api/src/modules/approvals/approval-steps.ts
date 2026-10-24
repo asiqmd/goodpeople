@@ -2,6 +2,7 @@ import { approvalSteps, employees, jobAssignments, type Tx } from '@gp/db';
 import type { ApprovalItem, ApprovalStepKind, ApprovalSubject } from '@gp/shared';
 import { and, eq, inArray, type SQL } from 'drizzle-orm';
 import { inForceOn } from '../employees/employee.queries.js';
+import type { ApprovalSummary } from './approval-notices.js';
 
 export type ApprovalStepRow = typeof approvalSteps.$inferSelect;
 
@@ -88,4 +89,6 @@ export interface ApprovalSubjectHandler<View = unknown> {
   /** Inbox entries for these waiting steps, with a date to sort the combined inbox by. */
   inboxItems(tx: Tx, steps: ApprovalStepRow[]): Promise<{ sortKey: string; item: ApprovalItem }[]>;
   view(subjectId: string): Promise<View>;
+  /** A line about the request for notifications. */
+  summarize(tx: Tx, subjectId: string): Promise<ApprovalSummary>;
 }

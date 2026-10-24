@@ -1,14 +1,13 @@
-import { MAX_IMPORT_ROWS } from '@gp/shared';
+import { can, MAX_IMPORT_ROWS } from '@gp/shared';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { ImportEmployeesForm } from '@/components/lifecycle/lifecycle-forms';
 import { buttonClass, Card } from '@/components/ui';
 import { currentTenantUser } from '@/lib/api';
-import { isHrRole } from '@/lib/roles';
 
 export default async function ImportEmployeesPage() {
-  if (!isHrRole((await currentTenantUser())?.role)) redirect('/workspace');
+  if (!can((await currentTenantUser())?.role, 'imports.run')) redirect('/workspace');
   const t = await getTranslations('lifecycle.import');
   return (
     <>

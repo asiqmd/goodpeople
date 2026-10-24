@@ -7,6 +7,7 @@ import 'auth/auth_controller.dart';
 import 'auth/login_screen.dart';
 import 'documents/file_opener.dart';
 import 'home/home_screen.dart';
+import 'home/session_services.dart';
 import 'l10n/app_localizations.dart';
 import 'settings/locale_controller.dart';
 import 'ui/theme.dart';
@@ -34,7 +35,9 @@ class GoodPeopleApp extends ConsumerWidget {
 /// Signing in, signing out and an expired session all switch screens here,
 /// so no screen has to navigate on its own. Signing out also closes any
 /// screen pushed on top of home, such as the profile, and deletes the
-/// document last opened in the phone's viewer.
+/// document last opened in the phone's viewer. While signed in,
+/// [SessionServices] runs around home: the offline punch queue, the inbox
+/// and push.
 class AuthGate extends ConsumerWidget {
   const AuthGate({super.key});
 
@@ -49,7 +52,10 @@ class AuthGate extends ConsumerWidget {
       }
     });
     return switch (ref.watch(authProvider)) {
-      final SignedIn session => HomeScreen(session: session),
+      final SignedIn session => SessionServices(
+        key: ValueKey(session.user.id),
+        child: HomeScreen(session: session),
+      ),
       SignedOut(:final sessionExpired) => LoginScreen(
         sessionExpired: sessionExpired,
       ),

@@ -118,10 +118,20 @@ export const selfPunchSchema = z
     latitude: z.coerce.number().min(-90).max(90).optional(),
     longitude: z.coerce.number().min(-180).max(180).optional(),
     accuracyM: z.coerce.number().min(0).max(100_000).optional(),
+    /**
+     * A punch the app recorded without a connection and sends later: when it happened, and an
+     * id the app chose so a resend is recognised instead of counted twice.
+     */
+    punchedAt: z.iso.datetime({ offset: true }).optional(),
+    clientId: z.uuid().optional(),
   })
   .refine((p) => (p.latitude === undefined) === (p.longitude === undefined), {
     message: 'Send both latitude and longitude, or neither',
     path: ['longitude'],
+  })
+  .refine((p) => p.punchedAt === undefined || p.clientId !== undefined, {
+    message: 'A punch sent later needs its clientId',
+    path: ['clientId'],
   });
 export type SelfPunchInput = z.infer<typeof selfPunchSchema>;
 

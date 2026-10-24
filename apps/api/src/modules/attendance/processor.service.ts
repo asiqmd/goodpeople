@@ -12,12 +12,13 @@ import {
 import { bdWorkLimits } from '@gp/country-packs';
 import {
   addDays,
-  dayBoundary,
-  evaluateDay,
-  todayIn,
   type AttendanceFlag,
+  dayBoundary,
   type DayResult,
+  evaluateDay,
+  groupBy,
   type LeaveCover,
+  todayIn,
 } from '@gp/shared';
 import { and, eq, gte, inArray, isNull, lte, or, sql } from 'drizzle-orm';
 import { currentTenantId } from '../../common/request-context.js';
@@ -152,10 +153,13 @@ export class AttendanceProcessor {
       return v;
     };
 
+    const punchesOf = groupBy(punches, (p) => p.employeeId!);
+    const leaveOf = groupBy(leave, (l) => l.employeeId);
     const out: ComputedDay[] = [];
     for (const person of people) {
       const days = plans.get(person.id)!;
-      const mine = punches.filter((p) => p.employeeId === person.id);
+      const mine = punchesOf.get(person.id) ?? [];
+      const myLeave = leaveOf.get(person.id) ?? [];
       const start = person.joinedOn > from ? person.joinedOn : from;
       const end = person.separatedOn && person.separatedOn < to ? person.separatedOn : to;
       for (let i = 1; i < days.length - 1; i++) {
@@ -165,9 +169,8 @@ export class AttendanceProcessor {
         const closesAt = dayBoundary(plan.window.end, next.window.start);
         const dayPunches = mine.filter((p) => p.punchedAt >= opensAt && p.punchedAt < closesAt);
 
-        const request = leave.find(
+        const request = myLeave.find(
           (l) =>
-            l.employeeId === person.id &&
             l.startDate <= plan.date &&
             l.endDate >= plan.date &&
             (plan.dayType === 'working' || l.countsOffDays),

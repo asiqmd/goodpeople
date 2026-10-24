@@ -36,7 +36,7 @@ import {
   type UpdateEmployeeInput,
 } from '@gp/shared';
 import { CurrentTenant, CurrentUser, type AuthUser } from '../../common/auth-user.js';
-import { HrOnly, TenantRolesGuard } from '../../common/roles.js';
+import { Permits, TenantRolesGuard, userCan } from '../../common/roles.js';
 import { openApiBody, zod } from '../../common/zod.js';
 import { AccessStateGuard, FeatureGuard, RequireFeature } from '../entitlements/guards.js';
 import { EmployeesService } from './employees.service.js';
@@ -45,12 +45,12 @@ import { EmployeesService } from './employees.service.js';
 @ApiBearerAuth()
 @UseGuards(AccessStateGuard, FeatureGuard, TenantRolesGuard)
 @RequireFeature('core_hr')
-@HrOnly()
 @Controller('tenant/employees')
 export class EmployeesController {
   constructor(private readonly employees: EmployeesService) {}
 
   @Get()
+  @Permits('employees.read')
   list(
     @Query(zod(employeeListQuerySchema)) query: EmployeeListQuery,
   ): Promise<Page<EmployeeListItem>> {
@@ -58,6 +58,7 @@ export class EmployeesController {
   }
 
   @Post()
+  @Permits('employees.write')
   @ApiBody(openApiBody(hireEmployeeSchema))
   hire(
     @CurrentUser() actor: AuthUser,
@@ -68,11 +69,16 @@ export class EmployeesController {
   }
 
   @Get(':id')
-  get(@Param('id', ParseUUIDPipe) id: string): Promise<EmployeeDetail> {
-    return this.employees.get(id);
+  @Permits('employees.read')
+  get(
+    @CurrentUser() user: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<EmployeeDetail> {
+    return this.employees.get(id, userCan(user, 'employees.identity'));
   }
 
   @Patch(':id')
+  @Permits('employees.write')
   @ApiBody(openApiBody(updateEmployeeSchema))
   update(
     @CurrentUser() actor: AuthUser,
@@ -83,12 +89,14 @@ export class EmployeesController {
   }
 
   @Get(':id/job-history')
+  @Permits('employees.read')
   history(@Param('id', ParseUUIDPipe) id: string): Promise<JobAssignmentView[]> {
     return this.employees.history(id);
   }
 
   /** Confirmation, transfer, promotion, increment, redesignation or another change, from a date. */
   @Post(':id/job-changes')
+  @Permits('employees.write')
   @ApiBody(openApiBody(jobChangeSchema))
   changeJob(
     @CurrentUser() actor: AuthUser,
@@ -100,6 +108,7 @@ export class EmployeesController {
 
   /** Corrects a mistake in a job history entry; real changes go through job-changes. */
   @Patch(':id/jobs/:jobId')
+  @Permits('employees.write')
   @ApiBody(openApiBody(jobCorrectionSchema))
   correctJob(
     @CurrentUser() actor: AuthUser,
@@ -111,6 +120,7 @@ export class EmployeesController {
   }
 
   @Put(':id/nominees')
+  @Permits('employees.write')
   @ApiBody(openApiBody(nomineesSchema))
   nominees(
     @CurrentUser() actor: AuthUser,
@@ -121,6 +131,7 @@ export class EmployeesController {
   }
 
   @Put(':id/payment-accounts')
+  @Permits('employees.write')
   @ApiBody(openApiBody(paymentAccountsSchema))
   paymentAccounts(
     @CurrentUser() actor: AuthUser,

@@ -3,17 +3,10 @@
 import type { EmployeeDetail, HireResult } from '@gp/shared';
 import { revalidatePath } from 'next/cache';
 import { authedFetch } from '@/lib/api';
-import { nest, rows, toNumber } from '@/lib/form';
+import { fail, nest, rows, toNumber } from '@/lib/form';
 import type { ActionState } from './platform';
 
 const CLEAR = '__clear';
-
-const fail = (result: {
-  error: { message: string; issues?: { path: string; message: string }[] };
-}) => ({
-  error: result.error.message,
-  issues: result.error.issues,
-});
 
 /** Personal, contact, identity and address fields shared by the hire and edit forms. */
 function personBody(data: Record<string, any>) {

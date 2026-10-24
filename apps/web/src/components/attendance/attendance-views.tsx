@@ -200,6 +200,11 @@ export async function PunchList({
               })}
             </span>{' '}
             <Badge tone="slate">{t(`source.${p.source}`)}</Badge>{' '}
+            {p.offline && (
+              <>
+                <Badge tone="blue">{t('offlinePunch')}</Badge>{' '}
+              </>
+            )}
             {p.device && <span className="text-xs text-slate-500">{p.device.name}</span>}
             {p.distanceM !== null && (
               <span className="text-xs text-slate-500">

@@ -3,12 +3,8 @@
 import type { DocumentView, ImportBatchView, LetterPreview, SeparationView } from '@gp/shared';
 import { revalidatePath } from 'next/cache';
 import { authedFetch, authedUpload } from '@/lib/api';
-import { nest } from '@/lib/form';
+import { fail, nest } from '@/lib/form';
 import type { ActionState } from './platform';
-
-const fail = (result: {
-  error: { message: string; code?: string; issues?: { path: string; message: string }[] };
-}) => ({ error: result.error.message, code: result.error.code, issues: result.error.issues });
 
 /** The same form without its empty text fields, which the API reads as "not given". */
 function withoutEmpty(form: FormData): FormData {

@@ -56,3 +56,43 @@ class AppConfig {
 final appConfigProvider = Provider<AppConfig>(
   (ref) => AppConfig.fromEnvironment(),
 );
+
+/// Firebase's settings for push notifications, from `--dart-define`s:
+/// `FIREBASE_API_KEY`, `FIREBASE_APP_ID`, `FIREBASE_MESSAGING_SENDER_ID`
+/// and `FIREBASE_PROJECT_ID`. The app ID differs between the Android and
+/// the iOS app, so each build passes its own.
+///
+/// Built this way, the app needs no `google-services.json` or
+/// `GoogleService-Info.plist`. Without the defines push is off; the inbox
+/// still reloads whenever the app comes back to the foreground.
+class FirebaseConfig {
+  const FirebaseConfig({
+    required this.apiKey,
+    required this.appId,
+    required this.messagingSenderId,
+    required this.projectId,
+  });
+
+  /// `null` unless all four defines are set.
+  static FirebaseConfig? fromEnvironment() {
+    const config = FirebaseConfig(
+      apiKey: String.fromEnvironment('FIREBASE_API_KEY'),
+      appId: String.fromEnvironment('FIREBASE_APP_ID'),
+      messagingSenderId: String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID'),
+      projectId: String.fromEnvironment('FIREBASE_PROJECT_ID'),
+    );
+    return config.isComplete ? config : null;
+  }
+
+  final String apiKey;
+  final String appId;
+  final String messagingSenderId;
+  final String projectId;
+
+  bool get isComplete => [
+    apiKey,
+    appId,
+    messagingSenderId,
+    projectId,
+  ].every((value) => value.trim().isNotEmpty);
+}

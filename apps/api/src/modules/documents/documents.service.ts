@@ -24,7 +24,8 @@ import { FIELD_CIPHER, TenantDb } from '../../db/db.module.js';
 import type { FileStore } from '../../storage/file-store.js';
 import { FILE_STORE } from '../../storage/storage.module.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
-import { employeeOfUser, isHr } from '../employees/employee.queries.js';
+import { userCan } from '../../common/roles.js';
+import { employeeOfUser } from '../employees/employee.queries.js';
 
 export type DocumentRow = typeof documents.$inferSelect;
 
@@ -229,7 +230,7 @@ export class DocumentsService {
         .from(documents)
         .where(and(eq(documents.id, id), isNull(documents.deletedAt)));
       if (!row) throw new NotFoundException('Document not found');
-      if (!isHr(user)) {
+      if (!userCan(user, 'documents.manage')) {
         const me = await employeeOfUser(tx, user.id);
         if (me?.id !== row.employeeId || !row.visibleToEmployee) {
           throw new ForbiddenException('This document is not shared with you');

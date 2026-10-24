@@ -1,6 +1,6 @@
 import 'server-only';
 import type { ApiError, TenantRole } from '@gp/shared';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { cookieNames, type SessionKind } from './session';
 
@@ -18,11 +18,22 @@ export async function apiFetch<T>(
     headers: {
       'content-type': 'application/json',
       ...(init.token ? { authorization: `Bearer ${init.token}` } : {}),
+      ...(await visitorAddress()),
     },
     body: init.body === undefined ? undefined : JSON.stringify(init.body),
     cache: 'no-store',
   });
   return toResult<T>(res);
+}
+
+/**
+ * The visitor's address as the proxy in front of this server saw it (the last entry it
+ * added), passed on so the API's sign-in limits count each visitor, not this server.
+ */
+async function visitorAddress(): Promise<Record<string, string>> {
+  const forwarded = (await headers()).get('x-forwarded-for');
+  const visitor = forwarded?.split(',').at(-1)?.trim();
+  return visitor ? { 'x-forwarded-for': visitor } : {};
 }
 
 async function toResult<T>(res: Response): Promise<ApiResult<T>> {
@@ -114,13 +125,13 @@ export async function proxyFile(
       headers: { 'content-type': 'text/plain; charset=utf-8' },
     });
   }
-  const headers = new Headers({
+  const passed = new Headers({
     'cache-control': 'private, no-store',
     'x-content-type-options': 'nosniff',
   });
   for (const name of ['content-type', 'content-disposition', 'content-length']) {
     const value = res.headers.get(name);
-    if (value) headers.set(name, value);
+    if (value) passed.set(name, value);
   }
-  return new Response(res.body, { status: 200, headers });
+  return new Response(res.body, { status: 200, headers: passed });
 }

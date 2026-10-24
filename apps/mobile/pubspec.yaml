@@ -9,6 +9,11 @@ environment:
 
 dependencies:
   dio: ^5.11.1
+  # Push notifications. Set up from --dart-defines (see FirebaseConfig), so
+  # there is no google-services.json or GoogleService-Info.plist; without
+  # them push is off.
+  firebase_core: ^5.1.0
+  firebase_messaging: ^17.0.1
   flutter:
     sdk: flutter
   flutter_localizations:
@@ -21,7 +26,8 @@ dependencies:
   intl: any
   # Opens a downloaded PDF in the phone's own viewer.
   open_filex: ^5.0.0
-  # The app's cache directory, where that PDF is saved first.
+  # The app's cache directory, where that PDF is saved first, and its
+  # support directory, where punches taken offline wait to be sent.
   path_provider: ^2.1.6
 
 dev_dependencies:

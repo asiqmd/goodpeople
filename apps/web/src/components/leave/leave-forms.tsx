@@ -5,7 +5,7 @@ import { useFormatter, useLocale, useTranslations } from 'next-intl';
 import { useActionState, useEffect, useState, useTransition } from 'react';
 import { applyLeave, cancelLeave, decideApproval, previewLeave } from '@/app/actions/leave';
 import type { ActionState } from '@/app/actions/platform';
-import { SubmitButton } from '../forms';
+import { ErrorText, Form, SubmitButton } from '../forms';
 import { Banner, buttonClass, Field, inputClass } from '../ui';
 
 const typeName = (t: { name: string; nameBn: string | null }, locale: string) =>
@@ -22,12 +22,16 @@ export function ApplyLeaveForm({ types }: { types: LeaveTypeView[] }) {
     undefined,
   );
   return (
-    <form action={action} className="space-y-4">
-      {state?.error && <Banner tone="red">{state.error}</Banner>}
+    <Form state={state} action={action} className="space-y-4">
+      {state?.error && (
+        <Banner tone="red">
+          <ErrorText state={state} />
+        </Banner>
+      )}
       {state?.result && <Banner tone="green">{t('submitted')}</Banner>}
       {/* A new key after each submitted request starts the fields afresh. */}
       <ApplyFields key={state?.result?.id ?? 'new'} types={types} />
-    </form>
+    </Form>
   );
 }
 

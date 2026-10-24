@@ -19,7 +19,7 @@ import { useActionState, useState, type ReactNode } from 'react';
 import { hireEmployee, updateEmployee } from '@/app/actions/hr';
 import type { ActionState } from '@/app/actions/platform';
 import { treeOrder } from '@/lib/org';
-import { issueFor, SubmitButton } from '../forms';
+import { ErrorText, Form, issueFor, SubmitButton } from '../forms';
 import { Banner, buttonClass, Card, Field, inputClass } from '../ui';
 import { AddressFields } from './address-fields';
 
@@ -98,7 +98,7 @@ export function EmployeeForm(
           <Banner tone="green">{t('hired', { name: hired.fullName })}</Banner>
           {temporaryPassword && hired.portalUser && (
             <div className="rounded-lg bg-slate-50 p-4 text-sm ring-1 ring-slate-200">
-              <p>{t('tempPassword', { email: hired.portalUser.email })}</p>
+              <p>{t('tempPassword', { email: hired.portalUser.email ?? '' })}</p>
               <code className="mt-2 block select-all rounded bg-white px-3 py-2 font-mono text-base ring-1 ring-slate-200">
                 {temporaryPassword}
               </code>
@@ -123,8 +123,12 @@ export function EmployeeForm(
   }
 
   return (
-    <form action={formAction} className="space-y-6">
-      {state?.error && <Banner tone="red">{state.error}</Banner>}
+    <Form state={state} action={formAction} className="space-y-6">
+      {state?.error && (
+        <Banner tone="red">
+          <ErrorText state={state} />
+        </Banner>
+      )}
       {state?.ok && <Banner tone="green">{t('saved')}</Banner>}
 
       <Section title={t('personal')}>
@@ -337,7 +341,20 @@ export function EmployeeForm(
           {portal && (
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label={t('portalEmail')} error={err('portalAccess.email')}>
-                <input name="portalAccess.email" type="email" required className={inputClass} />
+                <input name="portalAccess.email" type="email" className={inputClass} />
+              </Field>
+              <Field
+                label={t('portalPhone')}
+                hint={t('portalPhoneHint')}
+                error={err('portalAccess.phone')}
+              >
+                <input
+                  name="portalAccess.phone"
+                  type="tel"
+                  inputMode="tel"
+                  placeholder="01XXXXXXXXX"
+                  className={inputClass}
+                />
               </Field>
               <Field label={t('portalRole')}>
                 <EnumSelect
@@ -356,7 +373,7 @@ export function EmployeeForm(
       <div className="flex justify-end">
         <SubmitButton>{props.mode === 'hire' ? t('hire') : t('save')}</SubmitButton>
       </div>
-    </form>
+    </Form>
   );
 }
 

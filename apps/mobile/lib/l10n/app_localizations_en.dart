@@ -1344,4 +1344,359 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get separationRejected => 'Resignation rejected';
+
+  @override
+  String get signInWithEmail => 'Email';
+
+  @override
+  String get signInWithPhone => 'Mobile';
+
+  @override
+  String get mobileNumber => 'Mobile number';
+
+  @override
+  String get mobileNumberHint => 'e.g. 01712345678';
+
+  @override
+  String get mobileNumberRequired => 'Enter your mobile number';
+
+  @override
+  String get mobileNumberInvalid =>
+      'Enter a Bangladesh mobile number, e.g. 01712345678';
+
+  @override
+  String get sendCode => 'Send code';
+
+  @override
+  String get otpTitle => 'Enter the code we sent';
+
+  @override
+  String otpSentBody(String phone, num minutes) {
+    final intl.NumberFormat minutesNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String minutesString = minutesNumberFormat.format(minutes);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: '$minutesString minutes',
+      one: '$minutesString minute',
+    );
+    return 'If $phone has a Good People login, a 6-digit code is on its way by SMS. It works for $_temp0.';
+  }
+
+  @override
+  String get codeLabel => '6-digit code';
+
+  @override
+  String get codeRequired => 'Enter the 6-digit code';
+
+  @override
+  String get codeWrongOrExpired =>
+      'That code is wrong or has expired. Check it, or ask for a new one.';
+
+  @override
+  String get sendCodeAgain => 'Send again';
+
+  @override
+  String sendCodeAgainHint(String seconds) {
+    return 'Didn\'t get it? You can ask for a new code after $seconds seconds.';
+  }
+
+  @override
+  String get codeSentAgain => 'A new code is on its way.';
+
+  @override
+  String get useDifferentNumber => 'Use a different number';
+
+  @override
+  String get twoStepTitle => 'Two-step sign-in';
+
+  @override
+  String get twoStepBody =>
+      'Enter the 6-digit code from your authenticator app.';
+
+  @override
+  String get twoStepRecoveryBody =>
+      'Enter one of your recovery codes, like k7qm-2xpd. Each one works once.';
+
+  @override
+  String get recoveryCodeLabel => 'Recovery code';
+
+  @override
+  String get recoveryCodeInvalid => 'Enter a recovery code like k7qm-2xpd';
+
+  @override
+  String get useRecoveryCode => 'Use a recovery code instead';
+
+  @override
+  String get useAuthenticatorCode => 'Use a code from the app instead';
+
+  @override
+  String get twoStepWrongCode =>
+      'That code is wrong or has expired. Try again, or go back and sign in again.';
+
+  @override
+  String get verify => 'Verify';
+
+  @override
+  String get twoStepSetupTitle => 'Set up two-step sign-in first';
+
+  @override
+  String get twoStepSetupBody =>
+      'Your role must use two-step sign-in. Set it up in the Good People web app, then sign in here.';
+
+  @override
+  String get back => 'Back';
+
+  @override
+  String get loginWrongCredentials => 'Wrong workspace, email or password';
+
+  @override
+  String get errorTooManyAttempts =>
+      'Too many attempts. Please wait a few minutes and try again.';
+
+  @override
+  String errorTooManyAttemptsWait(num minutes) {
+    final intl.NumberFormat minutesNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String minutesString = minutesNumberFormat.format(minutes);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: 'Too many attempts. Try again in $minutesString minutes.',
+      one: 'Too many attempts. Try again in $minutesString minute.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get errorLoginDisabled =>
+      'This login is no longer active. Ask your HR team.';
+
+  @override
+  String get errorWrongPassword => 'Your current password is not right.';
+
+  @override
+  String get errorTenantSuspended =>
+      'This workspace is suspended. Contact your administrator.';
+
+  @override
+  String get errorTenantReadOnly =>
+      'This workspace is read-only for now, so changes can\'t be saved.';
+
+  @override
+  String get errorRoleNotAllowed => 'Your role can\'t do this.';
+
+  @override
+  String get errorFeatureNotInPlan =>
+      'Your workspace\'s plan doesn\'t include this.';
+
+  @override
+  String get punchErrorOfflineTooOld =>
+      'This punch was saved more than 72 hours ago, so it can\'t be added now. Ask for a correction instead.';
+
+  @override
+  String punchSavedOffline(String time) {
+    return 'No connection. Your punch at $time is saved on this phone and will be sent when you\'re back online.';
+  }
+
+  @override
+  String punchesWaiting(num count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString punches waiting to be sent',
+      one: '$countString punch waiting to be sent',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String punchesWaitingBody(String times) {
+    return 'Taken without a connection at $times. The app sends them as soon as it can reach the server.';
+  }
+
+  @override
+  String get punchesSendNow => 'Send now';
+
+  @override
+  String punchesSent(num count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString saved punches sent',
+      one: '$countString saved punch sent',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String punchRefusedTitle(String time, String date) {
+    return 'Your punch at $time on $date was not recorded';
+  }
+
+  @override
+  String get punchRefusedHint => 'To fix the day, ask for a correction.';
+
+  @override
+  String get dismiss => 'Dismiss';
+
+  @override
+  String get homePunchRefused =>
+      'A punch saved without a connection was not recorded. Open Attendance to see why.';
+
+  @override
+  String get notificationsTitle => 'Notifications';
+
+  @override
+  String get notificationsEmpty => 'No notifications yet.';
+
+  @override
+  String get notificationsLoadFailed => 'We could not load your notifications.';
+
+  @override
+  String get notificationsMarkAllRead => 'Mark all as read';
+
+  @override
+  String notificationsUnread(num count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Notifications, $countString unread',
+      one: 'Notifications, $countString unread',
+      zero: 'Notifications',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get notificationUnread => 'Unread';
+
+  @override
+  String get pushOpen => 'View';
+
+  @override
+  String get teamTitle => 'Team';
+
+  @override
+  String get teamSubtitle => 'Who is in today, and who is on leave';
+
+  @override
+  String get teamLoadFailed => 'We could not load your team.';
+
+  @override
+  String get teamEmpty => 'Nobody to show here.';
+
+  @override
+  String get teamAll => 'All';
+
+  @override
+  String get teamOnLeave => 'On leave this week';
+
+  @override
+  String get teamNoLeave => 'Nobody is on leave this week.';
+
+  @override
+  String get teamLeaveLoadFailed => 'We could not load who is on leave.';
+
+  @override
+  String get teamNoEmployeeBody =>
+      'Team views need an employee record linked to your login.';
+
+  @override
+  String get accountTitle => 'Account';
+
+  @override
+  String get accountSubtitle => 'Sign-in, password and two-step sign-in';
+
+  @override
+  String get accountLoadFailed => 'We could not load your account.';
+
+  @override
+  String get accountName => 'Name';
+
+  @override
+  String get accountRole => 'Role';
+
+  @override
+  String get accountNotSet => 'Not set';
+
+  @override
+  String roleName(String role) {
+    String _temp0 = intl.Intl.selectLogic(role, {
+      'tenant_admin': 'Workspace admin',
+      'hr_admin': 'HR admin',
+      'hr_officer': 'HR officer',
+      'attendance_officer': 'Attendance officer',
+      'auditor': 'Auditor',
+      'employee': 'Employee',
+      'other': 'Unknown',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get accountTwoStep => 'Two-step sign-in';
+
+  @override
+  String get accountTwoStepOn => 'On';
+
+  @override
+  String get accountTwoStepOff => 'Off';
+
+  @override
+  String get accountTwoStepRequired => 'Required for your role.';
+
+  @override
+  String get accountTwoStepHint =>
+      'Turn it on or off in the Good People web app.';
+
+  @override
+  String get accountNoPassword =>
+      'You sign in with a code sent to your mobile, so there is no password to change.';
+
+  @override
+  String get changePassword => 'Change password';
+
+  @override
+  String get currentPassword => 'Current password';
+
+  @override
+  String get currentPasswordRequired => 'Enter your current password';
+
+  @override
+  String get newPassword => 'New password';
+
+  @override
+  String get newPasswordHint => 'At least 10 characters';
+
+  @override
+  String get confirmNewPassword => 'New password again';
+
+  @override
+  String get newPasswordTooShort => 'Use at least 10 characters';
+
+  @override
+  String get newPasswordSame => 'Choose a password you have not been using';
+
+  @override
+  String get newPasswordMismatch => 'The two new passwords are not the same';
+
+  @override
+  String get passwordChanged =>
+      'Password changed. You stay signed in here; other phones and browsers were signed out.';
 }

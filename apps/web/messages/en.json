@@ -31,7 +31,26 @@
     "password": "Password",
     "submit": "Sign in",
     "expired": "Your session ended. Please sign in again.",
-    "failed": "Sign-in failed. Check your details and try again."
+    "failed": "Sign-in failed. Check your details and try again.",
+    "code": "Code",
+    "startAgain": "Start again",
+    "mfaOn": "Two-step sign-in is on.",
+    "recoveryCodesHint": "Keep these recovery codes somewhere safe. Each one signs you in once if you lose your phone. They are shown only now.",
+    "continue": "Continue",
+    "mfaSetupIntro": "Your role must use two-step sign-in. Scan this code with an authenticator app (Google Authenticator, Microsoft Authenticator or similar), then enter the 6-digit code it shows.",
+    "qrAlt": "QR code for your authenticator app",
+    "mfaKey": "Or type this key:",
+    "mfaCodeHint": "The 6-digit code from your authenticator app, or a recovery code",
+    "mfaSetupCodeHint": "The 6-digit code your authenticator app shows now",
+    "verify": "Verify",
+    "otpSent": "If {phone} has a login here, a 6-digit code is on its way by SMS.",
+    "otpCodeHint": "The code is valid for 5 minutes",
+    "sendAgain": "Send the code again",
+    "phone": "Mobile number",
+    "phoneHint": "The number your HR team registered for you",
+    "sendCode": "Send code",
+    "usePassword": "Sign in with email and password",
+    "usePhone": "Sign in with mobile number"
   },
   "workspace": {
     "plan": "Plan",
@@ -44,7 +63,13 @@
     "noEntities": "No legal entities yet.",
     "readOnly": "This workspace is read-only. You can view data but not change it.",
     "suspended": "This workspace is suspended. Contact Good People support.",
-    "limits": "Limits"
+    "limits": "Limits",
+    "nav": {
+      "users": "Users",
+      "setup": "Go-live checklist",
+      "account": "My account",
+      "notificationsLabel": "Notifications ({count} unread)"
+    }
   },
   "platform": {
     "tenants": "Tenants",
@@ -87,7 +112,8 @@
     "details": "Details",
     "noAudit": "No audit entries yet.",
     "backToTenants": "All tenants",
-    "staffOnly": "Platform staff"
+    "staffOnly": "Platform staff",
+    "account": "My account"
   },
   "billingModes": {
     "paid": "Paid",
@@ -234,7 +260,9 @@
       "tempPassword": "One-time password for {email}. It is shown only once: share it securely.",
       "viewEmployee": "Open employee record",
       "hireAnother": "Hire another",
-      "confirmedOn": "Confirmation date"
+      "confirmedOn": "Confirmation date",
+      "portalPhone": "Or mobile number",
+      "portalPhoneHint": "Employees can sign in with a code sent by SMS instead of a password"
     },
     "detail": {
       "profile": "Profile",
@@ -384,7 +412,10 @@
     "roles": {
       "tenant_admin": "Workspace admin",
       "hr_admin": "HR admin",
-      "employee": "Employee"
+      "employee": "Employee",
+      "hr_officer": "HR officer",
+      "attendance_officer": "Attendance officer",
+      "auditor": "Auditor"
     }
   },
   "leave": {
@@ -829,7 +860,8 @@
       "void": "Void",
       "voidReason": "Why is it wrong?"
     },
-    "selfie": "Photo"
+    "selfie": "Photo",
+    "offlinePunch": "Sent later"
   },
   "lifecycle": {
     "nav": {
@@ -1003,5 +1035,271 @@
       "separations": "Separations in progress",
       "documents": "Documents expired or expiring within 60 days"
     }
+  },
+  "errors": {
+    "too_many_attempts": "Too many attempts. Wait a few minutes and try again.",
+    "login_disabled": "This login is no longer active. Ask your HR team.",
+    "tenant_suspended": "This workspace is suspended. Contact Good People support.",
+    "tenant_read_only": "This workspace is read-only, so nothing can be changed.",
+    "role_not_allowed": "Your role cannot do this.",
+    "invalid_reference": "Something you chose no longer exists. Reload the page and try again.",
+    "own_role": "You cannot change your own role.",
+    "own_login": "You cannot disable your own login.",
+    "own_mfa": "Turn your own two-step sign-in off from your account page.",
+    "last_admin": "The workspace needs at least one active workspace admin.",
+    "contact_required": "Keep an email address or a mobile number.",
+    "email_required": "Staff roles sign in with an email address and password.",
+    "employee_has_login": "This employee already has a login.",
+    "employee_not_found": "No employee has this code.",
+    "no_password": "This login signs in with an SMS code and has no password.",
+    "wrong_password": "That password is not right.",
+    "mfa_wrong_code": "That code does not match. Check that the time on your phone is right.",
+    "mfa_required": "Your role must use two-step sign-in, so it cannot be turned off.",
+    "mfa_already_enabled": "Two-step sign-in is already on.",
+    "mfa_not_started": "Start the setup again.",
+    "mfa_needs_password": "Two-step sign-in is for logins with a password.",
+    "template_fixed": "The sign-in code message cannot be changed.",
+    "location_required": "Allow location access to punch.",
+    "selfie_required": "Take a photo to punch.",
+    "self_punch_disabled": "Punching from the app is turned off.",
+    "separated": "Separated employees cannot punch.",
+    "too_soon": "You punched less than a minute ago.",
+    "no_geofence": "Your work location has no geofence yet. Ask HR to set one.",
+    "future_punch": "A punch cannot be in the future.",
+    "offline_punch_too_old": "This punch was recorded too long ago. Ask for a correction instead.",
+    "unsupported_file": "Upload a PDF, JPEG, PNG or WebP file.",
+    "validation_failed": "Some fields need fixing. See the notes below them."
+  },
+  "platformRoles": {
+    "super_admin": "Super admin",
+    "platform_ops": "Platform operations",
+    "support": "Support",
+    "finance": "Finance",
+    "partner_manager": "Partner manager"
+  },
+  "account": {
+    "title": "My account",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Mobile",
+    "role": "Role",
+    "mfa": "Two-step sign-in",
+    "on": "On",
+    "off": "Off",
+    "recoveryLeft": "{count, plural, =0 {No recovery codes left. Turn two-step sign-in off and on again to get new ones.} one {# recovery code left.} other {# recovery codes left.}}",
+    "mfaRequired": "Your role must use two-step sign-in, so it stays on.",
+    "mfaRequiredSetup": "Your role must use two-step sign-in. Set it up now.",
+    "password": "Password",
+    "signIn": "Signing in",
+    "phoneOnly": "You sign in with a code sent by SMS to your mobile number, so there is no password to manage.",
+    "mfaOn": "Two-step sign-in is on.",
+    "recoveryHint": "Keep these recovery codes somewhere safe. Each one signs you in once if you lose your phone. They are shown only now.",
+    "passwordChanged": "Password changed. Your other sessions were signed out.",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "newPasswordHint": "At least 10 characters",
+    "changePassword": "Change password",
+    "mfaIntro": "After your password, you also enter a code from an authenticator app on your phone. Someone who learns your password still cannot sign in.",
+    "mfaStart": "Set up two-step sign-in",
+    "qrAlt": "QR code for your authenticator app",
+    "mfaScan": "Scan this code with an authenticator app (Google Authenticator, Microsoft Authenticator or similar).",
+    "mfaKey": "Or type this key:",
+    "mfaCode": "Code from the app",
+    "mfaCodeHint": "The 6-digit code the app shows now",
+    "mfaConfirm": "Turn on",
+    "confirmPassword": "Your password",
+    "mfaDisable": "Turn off two-step sign-in",
+    "savedCodes": "I've saved them"
+  },
+  "users": {
+    "title": "Workspace logins",
+    "intro": "Who can sign in, with which role. A new role applies within 15 minutes; a disabled login is signed out at once.",
+    "adminsWithoutMfa": "{count, plural, one {# admin does not use two-step sign-in yet.} other {# admins do not use two-step sign-in yet.}}",
+    "name": "Name",
+    "signsInWith": "Signs in with",
+    "role": "Role",
+    "employee": "Employee",
+    "lastSignIn": "Last sign-in",
+    "disabled": "Disabled",
+    "mfa": "Two-step",
+    "never": "Never",
+    "add": "Add a login",
+    "rolesTitle": "What each role can do",
+    "roleDescriptions": {
+      "tenant_admin": "Everything, including logins and roles.",
+      "hr_admin": "All of HR: people, organisation, leave, attendance, documents, letters, notifications and the audit log. Not logins.",
+      "hr_officer": "Day-to-day HR: people (with identity numbers), leave, attendance, documents, lifecycle, imports and HR approvals. Not the organisation set-up or notification settings.",
+      "attendance_officer": "Attendance only: shifts, rosters, devices, punches and corrections, and reading the employee list (identity numbers hidden).",
+      "auditor": "Reads the employee list (identity numbers hidden) and the audit log. Changes nothing.",
+      "employee": "Self-service: their own profile, leave, attendance, documents and their team's approvals."
+    },
+    "created": "Login created for {name}.",
+    "temporaryPassword": "One-time password, shown only now:",
+    "email": "Email",
+    "phone": "Mobile number",
+    "phoneHint": "For signing in with an SMS code (employees)",
+    "roleHint": "Staff roles need an email address",
+    "employeeHint": "Employee code, to link this login to their record",
+    "password": "Password",
+    "passwordHint": "Leave empty for a one-time password",
+    "create": "Create login",
+    "edit": "Edit",
+    "disable": "Disable",
+    "enable": "Enable",
+    "disableConfirm": "Disable {name}'s login? They are signed out at once.",
+    "resetPassword": "Reset password",
+    "resetPasswordConfirm": "Make a new one-time password? The current one stops working and the person is signed out.",
+    "resetMfa": "Reset two-step sign-in",
+    "resetMfaConfirm": "Turn off this person's two-step sign-in, e.g. after a lost phone? They set it up again next time.",
+    "saved": "Saved.",
+    "save": "Save"
+  },
+  "notifications": {
+    "tabs": {
+      "inbox": "Inbox",
+      "settings": "Channels",
+      "templates": "Wording",
+      "log": "Delivery log"
+    },
+    "settingsTitle": "How people are told",
+    "smsUsage": "{used} of {limit} SMS used this month.",
+    "smsUsageUnlimited": "{used} SMS sent this month.",
+    "templatesTitle": "Notification wording",
+    "events": {
+      "approval_requested": "A request waits for a decision",
+      "approval_decided": "A request was decided",
+      "document_expiring": "A document is expiring",
+      "probation_ending": "Probation is ending",
+      "letter_issued": "A letter was issued",
+      "attendance_missing_punch": "A day has one punch only",
+      "auth_otp": "Sign-in code"
+    },
+    "languages": {
+      "en": "English",
+      "bn": "Bangla"
+    },
+    "customized": "Your wording",
+    "otpFixed": "The sign-in code message is fixed so it always says what it is.",
+    "logTitle": "Delivery log",
+    "all": "All",
+    "statuses": {
+      "queued": "Queued",
+      "sent": "Sent",
+      "failed": "Failed",
+      "skipped": "Skipped"
+    },
+    "logEmpty": "Nothing sent yet.",
+    "when": "When",
+    "event": "What",
+    "channel": "Channel",
+    "to": "To",
+    "status": "Status",
+    "devices": "Their devices",
+    "inboxTitle": "Notifications",
+    "markAllRead": "Mark all as read",
+    "inboxEmpty": "Nothing yet. You will be told here when something needs you.",
+    "unread": "unread",
+    "saved": "Saved.",
+    "channels": {
+      "email": "Email",
+      "sms": "SMS",
+      "push": "Mobile app"
+    },
+    "driverLog": "Not connected on this server: written to the log only",
+    "driver": "Sent through {driver}",
+    "inAppAlways": "Everyone with a login also sees every notification here, in the web and the app, whatever the channels.",
+    "save": "Save",
+    "templateTitle": "Title (email subject and push title)",
+    "templateBody": "Text",
+    "templateSms": "SMS",
+    "smsLength": "{characters} characters: {messages, plural, one {# SMS} other {# SMS}} per person",
+    "placeholders": "You can use:",
+    "reset": "Back to the built-in wording",
+    "retry": "Send again"
+  },
+  "setup": {
+    "title": "Go-live checklist",
+    "progress": "{done} of {total} done",
+    "intro": "What this workspace still needs before people rely on it. Each step is checked against your data, so it is always up to date.",
+    "steps": {
+      "company": {
+        "title": "Company details",
+        "done": "Every company has its TIN and registration number.",
+        "todo": "{done} of {total} companies have a TIN and registration number."
+      },
+      "locations": {
+        "title": "Work locations",
+        "done": "Locations are set up, with geofences for punching from the app.",
+        "todo": "{done} of {total} locations have a geofence for punching from the app."
+      },
+      "org": {
+        "title": "Departments and designations",
+        "done": "Departments and designations are set up.",
+        "todo": "Add departments (or sections and lines) and designations."
+      },
+      "employees": {
+        "title": "Employees",
+        "done": "{done} active employees.",
+        "todo": "Hire or import your employees."
+      },
+      "logins": {
+        "title": "Employee logins",
+        "done": "Every active employee has a login.",
+        "todo": "{done} of {total} employees have a login. Workers who only use the devices do not need one."
+      },
+      "hr_team": {
+        "title": "HR team",
+        "done": "Someone besides the workspace admin runs HR.",
+        "todo": "Give an HR admin or HR officer login to the people who run HR day to day."
+      },
+      "admin_mfa": {
+        "title": "Two-step sign-in for admins",
+        "done": "Every admin signs in with an authenticator code.",
+        "todo": "{done} of {total} admins use two-step sign-in. Ask the others to turn it on in their account."
+      },
+      "shifts": {
+        "title": "Shifts",
+        "done": "Shifts are set up.",
+        "todo": "Add the shifts people work."
+      },
+      "devices": {
+        "title": "Attendance devices",
+        "done": "Every device has reported in the last day.",
+        "todo": "{done} of {total} devices reported in the last day. Check the Edge Agent and the network."
+      },
+      "attendance_pins": {
+        "title": "Device numbers",
+        "done": "Every employee has their device number.",
+        "todo": "{done} of {total} employees have the number they are enrolled under on the devices."
+      },
+      "holidays": {
+        "title": "Holidays",
+        "done": "{done} holidays this year.",
+        "todo": "Add this year's holidays, and confirm lunar dates as they are announced ({total} tentative in the next 30 days)."
+      },
+      "leave_types": {
+        "title": "Leave types",
+        "done": "{done} leave types.",
+        "todo": "Add leave types."
+      },
+      "email": {
+        "title": "Email delivery",
+        "done": "Email notifications are sent through your mail server.",
+        "todo": "Emails are only written to the server log. Set EMAIL_DRIVER=smtp on the server."
+      },
+      "sms": {
+        "title": "SMS delivery",
+        "done": "SMS go out through the SMS gateway.",
+        "todo": "SMS are turned on but only written to the server log. Set the SMS gateway on the server."
+      }
+    },
+    "statuses": {
+      "done": "Done",
+      "warning": "Check",
+      "todo": "To do",
+      "not_needed": "Not needed"
+    },
+    "fix": "Fix",
+    "outsideApp": "Some go-live steps happen outside the app: a parallel month with your current process, legal review of letters and leave rules, and a tested backup. See docs/ops/go-live.md."
   }
 }

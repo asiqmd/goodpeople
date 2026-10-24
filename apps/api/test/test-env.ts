@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { createApp } from '../src/app.js';
-import { loadConfig } from '../src/config.js';
+import { loadConfig, type AppConfig } from '../src/config.js';
 
 /** The same server and roles as development, against `<name>_test`. */
 export function testEnv() {
@@ -24,13 +24,16 @@ export function testEnv() {
 /** Documents written by the tests, wiped by the global setup before each run. */
 export const testStorageDir = join(tmpdir(), 'good-people-test-storage');
 
-export async function bootApp(): Promise<INestApplication> {
-  // Tests process attendance explicitly; background work would race them.
+export async function bootApp(
+  overrides: Partial<Record<keyof AppConfig, string>> = {},
+): Promise<INestApplication> {
+  // Tests process attendance and send notifications explicitly; background work would race them.
   const app = await createApp(
     loadConfig({
       DATABASE_URL: testEnv().appUrl,
       BACKGROUND_JOBS: 'off',
       STORAGE_DIR: testStorageDir,
+      ...overrides,
     }),
   );
   await app.init();

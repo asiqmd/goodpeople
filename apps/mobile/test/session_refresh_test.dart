@@ -37,6 +37,70 @@ void main() {
     expect(container.read(authProvider), isA<SignedIn>());
   });
 
+  test('calls that get a 401 together share one refresh', () async {
+    // A refresh token works once; a second refresh with it would be taken
+    // for a stolen token and end every session.
+    final api = FakeGoodPeopleApi()
+      ..accessResults.add(_expiredToken)
+      ..employeeResults.add(_expiredToken)
+      ..balanceErrors.add(_expiredToken);
+    final container = ProviderContainer.test(
+      overrides: [goodPeopleApiProvider.overrideWithValue(api)],
+    );
+    final auth = container.read(authProvider.notifier);
+    await auth.signIn(workspace: 'acme', email: 'a@acme.test', password: 'x');
+
+    await Future.wait([
+      auth.fetchTenantAccess(),
+      auth.fetchMyEmployee(),
+      auth.fetchMyLeaveBalances(2026),
+    ]);
+
+    expect(api.refreshTokens, ['refresh-1']);
+    expect(api.accessTokens, ['access-1', 'access-2']);
+    expect(api.employeeTokens, ['access-1', 'access-2']);
+    expect(api.balanceTokens, ['access-1', 'access-2']);
+    expect(container.read(authProvider), isA<SignedIn>());
+  });
+
+  test('signing out ends the session on the server too', () async {
+    final api = FakeGoodPeopleApi();
+    final container = ProviderContainer.test(
+      overrides: [goodPeopleApiProvider.overrideWithValue(api)],
+    );
+    final auth = container.read(authProvider.notifier);
+    await auth.signIn(workspace: 'acme', email: 'a@acme.test', password: 'x');
+    await auth.signOut();
+    // The server call runs after the screen has changed.
+    await pumpEventQueue();
+
+    expect(api.loggedOut, hasLength(1));
+  });
+
+  test(
+    'a call that fails after sign-out does not end the next session',
+    () async {
+      final api = FakeGoodPeopleApi();
+      final container = ProviderContainer.test(
+        overrides: [goodPeopleApiProvider.overrideWithValue(api)],
+      );
+      final auth = container.read(authProvider.notifier);
+      await auth.signIn(workspace: 'acme', email: 'a@acme.test', password: 'x');
+      await auth.signOut();
+
+      await expectLater(
+        auth.fetchMyEmployee(),
+        throwsA(isA<SessionExpiredException>()),
+      );
+      // Signed out by the user, not because the session expired.
+      expect(container.read(authProvider), isA<SignedOut>());
+      expect(
+        (container.read(authProvider) as SignedOut).sessionExpired,
+        isFalse,
+      );
+    },
+  );
+
   testWidgets('a rejected refresh sends the user back to login', (
     tester,
   ) async {

@@ -3,16 +3,8 @@
 import type { EdgeAgentCreated, MyAttendanceToday, RegularizationView } from '@gp/shared';
 import { revalidatePath } from 'next/cache';
 import { authedFetch, authedUpload } from '@/lib/api';
-import { nest, toNumber } from '@/lib/form';
+import { fail, nest, toNumber } from '@/lib/form';
 import type { ActionState } from './platform';
-
-const fail = (result: {
-  error: { message: string; code?: string; issues?: { path: string; message: string }[] };
-}) => ({
-  error: result.error.message,
-  code: result.error.code,
-  issues: result.error.issues,
-});
 
 export type PunchState = { error?: string; code?: string; ok?: boolean } | undefined;
 

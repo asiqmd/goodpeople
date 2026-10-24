@@ -985,5 +985,213 @@
   "approveSeparationTitle": "Approve this resignation?",
   "rejectSeparationTitle": "Reject this resignation?",
   "separationApproved": "Resignation approved",
-  "separationRejected": "Resignation rejected"
+  "separationRejected": "Resignation rejected",
+  "signInWithEmail": "Email",
+  "@signInWithEmail": {
+    "description": "Login method switch: sign in with email and password."
+  },
+  "signInWithPhone": "Mobile",
+  "@signInWithPhone": {
+    "description": "Login method switch: sign in with a code sent to a mobile number."
+  },
+  "mobileNumber": "Mobile number",
+  "mobileNumberHint": "e.g. 01712345678",
+  "@mobileNumberHint": {
+    "description": "Keep the example number in Latin digits."
+  },
+  "mobileNumberRequired": "Enter your mobile number",
+  "mobileNumberInvalid": "Enter a Bangladesh mobile number, e.g. 01712345678",
+  "sendCode": "Send code",
+  "@sendCode": {
+    "description": "Button: text a sign-in code to the mobile number."
+  },
+  "otpTitle": "Enter the code we sent",
+  "otpSentBody": "If {phone} has a Good People login, a 6-digit code is on its way by SMS. It works for {minutes, plural, one{{minutes} minute} other{{minutes} minutes}}.",
+  "@otpSentBody": {
+    "description": "The API answers the same for numbers without a login, so this cannot say for sure that a code was sent.",
+    "placeholders": {
+      "phone": {
+        "type": "String",
+        "example": "01712345678"
+      },
+      "minutes": {
+        "type": "num",
+        "format": "decimalPattern",
+        "example": "5"
+      }
+    }
+  },
+  "codeLabel": "6-digit code",
+  "codeRequired": "Enter the 6-digit code",
+  "codeWrongOrExpired": "That code is wrong or has expired. Check it, or ask for a new one.",
+  "sendCodeAgain": "Send again",
+  "sendCodeAgainHint": "Didn't get it? You can ask for a new code after {seconds} seconds.",
+  "@sendCodeAgainHint": {
+    "placeholders": {
+      "seconds": {
+        "type": "String",
+        "example": "30"
+      }
+    }
+  },
+  "codeSentAgain": "A new code is on its way.",
+  "useDifferentNumber": "Use a different number",
+  "twoStepTitle": "Two-step sign-in",
+  "twoStepBody": "Enter the 6-digit code from your authenticator app.",
+  "twoStepRecoveryBody": "Enter one of your recovery codes, like k7qm-2xpd. Each one works once.",
+  "@twoStepRecoveryBody": {
+    "description": "Keep the example code as it is."
+  },
+  "recoveryCodeLabel": "Recovery code",
+  "recoveryCodeInvalid": "Enter a recovery code like k7qm-2xpd",
+  "useRecoveryCode": "Use a recovery code instead",
+  "useAuthenticatorCode": "Use a code from the app instead",
+  "twoStepWrongCode": "That code is wrong or has expired. Try again, or go back and sign in again.",
+  "verify": "Verify",
+  "twoStepSetupTitle": "Set up two-step sign-in first",
+  "twoStepSetupBody": "Your role must use two-step sign-in. Set it up in the Good People web app, then sign in here.",
+  "back": "Back",
+  "loginWrongCredentials": "Wrong workspace, email or password",
+  "errorTooManyAttempts": "Too many attempts. Please wait a few minutes and try again.",
+  "errorTooManyAttemptsWait": "{minutes, plural, one{Too many attempts. Try again in {minutes} minute.} other{Too many attempts. Try again in {minutes} minutes.}}",
+  "@errorTooManyAttemptsWait": {
+    "placeholders": {
+      "minutes": {
+        "type": "num",
+        "format": "decimalPattern",
+        "example": "15"
+      }
+    }
+  },
+  "errorLoginDisabled": "This login is no longer active. Ask your HR team.",
+  "errorWrongPassword": "Your current password is not right.",
+  "errorTenantSuspended": "This workspace is suspended. Contact your administrator.",
+  "errorTenantReadOnly": "This workspace is read-only for now, so changes can't be saved.",
+  "errorRoleNotAllowed": "Your role can't do this.",
+  "errorFeatureNotInPlan": "Your workspace's plan doesn't include this.",
+  "punchErrorOfflineTooOld": "This punch was saved more than 72 hours ago, so it can't be added now. Ask for a correction instead.",
+  "punchSavedOffline": "No connection. Your punch at {time} is saved on this phone and will be sent when you're back online.",
+  "@punchSavedOffline": {
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "8:05 AM"
+      }
+    }
+  },
+  "punchesWaiting": "{count, plural, one{{count} punch waiting to be sent} other{{count} punches waiting to be sent}}",
+  "@punchesWaiting": {
+    "placeholders": {
+      "count": {
+        "type": "num",
+        "format": "decimalPattern",
+        "example": "2"
+      }
+    }
+  },
+  "punchesWaitingBody": "Taken without a connection at {times}. The app sends them as soon as it can reach the server.",
+  "@punchesWaitingBody": {
+    "placeholders": {
+      "times": {
+        "type": "String",
+        "example": "8:05 AM, 5:10 PM"
+      }
+    }
+  },
+  "punchesSendNow": "Send now",
+  "punchesSent": "{count, plural, one{{count} saved punch sent} other{{count} saved punches sent}}",
+  "@punchesSent": {
+    "placeholders": {
+      "count": {
+        "type": "num",
+        "format": "decimalPattern",
+        "example": "2"
+      }
+    }
+  },
+  "punchRefusedTitle": "Your punch at {time} on {date} was not recorded",
+  "@punchRefusedTitle": {
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "8:05 AM"
+      },
+      "date": {
+        "type": "String",
+        "example": "Oct 22, 2026"
+      }
+    }
+  },
+  "punchRefusedHint": "To fix the day, ask for a correction.",
+  "dismiss": "Dismiss",
+  "@dismiss": {
+    "description": "Hides a message the user has read."
+  },
+  "homePunchRefused": "A punch saved without a connection was not recorded. Open Attendance to see why.",
+  "notificationsTitle": "Notifications",
+  "notificationsEmpty": "No notifications yet.",
+  "notificationsLoadFailed": "We could not load your notifications.",
+  "notificationsMarkAllRead": "Mark all as read",
+  "notificationsUnread": "{count, plural, =0{Notifications} one{Notifications, {count} unread} other{Notifications, {count} unread}}",
+  "@notificationsUnread": {
+    "description": "Tooltip of the bell on the home screen.",
+    "placeholders": {
+      "count": {
+        "type": "num",
+        "format": "decimalPattern",
+        "example": "3"
+      }
+    }
+  },
+  "notificationUnread": "Unread",
+  "pushOpen": "View",
+  "@pushOpen": {
+    "description": "Action on a notification shown while the app is open."
+  },
+  "teamTitle": "Team",
+  "teamSubtitle": "Who is in today, and who is on leave",
+  "teamLoadFailed": "We could not load your team.",
+  "teamEmpty": "Nobody to show here.",
+  "teamAll": "All",
+  "@teamAll": {
+    "description": "Filter chip: everyone in the team."
+  },
+  "teamOnLeave": "On leave this week",
+  "teamNoLeave": "Nobody is on leave this week.",
+  "teamLeaveLoadFailed": "We could not load who is on leave.",
+  "teamNoEmployeeBody": "Team views need an employee record linked to your login.",
+  "accountTitle": "Account",
+  "accountSubtitle": "Sign-in, password and two-step sign-in",
+  "accountLoadFailed": "We could not load your account.",
+  "accountName": "Name",
+  "accountRole": "Role",
+  "@accountRole": {
+    "description": "The login's access role, such as HR admin or Employee."
+  },
+  "accountNotSet": "Not set",
+  "roleName": "{role, select, tenant_admin{Workspace admin} hr_admin{HR admin} hr_officer{HR officer} attendance_officer{Attendance officer} auditor{Auditor} employee{Employee} other{Unknown}}",
+  "@roleName": {
+    "description": "A workspace access role from the API.",
+    "placeholders": {
+      "role": {
+        "type": "String"
+      }
+    }
+  },
+  "accountTwoStep": "Two-step sign-in",
+  "accountTwoStepOn": "On",
+  "accountTwoStepOff": "Off",
+  "accountTwoStepRequired": "Required for your role.",
+  "accountTwoStepHint": "Turn it on or off in the Good People web app.",
+  "accountNoPassword": "You sign in with a code sent to your mobile, so there is no password to change.",
+  "changePassword": "Change password",
+  "currentPassword": "Current password",
+  "currentPasswordRequired": "Enter your current password",
+  "newPassword": "New password",
+  "newPasswordHint": "At least 10 characters",
+  "confirmNewPassword": "New password again",
+  "newPasswordTooShort": "Use at least 10 characters",
+  "newPasswordSame": "Choose a password you have not been using",
+  "newPasswordMismatch": "The two new passwords are not the same",
+  "passwordChanged": "Password changed. You stay signed in here; other phones and browsers were signed out."
 }

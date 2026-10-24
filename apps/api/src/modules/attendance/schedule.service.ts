@@ -10,12 +10,13 @@ import {
   type Tx,
 } from '@gp/db';
 import {
-  DEFAULT_WEEKLY_OFF_DAYS,
   addDays,
+  type DayType,
+  DEFAULT_WEEKLY_OFF_DAYS,
+  groupBy,
+  type ShiftSchedule,
   shiftWindow,
   weekdayOf,
-  type DayType,
-  type ShiftSchedule,
 } from '@gp/shared';
 import { and, eq, gte, inArray, isNull, lte, or } from 'drizzle-orm';
 
@@ -170,11 +171,14 @@ export class ScheduleService {
       return w;
     };
 
+    // Grouped once: looking each person up in the full lists made thousands of people slow.
+    const jobsOf = groupBy(jobs, (j) => j.employeeId);
+    const shiftsOf = groupBy(assignments, (a) => a.employeeId);
     for (const employeeId of employeeIds) {
-      const myJobs = jobs
-        .filter((j) => j.employeeId === employeeId)
-        .toSorted((a, b) => a.from.localeCompare(b.from));
-      const myShifts = assignments.filter((a) => a.employeeId === employeeId);
+      const myJobs = (jobsOf.get(employeeId) ?? []).toSorted((a, b) =>
+        a.from.localeCompare(b.from),
+      );
+      const myShifts = shiftsOf.get(employeeId) ?? [];
       const days: DayPlan[] = [];
       for (let date = from; date <= to; date = addDays(date, 1)) {
         // Before someone joins, their first assignment stands in.

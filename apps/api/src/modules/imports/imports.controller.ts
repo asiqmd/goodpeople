@@ -15,7 +15,7 @@ import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { importCommitSchema, type ImportBatchView, type TenantWithAccess } from '@gp/shared';
 import type { z } from 'zod';
 import { CurrentTenant, CurrentUser, type AuthUser } from '../../common/auth-user.js';
-import { HrOnly, TenantRolesGuard } from '../../common/roles.js';
+import { Permits, TenantRolesGuard } from '../../common/roles.js';
 import { openApiBody, zod } from '../../common/zod.js';
 import { fileResponse } from '../documents/documents.controller.js';
 import { AccessStateGuard, FeatureGuard, RequireFeature } from '../entitlements/guards.js';
@@ -28,7 +28,7 @@ const XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 @ApiBearerAuth()
 @UseGuards(AccessStateGuard, FeatureGuard, TenantRolesGuard)
 @RequireFeature('core_hr')
-@HrOnly()
+@Permits('imports.run')
 @Controller('tenant/imports/employees')
 export class ImportsController {
   constructor(private readonly imports: ImportsService) {}

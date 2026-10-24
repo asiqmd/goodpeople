@@ -94,7 +94,7 @@ void main() {
       tenant: 'acme',
       email: 'rahima@acme.test',
       password: 'secret',
-    );
+    ) as LoginResponse;
 
     final request = adapter.requests.single;
     expect(request.method, 'POST');
@@ -1457,4 +1457,341 @@ void main() {
       ),
     );
   });
+
+  group('sign-in by code, two-step sign-in, account and notifications', () {
+    test('login answers a second step instead of a session', () async {
+      final (api, _) = client(200, {'mfaRequired': true, 'mfaToken': 'mfa-1'});
+      final step = await api.login(
+        tenant: 'acme',
+        email: 'a@acme.test',
+        password: 'x',
+      );
+      expect(step, isA<TwoStepChallenge>());
+      step as TwoStepChallenge;
+      expect(step.mfaToken, 'mfa-1');
+      expect(step.setupRequired, isFalse);
+
+      final (setupApi, _) = client(200, {
+        'mfaSetupRequired': true,
+        'mfaToken': 'mfa-2',
+      });
+      final setup = await setupApi.login(
+        tenant: 'acme',
+        email: 'a@acme.test',
+        password: 'x',
+      ) as TwoStepChallenge;
+      expect(setup.setupRequired, isTrue);
+    });
+
+    test(
+      'the second step posts the token and code and answers a session',
+      () async {
+        final (api, adapter) = client(200, loginJson);
+        final session = await api.verifyMfa(
+          mfaToken: 'mfa-1',
+          code: 'k7qm-2xpd',
+        );
+        expect(adapter.requests.single.uri.path, '/auth/mfa/verify');
+        expect(adapter.requests.single.data, {
+          'mfaToken': 'mfa-1',
+          'code': 'k7qm-2xpd',
+        });
+        expect(session.tokens.accessToken, 'access-1');
+      },
+    );
+
+    test('a code by SMS: requested, then verified into a session with no '
+        'email', () async {
+      final (api, adapter) = client(202, {
+        'sent': true,
+        'expiresInSeconds': 300,
+      });
+      final sent = await api.requestOtp(tenant: 'acme', phone: '01712345678');
+      expect(adapter.requests.single.method, 'POST');
+      expect(adapter.requests.single.uri.path, '/auth/otp/request');
+      expect(adapter.requests.single.data, {
+        'tenant': 'acme',
+        'phone': '01712345678',
+      });
+      expect(sent.expiresInSeconds, 300);
+
+      final (verify, verifyAdapter) = client(200, phoneLoginJson);
+      final session = await verify.verifyOtp(
+        tenant: 'acme',
+        phone: '01712345678',
+        code: '123456',
+      );
+      expect(verifyAdapter.requests.single.uri.path, '/auth/otp/verify');
+      expect(verifyAdapter.requests.single.data, {
+        'tenant': 'acme',
+        'phone': '01712345678',
+        'code': '123456',
+      });
+      expect(session.user.email, isNull);
+      expect(session.user.role, UserRole.employee);
+    });
+
+    test('a 429 carries its code and when to try again', () async {
+      final (api, _) = client(429, {
+        'statusCode': 429,
+        'error': 'Too Many Requests',
+        'message': 'Too many attempts. Try again in 15 minutes.',
+        'code': 'too_many_attempts',
+        'retryAfterSeconds': 840,
+      });
+      await expectLater(
+        api.requestOtp(tenant: 'acme', phone: '01712345678'),
+        throwsA(
+          isA<ApiException>()
+              .having((e) => e.code, 'code', 'too_many_attempts')
+              .having((e) => e.retryAfterSeconds, 'retryAfterSeconds', 840),
+        ),
+      );
+    });
+
+    test('no connection is a network error, not an HTTP one', () async {
+      final dio = Dio(BaseOptions(baseUrl: 'http://localhost:4000'))
+        ..httpClientAdapter = _OfflineAdapter();
+      await expectLater(
+        DioGoodPeopleApi(dio).punch('access-1'),
+        throwsA(
+          isA<ApiException>()
+              .having((e) => e.kind, 'kind', ApiErrorKind.network)
+              .having((e) => e.statusCode, 'statusCode', isNull),
+        ),
+      );
+    });
+
+    test('account: read, password, language and devices', () async {
+      final (api, adapter) = client(200, accountJson(mfaEnabled: true));
+      final account = await api.fetchAccount('access-1');
+      expect(adapter.requests.single.uri.path, '/account');
+      expect(
+        adapter.requests.single.headers['Authorization'],
+        'Bearer access-1',
+      );
+      expect(account.role, UserRole.tenantAdmin);
+      expect(account.mfaEnabled, isTrue);
+      expect(account.hasPassword, isTrue);
+      expect(account.phone, '+8801711000005');
+
+      final (write, writes) = client(204, null);
+      await write.changePassword(
+        'access-1',
+        currentPassword: 'old secret',
+        newPassword: 'a whole new password',
+        keepRefreshToken: 'refresh-1',
+      );
+      await write.registerDevice(
+        'access-1',
+        platform: DevicePlatform.android,
+        token: 'fcm-token-0123456789',
+      );
+      await write.removeDevice('access-1', 'fcm-token-0123456789');
+      expect(
+        [for (final r in writes.requests) (r.method, r.uri.path)],
+        [
+          ('POST', '/account/password'),
+          ('POST', '/account/devices'),
+          ('POST', '/account/devices/remove'),
+        ],
+      );
+      expect(
+        [for (final r in writes.requests) r.data],
+        [
+          {
+            'currentPassword': 'old secret',
+            'newPassword': 'a whole new password',
+            'keepRefreshToken': 'refresh-1',
+          },
+          {'platform': 'android', 'token': 'fcm-token-0123456789'},
+          {'token': 'fcm-token-0123456789'},
+        ],
+      );
+
+      final (prefs, prefsAdapter) = client(200, {
+        ...accountJson(),
+        'language': 'bn',
+      });
+      final updated = await prefs.updatePreferences(
+        'access-1',
+        language: UserLanguage.bn,
+      );
+      expect(prefsAdapter.requests.single.method, 'PATCH');
+      expect(prefsAdapter.requests.single.uri.path, '/account/preferences');
+      expect(prefsAdapter.requests.single.data, {'language': 'bn'});
+      expect(updated.language, UserLanguage.bn);
+    });
+
+    test('the inbox parses items and counts; reading posts to them', () async {
+      final (api, adapter) = client(
+        200,
+        inboxJson([
+          notificationJson(id: 'f0000000-0000-4000-8000-000000000001'),
+          notificationJson(
+            id: 'f0000000-0000-4000-8000-000000000002',
+            event: 'attendance.missing_punch',
+            link: null,
+            readAt: '2026-10-24T05:00:00.000Z',
+          ),
+          notificationJson(
+            id: 'f0000000-0000-4000-8000-000000000003',
+            event: 'brand.new_event',
+          ),
+        ]),
+      );
+      final inbox = await api.fetchNotifications('access-1', unreadOnly: true);
+      expect(adapter.requests.single.uri.path, '/tenant/notifications');
+      expect(adapter.requests.single.uri.queryParameters, {'unread': 'true'});
+      expect(inbox.unread, 2);
+      expect(inbox.items.map((n) => n.event), [
+        NotificationEvent.approvalRequested,
+        NotificationEvent.missingPunch,
+        NotificationEvent.unknown,
+      ]);
+      expect(inbox.items.first.link, '/workspace/approvals');
+      expect(inbox.items[1].isRead, isTrue);
+      expect(inbox.items[1].link, isNull);
+      expect(inbox.items.first.createdAt, DateTime.utc(2026, 10, 24, 3));
+
+      final read = inbox.withRead(inbox.items.first.id, DateTime.utc(2026));
+      expect(read.unread, 1);
+      expect(read.items.first.isRead, isTrue);
+      expect(read.withRead(inbox.items.first.id, DateTime.utc(2026)).unread, 1);
+      expect(inbox.allRead(DateTime.utc(2026)).unread, 0);
+
+      final (write, writes) = client(204, null);
+      await write.markNotificationRead(
+        'access-1',
+        'f0000000-0000-4000-8000-000000000001',
+      );
+      await write.markAllNotificationsRead('access-1');
+      expect(
+        [for (final r in writes.requests) (r.method, r.uri.path)],
+        [
+          (
+            'POST',
+            '/tenant/notifications/f0000000-0000-4000-8000-000000000001/read',
+          ),
+          ('POST', '/tenant/notifications/read-all'),
+        ],
+      );
+    });
+
+    test('a punch from the offline queue sends when it happened and its '
+        'clientId, as JSON or in the form', () async {
+      final at = DateTime.utc(2026, 10, 24, 2, 5, 0, 123, 456);
+      final (api, adapter) = client(201, attendanceTodayJson());
+      await api.punch(
+        'access-1',
+        location: atTheFactory,
+        clientId: '3b241101-e2bb-4255-8caf-4136c566a962',
+        punchedAt: at,
+      );
+      expect(adapter.requests.single.data, {
+        'source': 'mobile',
+        'latitude': 24.0024,
+        'longitude': 90.4265,
+        'accuracyM': 12.0,
+        'clientId': '3b241101-e2bb-4255-8caf-4136c566a962',
+        'punchedAt': '2026-10-24T02:05:00.123Z',
+      });
+
+      final (form, formAdapter) = fileClient(
+        201,
+        utf8.encode(jsonEncode(attendanceTodayJson())),
+        headers: {
+          Headers.contentTypeHeader: [Headers.jsonContentType],
+        },
+      );
+      await form.punch(
+        'access-1',
+        selfie: PunchSelfie(bytes: tinyPng),
+        clientId: '3b241101-e2bb-4255-8caf-4136c566a962',
+        punchedAt: at,
+      );
+      final fields = Map.fromEntries(
+        (formAdapter.requests.single.data as FormData).fields,
+      );
+      expect(fields, {
+        'source': 'mobile',
+        'clientId': '3b241101-e2bb-4255-8caf-4136c566a962',
+        'punchedAt': '2026-10-24T02:05:00.123Z',
+      });
+    });
+
+    test('team day and leave calendar send their dates and parse', () async {
+      final (api, adapter) = client(
+        200,
+        teamDayJson('2026-10-24', [
+          teamRowJson(
+            id: 'e0000000-0000-4000-8000-000000000001',
+            name: 'Karim Uddin',
+            code: 'MG-0011',
+            date: '2026-10-24',
+            status: 'missing_punch',
+          ),
+        ]),
+      );
+      final day = await api.fetchTeamDay(
+        'access-1',
+        date: DateTime.utc(2026, 10, 24),
+      );
+      expect(adapter.requests.single.uri.path, '/tenant/attendance/daily');
+      expect(adapter.requests.single.uri.queryParameters, {
+        'date': '2026-10-24',
+      });
+      expect(day.counts, {AttendanceStatus.missingPunch: 1});
+      expect(day.rows.single.employee.employeeCode, 'MG-0011');
+      expect(day.rows.single.day.status, AttendanceStatus.missingPunch);
+
+      final (leave, leaveAdapter) = client(
+        200,
+        leaveCalendarJson('2026-10-24', '2026-10-30', [
+          {
+            'requestId': 'b0000000-0000-4000-8000-000000000101',
+            'employee': {
+              'id': 'e0000000-0000-4000-8000-000000000002',
+              'fullName': 'Salma Begum',
+              'employeeCode': 'MG-0012',
+            },
+            'leaveType': {'code': 'SL', 'name': 'Sick leave', 'nameBn': null},
+            'startDate': '2026-10-24',
+            'endDate': '2026-10-25',
+            'status': 'approved',
+          },
+        ]),
+      );
+      final calendar = await leave.fetchLeaveCalendar(
+        'access-1',
+        from: DateTime.utc(2026, 10, 24),
+        to: DateTime.utc(2026, 10, 30),
+      );
+      expect(leaveAdapter.requests.single.uri.path, '/tenant/leave/calendar');
+      expect(leaveAdapter.requests.single.uri.queryParameters, {
+        'from': '2026-10-24',
+        'to': '2026-10-30',
+      });
+      final entry = calendar.entries.single;
+      expect(entry.status, LeaveRequestStatus.approved);
+      expect(entry.covers(DateTime.utc(2026, 10, 25)), isTrue);
+      expect(entry.covers(DateTime.utc(2026, 10, 26)), isFalse);
+    });
+  });
+}
+
+/// Fails every request the way dio does with no connection.
+class _OfflineAdapter implements HttpClientAdapter {
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async => throw DioException.connectionError(
+    requestOptions: options,
+    reason: 'Network is unreachable',
+  );
+
+  @override
+  void close({bool force = false}) {}
 }

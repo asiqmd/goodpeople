@@ -39,7 +39,14 @@ import {
 import { AttendanceProcessor } from '../attendance/processor.service.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
 import { WorkCalendarService } from '../calendar/work-calendar.service.js';
-import { employeeOfUser, isHr, teamScope } from '../employees/employee.queries.js';
+import { userCan } from '../../common/roles.js';
+import { employeeOfUser, teamScope } from '../employees/employee.queries.js';
+import {
+  leaveSummary,
+  noticeRequested,
+  type ApprovalSummary,
+} from '../approvals/approval-notices.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 import { BalancesService, type LeaveTypeRow } from './balances.service.js';
 import { loadRequests } from './leave-views.js';
 
@@ -56,6 +63,7 @@ export class LeaveRequestsService implements ApprovalSubjectHandler<LeaveRequest
     private readonly balances: BalancesService,
     private readonly attendance: AttendanceProcessor,
     private readonly audit: TenantAuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // ── Preview and apply ──────────────────────────────────────────────────────
@@ -218,6 +226,14 @@ export class LeaveRequestsService implements ApprovalSubjectHandler<LeaveRequest
       chain: type.approvalChain,
     });
     if (!someoneDecides) await this.finalize(tx, request.id, 'approved', request.appliedBy);
+    else {
+      await noticeRequested(
+        tx,
+        this.notifications,
+        { type: 'leave_request', id: request.id },
+        await this.summarize(tx, request.id),
+      );
+    }
   }
 
   /** Marks a request approved (debiting the balance) or rejected. Used by approvals too. */
@@ -268,7 +284,7 @@ export class LeaveRequestsService implements ApprovalSubjectHandler<LeaveRequest
         .for('update');
       if (!request) throw new NotFoundException('Leave request not found');
       const mine = await employeeOfUser(tx, user.id);
-      if (mine?.id !== request.employeeId && !isHr(user)) {
+      if (mine?.id !== request.employeeId && !userCan(user, 'leave.manage')) {
         throw new ForbiddenException('You can only cancel your own leave');
       }
       if (request.status === 'approved' && request.startDate <= todayIn()) {
@@ -478,6 +494,16 @@ export class LeaveRequestsService implements ApprovalSubjectHandler<LeaveRequest
 
   // ── Approvals ──────────────────────────────────────────────────────────────
 
+  async summarize(tx: Tx, subjectId: string): Promise<ApprovalSummary> {
+    const [request] = await loadRequests(tx, eq(leaveRequests.id, subjectId));
+    return {
+      employeeId: request!.employee.id,
+      personName: request!.employee.fullName,
+      summary: leaveSummary(request!),
+      link: '/workspace/leave',
+    };
+  }
+
   async lockSubject(tx: Tx, subjectId: string) {
     const [row] = await tx
       .select({ employeeId: leaveRequests.employeeId })
@@ -548,7 +574,9 @@ export class LeaveRequestsService implements ApprovalSubjectHandler<LeaveRequest
     employeeId: string | null,
   ): Promise<EmployeeRow> {
     if (employeeId) {
-      if (!isHr(user)) throw new ForbiddenException('Only HR can apply on someone else’s behalf');
+      if (!userCan(user, 'leave.manage')) {
+        throw new ForbiddenException('Only HR can apply on someone else’s behalf');
+      }
       const [row] = await tx.select().from(employees).where(eq(employees.id, employeeId));
       if (!row) throw new NotFoundException('Employee not found');
       return row;

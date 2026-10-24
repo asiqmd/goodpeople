@@ -71,6 +71,20 @@
       "when": 1792856821047,
       "tag": "0009_lifecycle_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792860824580,
+      "tag": "0010_notifications",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792860837152,
+      "tag": "0011_notifications_rls",
+      "breakpoints": true
     }
   ]
 }
