@@ -1,0 +1,21 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: var(--font-latin), var(--font-bangla), ui-sans-serif, system-ui, sans-serif;
+  --color-brand-50: #ecfdf5;
+  --color-brand-100: #d1fae5;
+  --color-brand-500: #10b981;
+  --color-brand-600: #059669;
+  --color-brand-700: #047857;
+  --color-brand-900: #064e3b;
+}
+
+body {
+  background: var(--color-slate-50);
+  color: var(--color-slate-900);
+}
+
+/* Bangla script reads better with a little more line height. */
+:lang(bn) {
+  line-height: 1.7;
+}

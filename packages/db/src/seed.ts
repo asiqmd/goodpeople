@@ -1,0 +1,156 @@
+import { PLAN_CATALOG, type BillingMode, type IndustryTemplate, type PlanCode } from '@gp/shared';
+import { eq } from 'drizzle-orm';
+import { scopeToTenant, type Database } from './client.js';
+import { hashPassword } from './passwords.js';
+import {
+  legalEntities,
+  plans,
+  platformAuditLog,
+  platformUsers,
+  subscriptions,
+  tenants,
+  tenantUsers,
+} from './schema/index.js';
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+interface SeedTenant {
+  slug: string;
+  name: string;
+  industryTemplate: IndustryTemplate;
+  billingMode: BillingMode;
+  planCode: PlanCode;
+  accessExpiresInDays?: number;
+  reason: string;
+  entities: string[];
+  /** Paid tenants only: days from now until (negative: since) the period ended. */
+  subscription?: { status: 'active' | 'past_due' | 'canceled'; periodEndInDays: number };
+}
+
+/** One tenant per billing situation, so every access state can be tried locally. */
+export const SEED_TENANTS: SeedTenant[] = [
+  {
+    slug: 'my-group',
+    name: 'My Group',
+    industryTemplate: 'group',
+    billingMode: 'internal',
+    planCode: 'enterprise',
+    reason: 'Our own organizations (internal adoption)',
+    entities: ['My Group Textiles Ltd', 'My Group Foods Ltd'],
+  },
+  {
+    slug: 'sponsored-ngo',
+    name: 'Sponsored NGO',
+    industryTemplate: 'ngo',
+    billingMode: 'complimentary',
+    planCode: 'enterprise',
+    reason: 'Sponsored pilot assigned by the Super Admin',
+    entities: ['Sponsored NGO Foundation'],
+  },
+  {
+    slug: 'acme-garments',
+    name: 'Acme Garments',
+    industryTemplate: 'rmg',
+    billingMode: 'paid',
+    planCode: 'growth',
+    reason: 'Paying customer whose last payment failed',
+    entities: ['Acme Garments Ltd'],
+    subscription: { status: 'past_due', periodEndInDays: -40 },
+  },
+  {
+    slug: 'trial-co',
+    name: 'Trial Co',
+    industryTemplate: 'corporate',
+    billingMode: 'trial',
+    planCode: 'starter',
+    accessExpiresInDays: 14,
+    reason: 'Self-serve trial',
+    entities: ['Trial Co Ltd'],
+  },
+];
+
+export const seedAdminEmail = (slug: string) => `admin@${slug}.test`;
+
+export interface SeedOptions {
+  superAdminEmail: string;
+  password: string;
+  now?: Date;
+}
+
+/** Idempotent: plans are upserted, users and tenants are only created when missing. */
+export async function seed(db: Database, opts: SeedOptions) {
+  const now = opts.now ?? new Date();
+  const passwordHash = await hashPassword(opts.password);
+
+  for (const plan of PLAN_CATALOG) {
+    await db
+      .insert(plans)
+      .values({ code: plan.code, name: plan.name, features: plan.features, limits: plan.limits })
+      .onConflictDoUpdate({
+        target: plans.code,
+        set: { name: plan.name, features: plan.features, limits: plan.limits },
+      });
+  }
+  const planIds = new Map((await db.select().from(plans)).map((p) => [p.code, p.id]));
+
+  await db
+    .insert(platformUsers)
+    .values({ email: opts.superAdminEmail, name: 'Super Admin', passwordHash, role: 'super_admin' })
+    .onConflictDoNothing();
+  const [superAdmin] = await db
+    .select()
+    .from(platformUsers)
+    .where(eq(platformUsers.email, opts.superAdminEmail));
+
+  const created: string[] = [];
+  for (const t of SEED_TENANTS) {
+    const [existing] = await db.select().from(tenants).where(eq(tenants.slug, t.slug));
+    if (existing) continue;
+    await db.transaction(async (tx) => {
+      const [tenant] = await tx
+        .insert(tenants)
+        .values({
+          slug: t.slug,
+          name: t.name,
+          industryTemplate: t.industryTemplate,
+          billingMode: t.billingMode,
+          planId: planIds.get(t.planCode)!,
+          accessExpiresAt:
+            t.accessExpiresInDays === undefined
+              ? null
+              : new Date(now.getTime() + t.accessExpiresInDays * DAY_MS),
+          bypassReason: t.billingMode === 'paid' || t.billingMode === 'trial' ? null : t.reason,
+          grantedBy: superAdmin!.id,
+        })
+        .returning();
+      if (t.subscription) {
+        await tx.insert(subscriptions).values({
+          tenantId: tenant!.id,
+          provider: 'manual',
+          status: t.subscription.status,
+          currentPeriodEnd: new Date(now.getTime() + t.subscription.periodEndInDays * DAY_MS),
+        });
+      }
+      await tx.insert(platformAuditLog).values({
+        actorId: superAdmin!.id,
+        action: 'tenant.assign',
+        tenantId: tenant!.id,
+        reason: `Seed: ${t.reason}`,
+        after: { billingMode: t.billingMode, planCode: t.planCode },
+      });
+      await scopeToTenant(tx, tenant!.id);
+      await tx.insert(tenantUsers).values({
+        tenantId: tenant!.id,
+        email: seedAdminEmail(t.slug),
+        name: `${t.name} Admin`,
+        passwordHash,
+        role: 'tenant_admin',
+      });
+      await tx
+        .insert(legalEntities)
+        .values(t.entities.map((name) => ({ tenantId: tenant!.id, name })));
+    });
+    created.push(t.slug);
+  }
+  return { created };
+}

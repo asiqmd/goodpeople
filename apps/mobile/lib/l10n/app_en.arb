@@ -1,0 +1,76 @@
+{
+  "@@locale": "en",
+  "appTitle": "Good People",
+  "@appTitle": {
+    "description": "Product name, shown on the login screen and in the OS task switcher."
+  },
+  "signIn": "Sign in",
+  "signInSubtitle": "Sign in to your workspace",
+  "workspace": "Workspace",
+  "workspaceHint": "e.g. your-company",
+  "@workspaceHint": {
+    "description": "Hint for the workspace slug field. Keep the example slug in Latin letters."
+  },
+  "email": "Email",
+  "password": "Password",
+  "showPassword": "Show password",
+  "hidePassword": "Hide password",
+  "workspaceRequired": "Enter your workspace",
+  "emailRequired": "Enter your email",
+  "emailInvalid": "Enter a valid email address",
+  "passwordRequired": "Enter your password",
+  "signOut": "Sign out",
+  "language": "Language",
+  "yourModules": "Your modules",
+  "signedInAs": "Signed in as {name}",
+  "@signedInAs": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Rahima Akter"
+      }
+    }
+  },
+  "planLabel": "Plan",
+  "billingLabel": "Billing",
+  "planName": "{plan, select, starter{Starter} growth{Growth} business{Business} enterprise{Enterprise} other{Unknown}}",
+  "@planName": {
+    "description": "Subscription plan name for a plan code from the API.",
+    "placeholders": {
+      "plan": {
+        "type": "String"
+      }
+    }
+  },
+  "billingModeName": "{mode, select, paid{Paid} trial{Trial} complimentary{Complimentary} internal{Internal} partner{Partner} license{License} other{Unknown}}",
+  "@billingModeName": {
+    "description": "How the workspace is billed, for a billing mode from the API.",
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "readOnlyTitle": "Read-only access",
+  "readOnlyBody": "You can view data but not change it.",
+  "suspendedTitle": "Access suspended",
+  "suspendedBody": "This workspace is suspended. Contact your administrator to restore access.",
+  "moduleEnabled": "Enabled",
+  "moduleLocked": "Locked",
+  "moduleCoreHr": "Core HR",
+  "moduleLeave": "Leave",
+  "moduleAttendance": "Attendance",
+  "modulePayroll": "Payroll",
+  "moduleBdTax": "Bangladesh income tax",
+  "moduleRecruitment": "Recruitment",
+  "modulePerformance": "Performance",
+  "moduleLms": "Learning",
+  "moduleMultiEntity": "Multiple legal entities",
+  "moduleApiAccess": "API access",
+  "moduleSso": "Single sign-on",
+  "networkError": "Could not reach the server. Check your connection and try again.",
+  "unexpectedError": "Something went wrong. Please try again.",
+  "sessionExpired": "Your session has ended. Please sign in again.",
+  "loadAccessFailed": "We could not load your workspace.",
+  "retry": "Try again"
+}

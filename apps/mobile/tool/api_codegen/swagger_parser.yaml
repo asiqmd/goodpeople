@@ -1,0 +1,18 @@
+# Read by tool/gen_api.sh. Options: https://pub.dev/packages/swagger_parser
+swagger_parser:
+  # gen_api.sh copies or downloads the spec here before generating.
+  schema_path: openapi.json
+  output_directory: lib/generated
+  name: good_people_api
+  language: dart
+  json_serializer: json_serializable
+  root_client: true
+  root_client_name: GoodPeopleRestClient
+  put_clients_in_folder: true
+  # Unknown enum values from a newer API parse as `unknown` instead of throwing.
+  unknown_enum_value: true
+  # The app is for workspace users; the platform console's endpoints stay out of its client.
+  include_tags:
+    - auth
+    - tenant
+    - health

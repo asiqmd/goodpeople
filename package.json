@@ -1,0 +1,26 @@
+{
+  "name": "good-people",
+  "private": true,
+  "packageManager": "pnpm@12.15.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "db:setup": "turbo run build --filter=@gp/db && pnpm --filter @gp/db run setup",
+    "db:migrate": "turbo run build --filter=@gp/db && pnpm --filter @gp/db run migrate",
+    "db:seed": "turbo run build --filter=@gp/db && pnpm --filter @gp/db run seed",
+    "db:reset": "turbo run build --filter=@gp/db && pnpm --filter @gp/db run reset",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "oxlint": "^1.58.0",
+    "prettier": "^3.9.10",
+    "turbo": "^2.11.10",
+    "typescript": "~6.0.3"
+  }
+}

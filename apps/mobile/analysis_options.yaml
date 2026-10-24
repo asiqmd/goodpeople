@@ -1,0 +1,14 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - build/**
+    - android/**
+    - ios/**
+    # Output of tool/gen_api.sh. Not used by the app in Phase 0, and it needs
+    # retrofit and json_annotation, which the app does not depend on yet.
+    - lib/api/generated/**
+
+linter:
+  rules:
+    prefer_single_quotes: true

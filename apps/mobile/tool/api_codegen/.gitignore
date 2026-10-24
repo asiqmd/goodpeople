@@ -1,0 +1,3 @@
+# Spec copied in by tool/gen_api.sh and the intermediate generator output.
+/openapi.json
+/lib/

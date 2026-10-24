@@ -1,0 +1,141 @@
+import {
+  BILLING_MODES,
+  COUNTRY_PACKS,
+  INDUSTRY_TEMPLATES,
+  PLAN_CODES,
+  PLATFORM_ROLES,
+  SUBSCRIPTION_STATUSES,
+  TENANT_STATUSES,
+  type FeatureKey,
+  type Limits,
+} from '@gp/shared';
+import { index, integer, jsonb, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+
+// Platform tables hold no tenant data and have no row-level security.
+// Only the platform-admin, auth and entitlements modules read them.
+
+export const billingMode = pgEnum('billing_mode', BILLING_MODES);
+export const tenantStatus = pgEnum('tenant_status', TENANT_STATUSES);
+export const subscriptionStatus = pgEnum('subscription_status', SUBSCRIPTION_STATUSES);
+export const platformRole = pgEnum('platform_role', PLATFORM_ROLES);
+export const planCode = pgEnum('plan_code', PLAN_CODES);
+export const countryPack = pgEnum('country_pack', COUNTRY_PACKS);
+export const industryTemplate = pgEnum('industry_template', INDUSTRY_TEMPLATES);
+export const grantKind = pgEnum('grant_kind', ['feature', 'limit']);
+export const sessionSubject = pgEnum('session_subject', ['platform', 'tenant']);
+
+const timestamptz = (name: string) => timestamp(name, { withTimezone: true });
+const createdAt = () => timestamptz('created_at').notNull().defaultNow();
+
+export const plans = pgTable('plans', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  code: planCode('code').notNull().unique(),
+  name: text('name').notNull(),
+  features: text('features').array().$type<FeatureKey[]>().notNull(),
+  limits: jsonb('limits').$type<Limits>().notNull(),
+  createdAt: createdAt(),
+});
+
+export const platformUsers = pgTable('platform_users', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  email: text('email').notNull().unique(),
+  name: text('name').notNull(),
+  passwordHash: text('password_hash').notNull(),
+  role: platformRole('role').notNull(),
+  createdAt: createdAt(),
+});
+
+export const tenants = pgTable('tenants', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  slug: text('slug').notNull().unique(),
+  countryPack: countryPack('country_pack').notNull().default('BD'),
+  industryTemplate: industryTemplate('industry_template').notNull(),
+  status: tenantStatus('status').notNull().default('active'),
+  billingMode: billingMode('billing_mode').notNull(),
+  planId: uuid('plan_id')
+    .notNull()
+    .references(() => plans.id),
+  /** Trial end, complimentary/partner expiry or licence expiry. Ignored for internal and paid. */
+  accessExpiresAt: timestamptz('access_expires_at'),
+  /** Admin-set limits that replace the plan's, e.g. an employee cap on a sponsored tenant. */
+  limitOverrides: jsonb('limit_overrides').$type<Partial<Limits>>().notNull().default({}),
+  bypassReason: text('bypass_reason'),
+  grantedBy: uuid('granted_by').references(() => platformUsers.id),
+  createdAt: createdAt(),
+  updatedAt: timestamptz('updated_at').notNull().defaultNow(),
+});
+
+/** Only `paid` tenants have one. Billing webhooks write here and nowhere else. */
+export const subscriptions = pgTable('subscriptions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id')
+    .notNull()
+    .unique()
+    .references(() => tenants.id, { onDelete: 'cascade' }),
+  provider: text('provider').notNull(),
+  externalRef: text('external_ref'),
+  status: subscriptionStatus('status').notNull(),
+  currentPeriodEnd: timestamptz('current_period_end').notNull(),
+  graceDays: integer('grace_days').notNull().default(7),
+  seats: integer('seats'),
+  createdAt: createdAt(),
+  updatedAt: timestamptz('updated_at').notNull().defaultNow(),
+});
+
+/** Time-boxed additions on top of a plan: a module, or a higher limit (`value` null = unlimited). */
+export const entitlementGrants = pgTable(
+  'entitlement_grants',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    kind: grantKind('kind').notNull(),
+    key: text('key').notNull(),
+    value: integer('value'),
+    startsAt: timestamptz('starts_at').notNull().defaultNow(),
+    endsAt: timestamptz('ends_at'),
+    reason: text('reason').notNull(),
+    grantedBy: uuid('granted_by').references(() => platformUsers.id),
+    approvedBy: uuid('approved_by').references(() => platformUsers.id),
+    createdAt: createdAt(),
+  },
+  (t) => [index('entitlement_grants_tenant_idx').on(t.tenantId)],
+);
+
+/** Append-only: a trigger rejects UPDATE and DELETE. */
+export const platformAuditLog = pgTable(
+  'platform_audit_log',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    actorId: uuid('actor_id').references(() => platformUsers.id),
+    action: text('action').notNull(),
+    tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'set null' }),
+    reason: text('reason'),
+    before: jsonb('before'),
+    after: jsonb('after'),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index('platform_audit_log_tenant_idx').on(t.tenantId),
+    index('platform_audit_log_created_idx').on(t.createdAt),
+  ],
+);
+
+/** Refresh-token sessions for both platform and tenant users; tokens are stored hashed. */
+export const authSessions = pgTable(
+  'auth_sessions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    subjectKind: sessionSubject('subject_kind').notNull(),
+    subjectId: uuid('subject_id').notNull(),
+    tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }),
+    tokenHash: text('token_hash').notNull().unique(),
+    expiresAt: timestamptz('expires_at').notNull(),
+    revokedAt: timestamptz('revoked_at'),
+    replacedBy: uuid('replaced_by'),
+    createdAt: createdAt(),
+  },
+  (t) => [index('auth_sessions_subject_idx').on(t.subjectKind, t.subjectId)],
+);
