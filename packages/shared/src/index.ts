@@ -5,5 +5,8 @@ export * from './bd.js';
 export * from './dates.js';
 export * from './hr.js';
 export * from './hr-schemas.js';
+export * from './leave.js';
+export * from './leave-schemas.js';
 export type * from './api-types.js';
 export type * from './hr-types.js';
+export type * from './leave-types.js';

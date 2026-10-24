@@ -245,5 +245,302 @@
         "type": "String"
       }
     }
-  }
+  },
+  "leaveTitle": "Leave",
+  "@leaveTitle": {
+    "description": "Home card and screen title for leave (time off work)."
+  },
+  "leaveSubtitle": "Balances, requests and holidays",
+  "@leaveSubtitle": {
+    "description": "Under \"Leave\" on the home screen."
+  },
+  "leaveTabBalances": "Balances",
+  "@leaveTabBalances": {
+    "description": "Leave screen tab."
+  },
+  "leaveTabApply": "Apply",
+  "@leaveTabApply": {
+    "description": "Leave screen tab: the form to ask for leave."
+  },
+  "leaveTabRequests": "My requests",
+  "@leaveTabRequests": {
+    "description": "Leave screen tab."
+  },
+  "leaveTabApprovals": "Approvals",
+  "@leaveTabApprovals": {
+    "description": "Leave screen tab: other people's leave waiting for the user's decision."
+  },
+  "leaveTabHolidays": "Holidays",
+  "@leaveTabHolidays": {
+    "description": "Leave screen tab: the holiday calendar."
+  },
+  "leaveLoadFailed": "We could not load your leave.",
+  "approvalsLoadFailed": "We could not load your approvals.",
+  "holidaysLoadFailed": "We could not load the holidays.",
+  "leaveNoEmployeeTitle": "No employee record",
+  "leaveNoEmployeeBody": "Leave belongs to an employee record, and your login is not linked to one. If you think it should be, ask your HR team.",
+  "leaveDays": "{count, plural, one{{count} day} other{{count} days}}",
+  "@leaveDays": {
+    "description": "A number of leave days. count can be a half, such as 1.5.",
+    "placeholders": {
+      "count": {
+        "type": "num",
+        "format": "decimalPattern",
+        "example": "1.5"
+      }
+    }
+  },
+  "leaveAvailable": "Available",
+  "@leaveAvailable": {
+    "description": "Leave days the employee can still take."
+  },
+  "leaveOnRequest": "On request",
+  "@leaveOnRequest": {
+    "description": "In place of a balance, for leave granted per event (maternity)."
+  },
+  "leaveEntitlement": "Entitlement",
+  "@leaveEntitlement": {
+    "description": "Leave days granted for the year."
+  },
+  "leaveCarriedForward": "Carried forward",
+  "leaveAdjustments": "Adjustments",
+  "@leaveAdjustments": {
+    "description": "Days HR added or removed by hand."
+  },
+  "leaveTaken": "Taken",
+  "leavePendingDays": "Pending",
+  "@leavePendingDays": {
+    "description": "Days in requests still waiting for approval."
+  },
+  "leaveUnpaid": "Unpaid",
+  "@leaveUnpaid": {
+    "description": "Marks a leave type without pay."
+  },
+  "leaveEligibleFrom": "Eligible from {date}",
+  "@leaveEligibleFrom": {
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "March 1, 2027"
+      }
+    }
+  },
+  "leaveNoTypes": "No leave types are set up yet.",
+  "leaveTypeLabel": "Leave type",
+  "leaveTypeRequired": "Choose a leave type",
+  "leaveStartDate": "From",
+  "@leaveStartDate": {
+    "description": "First day of the leave."
+  },
+  "leaveEndDate": "To",
+  "@leaveEndDate": {
+    "description": "Last day of the leave."
+  },
+  "leaveChooseDate": "Choose a date",
+  "leaveFullDay": "Full day",
+  "halfDayName": "{part, select, first_half{First half} second_half{Second half} other{Half day}}",
+  "@halfDayName": {
+    "description": "Which half of the day a half-day leave covers.",
+    "placeholders": {
+      "part": {
+        "type": "String"
+      }
+    }
+  },
+  "leaveReason": "Reason",
+  "leaveReasonTooShort": "Write at least 3 characters",
+  "leaveDocumentHint": "{days, plural, one{A supporting document is needed for more than {days} day.} other{A supporting document is needed for more than {days} days.}}",
+  "@leaveDocumentHint": {
+    "placeholders": {
+      "days": {
+        "type": "num",
+        "format": "decimalPattern",
+        "example": "2"
+      }
+    }
+  },
+  "leaveCountsOffDaysHint": "Weekly offs and holidays between the dates count as leave days.",
+  "leavePreviewHint": "Choose a leave type and dates to see how many days this takes.",
+  "leaveDaysLabel": "Leave days",
+  "leaveNotCounted": "Not counted",
+  "@leaveNotCounted": {
+    "description": "Heading over the weekly offs and holidays inside the dates."
+  },
+  "excludedDayReason": "{reason, select, weekly_off{Weekly off} holiday{Holiday} other{Not counted}}",
+  "@excludedDayReason": {
+    "description": "Why a date inside the leave is not counted.",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "excludedDayWithName": "{reason}: {name}",
+  "@excludedDayWithName": {
+    "placeholders": {
+      "reason": {
+        "type": "String",
+        "example": "Holiday"
+      },
+      "name": {
+        "type": "String",
+        "example": "Victory Day"
+      }
+    }
+  },
+  "leaveProblemsTitle": "This request can't be sent yet:",
+  "@leaveProblemsTitle": {
+    "description": "Above the reasons, from the API in English, that the request would be refused."
+  },
+  "leaveSubmit": "Send request",
+  "leaveSubmitted": "Leave request sent",
+  "leaveSubmittedBody": "Your approvers can see it now. Follow it under My requests.",
+  "leaveViewRequests": "See my requests",
+  "leaveApplyAgain": "Apply for more leave",
+  "leaveNoRequests": "No leave requests in {year}.",
+  "@leaveNoRequests": {
+    "placeholders": {
+      "year": {
+        "type": "String",
+        "example": "2026"
+      }
+    }
+  },
+  "leaveStatusName": "{status, select, pending{Pending} approved{Approved} rejected{Rejected} cancelled{Cancelled} other{Unknown}}",
+  "@leaveStatusName": {
+    "description": "A leave request's status from the API.",
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "approvalStepKindName": "{kind, select, manager{Manager} hr{HR} other{Approver}}",
+  "@approvalStepKindName": {
+    "description": "Who decides an approval step.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "approvalStepStatusName": "{status, select, waiting{Waiting for previous step} pending{Awaiting decision} approved{Approved} rejected{Rejected} skipped{Skipped} cancelled{Cancelled} other{Unknown}}",
+  "@approvalStepStatusName": {
+    "description": "One approval step's status from the API.",
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "approvalHrTeam": "HR team",
+  "@approvalHrTeam": {
+    "description": "Approver of an HR step, which any HR admin can decide."
+  },
+  "approvalTrail": "Approval",
+  "@approvalTrail": {
+    "description": "Heading over a request's approval steps."
+  },
+  "approvalStepTitle": "{kind}: {approver}",
+  "@approvalStepTitle": {
+    "placeholders": {
+      "kind": {
+        "type": "String",
+        "example": "Manager"
+      },
+      "approver": {
+        "type": "String",
+        "example": "Shirin Akter"
+      }
+    }
+  },
+  "approvalDecidedBy": "{name}, {date}",
+  "@approvalDecidedBy": {
+    "description": "Who decided an approval step, and when.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Shirin Akter"
+      },
+      "date": {
+        "type": "String",
+        "example": "Oct 21, 2026"
+      }
+    }
+  },
+  "leaveNeedsDocument": "Supporting document needed",
+  "leaveCancelRequest": "Cancel request",
+  "leaveCancelTitle": "Cancel this request?",
+  "leaveCancelBody": "{type}, {dates}. Days not yet taken go back to your balance.",
+  "@leaveCancelBody": {
+    "placeholders": {
+      "type": {
+        "type": "String",
+        "example": "Casual leave"
+      },
+      "dates": {
+        "type": "String",
+        "example": "Oct 29 – Oct 31, 2026"
+      }
+    }
+  },
+  "leaveKeepRequest": "Keep it",
+  "@leaveKeepRequest": {
+    "description": "Closes the cancel dialog without cancelling."
+  },
+  "leaveCancelled": "Request cancelled",
+  "approvalYourStep": "Your step: {kind}",
+  "@approvalYourStep": {
+    "placeholders": {
+      "kind": {
+        "type": "String",
+        "example": "Manager"
+      }
+    }
+  },
+  "approvalBalance": "Their balance",
+  "@approvalBalance": {
+    "description": "The requester's balance for this leave type."
+  },
+  "approvalAvailable": "{days} available",
+  "@approvalAvailable": {
+    "placeholders": {
+      "days": {
+        "type": "String",
+        "example": "8 days"
+      }
+    }
+  },
+  "approve": "Approve",
+  "reject": "Reject",
+  "approveTitle": "Approve this leave?",
+  "rejectTitle": "Reject this leave?",
+  "decisionComment": "Comment (optional)",
+  "leaveApproved": "Leave approved",
+  "leaveRejected": "Leave rejected",
+  "approvalsEmpty": "Nothing is waiting for you.",
+  "holidayKindName": "{kind, select, public{Public holiday} festival{Festival holiday} optional{Optional holiday} company{Company holiday} other{Holiday}}",
+  "@holidayKindName": {
+    "description": "Kind of holiday from the API.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "holidayTentative": "Tentative",
+  "@holidayTentative": {
+    "description": "A lunar holiday date not yet confirmed by the moon sighting."
+  },
+  "holidaysTentativeNote": "Tentative dates depend on the moon sighting and can move.",
+  "holidaysNone": "No holidays in {year}.",
+  "@holidaysNone": {
+    "placeholders": {
+      "year": {
+        "type": "String",
+        "example": "2026"
+      }
+    }
+  },
+  "holidaysNoCalendar": "No holiday calendar has been set up yet."
 }

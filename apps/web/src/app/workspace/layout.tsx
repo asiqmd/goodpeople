@@ -11,16 +11,29 @@ export default async function WorkspaceLayout({ children }: LayoutProps<'/worksp
   const tn = await getTranslations('hr.nav');
   const tc = await getTranslations('common');
   const tr = await getTranslations('reasons');
+  const tl = await getTranslations('leave.nav');
   const result = await authedFetch<TenantAccessView>('tenant', '/tenant/access');
   const user = await currentTenantUser();
   const isHr = !!user && (HR_ROLES as readonly string[]).includes(user.role);
+  const hasLeave = result.ok && result.data.access.features.includes('leave');
+  const approvals = hasLeave
+    ? await authedFetch<{ count: number }>('tenant', '/tenant/approvals/count')
+    : null;
+  const waiting = approvals?.ok ? approvals.data.count : 0;
 
   const links = [
     { href: '/workspace', label: tn('home') },
+    ...(hasLeave
+      ? [
+          { href: '/workspace/leave', label: tl('leave') },
+          { href: '/workspace/approvals', label: tl('approvals'), badge: waiting },
+        ]
+      : []),
     ...(isHr
       ? [
           { href: '/workspace/employees', label: tn('employees') },
           { href: '/workspace/organization', label: tn('organization') },
+          ...(hasLeave ? [{ href: '/workspace/leave/settings', label: tl('settings') }] : []),
         ]
       : []),
     { href: '/workspace/profile', label: tn('profile') },

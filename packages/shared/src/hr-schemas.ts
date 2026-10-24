@@ -95,7 +95,17 @@ export const locationInputSchema = z.object({
 export const locationUpdateSchema = locationInputSchema
   .omit({ legalEntityId: true })
   .partial()
-  .extend({ isActive: z.boolean().optional() });
+  .extend({
+    isActive: z.boolean().optional(),
+    /** null: the workspace default calendar. */
+    holidayCalendarId: id.nullable().optional(),
+    /** 0 = Sunday … 6 = Saturday. */
+    weeklyOffDays: z
+      .array(z.number().int().min(0).max(6))
+      .max(3)
+      .refine((d) => new Set(d).size === d.length, 'Each day can appear once')
+      .optional(),
+  });
 export type LocationInput = z.infer<typeof locationInputSchema>;
 export type LocationUpdate = z.infer<typeof locationUpdateSchema>;
 

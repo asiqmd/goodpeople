@@ -181,6 +181,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@gp/country-packs':
+        specifier: workspace:*
+        version: link:../../packages/country-packs
       '@gp/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -288,8 +291,26 @@ importers:
 
   packages/config: {}
 
+  packages/country-packs:
+    devDependencies:
+      '@gp/config':
+        specifier: workspace:*
+        version: link:../config
+      '@types/node':
+        specifier: ^24.0.0
+        version: 24.19.2
+      typescript:
+        specifier: ~6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: ^4.1.2
+        version: 4.1.12(@types/node@24.19.2)(vite@8.3.5(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))
+
   packages/db:
     dependencies:
+      '@gp/country-packs':
+        specifier: workspace:*
+        version: link:../country-packs
       '@gp/shared':
         specifier: workspace:*
         version: link:../shared

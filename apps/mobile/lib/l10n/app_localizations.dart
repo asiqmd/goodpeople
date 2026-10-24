@@ -649,6 +649,456 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{division, select, barishal{Barishal} chattogram{Chattogram} dhaka{Dhaka} khulna{Khulna} mymensingh{Mymensingh} rajshahi{Rajshahi} rangpur{Rangpur} sylhet{Sylhet} other{Unknown}}'**
   String divisionName(String division);
+
+  /// Home card and screen title for leave (time off work).
+  ///
+  /// In en, this message translates to:
+  /// **'Leave'**
+  String get leaveTitle;
+
+  /// Under "Leave" on the home screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Balances, requests and holidays'**
+  String get leaveSubtitle;
+
+  /// Leave screen tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Balances'**
+  String get leaveTabBalances;
+
+  /// Leave screen tab: the form to ask for leave.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get leaveTabApply;
+
+  /// Leave screen tab.
+  ///
+  /// In en, this message translates to:
+  /// **'My requests'**
+  String get leaveTabRequests;
+
+  /// Leave screen tab: other people's leave waiting for the user's decision.
+  ///
+  /// In en, this message translates to:
+  /// **'Approvals'**
+  String get leaveTabApprovals;
+
+  /// Leave screen tab: the holiday calendar.
+  ///
+  /// In en, this message translates to:
+  /// **'Holidays'**
+  String get leaveTabHolidays;
+
+  /// No description provided for @leaveLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load your leave.'**
+  String get leaveLoadFailed;
+
+  /// No description provided for @approvalsLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load your approvals.'**
+  String get approvalsLoadFailed;
+
+  /// No description provided for @holidaysLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load the holidays.'**
+  String get holidaysLoadFailed;
+
+  /// No description provided for @leaveNoEmployeeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No employee record'**
+  String get leaveNoEmployeeTitle;
+
+  /// No description provided for @leaveNoEmployeeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave belongs to an employee record, and your login is not linked to one. If you think it should be, ask your HR team.'**
+  String get leaveNoEmployeeBody;
+
+  /// A number of leave days. count can be a half, such as 1.5.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} day} other{{count} days}}'**
+  String leaveDays(num count);
+
+  /// Leave days the employee can still take.
+  ///
+  /// In en, this message translates to:
+  /// **'Available'**
+  String get leaveAvailable;
+
+  /// In place of a balance, for leave granted per event (maternity).
+  ///
+  /// In en, this message translates to:
+  /// **'On request'**
+  String get leaveOnRequest;
+
+  /// Leave days granted for the year.
+  ///
+  /// In en, this message translates to:
+  /// **'Entitlement'**
+  String get leaveEntitlement;
+
+  /// No description provided for @leaveCarriedForward.
+  ///
+  /// In en, this message translates to:
+  /// **'Carried forward'**
+  String get leaveCarriedForward;
+
+  /// Days HR added or removed by hand.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjustments'**
+  String get leaveAdjustments;
+
+  /// No description provided for @leaveTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'Taken'**
+  String get leaveTaken;
+
+  /// Days in requests still waiting for approval.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get leavePendingDays;
+
+  /// Marks a leave type without pay.
+  ///
+  /// In en, this message translates to:
+  /// **'Unpaid'**
+  String get leaveUnpaid;
+
+  /// No description provided for @leaveEligibleFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Eligible from {date}'**
+  String leaveEligibleFrom(String date);
+
+  /// No description provided for @leaveNoTypes.
+  ///
+  /// In en, this message translates to:
+  /// **'No leave types are set up yet.'**
+  String get leaveNoTypes;
+
+  /// No description provided for @leaveTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave type'**
+  String get leaveTypeLabel;
+
+  /// No description provided for @leaveTypeRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a leave type'**
+  String get leaveTypeRequired;
+
+  /// First day of the leave.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get leaveStartDate;
+
+  /// Last day of the leave.
+  ///
+  /// In en, this message translates to:
+  /// **'To'**
+  String get leaveEndDate;
+
+  /// No description provided for @leaveChooseDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a date'**
+  String get leaveChooseDate;
+
+  /// No description provided for @leaveFullDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Full day'**
+  String get leaveFullDay;
+
+  /// Which half of the day a half-day leave covers.
+  ///
+  /// In en, this message translates to:
+  /// **'{part, select, first_half{First half} second_half{Second half} other{Half day}}'**
+  String halfDayName(String part);
+
+  /// No description provided for @leaveReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason'**
+  String get leaveReason;
+
+  /// No description provided for @leaveReasonTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Write at least 3 characters'**
+  String get leaveReasonTooShort;
+
+  /// No description provided for @leaveDocumentHint.
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, one{A supporting document is needed for more than {days} day.} other{A supporting document is needed for more than {days} days.}}'**
+  String leaveDocumentHint(num days);
+
+  /// No description provided for @leaveCountsOffDaysHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly offs and holidays between the dates count as leave days.'**
+  String get leaveCountsOffDaysHint;
+
+  /// No description provided for @leavePreviewHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a leave type and dates to see how many days this takes.'**
+  String get leavePreviewHint;
+
+  /// No description provided for @leaveDaysLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave days'**
+  String get leaveDaysLabel;
+
+  /// Heading over the weekly offs and holidays inside the dates.
+  ///
+  /// In en, this message translates to:
+  /// **'Not counted'**
+  String get leaveNotCounted;
+
+  /// Why a date inside the leave is not counted.
+  ///
+  /// In en, this message translates to:
+  /// **'{reason, select, weekly_off{Weekly off} holiday{Holiday} other{Not counted}}'**
+  String excludedDayReason(String reason);
+
+  /// No description provided for @excludedDayWithName.
+  ///
+  /// In en, this message translates to:
+  /// **'{reason}: {name}'**
+  String excludedDayWithName(String reason, String name);
+
+  /// Above the reasons, from the API in English, that the request would be refused.
+  ///
+  /// In en, this message translates to:
+  /// **'This request can\'t be sent yet:'**
+  String get leaveProblemsTitle;
+
+  /// No description provided for @leaveSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Send request'**
+  String get leaveSubmit;
+
+  /// No description provided for @leaveSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave request sent'**
+  String get leaveSubmitted;
+
+  /// No description provided for @leaveSubmittedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your approvers can see it now. Follow it under My requests.'**
+  String get leaveSubmittedBody;
+
+  /// No description provided for @leaveViewRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'See my requests'**
+  String get leaveViewRequests;
+
+  /// No description provided for @leaveApplyAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply for more leave'**
+  String get leaveApplyAgain;
+
+  /// No description provided for @leaveNoRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'No leave requests in {year}.'**
+  String leaveNoRequests(String year);
+
+  /// A leave request's status from the API.
+  ///
+  /// In en, this message translates to:
+  /// **'{status, select, pending{Pending} approved{Approved} rejected{Rejected} cancelled{Cancelled} other{Unknown}}'**
+  String leaveStatusName(String status);
+
+  /// Who decides an approval step.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind, select, manager{Manager} hr{HR} other{Approver}}'**
+  String approvalStepKindName(String kind);
+
+  /// One approval step's status from the API.
+  ///
+  /// In en, this message translates to:
+  /// **'{status, select, waiting{Waiting for previous step} pending{Awaiting decision} approved{Approved} rejected{Rejected} skipped{Skipped} cancelled{Cancelled} other{Unknown}}'**
+  String approvalStepStatusName(String status);
+
+  /// Approver of an HR step, which any HR admin can decide.
+  ///
+  /// In en, this message translates to:
+  /// **'HR team'**
+  String get approvalHrTeam;
+
+  /// Heading over a request's approval steps.
+  ///
+  /// In en, this message translates to:
+  /// **'Approval'**
+  String get approvalTrail;
+
+  /// No description provided for @approvalStepTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind}: {approver}'**
+  String approvalStepTitle(String kind, String approver);
+
+  /// Who decided an approval step, and when.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}, {date}'**
+  String approvalDecidedBy(String name, String date);
+
+  /// No description provided for @leaveNeedsDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Supporting document needed'**
+  String get leaveNeedsDocument;
+
+  /// No description provided for @leaveCancelRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel request'**
+  String get leaveCancelRequest;
+
+  /// No description provided for @leaveCancelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel this request?'**
+  String get leaveCancelTitle;
+
+  /// No description provided for @leaveCancelBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{type}, {dates}. Days not yet taken go back to your balance.'**
+  String leaveCancelBody(String type, String dates);
+
+  /// Closes the cancel dialog without cancelling.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep it'**
+  String get leaveKeepRequest;
+
+  /// No description provided for @leaveCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Request cancelled'**
+  String get leaveCancelled;
+
+  /// No description provided for @approvalYourStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Your step: {kind}'**
+  String approvalYourStep(String kind);
+
+  /// The requester's balance for this leave type.
+  ///
+  /// In en, this message translates to:
+  /// **'Their balance'**
+  String get approvalBalance;
+
+  /// No description provided for @approvalAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} available'**
+  String approvalAvailable(String days);
+
+  /// No description provided for @approve.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve'**
+  String get approve;
+
+  /// No description provided for @reject.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject'**
+  String get reject;
+
+  /// No description provided for @approveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve this leave?'**
+  String get approveTitle;
+
+  /// No description provided for @rejectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject this leave?'**
+  String get rejectTitle;
+
+  /// No description provided for @decisionComment.
+  ///
+  /// In en, this message translates to:
+  /// **'Comment (optional)'**
+  String get decisionComment;
+
+  /// No description provided for @leaveApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave approved'**
+  String get leaveApproved;
+
+  /// No description provided for @leaveRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave rejected'**
+  String get leaveRejected;
+
+  /// No description provided for @approvalsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is waiting for you.'**
+  String get approvalsEmpty;
+
+  /// Kind of holiday from the API.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind, select, public{Public holiday} festival{Festival holiday} optional{Optional holiday} company{Company holiday} other{Holiday}}'**
+  String holidayKindName(String kind);
+
+  /// A lunar holiday date not yet confirmed by the moon sighting.
+  ///
+  /// In en, this message translates to:
+  /// **'Tentative'**
+  String get holidayTentative;
+
+  /// No description provided for @holidaysTentativeNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Tentative dates depend on the moon sighting and can move.'**
+  String get holidaysTentativeNote;
+
+  /// No description provided for @holidaysNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No holidays in {year}.'**
+  String holidaysNone(String year);
+
+  /// No description provided for @holidaysNoCalendar.
+  ///
+  /// In en, this message translates to:
+  /// **'No holiday calendar has been set up yet.'**
+  String get holidaysNoCalendar;
 }
 
 class _AppLocalizationsDelegate

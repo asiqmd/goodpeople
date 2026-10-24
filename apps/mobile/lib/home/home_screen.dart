@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../api/api_models.dart';
 import '../auth/auth_controller.dart';
 import '../l10n/app_localizations.dart';
+import '../leave/leave_screen.dart';
 import '../profile/profile_screen.dart';
 import '../ui/language_menu.dart';
 import '../ui/load_error_view.dart';
@@ -20,6 +21,7 @@ class HomeScreen extends ConsumerWidget {
       ValueKey('module-$feature');
 
   static const myProfileKey = ValueKey('home-my-profile');
+  static const leaveKey = ValueKey('home-leave');
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -109,7 +111,23 @@ class _AccessDetails extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        const _MyProfileCard(),
+        _ShortcutCard(
+          key: HomeScreen.myProfileKey,
+          icon: Icons.badge_outlined,
+          title: l10n.myProfile,
+          subtitle: l10n.myProfileSubtitle,
+          onTap: () => Navigator.of(context).push(ProfileScreen.route()),
+        ),
+        if (view.access.hasFeature('leave')) ...[
+          const SizedBox(height: 12),
+          _ShortcutCard(
+            key: HomeScreen.leaveKey,
+            icon: Icons.event_available_outlined,
+            title: l10n.leaveTitle,
+            subtitle: l10n.leaveSubtitle,
+            onTap: () => Navigator.of(context).push(LeaveScreen.route()),
+          ),
+        ],
         const SizedBox(height: 24),
         Text(l10n.yourModules, style: theme.textTheme.titleMedium),
         const SizedBox(height: 8),
@@ -220,43 +238,53 @@ class _ModuleTile extends StatelessWidget {
   }
 }
 
-/// Opens [ProfileScreen].
-class _MyProfileCard extends StatelessWidget {
-  const _MyProfileCard();
+/// A tappable card on the home screen that opens a section, such as My
+/// profile or Leave.
+class _ShortcutCard extends StatelessWidget {
+  const _ShortcutCard({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
     return Card.filled(
-      key: HomeScreen.myProfileKey,
       margin: EdgeInsets.zero,
       color: scheme.secondaryContainer,
       clipBehavior: Clip.antiAlias,
       child: Semantics(
         button: true,
         child: InkWell(
-          onTap: () => Navigator.of(context).push(ProfileScreen.route()),
+          onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                Icon(Icons.badge_outlined, color: scheme.onSecondaryContainer),
+                Icon(icon, color: scheme.onSecondaryContainer),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        l10n.myProfile,
+                        title,
                         style: theme.textTheme.titleMedium?.copyWith(
                           color: scheme.onSecondaryContainer,
                         ),
                       ),
                       Text(
-                        l10n.myProfileSubtitle,
+                        subtitle,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: scheme.onSecondaryContainer,
                         ),

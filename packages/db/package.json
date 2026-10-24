@@ -11,7 +11,10 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist", "migrations"],
+  "files": [
+    "dist",
+    "migrations"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
@@ -24,6 +27,7 @@
     "reset": "tsx src/scripts/reset.ts"
   },
   "dependencies": {
+    "@gp/country-packs": "workspace:*",
     "@gp/shared": "workspace:*",
     "argon2": "^0.45.1",
     "drizzle-orm": "^0.45.4",

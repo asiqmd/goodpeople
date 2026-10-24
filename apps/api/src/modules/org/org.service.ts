@@ -59,6 +59,8 @@ const toLocationView = (r: Row<typeof locations>): LocationView => ({
   latitude: r.latitude,
   longitude: r.longitude,
   geofenceRadiusM: r.geofenceRadiusM,
+  holidayCalendarId: r.holidayCalendarId,
+  weeklyOffDays: r.weeklyOffDays,
   isActive: r.isActive,
 });
 

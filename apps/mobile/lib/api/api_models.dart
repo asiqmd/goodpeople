@@ -5,6 +5,8 @@
 /// failing, so a newer API does not break an older app.
 library;
 
+part 'leave_models.dart';
+
 typedef Json = Map<String, Object?>;
 
 /// An enum value with its JSON spelling, for example `read_only`.
@@ -851,9 +853,28 @@ DateTime _readDate(Json json, String key) {
 DateTime? _readOptionalDate(Json json, String key) =>
     json[key] == null ? null : _readDate(json, key);
 
+/// [date] as the API's `YYYY-MM-DD`. Only the year, month and day are used,
+/// so a UTC-midnight calendar date round-trips unchanged.
+String toWireDate(DateTime date) {
+  String two(int value) => value.toString().padLeft(2, '0');
+  return '${date.year.toString().padLeft(4, '0')}-${two(date.month)}-'
+      '${two(date.day)}';
+}
+
 /// An ISO 8601 timestamp such as `2026-10-20T08:00:00.000Z`.
 DateTime _readTimestamp(Json json, String key) {
   final text = _read<String>(json, key);
   return DateTime.tryParse(text) ??
       (throw FormatException('Expected "$key" to be a timestamp: $text'));
 }
+
+DateTime? _readOptionalTimestamp(Json json, String key) =>
+    json[key] == null ? null : _readTimestamp(json, key);
+
+List<String> _readStrings(Json json, String key) => [
+  for (final item in _read<List<Object?>>(json, key))
+    if (item is String)
+      item
+    else
+      throw FormatException('Expected every "$key" item to be a string'),
+];

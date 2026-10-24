@@ -26,7 +26,8 @@ month's rules.
 
 ## Consequences
 
-- **Phase 1:** builds the rules engine (`packages/country-packs`, not created yet), starting
-  with leave and holidays. Phase 2 adds payroll and tax.
+- **Built in Phase 1 M2:** `packages/country-packs`, with `ruleOn(key, date)`, the BD leave
+  and holiday rules, and statutory floors that refuse company policies below the law.
+  Phase 2 adds payroll and tax rules.
 - **Golden tests:** anonymized payroll sheets from design partners become fixtures, and CI
   blocks any change that alters their results.

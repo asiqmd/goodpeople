@@ -29,6 +29,60 @@ abstract interface class GoodPeopleApi {
   /// A login with no linked employee record (usual for tenant admins) gets a
   /// 404 [ApiException].
   Future<EmployeeDetail> fetchMyEmployee(String accessToken);
+
+  // ── Leave ─────────────────────────────────────────────────────────────────
+  // The `/tenant/me/leave/...` calls answer 404 for a login with no employee
+  // record, like [fetchMyEmployee].
+
+  /// `GET /tenant/me/leave/balances?year=`: one balance per leave type.
+  Future<List<LeaveBalance>> fetchMyLeaveBalances(
+    String accessToken, {
+    required int year,
+  });
+
+  /// `GET /tenant/leave/types`: every type, for the apply form.
+  Future<List<LeaveType>> fetchLeaveTypes(String accessToken);
+
+  /// `POST /tenant/me/leave/preview`: the day count and any problems,
+  /// without creating anything.
+  Future<LeavePreview> previewLeave(String accessToken, LeaveDraft draft);
+
+  /// `POST /tenant/me/leave/requests`. A request the rules refuse gets a
+  /// 400 [ApiException] with code `leave_not_allowed` and the problems in
+  /// its message.
+  Future<LeaveRequest> applyForLeave(
+    String accessToken,
+    LeaveDraft draft, {
+    required String reason,
+  });
+
+  /// `GET /tenant/me/leave/requests?year=`, newest first. Every year when
+  /// [year] is `null`.
+  Future<List<LeaveRequest>> fetchMyLeaveRequests(
+    String accessToken, {
+    int? year,
+  });
+
+  /// `POST /tenant/leave/requests/{id}/cancel`. A request that can no longer
+  /// be cancelled gets a 409 [ApiException].
+  Future<LeaveRequest> cancelLeaveRequest(String accessToken, String requestId);
+
+  /// `GET /tenant/approvals`: steps waiting for the signed-in user.
+  Future<List<ApprovalItem>> fetchApprovals(String accessToken);
+
+  /// `POST /tenant/approvals/{stepId}/approve` or `/reject`, with an optional
+  /// comment. A step that is not this user's, or no longer open, gets a 403
+  /// or 409 [ApiException].
+  Future<LeaveRequest> decideApproval(
+    String accessToken,
+    String stepId,
+    ApprovalDecision decision, {
+    String? comment,
+  });
+
+  /// `GET /tenant/me/holidays?year=`: the employee's holiday calendar. A
+  /// workspace with no calendar yet gets a 404 [ApiException].
+  Future<HolidayYear> fetchMyHolidays(String accessToken, {required int year});
 }
 
 /// [GoodPeopleApi] over HTTP with dio.
@@ -85,14 +139,145 @@ class DioGoodPeopleApi implements GoodPeopleApi {
     EmployeeDetail.fromJson,
   );
 
+  @override
+  Future<List<LeaveBalance>> fetchMyLeaveBalances(
+    String accessToken, {
+    required int year,
+  }) => _callList(
+    () => _dio.get<Object?>(
+      '/tenant/me/leave/balances',
+      queryParameters: {'year': year},
+      options: _bearer(accessToken),
+    ),
+    LeaveBalance.fromJson,
+  );
+
+  @override
+  Future<List<LeaveType>> fetchLeaveTypes(String accessToken) => _callList(
+    () =>
+        _dio.get<Object?>('/tenant/leave/types', options: _bearer(accessToken)),
+    LeaveType.fromJson,
+  );
+
+  @override
+  Future<LeavePreview> previewLeave(String accessToken, LeaveDraft draft) =>
+      _call(
+        () => _dio.post<Object?>(
+          '/tenant/me/leave/preview',
+          data: draft.toPreviewJson(),
+          options: _bearer(accessToken),
+        ),
+        LeavePreview.fromJson,
+      );
+
+  @override
+  Future<LeaveRequest> applyForLeave(
+    String accessToken,
+    LeaveDraft draft, {
+    required String reason,
+  }) => _call(
+    () => _dio.post<Object?>(
+      '/tenant/me/leave/requests',
+      data: draft.toRequestJson(reason: reason),
+      options: _bearer(accessToken),
+    ),
+    LeaveRequest.fromJson,
+  );
+
+  @override
+  Future<List<LeaveRequest>> fetchMyLeaveRequests(
+    String accessToken, {
+    int? year,
+  }) => _callList(
+    () => _dio.get<Object?>(
+      '/tenant/me/leave/requests',
+      queryParameters: {'year': ?year},
+      options: _bearer(accessToken),
+    ),
+    LeaveRequest.fromJson,
+  );
+
+  @override
+  Future<LeaveRequest> cancelLeaveRequest(
+    String accessToken,
+    String requestId,
+  ) => _call(
+    () => _dio.post<Object?>(
+      '/tenant/leave/requests/${Uri.encodeComponent(requestId)}/cancel',
+      options: _bearer(accessToken),
+    ),
+    LeaveRequest.fromJson,
+  );
+
+  @override
+  Future<List<ApprovalItem>> fetchApprovals(String accessToken) => _callList(
+    () => _dio.get<Object?>('/tenant/approvals', options: _bearer(accessToken)),
+    ApprovalItem.fromJson,
+  );
+
+  @override
+  Future<LeaveRequest> decideApproval(
+    String accessToken,
+    String stepId,
+    ApprovalDecision decision, {
+    String? comment,
+  }) => _call(
+    () => _dio.post<Object?>(
+      '/tenant/approvals/${Uri.encodeComponent(stepId)}/'
+      '${decision.pathSegment}',
+      data: {'comment': ?comment},
+      options: _bearer(accessToken),
+    ),
+    LeaveRequest.fromJson,
+  );
+
+  @override
+  Future<HolidayYear> fetchMyHolidays(
+    String accessToken, {
+    required int year,
+  }) => _call(
+    () => _dio.get<Object?>(
+      '/tenant/me/holidays',
+      queryParameters: {'year': year},
+      options: _bearer(accessToken),
+    ),
+    HolidayYear.fromJson,
+  );
+
   void close() => _dio.close(force: true);
 
   static Options _bearer(String accessToken) =>
       Options(headers: {'Authorization': 'Bearer $accessToken'});
 
+  /// A call whose 2xx body is a JSON object.
   Future<T> _call<T>(
     Future<Response<Object?>> Function() send,
     T Function(Json json) parse,
+  ) => _send(send, (data) {
+    if (data is Json) return parse(data);
+    throw const FormatException('Expected a JSON object');
+  });
+
+  /// A call whose 2xx body is a JSON array of objects.
+  Future<List<T>> _callList<T>(
+    Future<Response<Object?>> Function() send,
+    T Function(Json json) parse,
+  ) => _send(send, (data) {
+    if (data is! List<Object?>) {
+      throw const FormatException('Expected a JSON array');
+    }
+    return [
+      for (final item in data)
+        if (item is Json)
+          parse(item)
+        else
+          throw const FormatException('Expected every item to be an object'),
+    ];
+  });
+
+  Future<T> _send<T>(
+    Future<Response<Object?>> Function() send,
+    T Function(Object? data) parse,
   ) async {
     final Response<Object?> response;
     try {
@@ -101,10 +286,8 @@ class DioGoodPeopleApi implements GoodPeopleApi {
       throw ApiException.fromDio(error);
     }
 
-    final data = response.data;
     try {
-      if (data is Json) return parse(data);
-      throw const FormatException('Expected a JSON object');
+      return parse(response.data);
     } on FormatException catch (error) {
       throw ApiException(
         kind: ApiErrorKind.badResponse,

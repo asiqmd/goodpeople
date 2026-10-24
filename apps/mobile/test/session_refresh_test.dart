@@ -7,6 +7,7 @@ import 'package:good_people/app.dart';
 import 'package:good_people/auth/auth_controller.dart';
 import 'package:good_people/auth/login_screen.dart';
 import 'package:good_people/home/home_screen.dart';
+import 'package:good_people/leave/leave_screen.dart';
 import 'package:good_people/profile/profile_screen.dart';
 
 import 'support/fake_api.dart';
@@ -78,6 +79,22 @@ void main() {
     expect(container.read(authProvider), isA<SignedIn>());
   });
 
+  test('a 401 from a leave call refreshes once and retries', () async {
+    final api = FakeGoodPeopleApi()..balanceErrors.add(_expiredToken);
+    final container = ProviderContainer.test(
+      overrides: [goodPeopleApiProvider.overrideWithValue(api)],
+    );
+    final auth = container.read(authProvider.notifier);
+    await auth.signIn(workspace: 'acme', email: 'a@acme.test', password: 'x');
+
+    final balances = await auth.fetchMyLeaveBalances(2026);
+
+    expect(balances.first.available, 8.5);
+    expect(api.refreshTokens, ['refresh-1']);
+    expect(api.balanceTokens, ['access-1', 'access-2']);
+    expect(container.read(authProvider), isA<SignedIn>());
+  });
+
   testWidgets('a session that ends on the profile screen returns to login', (
     tester,
   ) async {
@@ -103,6 +120,38 @@ void main() {
 
     expect(api.refreshTokens, ['refresh-1']);
     expect(find.byType(ProfileScreen), findsNothing);
+    expect(find.byType(LoginScreen), findsOneWidget);
+    expect(
+      find.text('Your session has ended. Please sign in again.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('a session that ends on the leave screen returns to login', (
+    tester,
+  ) async {
+    final api = FakeGoodPeopleApi()
+      ..balanceErrors.add(_expiredToken)
+      ..refreshResult = _expiredToken;
+    final container = ProviderContainer.test(
+      overrides: [goodPeopleApiProvider.overrideWithValue(api)],
+    );
+    await container
+        .read(authProvider.notifier)
+        .signIn(workspace: 'acme', email: 'a@acme.test', password: 'x');
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const GoodPeopleApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(HomeScreen.leaveKey));
+    await tester.pumpAndSettle();
+
+    expect(api.refreshTokens, ['refresh-1']);
+    expect(find.byType(LeaveScreen), findsNothing);
     expect(find.byType(LoginScreen), findsOneWidget);
     expect(
       find.text('Your session has ended. Please sign in again.'),

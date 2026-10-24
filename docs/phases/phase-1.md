@@ -9,8 +9,8 @@ been walked through in the browser.
 | Milestone                                    | Scope                                                                          | Depends on | Status |
 | -------------------------------------------- | ------------------------------------------------------------------------------ | ---------- | ------ |
 | **M1 Org & employees**                       | Org structure, employee master, job history, roles, encrypted identity fields  | Phase 0    | Done   |
-| **M2 Rules, holidays & leave**               | BD country-pack rules engine, holiday calendars, leave and approvals           | M1         | Next   |
-| **M3 Attendance**                            | Shifts, punches, Edge Agent, daily processing, regularization                  | M1, M2     |        |
+| **M2 Rules, holidays & leave**               | BD country-pack rules engine, holiday calendars, leave and approvals           | M1         | Done   |
+| **M3 Attendance**                            | Shifts, punches, Edge Agent, daily processing, regularization                  | M1, M2     | Next   |
 | **M4 Lifecycle & documents**                 | Lifecycle events, documents vault, letters, ID card, service book, bulk import | M1         |        |
 | **M5 Notifications, self-service & go-live** | EN/BN templates, phone OTP, mobile v1, hardening                               | M2–M4      |        |
 
@@ -72,15 +72,100 @@ been walked through in the browser.
 - HR can run the org setup and hire → change → view flow in the web app in English and Bangla.
 - The mobile app shows the signed-in employee's profile.
 
+## M2: Rules engine, holidays & leave
+
+### Rules engine (`packages/country-packs`)
+
+Statutory rules are data in code, reviewed by pull request like any other change. Each rule
+has versions, and each version carries:
+
+- **effective dates:** from, and to when superseded
+- **its legal reference:** act and section
+- **a review status:** `verified`, or `needs_review` when sources conflict or the gazette has
+  not been checked
+
+`ruleOn(key, date)` returns the version in force on a date.
+
+**Statutory rules are a floor; companies can be more generous.**
+
+- A leave type's own settings apply when they are better for the worker.
+- Settings below the statutory minimum are refused, quoting the section.
+
+**Bangladesh rules in M2:**
+
+| Rule                       | Value                                                                        | Reference  |
+| -------------------------- | ---------------------------------------------------------------------------- | ---------- |
+| Casual leave               | 10 days a year, not carried forward                                          | BLA s.115  |
+| Sick leave                 | 14 days a year, not carried forward                                          | BLA s.116  |
+| Annual leave earning       | 1 day per 18 days worked; factories 1 per 14 from 17 Nov 2025 (needs review) | s.117      |
+| Annual leave eligibility   | after 1 year of continuous service                                           | s.117      |
+| Annual leave carry-forward | up to 40 days (needs review)                                                 | s.117      |
+| Maternity leave            | 112 days, then 120 from 17 Nov 2025 (needs review); 6 months' service        | s.46, s.47 |
+| Festival holidays          | 11 days, then 13 from 17 Nov 2025 (needs review)                             | s.118      |
+
+### Holiday calendars
+
+- **Setup:** each workspace has calendars, and each location picks one plus its weekly off
+  days (Friday by default).
+- **Kinds:** a holiday is public, festival, optional or company. Lunar dates can be marked
+  **tentative** until the moon-sighting announcement.
+- **Bangladesh template:** imports the fixed national days plus estimated Eid, Puja and other
+  lunar dates for a year, all estimates marked tentative.
+- **Compliance check:** a calendar shows a warning when it has fewer festival days than the
+  Labour Act requires.
+- **Recalculation:** moving, adding or removing a holiday recalculates the day count of
+  overlapping leave requests. Approved leave gets a balance correction entry; nothing is
+  silently rewritten.
+
+### Leave
+
+- **Leave types:** BD defaults are provisioned for every workspace (casual, sick, annual,
+  maternity), and HR can add company types. Each type has:
+  - its accrual: annual grant, earned per days worked, or per event
+  - days, carry-forward cap and minimum service
+  - a gender restriction (maternity)
+  - whether off days and holidays count (maternity counts calendar days)
+  - half days
+  - its approval chain
+- **Balances are computed, not stored:**
+  - entitlement for the year (pro-rated in the joining year; earned leave from the previous
+    year's working days)
+  - plus carry-forward
+  - plus ledger movements (taken, reversals, HR adjustments, recalculations)
+  - minus pending requests
+  - Until attendance arrives (M3), "days worked" means scheduled working days.
+- **Requests:** the day count skips weekly offs and holidays unless the type counts them.
+  Requests are refused when they:
+  - overlap another request
+  - cross 31 December
+  - exceed the balance
+  - fall short of the minimum service
+- **Approvals (first piece of the workflow engine):**
+  - Each type has an ordered chain of `manager` and `hr` steps.
+  - A manager without a workspace login is skipped, so requests never get stuck; if that
+    leaves nobody to decide, an HR step is added (leave is never auto-approved by default).
+  - An empty approval chain means the type needs no approval.
+  - Nobody decides their own request.
+  - Rejection ends the chain.
+  - Cancelling approved future leave reverses the balance.
+- **Team calendar:** HR sees everyone; others see their unit and direct reports.
+
+### Done when
+
+- **Tests:** unit tests cover rule lookup across the 2025 amendment dates and day counting.
+  The API end-to-end tests cover:
+  - balances
+  - apply → manager → HR approval
+  - rejection, cancellation and reversal
+  - statutory floors
+  - holiday recalculation
+  - permissions
+- **Web:** employees apply and see balances, managers and HR approve, and HR manages leave
+  types and holiday calendars, in English and Bangla.
+- **Mobile:** shows balances, applying, my requests and the approvals inbox.
+
 ## Later milestones (outline; detailed when each starts)
 
-- **M2:**
-  - Country-pack rule store (effective-dated parameters with legal references).
-  - BD leave types: casual 10, sick 14, annual accrual, maternity 120 days, festival 13.
-  - Holiday calendars with tentative lunar dates.
-  - Leave policies, accrual, balances, requests, multi-level approvals (first piece of the
-    workflow engine), team calendar.
-  - Leave apply/approve on mobile.
 - **M3:**
   - Shift and roster masters (night and rotating shifts).
   - Punch ingestion from devices, web and mobile, with geo-fenced selfie punch.

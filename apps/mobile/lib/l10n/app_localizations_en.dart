@@ -385,4 +385,327 @@ class AppLocalizationsEn extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String get leaveTitle => 'Leave';
+
+  @override
+  String get leaveSubtitle => 'Balances, requests and holidays';
+
+  @override
+  String get leaveTabBalances => 'Balances';
+
+  @override
+  String get leaveTabApply => 'Apply';
+
+  @override
+  String get leaveTabRequests => 'My requests';
+
+  @override
+  String get leaveTabApprovals => 'Approvals';
+
+  @override
+  String get leaveTabHolidays => 'Holidays';
+
+  @override
+  String get leaveLoadFailed => 'We could not load your leave.';
+
+  @override
+  String get approvalsLoadFailed => 'We could not load your approvals.';
+
+  @override
+  String get holidaysLoadFailed => 'We could not load the holidays.';
+
+  @override
+  String get leaveNoEmployeeTitle => 'No employee record';
+
+  @override
+  String get leaveNoEmployeeBody =>
+      'Leave belongs to an employee record, and your login is not linked to one. If you think it should be, ask your HR team.';
+
+  @override
+  String leaveDays(num count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString days',
+      one: '$countString day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get leaveAvailable => 'Available';
+
+  @override
+  String get leaveOnRequest => 'On request';
+
+  @override
+  String get leaveEntitlement => 'Entitlement';
+
+  @override
+  String get leaveCarriedForward => 'Carried forward';
+
+  @override
+  String get leaveAdjustments => 'Adjustments';
+
+  @override
+  String get leaveTaken => 'Taken';
+
+  @override
+  String get leavePendingDays => 'Pending';
+
+  @override
+  String get leaveUnpaid => 'Unpaid';
+
+  @override
+  String leaveEligibleFrom(String date) {
+    return 'Eligible from $date';
+  }
+
+  @override
+  String get leaveNoTypes => 'No leave types are set up yet.';
+
+  @override
+  String get leaveTypeLabel => 'Leave type';
+
+  @override
+  String get leaveTypeRequired => 'Choose a leave type';
+
+  @override
+  String get leaveStartDate => 'From';
+
+  @override
+  String get leaveEndDate => 'To';
+
+  @override
+  String get leaveChooseDate => 'Choose a date';
+
+  @override
+  String get leaveFullDay => 'Full day';
+
+  @override
+  String halfDayName(String part) {
+    String _temp0 = intl.Intl.selectLogic(part, {
+      'first_half': 'First half',
+      'second_half': 'Second half',
+      'other': 'Half day',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get leaveReason => 'Reason';
+
+  @override
+  String get leaveReasonTooShort => 'Write at least 3 characters';
+
+  @override
+  String leaveDocumentHint(num days) {
+    final intl.NumberFormat daysNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String daysString = daysNumberFormat.format(days);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'A supporting document is needed for more than $daysString days.',
+      one: 'A supporting document is needed for more than $daysString day.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get leaveCountsOffDaysHint =>
+      'Weekly offs and holidays between the dates count as leave days.';
+
+  @override
+  String get leavePreviewHint =>
+      'Choose a leave type and dates to see how many days this takes.';
+
+  @override
+  String get leaveDaysLabel => 'Leave days';
+
+  @override
+  String get leaveNotCounted => 'Not counted';
+
+  @override
+  String excludedDayReason(String reason) {
+    String _temp0 = intl.Intl.selectLogic(reason, {
+      'weekly_off': 'Weekly off',
+      'holiday': 'Holiday',
+      'other': 'Not counted',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String excludedDayWithName(String reason, String name) {
+    return '$reason: $name';
+  }
+
+  @override
+  String get leaveProblemsTitle => 'This request can\'t be sent yet:';
+
+  @override
+  String get leaveSubmit => 'Send request';
+
+  @override
+  String get leaveSubmitted => 'Leave request sent';
+
+  @override
+  String get leaveSubmittedBody =>
+      'Your approvers can see it now. Follow it under My requests.';
+
+  @override
+  String get leaveViewRequests => 'See my requests';
+
+  @override
+  String get leaveApplyAgain => 'Apply for more leave';
+
+  @override
+  String leaveNoRequests(String year) {
+    return 'No leave requests in $year.';
+  }
+
+  @override
+  String leaveStatusName(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'pending': 'Pending',
+      'approved': 'Approved',
+      'rejected': 'Rejected',
+      'cancelled': 'Cancelled',
+      'other': 'Unknown',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String approvalStepKindName(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'manager': 'Manager',
+      'hr': 'HR',
+      'other': 'Approver',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String approvalStepStatusName(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'waiting': 'Waiting for previous step',
+      'pending': 'Awaiting decision',
+      'approved': 'Approved',
+      'rejected': 'Rejected',
+      'skipped': 'Skipped',
+      'cancelled': 'Cancelled',
+      'other': 'Unknown',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get approvalHrTeam => 'HR team';
+
+  @override
+  String get approvalTrail => 'Approval';
+
+  @override
+  String approvalStepTitle(String kind, String approver) {
+    return '$kind: $approver';
+  }
+
+  @override
+  String approvalDecidedBy(String name, String date) {
+    return '$name, $date';
+  }
+
+  @override
+  String get leaveNeedsDocument => 'Supporting document needed';
+
+  @override
+  String get leaveCancelRequest => 'Cancel request';
+
+  @override
+  String get leaveCancelTitle => 'Cancel this request?';
+
+  @override
+  String leaveCancelBody(String type, String dates) {
+    return '$type, $dates. Days not yet taken go back to your balance.';
+  }
+
+  @override
+  String get leaveKeepRequest => 'Keep it';
+
+  @override
+  String get leaveCancelled => 'Request cancelled';
+
+  @override
+  String approvalYourStep(String kind) {
+    return 'Your step: $kind';
+  }
+
+  @override
+  String get approvalBalance => 'Their balance';
+
+  @override
+  String approvalAvailable(String days) {
+    return '$days available';
+  }
+
+  @override
+  String get approve => 'Approve';
+
+  @override
+  String get reject => 'Reject';
+
+  @override
+  String get approveTitle => 'Approve this leave?';
+
+  @override
+  String get rejectTitle => 'Reject this leave?';
+
+  @override
+  String get decisionComment => 'Comment (optional)';
+
+  @override
+  String get leaveApproved => 'Leave approved';
+
+  @override
+  String get leaveRejected => 'Leave rejected';
+
+  @override
+  String get approvalsEmpty => 'Nothing is waiting for you.';
+
+  @override
+  String holidayKindName(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'public': 'Public holiday',
+      'festival': 'Festival holiday',
+      'optional': 'Optional holiday',
+      'company': 'Company holiday',
+      'other': 'Holiday',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get holidayTentative => 'Tentative';
+
+  @override
+  String get holidaysTentativeNote =>
+      'Tentative dates depend on the moon sighting and can move.';
+
+  @override
+  String holidaysNone(String year) {
+    return 'No holidays in $year.';
+  }
+
+  @override
+  String get holidaysNoCalendar => 'No holiday calendar has been set up yet.';
 }

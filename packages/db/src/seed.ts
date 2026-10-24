@@ -1,9 +1,17 @@
-import { PLAN_CATALOG, type BillingMode, type IndustryTemplate, type PlanCode } from '@gp/shared';
+import {
+  PLAN_CATALOG,
+  todayIn,
+  type BillingMode,
+  type IndustryTemplate,
+  type PlanCode,
+} from '@gp/shared';
 import { eq } from 'drizzle-orm';
 import { scopeToTenant, type Database } from './client.js';
 import { createFieldCipher } from './field-cipher.js';
 import { hashPassword } from './passwords.js';
+import { provisionCountryDefaults } from './provision.js';
 import { seedGroupHr } from './seed-hr.js';
+import { seedGroupLeave } from './seed-leave.js';
 import {
   legalEntities,
   plans,
@@ -154,6 +162,10 @@ export async function seed(db: Database, opts: SeedOptions) {
         .insert(legalEntities)
         .values(t.entities.map((name) => ({ tenantId: tenant!.id, name })))
         .returning({ id: legalEntities.id });
+      await provisionCountryDefaults(tx, tenant!.id, {
+        countryPack: 'BD',
+        today: todayIn('Asia/Dhaka', now),
+      });
       if (t.slug === 'my-group') {
         await seedGroupHr(tx, {
           tenantId: tenant!.id,
@@ -162,6 +174,7 @@ export async function seed(db: Database, opts: SeedOptions) {
           cipher: createFieldCipher(opts.fieldKey),
           passwordHash,
         });
+        await seedGroupLeave(tx, { tenantId: tenant!.id, passwordHash });
       }
     });
     created.push(t.slug);

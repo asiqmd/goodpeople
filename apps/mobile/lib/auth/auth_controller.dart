@@ -74,6 +74,45 @@ class AuthController extends Notifier<AuthState> {
   Future<EmployeeDetail> fetchMyEmployee() =>
       _withSession(_api.fetchMyEmployee);
 
+  // ── Leave ─────────────────────────────────────────────────────────────────
+  // Each call refreshes the session once if needed (see [_withSession]). A
+  // 401 means the server did not act, so retrying a POST is safe.
+
+  Future<List<LeaveBalance>> fetchMyLeaveBalances(int year) =>
+      _withSession((token) => _api.fetchMyLeaveBalances(token, year: year));
+
+  Future<List<LeaveType>> fetchLeaveTypes() =>
+      _withSession(_api.fetchLeaveTypes);
+
+  Future<LeavePreview> previewLeave(LeaveDraft draft) =>
+      _withSession((token) => _api.previewLeave(token, draft));
+
+  Future<LeaveRequest> applyForLeave(
+    LeaveDraft draft, {
+    required String reason,
+  }) =>
+      _withSession((token) => _api.applyForLeave(token, draft, reason: reason));
+
+  Future<List<LeaveRequest>> fetchMyLeaveRequests({int? year}) =>
+      _withSession((token) => _api.fetchMyLeaveRequests(token, year: year));
+
+  Future<LeaveRequest> cancelLeaveRequest(String requestId) =>
+      _withSession((token) => _api.cancelLeaveRequest(token, requestId));
+
+  Future<List<ApprovalItem>> fetchApprovals() =>
+      _withSession(_api.fetchApprovals);
+
+  Future<LeaveRequest> decideApproval(
+    String stepId,
+    ApprovalDecision decision, {
+    String? comment,
+  }) => _withSession(
+    (token) => _api.decideApproval(token, stepId, decision, comment: comment),
+  );
+
+  Future<HolidayYear> fetchMyHolidays(int year) =>
+      _withSession((token) => _api.fetchMyHolidays(token, year: year));
+
   /// Runs [call] with the stored access token.
   ///
   /// On a 401 it calls `/auth/refresh` once and retries with the new access

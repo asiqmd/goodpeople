@@ -388,4 +388,326 @@ class AppLocalizationsBn extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String get leaveTitle => 'ছুটি';
+
+  @override
+  String get leaveSubtitle => 'ছুটির হিসাব, আবেদন ও ছুটির দিন';
+
+  @override
+  String get leaveTabBalances => 'ছুটির হিসাব';
+
+  @override
+  String get leaveTabApply => 'আবেদন';
+
+  @override
+  String get leaveTabRequests => 'আমার আবেদন';
+
+  @override
+  String get leaveTabApprovals => 'অনুমোদন';
+
+  @override
+  String get leaveTabHolidays => 'ছুটির দিন';
+
+  @override
+  String get leaveLoadFailed => 'আপনার ছুটির তথ্য লোড করা যায়নি।';
+
+  @override
+  String get approvalsLoadFailed => 'আপনার অনুমোদনের তালিকা লোড করা যায়নি।';
+
+  @override
+  String get holidaysLoadFailed => 'ছুটির দিনের তালিকা লোড করা যায়নি।';
+
+  @override
+  String get leaveNoEmployeeTitle => 'কোনো কর্মী রেকর্ড নেই';
+
+  @override
+  String get leaveNoEmployeeBody =>
+      'ছুটির তথ্য কর্মী রেকর্ডের সাথে যুক্ত থাকে, কিন্তু আপনার লগইনের সাথে কোনো কর্মী রেকর্ড যুক্ত নেই। আপনার থাকার কথা মনে হলে আপনার এইচআর টিমকে জানান।';
+
+  @override
+  String leaveDays(num count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString দিন',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get leaveAvailable => 'অবশিষ্ট';
+
+  @override
+  String get leaveOnRequest => 'আবেদন সাপেক্ষে';
+
+  @override
+  String get leaveEntitlement => 'প্রাপ্য';
+
+  @override
+  String get leaveCarriedForward => 'আগের বছরের জমা';
+
+  @override
+  String get leaveAdjustments => 'সমন্বয়';
+
+  @override
+  String get leaveTaken => 'ভোগকৃত';
+
+  @override
+  String get leavePendingDays => 'অপেক্ষমাণ';
+
+  @override
+  String get leaveUnpaid => 'বিনা বেতনে';
+
+  @override
+  String leaveEligibleFrom(String date) {
+    return '$date থেকে প্রাপ্য';
+  }
+
+  @override
+  String get leaveNoTypes => 'এখনো কোনো ছুটির ধরন যোগ করা হয়নি।';
+
+  @override
+  String get leaveTypeLabel => 'ছুটির ধরন';
+
+  @override
+  String get leaveTypeRequired => 'ছুটির ধরন বেছে নিন';
+
+  @override
+  String get leaveStartDate => 'শুরু';
+
+  @override
+  String get leaveEndDate => 'শেষ';
+
+  @override
+  String get leaveChooseDate => 'তারিখ বেছে নিন';
+
+  @override
+  String get leaveFullDay => 'পুরো দিন';
+
+  @override
+  String halfDayName(String part) {
+    String _temp0 = intl.Intl.selectLogic(part, {
+      'first_half': 'প্রথমার্ধ',
+      'second_half': 'দ্বিতীয়ার্ধ',
+      'other': 'অর্ধদিবস',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get leaveReason => 'কারণ';
+
+  @override
+  String get leaveReasonTooShort => 'অন্তত ৩টি অক্ষর লিখুন';
+
+  @override
+  String leaveDocumentHint(num days) {
+    final intl.NumberFormat daysNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String daysString = daysNumberFormat.format(days);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$daysString দিনের বেশি ছুটির জন্য সহায়ক কাগজপত্র জমা দিতে হবে।',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get leaveCountsOffDaysHint =>
+      'এই ছুটির মাঝে পড়া সাপ্তাহিক ছুটি ও অন্যান্য ছুটির দিনও ছুটি হিসেবে গণনা হবে।';
+
+  @override
+  String get leavePreviewHint =>
+      'কত দিন ছুটি লাগবে দেখতে ছুটির ধরন ও তারিখ বেছে নিন।';
+
+  @override
+  String get leaveDaysLabel => 'ছুটির দিন সংখ্যা';
+
+  @override
+  String get leaveNotCounted => 'গণনার বাইরে';
+
+  @override
+  String excludedDayReason(String reason) {
+    String _temp0 = intl.Intl.selectLogic(reason, {
+      'weekly_off': 'সাপ্তাহিক ছুটি',
+      'holiday': 'ছুটির দিন',
+      'other': 'গণনার বাইরে',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String excludedDayWithName(String reason, String name) {
+    return '$reason: $name';
+  }
+
+  @override
+  String get leaveProblemsTitle => 'এই আবেদন এখনো পাঠানো যাবে না:';
+
+  @override
+  String get leaveSubmit => 'আবেদন পাঠান';
+
+  @override
+  String get leaveSubmitted => 'ছুটির আবেদন পাঠানো হয়েছে';
+
+  @override
+  String get leaveSubmittedBody =>
+      'অনুমোদনকারীরা এখন এটি দেখতে পাচ্ছেন। \"আমার আবেদন\" অংশে এর অগ্রগতি দেখুন।';
+
+  @override
+  String get leaveViewRequests => 'আমার আবেদন দেখুন';
+
+  @override
+  String get leaveApplyAgain => 'আরও ছুটির আবেদন করুন';
+
+  @override
+  String leaveNoRequests(String year) {
+    return '$year সালে কোনো ছুটির আবেদন নেই।';
+  }
+
+  @override
+  String leaveStatusName(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'pending': 'অপেক্ষমাণ',
+      'approved': 'অনুমোদিত',
+      'rejected': 'প্রত্যাখ্যাত',
+      'cancelled': 'বাতিল',
+      'other': 'অজানা',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String approvalStepKindName(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'manager': 'ম্যানেজার',
+      'hr': 'এইচআর',
+      'other': 'অনুমোদনকারী',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String approvalStepStatusName(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'waiting': 'আগের ধাপের অপেক্ষায়',
+      'pending': 'সিদ্ধান্তের অপেক্ষায়',
+      'approved': 'অনুমোদিত',
+      'rejected': 'প্রত্যাখ্যাত',
+      'skipped': 'বাদ দেওয়া হয়েছে',
+      'cancelled': 'বাতিল',
+      'other': 'অজানা',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get approvalHrTeam => 'এইচআর টিম';
+
+  @override
+  String get approvalTrail => 'অনুমোদনের ধাপ';
+
+  @override
+  String approvalStepTitle(String kind, String approver) {
+    return '$kind: $approver';
+  }
+
+  @override
+  String approvalDecidedBy(String name, String date) {
+    return '$name, $date';
+  }
+
+  @override
+  String get leaveNeedsDocument => 'সহায়ক কাগজপত্র জমা দিতে হবে';
+
+  @override
+  String get leaveCancelRequest => 'আবেদন বাতিল করুন';
+
+  @override
+  String get leaveCancelTitle => 'এই আবেদনটি বাতিল করবেন?';
+
+  @override
+  String leaveCancelBody(String type, String dates) {
+    return '$type, $dates। যে দিনগুলো এখনো নেওয়া হয়নি, সেগুলো আপনার ছুটির হিসাবে ফিরে যাবে।';
+  }
+
+  @override
+  String get leaveKeepRequest => 'রেখে দিন';
+
+  @override
+  String get leaveCancelled => 'আবেদন বাতিল করা হয়েছে';
+
+  @override
+  String approvalYourStep(String kind) {
+    return 'আপনার ধাপ: $kind';
+  }
+
+  @override
+  String get approvalBalance => 'তাঁর ছুটির হিসাব';
+
+  @override
+  String approvalAvailable(String days) {
+    return '$days অবশিষ্ট';
+  }
+
+  @override
+  String get approve => 'অনুমোদন করুন';
+
+  @override
+  String get reject => 'প্রত্যাখ্যান করুন';
+
+  @override
+  String get approveTitle => 'এই ছুটি অনুমোদন করবেন?';
+
+  @override
+  String get rejectTitle => 'এই ছুটি প্রত্যাখ্যান করবেন?';
+
+  @override
+  String get decisionComment => 'মন্তব্য (ঐচ্ছিক)';
+
+  @override
+  String get leaveApproved => 'ছুটি অনুমোদন করা হয়েছে';
+
+  @override
+  String get leaveRejected => 'ছুটি প্রত্যাখ্যান করা হয়েছে';
+
+  @override
+  String get approvalsEmpty => 'আপনার সিদ্ধান্তের অপেক্ষায় কিছু নেই।';
+
+  @override
+  String holidayKindName(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'public': 'সাধারণ ছুটি',
+      'festival': 'উৎসব ছুটি',
+      'optional': 'ঐচ্ছিক ছুটি',
+      'company': 'প্রতিষ্ঠানের ছুটি',
+      'other': 'ছুটি',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get holidayTentative => 'সম্ভাব্য';
+
+  @override
+  String get holidaysTentativeNote =>
+      'সম্ভাব্য তারিখগুলো চাঁদ দেখার ওপর নির্ভর করে, তাই বদলাতে পারে।';
+
+  @override
+  String holidaysNone(String year) {
+    return '$year সালে কোনো ছুটির দিন নেই।';
+  }
+
+  @override
+  String get holidaysNoCalendar =>
+      'এখনো কোনো ছুটির ক্যালেন্ডার তৈরি করা হয়নি।';
 }

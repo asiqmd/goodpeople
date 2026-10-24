@@ -11,7 +11,9 @@
     "close": "Close",
     "none": "None",
     "unlimited": "Unlimited",
-    "never": "Never"
+    "never": "Never",
+    "yes": "Yes",
+    "no": "No"
   },
   "home": {
     "title": "One HR platform for every kind of organization",
@@ -383,6 +385,183 @@
       "tenant_admin": "Workspace admin",
       "hr_admin": "HR admin",
       "employee": "Employee"
+    }
+  },
+  "leave": {
+    "nav": {
+      "leave": "Leave",
+      "approvals": "Approvals",
+      "calendar": "Team calendar",
+      "settings": "Leave settings"
+    },
+    "my": {
+      "title": "My leave",
+      "balances": "Balances for {year}",
+      "apply": "Apply for leave",
+      "requests": "My requests",
+      "noRequests": "No leave requests yet.",
+      "noEmployee": "Your login is not linked to an employee record, so you can't apply for leave here."
+    },
+    "balance": {
+      "entitlement": "Entitled",
+      "carried": "Carried forward",
+      "adjustments": "Adjustments",
+      "taken": "Taken",
+      "pending": "Pending",
+      "available": "Available",
+      "onRequest": "On request",
+      "eligibleFrom": "Eligible from {date}",
+      "unpaid": "Unpaid"
+    },
+    "form": {
+      "type": "Leave type",
+      "start": "From",
+      "end": "To",
+      "halfDay": "Half day",
+      "fullDay": "Full day",
+      "first_half": "First half",
+      "second_half": "Second half",
+      "reason": "Reason",
+      "submit": "Submit request",
+      "submitted": "Request submitted",
+      "preview": "{days, plural, one {# day} other {# days}} of leave",
+      "weekly_off": "{date}: weekly off",
+      "holiday": "{date}: {name}",
+      "choose": "Choose…"
+    },
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "cancelled": "Cancelled"
+    },
+    "step": {
+      "manager": "Manager",
+      "hr": "HR",
+      "waiting": "Waiting",
+      "pending": "Awaiting decision",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "skipped": "Skipped (no login)",
+      "cancelled": "Cancelled"
+    },
+    "request": {
+      "cancel": "Cancel request",
+      "cancelConfirm": "Cancel this leave request?",
+      "needsDocument": "Medical certificate needed",
+      "by": "by {name}",
+      "days": "{days, plural, one {# day} other {# days}}"
+    },
+    "approvals": {
+      "title": "Approvals",
+      "none": "Nothing is waiting for you.",
+      "approve": "Approve",
+      "reject": "Reject",
+      "comment": "Comment (optional)",
+      "available": "Available before this request: {available}",
+      "decided": "Decision recorded"
+    },
+    "calendar": {
+      "title": "Team calendar",
+      "previous": "Previous month",
+      "next": "Next month",
+      "legendApproved": "Approved",
+      "legendPending": "Pending",
+      "legendHoliday": "Holiday",
+      "none": "Nobody is on leave this month."
+    },
+    "settings": {
+      "title": "Leave settings",
+      "types": "Leave types",
+      "statutory": "Labour Act",
+      "custom": "Company",
+      "daysPerYear": "Days a year",
+      "rate": "Days worked per leave day",
+      "rateHint": "Empty follows the Labour Act for each location.",
+      "maxDays": "Most days per request",
+      "carry": "Carry-forward cap",
+      "minService": "Minimum service (days)",
+      "gender": "Only for",
+      "anyGender": "Everyone",
+      "countsOffDays": "Count weekly offs and holidays",
+      "allowHalfDay": "Allow half days",
+      "chain": "Approval steps",
+      "documentAfter": "Certificate after (days)",
+      "active": "In use",
+      "save": "Save",
+      "saved": "Saved",
+      "provision": "Add missing Labour Act types",
+      "addType": "Add a company leave type",
+      "code": "Code",
+      "name": "Name",
+      "nameBn": "Name (Bangla)",
+      "paid": "Paid",
+      "accrual": "Accrual",
+      "accruals": {
+        "annual_grant": "Yearly allowance",
+        "earned": "Earned by days worked",
+        "per_event": "Per event"
+      },
+      "calendars": "Holiday calendars",
+      "default": "Default",
+      "makeDefault": "Make default",
+      "newCalendar": "New calendar",
+      "create": "Create",
+      "holidays": "Holidays in {year}",
+      "tentative": "Tentative",
+      "confirmDate": "Confirm date",
+      "delete": "Delete",
+      "addHoliday": "Add holiday",
+      "date": "Date",
+      "kind": "Kind",
+      "kinds": {
+        "public": "Public",
+        "festival": "Festival",
+        "optional": "Optional",
+        "company": "Company"
+      },
+      "isTentative": "Tentative (awaiting moon sighting)",
+      "import": "Import Bangladesh holidays for {year}",
+      "imported": "{added} added, {skipped} already there",
+      "recalculated": "{count, plural, one {# leave request was} other {# leave requests were}} recalculated",
+      "festivalOk": "{count} festival holidays: meets the Labour Act minimum of {required}.",
+      "festivalShort": "{count} festival holidays set; the Labour Act requires {required} ({act}, s.{section}).",
+      "locations": "Locations",
+      "calendar": "Calendar",
+      "weeklyOff": "Weekly off days",
+      "useDefault": "Default calendar",
+      "weekdays": {
+        "0": "Sun",
+        "1": "Mon",
+        "2": "Tue",
+        "3": "Wed",
+        "4": "Thu",
+        "5": "Fri",
+        "6": "Sat"
+      },
+      "rules": "Labour Act rules in force",
+      "reviewNeeded": "Needs legal review",
+      "verified": "Verified",
+      "since": "since {date}",
+      "year": "Year"
+    },
+    "employee": {
+      "tab": "Leave",
+      "adjust": "Adjust balance",
+      "adjustHint": "Positive adds days, negative takes them away. Every adjustment needs a note.",
+      "days": "Days",
+      "note": "Note",
+      "kind": "Kind",
+      "ledger": "Balance movements",
+      "noLedger": "No movements this year.",
+      "ledgerKinds": {
+        "taken": "Taken",
+        "reversal": "Reversed",
+        "adjustment": "Adjustment",
+        "opening": "Opening balance",
+        "recalculation": "Recalculated"
+      },
+      "requests": "Leave requests"
     }
   }
 }

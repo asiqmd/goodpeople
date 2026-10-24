@@ -7,6 +7,7 @@ import { DbModule } from './db/db.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { EmployeesModule } from './modules/employees/employees.module.js';
 import { HealthModule } from './modules/health/health.controller.js';
+import { LeaveModule } from './modules/leave/leave.module.js';
 import { OrgModule } from './modules/org/org.module.js';
 import { PlatformAdminModule } from './modules/platform-admin/platform-admin.module.js';
 import { ReferenceModule } from './modules/reference/reference.controller.js';
@@ -27,6 +28,7 @@ export class AppModule {
         TenancyModule,
         OrgModule,
         EmployeesModule,
+        LeaveModule,
       ],
       providers: [
         { provide: APP_CONFIG, useValue: config },

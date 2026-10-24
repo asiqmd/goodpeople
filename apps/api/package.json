@@ -13,6 +13,7 @@
     "openapi": "node dist/openapi.js"
   },
   "dependencies": {
+    "@gp/country-packs": "workspace:*",
     "@gp/db": "workspace:*",
     "@gp/shared": "workspace:*",
     "@nestjs/common": "^12.2.0",

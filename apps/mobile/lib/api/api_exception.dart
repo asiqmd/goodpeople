@@ -22,12 +22,14 @@ class ApiIssue {
 /// Error thrown by [GoodPeopleApi] for every failed call.
 ///
 /// Error bodies follow the API's shape:
-/// `{"statusCode":401,"error":"Unauthorized","message":"...","issues":[...]}`.
+/// `{"statusCode":401,"error":"Unauthorized","message":"...","issues":[...]}`,
+/// sometimes with a machine-readable `code` such as `leave_not_allowed`.
 class ApiException implements Exception {
   const ApiException({
     required this.kind,
     required this.message,
     this.statusCode,
+    this.code,
     this.issues = const [],
   });
 
@@ -41,9 +43,13 @@ class ApiException implements Exception {
     }
 
     var message = response.statusMessage ?? 'HTTP ${response.statusCode}';
+    String? code;
     var issues = const <ApiIssue>[];
     final body = response.data;
     if (body is Map<String, Object?>) {
+      if (body['code'] case final String bodyCode when bodyCode.isNotEmpty) {
+        code = bodyCode;
+      }
       final bodyMessage = body['message'];
       if (bodyMessage is String && bodyMessage.isNotEmpty) {
         message = bodyMessage;
@@ -69,6 +75,7 @@ class ApiException implements Exception {
       kind: ApiErrorKind.server,
       statusCode: response.statusCode,
       message: message,
+      code: code,
       issues: issues,
     );
   }
@@ -79,6 +86,10 @@ class ApiException implements Exception {
   /// Human-readable message from the server (English), or a technical
   /// description for network and parsing failures.
   final String message;
+
+  /// The body's `code`, when the API sends one, for example
+  /// `leave_not_allowed`.
+  final String? code;
   final List<ApiIssue> issues;
 
   bool get isUnauthorized => statusCode == 401;

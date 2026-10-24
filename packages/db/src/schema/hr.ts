@@ -23,12 +23,14 @@ import {
   jsonb,
   pgEnum,
   pgTable,
+  smallint,
   text,
   timestamp,
   unique,
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
+import { holidayCalendars } from './calendar.js';
 import { tenants } from './platform.js';
 import { legalEntities, tenantUsers } from './tenant.js';
 
@@ -65,6 +67,13 @@ export const locations = pgTable(
     longitude: doublePrecision('longitude'),
     geofenceRadiusM: integer('geofence_radius_m'),
     timeZone: text('time_zone').notNull().default('Asia/Dhaka'),
+    /** null: the workspace's default holiday calendar. */
+    holidayCalendarId: uuid('holiday_calendar_id'),
+    /** 0 = Sunday … 6 = Saturday. Friday is the usual weekly holiday. */
+    weeklyOffDays: smallint('weekly_off_days')
+      .array()
+      .notNull()
+      .default(sql`'{5}'`),
     isActive: boolean('is_active').notNull().default(true),
     createdAt: createdAt(),
   },
@@ -75,6 +84,11 @@ export const locations = pgTable(
       name: 'locations_legal_entity_fk',
       columns: [t.tenantId, t.legalEntityId],
       foreignColumns: [legalEntities.tenantId, legalEntities.id],
+    }),
+    foreignKey({
+      name: 'locations_holiday_calendar_fk',
+      columns: [t.tenantId, t.holidayCalendarId],
+      foreignColumns: [holidayCalendars.tenantId, holidayCalendars.id],
     }),
   ],
 );
@@ -365,19 +379,3 @@ export const tenantAuditLog = pgTable(
   },
   (t) => [index('tenant_audit_log_entity_idx').on(t.tenantId, t.entityType, t.entityId)],
 );
-
-/** Tables protected by the tenant_isolation policy. Tests assert this list matches the database. */
-export const RLS_TABLES = [
-  'tenant_users',
-  'legal_entities',
-  'locations',
-  'org_units',
-  'designations',
-  'grades',
-  'cost_centres',
-  'employees',
-  'job_assignments',
-  'employee_nominees',
-  'employee_payment_accounts',
-  'tenant_audit_log',
-] as const;

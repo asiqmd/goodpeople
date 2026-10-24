@@ -10,6 +10,7 @@ import {
   entitlementGrants,
   hashPassword,
   plans,
+  provisionCountryDefaults,
   scopeToTenant,
   tenants,
   tenantUsers,
@@ -18,6 +19,7 @@ import {
 import {
   BYPASS_BILLING_MODES,
   PLAN_CATALOG,
+  todayIn,
   type AssignCompanyInput,
   type BillingMode,
   type CreateGrantInput,
@@ -121,6 +123,8 @@ export class PlatformAdminService {
           role: 'tenant_admin',
         })
         .returning({ id: tenantUsers.id });
+      // Every new workspace starts with its country pack: statutory leave types and holidays.
+      await provisionCountryDefaults(tx, tenant!.id, { countryPack: 'BD', today: todayIn() });
       return { tenantId: tenant!.id, adminId: admin!.id };
     });
 

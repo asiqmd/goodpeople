@@ -38,6 +38,8 @@ export interface LocationView extends Ref {
   latitude: number | null;
   longitude: number | null;
   geofenceRadiusM: number | null;
+  holidayCalendarId: string | null;
+  weeklyOffDays: number[];
   isActive: boolean;
 }
 

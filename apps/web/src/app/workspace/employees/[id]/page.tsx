@@ -1,11 +1,16 @@
-import type {
-  EmployeeDetail,
-  EmployeeListItem,
-  JobAssignmentView,
-  OrgSnapshot,
-  Page,
+import {
+  todayIn,
+  type EmployeeDetail,
+  type EmployeeListItem,
+  type JobAssignmentView,
+  type LeaveBalanceView,
+  type LeaveLedgerEntryView,
+  type LeaveRequestView,
+  type LeaveTypeView,
+  type OrgSnapshot,
+  type Page,
 } from '@gp/shared';
-import { getTranslations } from 'next-intl/server';
+import { getFormatter, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { EmployeeForm } from '@/components/hr/employee-form';
@@ -20,10 +25,12 @@ import {
 import { JobChangeForm } from '@/components/hr/job-change-form';
 import { NomineesForm } from '@/components/hr/nominees-form';
 import { PaymentAccountsForm } from '@/components/hr/payment-accounts-form';
+import { BalanceCards, day, RequestList } from '@/components/leave/leave-views';
+import { AdjustLeaveForm } from '@/components/leave/settings-forms';
 import { buttonClass, Card } from '@/components/ui';
 import { authedFetch, load } from '@/lib/api';
 
-const TABS = ['profile', 'job', 'nominees', 'payment'] as const;
+const TABS = ['profile', 'job', 'nominees', 'payment', 'leave'] as const;
 
 export default async function EmployeePage({
   params,
@@ -36,6 +43,7 @@ export default async function EmployeePage({
   if (!result.ok) notFound();
   const employee = result.data;
   const t = await getTranslations('hr');
+  const tl = await getTranslations('leave');
 
   return (
     <>
@@ -62,7 +70,7 @@ export default async function EmployeePage({
                 : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
-            {t(`detail.${name}`)}
+            {name === 'leave' ? tl('employee.tab') : t(`detail.${name}`)}
           </Link>
         ))}
       </nav>
@@ -89,6 +97,7 @@ export default async function EmployeePage({
           <PaymentAccountsForm employeeId={id} accounts={employee.paymentAccounts} />
         </Card>
       )}
+      {tab === 'leave' && <LeaveTab employeeId={id} />}
       {tab === 'profile' && (
         <div className="grid gap-6 lg:grid-cols-2">
           <NomineeList employee={employee} />
@@ -124,6 +133,66 @@ async function JobTab({ employee }: { employee: EmployeeDetail }) {
           managers={managers}
         />
       </Card>
+    </>
+  );
+}
+
+async function LeaveTab({ employeeId }: { employeeId: string }) {
+  const today = todayIn();
+  const year = Number(today.slice(0, 4));
+  const [summary, types] = await Promise.all([
+    load<{
+      balances: LeaveBalanceView[];
+      requests: LeaveRequestView[];
+      ledger: LeaveLedgerEntryView[];
+    }>('tenant', `/tenant/employees/${employeeId}/leave?year=${year}`),
+    load<LeaveTypeView[]>('tenant', '/tenant/leave/types'),
+  ]);
+  const t = await getTranslations('leave');
+  const format = await getFormatter();
+  return (
+    <>
+      <section className="space-y-3">
+        <h2 className="text-sm font-medium text-slate-500">{t('my.balances', { year })}</h2>
+        <BalanceCards balances={summary.balances} />
+      </section>
+      <Card title={t('employee.requests')}>
+        {summary.requests.length === 0 ? (
+          <p className="text-sm text-slate-500">{t('my.noRequests')}</p>
+        ) : (
+          <RequestList requests={summary.requests} canCancel today={today} />
+        )}
+      </Card>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card title={t('employee.ledger')}>
+          {summary.ledger.length === 0 ? (
+            <p className="text-sm text-slate-500">{t('employee.noLedger')}</p>
+          ) : (
+            <ul className="divide-y divide-slate-100 text-sm">
+              {summary.ledger.map((e) => (
+                <li key={e.id} className="flex justify-between gap-3 py-2">
+                  <span>
+                    <span className="font-mono text-xs text-slate-400">{e.leaveType.code}</span>{' '}
+                    {t(`employee.ledgerKinds.${e.kind}`)}
+                    {e.note && <span className="block text-xs text-slate-500">{e.note}</span>}
+                  </span>
+                  <span className="text-right">
+                    <span className="font-medium">
+                      {format.number(e.days, { signDisplay: 'always' })}
+                    </span>
+                    <span className="block text-xs text-slate-500">
+                      {day(format, e.createdAt.slice(0, 10))}
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+        <Card title={t('employee.adjust')}>
+          <AdjustLeaveForm employeeId={employeeId} types={types} year={year} />
+        </Card>
+      </div>
     </>
   );
 }

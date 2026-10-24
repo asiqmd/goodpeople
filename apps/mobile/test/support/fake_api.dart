@@ -7,6 +7,10 @@ import 'package:good_people/api/api_models.dart';
 import 'package:good_people/api/good_people_api.dart';
 import 'package:good_people/app.dart';
 
+import 'leave_fixtures.dart';
+
+export 'leave_fixtures.dart';
+
 /// `POST /auth/login` 200 body, exactly as the API contract shapes it.
 const loginJson = <String, Object?>{
   'accessToken': 'access-1',
@@ -285,6 +289,165 @@ class FakeGoodPeopleApi implements GoodPeopleApi {
       final EmployeeDetail detail => detail,
       final Object error => throw error,
     };
+  }
+
+  // ── Leave ─────────────────────────────────────────────────────────────────
+
+  /// Thrown, one per call, by [fetchMyLeaveBalances] before it answers
+  /// [balances] for the year.
+  final balanceErrors = <Exception>[];
+  List<Json> Function(int year) balances = balancesJson;
+
+  /// Years asked of [fetchMyLeaveBalances], and the tokens sent.
+  final balanceYears = <int>[];
+  final balanceTokens = <String>[];
+
+  List<Json> leaveTypes = leaveTypesJson();
+  var leaveTypeCalls = 0;
+
+  /// Answers [previewLeave]. Each preview body is recorded in [previews].
+  LeavePreview Function(LeaveDraft draft) previewFor = (draft) =>
+      const LeavePreview(days: 1, excluded: [], problems: []);
+  final previews = <Json>[];
+
+  /// Thrown by [applyForLeave] instead of creating the request.
+  Exception? applyError;
+
+  /// Each request body sent to [applyForLeave].
+  final applications = <Json>[];
+
+  /// The user's own requests, as JSON so cancelling can change them.
+  List<Json> myRequests = myRequestsJson();
+  final requestYears = <int?>[];
+
+  /// Thrown by [cancelLeaveRequest] instead of cancelling.
+  Exception? cancelError;
+  final cancelledIds = <String>[];
+
+  /// The approval inbox, as JSON. Deciding an item removes it.
+  List<Json> approvals = [];
+  var approvalCalls = 0;
+  final decisions =
+      <({String stepId, ApprovalDecision decision, String? comment})>[];
+
+  Json Function(int year) holidays = holidayYearJson;
+
+  /// Thrown by [fetchMyHolidays] instead of answering, while set.
+  Exception? holidaysError;
+  final holidayYears = <int>[];
+
+  @override
+  Future<List<LeaveBalance>> fetchMyLeaveBalances(
+    String accessToken, {
+    required int year,
+  }) async {
+    balanceTokens.add(accessToken);
+    balanceYears.add(year);
+    if (balanceErrors.isNotEmpty) throw balanceErrors.removeAt(0);
+    return [for (final json in balances(year)) LeaveBalance.fromJson(json)];
+  }
+
+  @override
+  Future<List<LeaveType>> fetchLeaveTypes(String accessToken) async {
+    leaveTypeCalls++;
+    return [for (final json in leaveTypes) LeaveType.fromJson(json)];
+  }
+
+  @override
+  Future<LeavePreview> previewLeave(
+    String accessToken,
+    LeaveDraft draft,
+  ) async {
+    previews.add(draft.toPreviewJson());
+    return previewFor(draft);
+  }
+
+  @override
+  Future<LeaveRequest> applyForLeave(
+    String accessToken,
+    LeaveDraft draft, {
+    required String reason,
+  }) async {
+    final body = draft.toRequestJson(reason: reason);
+    applications.add(body);
+    if (applyError case final error?) throw error;
+    final json = leaveRequestJson(
+      id: 'b0000000-0000-4000-8000-0000000000ff',
+      type: leaveTypes.firstWhere((type) => type['id'] == draft.leaveTypeId),
+      startDate: body['startDate']! as String,
+      endDate: body['endDate']! as String,
+      halfDay: body['halfDay'] as String?,
+      days: previewFor(draft).days,
+      reason: reason,
+      createdAt: '2026-10-24T09:00:00.000Z',
+    );
+    myRequests = [json, ...myRequests];
+    return LeaveRequest.fromJson(json);
+  }
+
+  @override
+  Future<List<LeaveRequest>> fetchMyLeaveRequests(
+    String accessToken, {
+    int? year,
+  }) async {
+    requestYears.add(year);
+    return [
+      for (final json in myRequests)
+        if (year == null || (json['startDate']! as String).startsWith('$year'))
+          LeaveRequest.fromJson(json),
+    ];
+  }
+
+  @override
+  Future<LeaveRequest> cancelLeaveRequest(
+    String accessToken,
+    String requestId,
+  ) async {
+    cancelledIds.add(requestId);
+    if (cancelError case final error?) throw error;
+    final index = myRequests.indexWhere((json) => json['id'] == requestId);
+    final cancelled = {
+      ...myRequests[index],
+      'status': 'cancelled',
+      'steps': [
+        for (final step in myRequests[index]['steps']! as List<Object?>)
+          {...step! as Json, 'status': 'cancelled'},
+      ],
+    };
+    myRequests = [...myRequests]..[index] = cancelled;
+    return LeaveRequest.fromJson(cancelled);
+  }
+
+  @override
+  Future<List<ApprovalItem>> fetchApprovals(String accessToken) async {
+    approvalCalls++;
+    return [for (final json in approvals) ApprovalItem.fromJson(json)];
+  }
+
+  @override
+  Future<LeaveRequest> decideApproval(
+    String accessToken,
+    String stepId,
+    ApprovalDecision decision, {
+    String? comment,
+  }) async {
+    decisions.add((stepId: stepId, decision: decision, comment: comment));
+    final item = approvals.firstWhere((json) => json['stepId'] == stepId);
+    approvals = [...approvals]..remove(item);
+    return LeaveRequest.fromJson({
+      ...item['request']! as Json,
+      'status': decision == ApprovalDecision.approve ? 'approved' : 'rejected',
+    });
+  }
+
+  @override
+  Future<HolidayYear> fetchMyHolidays(
+    String accessToken, {
+    required int year,
+  }) async {
+    holidayYears.add(year);
+    if (holidaysError case final error?) throw error;
+    return HolidayYear.fromJson(holidays(year));
   }
 }
 

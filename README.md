@@ -10,9 +10,12 @@ A multi-tenant HR and payroll platform, built for Bangladesh first and ready to 
     with Bangladesh fields, encrypted identity and account numbers, effective-dated job history,
     nominees, payment accounts and self-service profile. It works in web and mobile, in English
     and Bangla.
+  - **Phase 1 M2 (rules, holidays & leave):** a Bangladesh rules engine with legal references
+    and review status, holiday calendars with tentative lunar dates, leave types, computed
+    balances, requests with manager → HR approvals, and a team calendar.
 - **Next:**
-  - Phase 1 M2: leave, holidays and the BD rules engine.
-  - Then attendance, lifecycle and payroll.
+  - Phase 1 M3: attendance.
+  - Then lifecycle and documents, notifications, and payroll.
   - The plan is in [docs/phases/phase-1.md](docs/phases/phase-1.md).
 
 ## Repository layout
@@ -24,6 +27,7 @@ apps/
   mobile/    Flutter app: workspace sign-in, home and my profile, en/bn (see apps/mobile/README.md)
 packages/
   shared/    Contract shared by API and web: billing modes, plans, resolveAccess(), zod schemas
+  country-packs/  Statutory rules per country (Bangladesh first), each with legal references
   db/        Drizzle schema, SQL migrations (incl. RLS), setup/migrate/seed scripts
   config/    Shared TypeScript config
 docs/adr/    Architecture decisions
@@ -62,6 +66,7 @@ pnpm --filter @gp/web dev
 | Super Admin                        | `/platform/login` | –               | `SEED_SUPER_ADMIN_EMAIL`   |
 | Internal tenant (2 legal entities) | `/login`          | `my-group`      | `admin@my-group.test`      |
 | Employee self-service (Rahima)     | `/login`          | `my-group`      | `rahima@my-group.test`     |
+| Line supervisor, approves leave    | `/login`          | `my-group`      | `shirin@my-group.test`     |
 | Complimentary tenant               | `/login`          | `sponsored-ngo` | `admin@sponsored-ngo.test` |
 | Paid, payment overdue → read-only  | `/login`          | `acme-garments` | `admin@acme-garments.test` |
 | Trial on the Starter plan          | `/login`          | `trial-co`      | `admin@trial-co.test`      |
