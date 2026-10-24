@@ -38,6 +38,20 @@ export interface BdRules {
   'leave.maternity.min_service_days': number;
   'holidays.festival.days_per_year': number;
   'holidays.weekly.min_days': number;
+  'leave.annual.paid_leave_counts_as_worked': boolean;
+  'work.daily_hours': number;
+  'work.daily_max_hours_with_overtime': number;
+  'work.weekly_hours': number;
+  'work.weekly_max_hours_with_overtime': number;
+  'work.weekly_average_max_hours': number;
+  'work.rest_intervals': readonly RestInterval[];
+  'work.overtime_rate_multiplier': number;
+}
+
+/** Work beyond `overHours` in a day needs at least `minutes` of rest or meal interval. */
+export interface RestInterval {
+  overHours: number;
+  minutes: number;
 }
 
 export const BD_RULES: Rulebook<BdRules> = {
@@ -137,6 +151,73 @@ export const BD_RULES: Rulebook<BdRules> = {
         reference: BLA('103'),
         status: 'verified',
         note: 'Shops and commercial establishments: one and a half days.',
+      },
+    ],
+  },
+  'leave.annual.paid_leave_counts_as_worked': {
+    title: 'Annual leave: days on paid leave count as days worked',
+    versions: [
+      {
+        from: ACT_START,
+        value: true,
+        reference: BLA('117'),
+        status: 'needs_review',
+        note: 'Whether paid leave and festival holidays count towards days worked must be confirmed by counsel.',
+      },
+    ],
+  },
+  'work.daily_hours': {
+    title: 'Ordinary working hours in a day (adults)',
+    versions: [{ from: ACT_START, value: 8, reference: BLA('100'), status: 'verified' }],
+  },
+  'work.daily_max_hours_with_overtime': {
+    title: 'Most working hours in a day, including overtime (adults)',
+    versions: [
+      {
+        from: ACT_START,
+        value: 10,
+        reference: BLA('100'),
+        status: 'verified',
+        note: 'Hours beyond 8 are overtime and paid under s.108.',
+      },
+    ],
+  },
+  'work.weekly_hours': {
+    title: 'Ordinary working hours in a week (adults)',
+    versions: [{ from: ACT_START, value: 48, reference: BLA('102'), status: 'verified' }],
+  },
+  'work.weekly_max_hours_with_overtime': {
+    title: 'Most working hours in a week, including overtime (adults)',
+    versions: [{ from: ACT_START, value: 60, reference: BLA('102'), status: 'verified' }],
+  },
+  'work.weekly_average_max_hours': {
+    title: 'Average weekly hours over a year, including overtime (adults)',
+    versions: [{ from: ACT_START, value: 56, reference: BLA('102'), status: 'needs_review' }],
+  },
+  'work.rest_intervals': {
+    title: 'Rest or meal interval needed for a day’s work',
+    versions: [
+      {
+        from: ACT_START,
+        value: [
+          { overHours: 5, minutes: 30 },
+          { overHours: 6, minutes: 60 },
+        ],
+        reference: BLA('101'),
+        status: 'verified',
+        note: 'Over 8 hours: one 1-hour interval or two half-hour intervals.',
+      },
+    ],
+  },
+  'work.overtime_rate_multiplier': {
+    title: 'Overtime allowance, times the ordinary hourly rate',
+    versions: [
+      {
+        from: ACT_START,
+        value: 2,
+        reference: BLA('108'),
+        status: 'verified',
+        note: 'Ordinary rate: basic wage plus dearness allowance and any ad hoc or interim wage.',
       },
     ],
   },

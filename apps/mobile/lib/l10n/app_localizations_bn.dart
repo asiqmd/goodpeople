@@ -710,4 +710,359 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get holidaysNoCalendar =>
       'এখনো কোনো ছুটির ক্যালেন্ডার তৈরি করা হয়নি।';
+
+  @override
+  String get attendanceTitle => 'হাজিরা';
+
+  @override
+  String get attendanceSubtitle => 'পাঞ্চ ইন ও আউট, মাসের হাজিরা ও সংশোধন';
+
+  @override
+  String get attendanceTabToday => 'আজ';
+
+  @override
+  String get attendanceTabMonth => 'এই মাস';
+
+  @override
+  String get attendanceTabCorrections => 'সংশোধন';
+
+  @override
+  String get attendanceLoadFailed => 'আপনার হাজিরার তথ্য লোড করা যায়নি।';
+
+  @override
+  String get attendanceNoEmployeeBody =>
+      'হাজিরার তথ্য কর্মী রেকর্ডের সাথে যুক্ত থাকে, কিন্তু আপনার লগইনের সাথে কোনো কর্মী রেকর্ড যুক্ত নেই। আপনার থাকার কথা মনে হলে আপনার এইচআর টিমকে জানান।';
+
+  @override
+  String attendanceStatusName(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'present': 'উপস্থিত',
+      'half_day': 'অর্ধদিবস',
+      'absent': 'অনুপস্থিত',
+      'on_leave': 'ছুটিতে',
+      'missing_punch': 'পাঞ্চ অসম্পূর্ণ',
+      'off': 'বন্ধ',
+      'pending': 'চলমান',
+      'other': 'অজানা',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String attendanceFlagName(String flag) {
+    String _temp0 = intl.Intl.selectLogic(flag, {
+      'late': 'দেরিতে আগমন',
+      'early_out': 'আগে প্রস্থান',
+      'over_daily_limit': 'দৈনিক সীমার বেশি',
+      'regularized': 'সংশোধিত',
+      'on_duty': 'অফিসের কাজে বাইরে',
+      'outside_geofence': 'কর্মস্থলের এলাকার বাইরে',
+      'other': 'মন্তব্য',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String dayTypeName(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'working': 'কর্মদিবস',
+      'weekly_off': 'সাপ্তাহিক ছুটি',
+      'holiday': 'ছুটির দিন',
+      'other': 'দিন',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String punchSourceName(String source) {
+    String _temp0 = intl.Intl.selectLogic(source, {
+      'device': 'ডিভাইস',
+      'web': 'ওয়েব',
+      'mobile': 'মোবাইল অ্যাপ',
+      'manual': 'এইচআর যোগ করেছে',
+      'regularization': 'সংশোধন',
+      'other': 'অন্যান্য',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String punchDirectionName(String direction) {
+    String _temp0 = intl.Intl.selectLogic(direction, {
+      'in': 'প্রবেশ',
+      'out': 'প্রস্থান',
+      'other': 'পাঞ্চ',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String regularizationKindName(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'missed_punch': 'বাদ পড়া পাঞ্চ',
+      'on_duty': 'অফিসের কাজে বাইরে',
+      'other': 'সংশোধন',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get attendanceNoShift => 'কোনো শিফট নির্ধারিত নেই';
+
+  @override
+  String get attendanceFirstIn => 'প্রথম প্রবেশ';
+
+  @override
+  String get attendanceLastOut => 'শেষ প্রস্থান';
+
+  @override
+  String get attendanceWorked => 'কাজের সময়';
+
+  @override
+  String get attendanceOvertime => 'ওভারটাইম';
+
+  @override
+  String attendanceLateBy(String duration) {
+    return 'দেরি $duration';
+  }
+
+  @override
+  String attendanceEarlyOutBy(String duration) {
+    return 'আগে প্রস্থান $duration';
+  }
+
+  @override
+  String attendanceOvertimeBy(String duration) {
+    return 'ওটি $duration';
+  }
+
+  @override
+  String attendanceLeaveCode(String code) {
+    return 'ছুটি: $code';
+  }
+
+  @override
+  String attendanceHolidayNamed(String name) {
+    return 'ছুটির দিন: $name';
+  }
+
+  @override
+  String attendanceCorrectionStatus(String status) {
+    return 'সংশোধন: $status';
+  }
+
+  @override
+  String get punchIn => 'পাঞ্চ ইন';
+
+  @override
+  String get punchOut => 'পাঞ্চ আউট';
+
+  @override
+  String get punchedIn => 'পাঞ্চ ইন হয়েছে';
+
+  @override
+  String get punchedOut => 'পাঞ্চ আউট হয়েছে';
+
+  @override
+  String get punchLocating => 'আপনার অবস্থান খোঁজা হচ্ছে…';
+
+  @override
+  String get punchGeofencedHint =>
+      'পাঞ্চ করার সময় আপনার অবস্থান কর্মস্থলের নির্ধারিত এলাকার সাথে মিলিয়ে দেখা হয়।';
+
+  @override
+  String get punchAnywhereHint =>
+      'আপনি যেকোনো জায়গা থেকে পাঞ্চ করতে পারবেন। অনুমতি দিলে আপনার অবস্থানও পাঠানো হবে।';
+
+  @override
+  String get punchBlockedDisabled =>
+      'আপনার ওয়ার্কস্পেসে অ্যাপ থেকে পাঞ্চ করা বন্ধ আছে। কর্মস্থলের হাজিরা ডিভাইস ব্যবহার করুন।';
+
+  @override
+  String get punchBlockedNoGeofence =>
+      'আপনার কর্মস্থলের জন্য এখনো পাঞ্চ করার এলাকা নির্ধারণ করা হয়নি, তাই অ্যাপ থেকে পাঞ্চ করা যাবে না। এইচআরকে এটি নির্ধারণ করতে বলুন।';
+
+  @override
+  String get punchBlockedOther => 'এই মুহূর্তে অ্যাপ থেকে পাঞ্চ করা যাচ্ছে না।';
+
+  @override
+  String get todaysPunches => 'আজকের পাঞ্চ';
+
+  @override
+  String get noPunchesYet => 'এখনো কোনো পাঞ্চ নেই।';
+
+  @override
+  String get punchVoided => 'বাতিল';
+
+  @override
+  String get locationServicesOff =>
+      'এই ফোনে লোকেশন বন্ধ আছে। পাঞ্চ করতে লোকেশন চালু করুন।';
+
+  @override
+  String get locationPermissionDenied =>
+      'আপনি কর্মস্থলে আছেন কিনা যাচাই করতে অ্যাপটিকে লোকেশন ব্যবহারের অনুমতি দিন।';
+
+  @override
+  String get locationPermissionBlocked =>
+      'এই অ্যাপের জন্য লোকেশন ব্যবহারের অনুমতি বন্ধ করা আছে। পাঞ্চ করতে সেটিংসে গিয়ে অনুমতি দিন।';
+
+  @override
+  String get locationTimeout =>
+      'আপনার অবস্থান পাওয়া যায়নি। খোলা জায়গায় গিয়ে আবার চেষ্টা করুন।';
+
+  @override
+  String get locationFailed =>
+      'আপনার অবস্থান পড়া যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।';
+
+  @override
+  String get openSettings => 'সেটিংস খুলুন';
+
+  @override
+  String punchErrorOutsideGeofence(String distance, String radius) {
+    return 'আপনি কর্মস্থল থেকে প্রায় $distance মিটার দূরে আছেন। কর্মস্থলের $radius মিটারের মধ্যে থেকে পাঞ্চ করা যায়।';
+  }
+
+  @override
+  String get punchErrorOutsideArea =>
+      'আপনি কর্মস্থলের নির্ধারিত এলাকার বাইরে আছেন, তাই এখান থেকে পাঞ্চ করা যাবে না।';
+
+  @override
+  String get punchErrorLocationRequired =>
+      'পাঞ্চ ইন বা আউট করতে লোকেশন ব্যবহারের অনুমতি দিন।';
+
+  @override
+  String get punchErrorTooSoon =>
+      'আপনি এক মিনিটেরও কম সময় আগে পাঞ্চ করেছেন। আবার পাঞ্চ করার আগে একটু অপেক্ষা করুন।';
+
+  @override
+  String get punchErrorSeparated =>
+      'আপনার চাকরির মেয়াদ শেষ হয়ে গেছে, তাই পাঞ্চ করা যাবে না।';
+
+  @override
+  String get correctionErrorFutureDay =>
+      'শুধু যে দিনগুলো শুরু হয়ে গেছে, সেগুলোই সংশোধন করা যায়।';
+
+  @override
+  String get correctionErrorOutsideWindow =>
+      'এই দিনটি অনেক আগের, তাই অ্যাপ থেকে সংশোধন করা যাবে না। এইচআরকে ঠিক করে দিতে বলুন।';
+
+  @override
+  String get correctionErrorNotTracked =>
+      'সেদিন হাজিরা রাখা হয়নি, তাই সংশোধনের কিছু নেই।';
+
+  @override
+  String get correctionErrorWrongDay =>
+      'এই সময়টি অন্য দিনের শিফটের। তারিখ ও সময় আবার দেখুন।';
+
+  @override
+  String get correctionErrorFuturePunch =>
+      'পাঞ্চের সময় ভবিষ্যতের হতে পারবে না।';
+
+  @override
+  String get correctionErrorAlreadyPending =>
+      'এই দিনের একটি সংশোধন ইতিমধ্যে অনুমোদনের অপেক্ষায় আছে।';
+
+  @override
+  String get correctionErrorNotPending =>
+      'এই সংশোধনের বিষয়ে ইতিমধ্যে সিদ্ধান্ত হয়ে গেছে।';
+
+  @override
+  String get attendanceMonthEmpty => 'এই মাসে এখনো কোনো হাজিরার দিন নেই।';
+
+  @override
+  String get attendanceCorrectDay => 'এই দিনের সংশোধনের আবেদন করুন';
+
+  @override
+  String get correctionRequest => 'সংশোধনের আবেদন';
+
+  @override
+  String get correctionsEmpty => 'আপনি এখনো কোনো সংশোধনের আবেদন করেননি।';
+
+  @override
+  String get correctionsLoadFailed => 'আপনার সংশোধনের তালিকা লোড করা যায়নি।';
+
+  @override
+  String correctionInAt(String time) {
+    return 'প্রবেশ $time';
+  }
+
+  @override
+  String correctionOutAt(String time) {
+    return 'প্রস্থান $time';
+  }
+
+  @override
+  String get correctionCancel => 'সংশোধন বাতিল করুন';
+
+  @override
+  String get correctionCancelTitle => 'এই সংশোধনটি বাতিল করবেন?';
+
+  @override
+  String correctionCancelBody(String date) {
+    return '$date তারিখের জন্য আপনার সংশোধনের আবেদন তুলে নেওয়া হবে।';
+  }
+
+  @override
+  String get correctionCancelled => 'সংশোধন বাতিল করা হয়েছে';
+
+  @override
+  String get correctionDate => 'দিন';
+
+  @override
+  String get correctionDateRequired => 'কোন দিনটি সংশোধন করবেন, বেছে নিন';
+
+  @override
+  String get correctionInTime => 'প্রবেশের সময়';
+
+  @override
+  String get correctionOutTime => 'প্রস্থানের সময়';
+
+  @override
+  String get correctionChooseTime => 'সময় বেছে নিন';
+
+  @override
+  String get correctionClearTime => 'সময় মুছে ফেলুন';
+
+  @override
+  String get correctionTimesHint =>
+      'আপনি কখন এসেছিলেন, কখন বের হয়েছিলেন, অথবা দুটোই দিন।';
+
+  @override
+  String get correctionTimesRequired =>
+      'প্রবেশের সময়, প্রস্থানের সময় অথবা দুটোই দিন।';
+
+  @override
+  String get correctionOnDutyHint =>
+      'অফিসের কাজে বাইরে থাকার দিন পুরো শিফট হিসেবে গণনা হয়, তাই কোনো সময় দিতে হবে না।';
+
+  @override
+  String get correctionSubmit => 'সংশোধন পাঠান';
+
+  @override
+  String get correctionSent => 'সংশোধনের আবেদন অনুমোদনের জন্য পাঠানো হয়েছে';
+
+  @override
+  String get approvalCorrectionTitle => 'হাজিরা সংশোধন';
+
+  @override
+  String get approvalAskedFor => 'যা চাওয়া হয়েছে';
+
+  @override
+  String get approvalDayNow => 'এখন যা রেকর্ড আছে';
+
+  @override
+  String get approveCorrectionTitle => 'এই সংশোধন অনুমোদন করবেন?';
+
+  @override
+  String get rejectCorrectionTitle => 'এই সংশোধন প্রত্যাখ্যান করবেন?';
+
+  @override
+  String get correctionApproved => 'সংশোধন অনুমোদন করা হয়েছে';
+
+  @override
+  String get correctionRejected => 'সংশোধন প্রত্যাখ্যান করা হয়েছে';
+
+  @override
+  String get approvalUnknownItem =>
+      'অ্যাপের এই সংস্করণে এই আবেদনটি দেখানো যায় না। ওয়েব থেকে সিদ্ধান্ত দিন।';
 }

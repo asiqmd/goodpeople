@@ -2,6 +2,11 @@
     <!-- Release builds call the Good People API. Debug and profile builds get
          this permission from their own manifests. -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Punching in or out checks the phone's location against the workplace
+         geofence. It is read only at the moment of a punch, while the app is
+         open; the app never asks for background location. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <application
         android:label="Good People"
         android:name="${applicationName}"

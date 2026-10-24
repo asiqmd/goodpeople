@@ -5,7 +5,13 @@ import { revalidatePath } from 'next/cache';
 import { authedFetch } from '@/lib/api';
 
 export type ActionState<T = undefined> =
-  | { error?: string; issues?: { path: string; message: string }[]; result?: T; ok?: boolean }
+  | {
+      error?: string;
+      code?: string;
+      issues?: { path: string; message: string }[];
+      result?: T;
+      ok?: boolean;
+    }
   | undefined;
 
 const text = (form: FormData, name: string) => String(form.get(name) ?? '').trim();

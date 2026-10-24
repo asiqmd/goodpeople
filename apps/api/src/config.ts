@@ -9,6 +9,8 @@ const configSchema = z.object({
   ACCESS_TOKEN_TTL_SECONDS: z.coerce.number().int().positive().default(900),
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(30),
   FIELD_ENCRYPTION_KEY: z.string().min(40, 'FIELD_ENCRYPTION_KEY must be 32 bytes, base64-encoded'),
+  /** How often attendance is processed in the background; 0 turns it off (tests). */
+  ATTENDANCE_JOB_INTERVAL_MINUTES: z.coerce.number().min(0).default(15),
 });
 
 export type AppConfig = z.infer<typeof configSchema>;

@@ -8,6 +8,7 @@ import {
   bdMaternityDays,
 } from './leave.js';
 import { BD_RULES } from './rules.js';
+import { bdShiftViolations, bdWorkLimits } from './attendance.js';
 
 describe('rule lookup across the 2025 amendment', () => {
   it('gives 112 days of maternity leave before 17 November 2025 and 120 from that day', () => {
@@ -104,5 +105,30 @@ describe('holiday template', () => {
       const dates = bdHolidayTemplate(year).map((h) => h.date);
       expect(new Set(dates).size).toBe(dates.length);
     }
+  });
+});
+
+describe('working time', () => {
+  it('accepts a 9-to-6 shift with an hour’s break', () => {
+    expect(bdShiftViolations({ spanMinutes: 540, breakMinutes: 60 }, '2026-10-24')).toEqual([]);
+  });
+
+  it('refuses a shift that schedules overtime inside it', () => {
+    const [violation] = bdShiftViolations({ spanMinutes: 600, breakMinutes: 60 }, '2026-10-24');
+    expect(violation).toMatchObject({ field: 'span', reference: { section: '100' } });
+  });
+
+  it('needs half an hour of rest after 5 hours and an hour after 6', () => {
+    expect(bdShiftViolations({ spanMinutes: 330, breakMinutes: 0 }, '2026-10-24')).toEqual([
+      expect.objectContaining({ field: 'breakMinutes', message: expect.stringMatching(/30/) }),
+    ]);
+    expect(bdShiftViolations({ spanMinutes: 330, breakMinutes: 30 }, '2026-10-24')).toEqual([]);
+    expect(bdShiftViolations({ spanMinutes: 450, breakMinutes: 30 }, '2026-10-24')).toEqual([
+      expect.objectContaining({ field: 'breakMinutes', message: expect.stringMatching(/60/) }),
+    ]);
+  });
+
+  it('caps a day at 10 hours and a week at 60 with overtime', () => {
+    expect(bdWorkLimits('2026-10-24')).toEqual({ dailyMaxMinutes: 600, weeklyMaxMinutes: 3600 });
   });
 });

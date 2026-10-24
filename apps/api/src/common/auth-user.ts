@@ -12,6 +12,8 @@ export interface AuthedRequest extends Request {
   user?: AuthUser;
   /** Set by AccessStateGuard on tenant routes. */
   tenant?: TenantWithAccess;
+  /** Set by EdgeAgentGuard on the Edge Agent's routes. */
+  edgeAgent?: { tenantId: string; agentId: string };
 }
 
 export const CurrentUser = createParamDecorator(

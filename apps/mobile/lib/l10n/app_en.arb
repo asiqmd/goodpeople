@@ -542,5 +542,246 @@
       }
     }
   },
-  "holidaysNoCalendar": "No holiday calendar has been set up yet."
+  "holidaysNoCalendar": "No holiday calendar has been set up yet.",
+  "attendanceTitle": "Attendance",
+  "attendanceSubtitle": "Punch in and out, your month and corrections",
+  "@attendanceSubtitle": {
+    "description": "Under \"Attendance\" on the home screen."
+  },
+  "attendanceTabToday": "Today",
+  "attendanceTabMonth": "This month",
+  "attendanceTabCorrections": "Corrections",
+  "@attendanceTabCorrections": {
+    "description": "Tab with the user's attendance corrections (regularizations)."
+  },
+  "attendanceLoadFailed": "We could not load your attendance.",
+  "attendanceNoEmployeeBody": "Attendance belongs to an employee record, but none is linked to your login. If you think you should have one, ask your HR team.",
+  "attendanceStatusName": "{status, select, present{Present} half_day{Half day} absent{Absent} on_leave{On leave} missing_punch{Missing punch} off{Off} pending{In progress} other{Unknown}}",
+  "@attendanceStatusName": {
+    "description": "A day's attendance status from the API. pending: the day is not over yet. missing_punch: only one punch, so the hours are unknown.",
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "attendanceFlagName": "{flag, select, late{Late} early_out{Left early} over_daily_limit{Over daily limit} regularized{Corrected} on_duty{On duty} outside_geofence{Outside work area} other{Note}}",
+  "@attendanceFlagName": {
+    "description": "A mark on an attendance day. over_daily_limit: worked more hours than the Labour Act allows in a day.",
+    "placeholders": {
+      "flag": {
+        "type": "String"
+      }
+    }
+  },
+  "dayTypeName": "{type, select, working{Working day} weekly_off{Weekly off} holiday{Holiday} other{Day}}",
+  "@dayTypeName": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "punchSourceName": "{source, select, device{Device} web{Web} mobile{Mobile app} manual{Added by HR} regularization{Correction} other{Other}}",
+  "@punchSourceName": {
+    "description": "Where a punch came from: an attendance device, the web or mobile app, HR by hand, or an approved correction.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "punchDirectionName": "{direction, select, in{In} out{Out} other{Punch}}",
+  "@punchDirectionName": {
+    "placeholders": {
+      "direction": {
+        "type": "String"
+      }
+    }
+  },
+  "regularizationKindName": "{kind, select, missed_punch{Missed punch} on_duty{On duty} other{Correction}}",
+  "@regularizationKindName": {
+    "description": "missed_punch: add a punch the device missed. on_duty: official work away from the workplace.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "attendanceNoShift": "No shift scheduled",
+  "attendanceFirstIn": "First in",
+  "attendanceLastOut": "Last out",
+  "attendanceWorked": "Worked",
+  "@attendanceWorked": {
+    "description": "Hours and minutes worked, shown as h:mm."
+  },
+  "attendanceOvertime": "Overtime",
+  "attendanceLateBy": "Late {duration}",
+  "@attendanceLateBy": {
+    "placeholders": {
+      "duration": {
+        "type": "String",
+        "example": "0:25"
+      }
+    }
+  },
+  "attendanceEarlyOutBy": "Left early {duration}",
+  "@attendanceEarlyOutBy": {
+    "placeholders": {
+      "duration": {
+        "type": "String",
+        "example": "0:40"
+      }
+    }
+  },
+  "attendanceOvertimeBy": "OT {duration}",
+  "@attendanceOvertimeBy": {
+    "description": "Overtime badge on a day.",
+    "placeholders": {
+      "duration": {
+        "type": "String",
+        "example": "1:00"
+      }
+    }
+  },
+  "attendanceLeaveCode": "Leave: {code}",
+  "@attendanceLeaveCode": {
+    "placeholders": {
+      "code": {
+        "type": "String",
+        "example": "CL"
+      }
+    }
+  },
+  "attendanceHolidayNamed": "Holiday: {name}",
+  "@attendanceHolidayNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Victory Day"
+      }
+    }
+  },
+  "attendanceCorrectionStatus": "Correction: {status}",
+  "@attendanceCorrectionStatus": {
+    "description": "A correction asked for this day, and its status.",
+    "placeholders": {
+      "status": {
+        "type": "String",
+        "example": "Pending"
+      }
+    }
+  },
+  "punchIn": "Punch in",
+  "punchOut": "Punch out",
+  "punchedIn": "Punched in",
+  "punchedOut": "Punched out",
+  "punchLocating": "Finding your location…",
+  "punchGeofencedHint": "When you punch, your location is checked against your workplace area.",
+  "punchAnywhereHint": "You can punch from anywhere. If you allow it, your location is sent too.",
+  "punchBlockedDisabled": "Punching from the app is turned off for your workspace. Use the attendance device at work.",
+  "punchBlockedNoGeofence": "Your workplace has no punch area set yet, so you can't punch from the app. Ask HR to set one.",
+  "punchBlockedOther": "Punching from the app isn't available right now.",
+  "todaysPunches": "Today's punches",
+  "noPunchesYet": "No punches yet.",
+  "punchVoided": "Voided",
+  "@punchVoided": {
+    "description": "A punch HR voided: kept on record but not counted."
+  },
+  "locationServicesOff": "Location is turned off on this phone. Turn it on to punch.",
+  "locationPermissionDenied": "Allow location access so the app can check that you are at your workplace.",
+  "locationPermissionBlocked": "Location access is blocked for this app. Allow it in Settings to punch.",
+  "locationTimeout": "Your location could not be found. Move to an open area and try again.",
+  "locationFailed": "Your location could not be read. Please try again.",
+  "openSettings": "Open settings",
+  "punchErrorOutsideGeofence": "You are about {distance} m from your workplace. You can punch within {radius} m of it.",
+  "@punchErrorOutsideGeofence": {
+    "placeholders": {
+      "distance": {
+        "type": "String",
+        "example": "812"
+      },
+      "radius": {
+        "type": "String",
+        "example": "200"
+      }
+    }
+  },
+  "punchErrorOutsideArea": "You are outside your workplace area, so you can't punch here.",
+  "punchErrorLocationRequired": "Allow location access to punch in or out.",
+  "punchErrorTooSoon": "You punched less than a minute ago. Wait a moment before punching again.",
+  "punchErrorSeparated": "Your employment has ended, so you can't punch.",
+  "correctionErrorFutureDay": "You can only correct days that have already started.",
+  "correctionErrorOutsideWindow": "This day is too far back to correct from the app. Ask HR to fix it.",
+  "correctionErrorNotTracked": "Attendance wasn't tracked on that day, so there is nothing to correct.",
+  "correctionErrorWrongDay": "That time belongs to another day's shift. Check the date and times.",
+  "correctionErrorFuturePunch": "A punch time can't be in the future.",
+  "correctionErrorAlreadyPending": "A correction for this day is already waiting for approval.",
+  "correctionErrorNotPending": "This correction has already been decided.",
+  "attendanceMonthEmpty": "No attendance days yet this month.",
+  "attendanceCorrectDay": "Request a correction for this day",
+  "@attendanceCorrectDay": {
+    "description": "Spoken hint on a day in the month list; tapping it opens the correction form."
+  },
+  "correctionRequest": "Request correction",
+  "correctionsEmpty": "You haven't asked for any corrections.",
+  "correctionsLoadFailed": "We could not load your corrections.",
+  "correctionInAt": "In {time}",
+  "@correctionInAt": {
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "8:05 AM"
+      }
+    }
+  },
+  "correctionOutAt": "Out {time}",
+  "@correctionOutAt": {
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "5:40 PM"
+      }
+    }
+  },
+  "correctionCancel": "Cancel correction",
+  "correctionCancelTitle": "Cancel this correction?",
+  "correctionCancelBody": "Your correction for {date} will be withdrawn.",
+  "@correctionCancelBody": {
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "Oct 20, 2026"
+      }
+    }
+  },
+  "correctionCancelled": "Correction cancelled",
+  "correctionDate": "Day",
+  "@correctionDate": {
+    "description": "The day the correction is for."
+  },
+  "correctionDateRequired": "Choose the day to correct",
+  "correctionInTime": "In time",
+  "correctionOutTime": "Out time",
+  "correctionChooseTime": "Choose a time",
+  "correctionClearTime": "Clear time",
+  "correctionTimesHint": "Give the time you came in, the time you left, or both.",
+  "correctionTimesRequired": "Give the in time, the out time or both.",
+  "correctionOnDutyHint": "An on-duty day counts as your whole shift, so no times are needed.",
+  "correctionSubmit": "Send correction",
+  "correctionSent": "Correction sent for approval",
+  "approvalCorrectionTitle": "Attendance correction",
+  "approvalAskedFor": "Asked for",
+  "@approvalAskedFor": {
+    "description": "Label over the times an employee asks to add."
+  },
+  "approvalDayNow": "Recorded now",
+  "@approvalDayNow": {
+    "description": "Label over the day as the system has it now, to compare with the correction."
+  },
+  "approveCorrectionTitle": "Approve this correction?",
+  "rejectCorrectionTitle": "Reject this correction?",
+  "correctionApproved": "Correction approved",
+  "correctionRejected": "Correction rejected",
+  "approvalUnknownItem": "This version of the app can't show this request. Decide it on the web."
 }

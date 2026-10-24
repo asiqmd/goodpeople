@@ -9,19 +9,17 @@ import {
   approvalSteps,
   employees,
   holidays,
-  jobAssignments,
   leaveLedger,
   leaveRequests,
   leaveTypes,
-  orgUnits,
   type Tx,
 } from '@gp/db';
 import { bdMaternityDays } from '@gp/country-packs';
 import {
-  HR_ROLES,
   addDays,
   countLeaveDays,
   todayIn,
+  type ApprovalItem,
   type LeaveCalendarView,
   type LeavePreview,
   type LeavePreviewInput,
@@ -32,28 +30,31 @@ import { and, asc, eq, gte, inArray, lte, or, sql, type SQL } from 'drizzle-orm'
 import type { AuthUser } from '../../common/auth-user.js';
 import { currentTenantId } from '../../common/request-context.js';
 import { TenantDb } from '../../db/db.module.js';
+import {
+  cancelOpenSteps,
+  createApprovalSteps,
+  type ApprovalStepRow,
+  type ApprovalSubjectHandler,
+} from '../approvals/approval-steps.js';
+import { AttendanceProcessor } from '../attendance/processor.service.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
-import { inForceOn } from '../employees/employee.queries.js';
+import { WorkCalendarService } from '../calendar/work-calendar.service.js';
+import { employeeOfUser, isHr, teamScope } from '../employees/employee.queries.js';
 import { BalancesService, type LeaveTypeRow } from './balances.service.js';
 import { loadRequests } from './leave-views.js';
-import { WorkCalendarService } from './work-calendar.service.js';
 
 type EmployeeRow = typeof employees.$inferSelect;
 
-export const isHr = (user: AuthUser) => (HR_ROLES as readonly string[]).includes(user.role);
-
-/** The employee record linked to a workspace login, if any. */
-export async function employeeOfUser(tx: Tx, userId: string): Promise<EmployeeRow | null> {
-  const [row] = await tx.select().from(employees).where(eq(employees.userId, userId));
-  return row ?? null;
-}
-
 @Injectable()
-export class LeaveRequestsService {
+export class LeaveRequestsService implements ApprovalSubjectHandler<LeaveRequestView> {
+  readonly auditPrefix = 'leave';
+  readonly entityType = 'leave_request' as const;
+
   constructor(
     private readonly tenantDb: TenantDb,
     private readonly calendars: WorkCalendarService,
     private readonly balances: BalancesService,
+    private readonly attendance: AttendanceProcessor,
     private readonly audit: TenantAuditService,
   ) {}
 
@@ -202,57 +203,21 @@ export class LeaveRequestsService {
     return { days: counted.days, excluded: counted.excluded, balance, problems };
   }
 
-  /**
-   * Builds the approval steps. A manager step goes to the manager on the start date; if there
-   * is no manager, or they have no workspace login, it is skipped so the request never sticks.
-   * If that leaves no one to decide, an HR step is added.
-   */
+  /** Approval steps from the type's chain; a type without a chain stands approved. */
   private async createSteps(
     tx: Tx,
     request: typeof leaveRequests.$inferSelect,
     type: LeaveTypeRow,
   ) {
-    const [job] = await tx
-      .select({ managerId: jobAssignments.managerId })
-      .from(jobAssignments)
-      .where(and(eq(jobAssignments.employeeId, request.employeeId), inForceOn(request.startDate)));
-    const manager = job?.managerId
-      ? (await tx.select().from(employees).where(eq(employees.id, job.managerId)))[0]
-      : undefined;
-
-    let pendingSet = false;
-    const steps = type.approvalChain.map((kind, i) => {
-      const approverEmployeeId = kind === 'manager' ? (manager?.id ?? null) : null;
-      const reachable =
-        kind === 'hr' || (manager?.userId != null && manager.id !== request.employeeId);
-      const status = !reachable ? 'skipped' : pendingSet ? 'waiting' : 'pending';
-      if (status === 'pending') pendingSet = true;
-      return {
-        tenantId: request.tenantId,
-        subjectType: 'leave_request',
-        subjectId: request.id,
-        stepNo: i + 1,
-        kind,
-        approverEmployeeId,
-        status: status as 'skipped' | 'waiting' | 'pending',
-      };
+    const someoneDecides = await createApprovalSteps(tx, {
+      tenantId: request.tenantId,
+      type: 'leave_request',
+      id: request.id,
+      employeeId: request.employeeId,
+      onDate: request.startDate,
+      chain: type.approvalChain,
     });
-    // Every step was skipped (no reachable manager): HR decides rather than auto-approving.
-    if (steps.length && !pendingSet) {
-      steps.push({
-        tenantId: request.tenantId,
-        subjectType: 'leave_request',
-        subjectId: request.id,
-        stepNo: steps.length + 1,
-        kind: 'hr',
-        approverEmployeeId: null,
-        status: 'pending',
-      });
-      pendingSet = true;
-    }
-    if (steps.length) await tx.insert(approvalSteps).values(steps);
-    // An empty approval chain means the type needs no approval: it stands approved.
-    if (!pendingSet) await this.finalize(tx, request.id, 'approved', request.appliedBy);
+    if (!someoneDecides) await this.finalize(tx, request.id, 'approved', request.appliedBy);
   }
 
   /** Marks a request approved (debiting the balance) or rejected. Used by approvals too. */
@@ -279,11 +244,15 @@ export class LeaveRequestsService {
           createdBy: actorUserId,
         });
       }
+      // Days already past now show as leave instead of absent.
+      await this.attendance.processSince(
+        tx,
+        [request!.employeeId],
+        request!.startDate,
+        request!.endDate,
+      );
     } else {
-      await tx
-        .update(approvalSteps)
-        .set({ status: 'cancelled' })
-        .where(and(eq(approvalSteps.subjectId, requestId), eq(approvalSteps.status, 'waiting')));
+      await cancelOpenSteps(tx, requestId, ['waiting']);
     }
   }
 
@@ -314,15 +283,7 @@ export class LeaveRequestsService {
         .update(leaveRequests)
         .set({ status: 'cancelled', cancelledAt: new Date() })
         .where(eq(leaveRequests.id, requestId));
-      await tx
-        .update(approvalSteps)
-        .set({ status: 'cancelled' })
-        .where(
-          and(
-            eq(approvalSteps.subjectId, requestId),
-            inArray(approvalSteps.status, ['pending', 'waiting']),
-          ),
-        );
+      await cancelOpenSteps(tx, requestId, ['pending', 'waiting']);
       if (request.status === 'approved') {
         await tx.insert(leaveLedger).values({
           tenantId: request.tenantId,
@@ -392,31 +353,11 @@ export class LeaveRequestsService {
     return this.tenantDb.run(async (tx) => {
       const today = todayIn();
       const me = await employeeOfUser(tx, user.id);
-      let scope: SQL | undefined;
-      if (isHr(user)) {
-        if (query.orgUnitId) {
-          const units = await unitAndBelow(tx, query.orgUnitId);
-          scope = inArray(leaveRequests.employeeId, employeesInUnits(tx, units, today));
-        }
-      } else {
-        if (!me) throw new NotFoundException('No employee record is linked to your login');
-        const [myJob] = await tx
-          .select()
-          .from(jobAssignments)
-          .where(and(eq(jobAssignments.employeeId, me.id), inForceOn(today)));
-        const sameUnit = myJob?.orgUnitId
-          ? employeesInUnits(tx, [myJob.orgUnitId], today)
-          : undefined;
-        const reports = tx
-          .select({ id: jobAssignments.employeeId })
-          .from(jobAssignments)
-          .where(and(eq(jobAssignments.managerId, me.id), inForceOn(today)));
-        scope = or(
-          eq(leaveRequests.employeeId, me.id),
-          inArray(leaveRequests.employeeId, reports),
-          sameUnit ? inArray(leaveRequests.employeeId, sameUnit) : undefined,
-        );
-      }
+      const scope = await teamScope(tx, user, leaveRequests.employeeId, {
+        onDate: today,
+        orgUnitId: query.orgUnitId,
+      });
+      if (scope === null) throw new NotFoundException('No employee record is linked to your login');
       const requests = await loadRequests(
         tx,
         and(
@@ -529,7 +470,75 @@ export class LeaveRequestsService {
         });
       }
     }
+    // Attendance on those dates becomes holiday or working day too.
+    const sorted = dates.toSorted();
+    await this.attendance.processSince(tx, undefined, sorted[0]!, sorted.at(-1)!);
     return changed;
+  }
+
+  // ── Approvals ──────────────────────────────────────────────────────────────
+
+  async lockSubject(tx: Tx, subjectId: string) {
+    const [row] = await tx
+      .select({ employeeId: leaveRequests.employeeId })
+      .from(leaveRequests)
+      .where(eq(leaveRequests.id, subjectId))
+      .for('update');
+    return row ?? null;
+  }
+
+  ownedBy(tx: Tx, employeeId: string): SQL {
+    return inArray(
+      approvalSteps.subjectId,
+      tx
+        .select({ id: leaveRequests.id })
+        .from(leaveRequests)
+        .where(eq(leaveRequests.employeeId, employeeId)),
+    );
+  }
+
+  /** Each waiting request with the balance it would draw on. */
+  async inboxItems(tx: Tx, steps: ApprovalStepRow[]) {
+    const views = await loadRequests(
+      tx,
+      inArray(
+        leaveRequests.id,
+        steps.map((s) => s.subjectId),
+      ),
+    );
+    const items: { sortKey: string; item: ApprovalItem }[] = [];
+    for (const step of steps) {
+      const request = views.find((v) => v.id === step.subjectId);
+      if (!request) continue;
+      const [employee] = await tx
+        .select()
+        .from(employees)
+        .where(eq(employees.id, request.employee.id));
+      const [type] = await tx
+        .select()
+        .from(leaveTypes)
+        .where(eq(leaveTypes.id, request.leaveType.id));
+      items.push({
+        sortKey: request.startDate,
+        item: {
+          subjectType: 'leave_request',
+          stepId: step.id,
+          kind: step.kind,
+          request,
+          balance: await this.balances.balance(
+            tx,
+            employee!,
+            type!,
+            Number(request.startDate.slice(0, 4)),
+          ),
+        },
+      });
+    }
+    return items;
+  }
+
+  view(subjectId: string): Promise<LeaveRequestView> {
+    return this.get(subjectId);
   }
 
   /** HR may act for anyone; everyone else only for themselves. */
@@ -552,19 +561,3 @@ export class LeaveRequestsService {
 
 const yearFilter = (year?: number) =>
   year === undefined ? undefined : sql`extract(year from ${leaveRequests.startDate}) = ${year}`;
-
-/** Employees whose job today sits in one of these units, as a subquery. */
-const employeesInUnits = (tx: Tx, units: string[], today: string) =>
-  tx
-    .select({ id: jobAssignments.employeeId })
-    .from(jobAssignments)
-    .where(and(inArray(jobAssignments.orgUnitId, units), inForceOn(today)));
-
-export async function unitAndBelow(tx: Tx, unitId: string): Promise<string[]> {
-  const all = await tx.select({ id: orgUnits.id, parentId: orgUnits.parentId }).from(orgUnits);
-  const ids = [unitId];
-  for (let i = 0; i < ids.length; i++) {
-    ids.push(...all.filter((u) => u.parentId === ids[i]).map((u) => u.id));
-  }
-  return ids;
-}

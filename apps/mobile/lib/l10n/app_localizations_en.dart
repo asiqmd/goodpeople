@@ -708,4 +708,361 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get holidaysNoCalendar => 'No holiday calendar has been set up yet.';
+
+  @override
+  String get attendanceTitle => 'Attendance';
+
+  @override
+  String get attendanceSubtitle =>
+      'Punch in and out, your month and corrections';
+
+  @override
+  String get attendanceTabToday => 'Today';
+
+  @override
+  String get attendanceTabMonth => 'This month';
+
+  @override
+  String get attendanceTabCorrections => 'Corrections';
+
+  @override
+  String get attendanceLoadFailed => 'We could not load your attendance.';
+
+  @override
+  String get attendanceNoEmployeeBody =>
+      'Attendance belongs to an employee record, but none is linked to your login. If you think you should have one, ask your HR team.';
+
+  @override
+  String attendanceStatusName(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'present': 'Present',
+      'half_day': 'Half day',
+      'absent': 'Absent',
+      'on_leave': 'On leave',
+      'missing_punch': 'Missing punch',
+      'off': 'Off',
+      'pending': 'In progress',
+      'other': 'Unknown',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String attendanceFlagName(String flag) {
+    String _temp0 = intl.Intl.selectLogic(flag, {
+      'late': 'Late',
+      'early_out': 'Left early',
+      'over_daily_limit': 'Over daily limit',
+      'regularized': 'Corrected',
+      'on_duty': 'On duty',
+      'outside_geofence': 'Outside work area',
+      'other': 'Note',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String dayTypeName(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'working': 'Working day',
+      'weekly_off': 'Weekly off',
+      'holiday': 'Holiday',
+      'other': 'Day',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String punchSourceName(String source) {
+    String _temp0 = intl.Intl.selectLogic(source, {
+      'device': 'Device',
+      'web': 'Web',
+      'mobile': 'Mobile app',
+      'manual': 'Added by HR',
+      'regularization': 'Correction',
+      'other': 'Other',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String punchDirectionName(String direction) {
+    String _temp0 = intl.Intl.selectLogic(direction, {
+      'in': 'In',
+      'out': 'Out',
+      'other': 'Punch',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String regularizationKindName(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'missed_punch': 'Missed punch',
+      'on_duty': 'On duty',
+      'other': 'Correction',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get attendanceNoShift => 'No shift scheduled';
+
+  @override
+  String get attendanceFirstIn => 'First in';
+
+  @override
+  String get attendanceLastOut => 'Last out';
+
+  @override
+  String get attendanceWorked => 'Worked';
+
+  @override
+  String get attendanceOvertime => 'Overtime';
+
+  @override
+  String attendanceLateBy(String duration) {
+    return 'Late $duration';
+  }
+
+  @override
+  String attendanceEarlyOutBy(String duration) {
+    return 'Left early $duration';
+  }
+
+  @override
+  String attendanceOvertimeBy(String duration) {
+    return 'OT $duration';
+  }
+
+  @override
+  String attendanceLeaveCode(String code) {
+    return 'Leave: $code';
+  }
+
+  @override
+  String attendanceHolidayNamed(String name) {
+    return 'Holiday: $name';
+  }
+
+  @override
+  String attendanceCorrectionStatus(String status) {
+    return 'Correction: $status';
+  }
+
+  @override
+  String get punchIn => 'Punch in';
+
+  @override
+  String get punchOut => 'Punch out';
+
+  @override
+  String get punchedIn => 'Punched in';
+
+  @override
+  String get punchedOut => 'Punched out';
+
+  @override
+  String get punchLocating => 'Finding your location…';
+
+  @override
+  String get punchGeofencedHint =>
+      'When you punch, your location is checked against your workplace area.';
+
+  @override
+  String get punchAnywhereHint =>
+      'You can punch from anywhere. If you allow it, your location is sent too.';
+
+  @override
+  String get punchBlockedDisabled =>
+      'Punching from the app is turned off for your workspace. Use the attendance device at work.';
+
+  @override
+  String get punchBlockedNoGeofence =>
+      'Your workplace has no punch area set yet, so you can\'t punch from the app. Ask HR to set one.';
+
+  @override
+  String get punchBlockedOther =>
+      'Punching from the app isn\'t available right now.';
+
+  @override
+  String get todaysPunches => 'Today\'s punches';
+
+  @override
+  String get noPunchesYet => 'No punches yet.';
+
+  @override
+  String get punchVoided => 'Voided';
+
+  @override
+  String get locationServicesOff =>
+      'Location is turned off on this phone. Turn it on to punch.';
+
+  @override
+  String get locationPermissionDenied =>
+      'Allow location access so the app can check that you are at your workplace.';
+
+  @override
+  String get locationPermissionBlocked =>
+      'Location access is blocked for this app. Allow it in Settings to punch.';
+
+  @override
+  String get locationTimeout =>
+      'Your location could not be found. Move to an open area and try again.';
+
+  @override
+  String get locationFailed =>
+      'Your location could not be read. Please try again.';
+
+  @override
+  String get openSettings => 'Open settings';
+
+  @override
+  String punchErrorOutsideGeofence(String distance, String radius) {
+    return 'You are about $distance m from your workplace. You can punch within $radius m of it.';
+  }
+
+  @override
+  String get punchErrorOutsideArea =>
+      'You are outside your workplace area, so you can\'t punch here.';
+
+  @override
+  String get punchErrorLocationRequired =>
+      'Allow location access to punch in or out.';
+
+  @override
+  String get punchErrorTooSoon =>
+      'You punched less than a minute ago. Wait a moment before punching again.';
+
+  @override
+  String get punchErrorSeparated =>
+      'Your employment has ended, so you can\'t punch.';
+
+  @override
+  String get correctionErrorFutureDay =>
+      'You can only correct days that have already started.';
+
+  @override
+  String get correctionErrorOutsideWindow =>
+      'This day is too far back to correct from the app. Ask HR to fix it.';
+
+  @override
+  String get correctionErrorNotTracked =>
+      'Attendance wasn\'t tracked on that day, so there is nothing to correct.';
+
+  @override
+  String get correctionErrorWrongDay =>
+      'That time belongs to another day\'s shift. Check the date and times.';
+
+  @override
+  String get correctionErrorFuturePunch =>
+      'A punch time can\'t be in the future.';
+
+  @override
+  String get correctionErrorAlreadyPending =>
+      'A correction for this day is already waiting for approval.';
+
+  @override
+  String get correctionErrorNotPending =>
+      'This correction has already been decided.';
+
+  @override
+  String get attendanceMonthEmpty => 'No attendance days yet this month.';
+
+  @override
+  String get attendanceCorrectDay => 'Request a correction for this day';
+
+  @override
+  String get correctionRequest => 'Request correction';
+
+  @override
+  String get correctionsEmpty => 'You haven\'t asked for any corrections.';
+
+  @override
+  String get correctionsLoadFailed => 'We could not load your corrections.';
+
+  @override
+  String correctionInAt(String time) {
+    return 'In $time';
+  }
+
+  @override
+  String correctionOutAt(String time) {
+    return 'Out $time';
+  }
+
+  @override
+  String get correctionCancel => 'Cancel correction';
+
+  @override
+  String get correctionCancelTitle => 'Cancel this correction?';
+
+  @override
+  String correctionCancelBody(String date) {
+    return 'Your correction for $date will be withdrawn.';
+  }
+
+  @override
+  String get correctionCancelled => 'Correction cancelled';
+
+  @override
+  String get correctionDate => 'Day';
+
+  @override
+  String get correctionDateRequired => 'Choose the day to correct';
+
+  @override
+  String get correctionInTime => 'In time';
+
+  @override
+  String get correctionOutTime => 'Out time';
+
+  @override
+  String get correctionChooseTime => 'Choose a time';
+
+  @override
+  String get correctionClearTime => 'Clear time';
+
+  @override
+  String get correctionTimesHint =>
+      'Give the time you came in, the time you left, or both.';
+
+  @override
+  String get correctionTimesRequired =>
+      'Give the in time, the out time or both.';
+
+  @override
+  String get correctionOnDutyHint =>
+      'An on-duty day counts as your whole shift, so no times are needed.';
+
+  @override
+  String get correctionSubmit => 'Send correction';
+
+  @override
+  String get correctionSent => 'Correction sent for approval';
+
+  @override
+  String get approvalCorrectionTitle => 'Attendance correction';
+
+  @override
+  String get approvalAskedFor => 'Asked for';
+
+  @override
+  String get approvalDayNow => 'Recorded now';
+
+  @override
+  String get approveCorrectionTitle => 'Approve this correction?';
+
+  @override
+  String get rejectCorrectionTitle => 'Reject this correction?';
+
+  @override
+  String get correctionApproved => 'Correction approved';
+
+  @override
+  String get correctionRejected => 'Correction rejected';
+
+  @override
+  String get approvalUnknownItem =>
+      'This version of the app can\'t show this request. Decide it on the web.';
 }

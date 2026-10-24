@@ -371,23 +371,29 @@ class PersonRef {
   final String fullName;
 }
 
-/// The employee a leave request belongs to.
+/// The employee a leave request or an attendance correction belongs to.
 class EmployeeRef {
   const EmployeeRef({
     required this.id,
     required this.fullName,
     required this.employeeCode,
+    this.fullNameBn,
   });
 
   factory EmployeeRef.fromJson(Json json) => EmployeeRef(
     id: _read<String>(json, 'id'),
     fullName: _read<String>(json, 'fullName'),
     employeeCode: _read<String>(json, 'employeeCode'),
+    fullNameBn: _read<String?>(json, 'fullNameBn'),
   );
 
   final String id;
   final String fullName;
   final String employeeCode;
+
+  /// Name in Bangla script. Attendance sends it (when HR entered one);
+  /// leave requests do not.
+  final String? fullNameBn;
 }
 
 /// One step of a request's approval trail.
@@ -488,30 +494,6 @@ class LeaveRequest {
     LeaveRequestStatus.approved => startDate.isAfter(today),
     _ => false,
   };
-}
-
-/// `GET /tenant/approvals` item: one step waiting for the signed-in user.
-class ApprovalItem {
-  const ApprovalItem({
-    required this.stepId,
-    required this.kind,
-    required this.request,
-    this.balance,
-  });
-
-  factory ApprovalItem.fromJson(Json json) => ApprovalItem(
-    stepId: _read<String>(json, 'stepId'),
-    kind: ApprovalStepKind.fromWire(_read<String>(json, 'kind')),
-    request: LeaveRequest.fromJson(_read<Json>(json, 'request')),
-    balance: _readOptional(json, 'balance', LeaveBalance.fromJson),
-  );
-
-  final String stepId;
-  final ApprovalStepKind kind;
-  final LeaveRequest request;
-
-  /// The requester's balance for the request's leave type and year.
-  final LeaveBalance? balance;
 }
 
 class HolidayCalendar {

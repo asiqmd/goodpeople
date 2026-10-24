@@ -57,7 +57,8 @@ describe('holiday calendars', () => {
         .expect(201)
     ).body;
     const step = (await api(app).get('/tenant/approvals').set(bearer(manager))).body.find(
-      (i: { request: { id: string } }) => i.request.id === request.id,
+      (i: { subjectType: string; request?: { id: string } }) =>
+        i.subjectType === 'leave_request' && i.request!.id === request.id,
     ).stepId;
     await api(app)
       .post(`/tenant/approvals/${step}/approve`)

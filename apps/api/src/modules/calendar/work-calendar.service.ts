@@ -1,7 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { holidayCalendars, holidays, jobAssignments, locations, type Tx } from '@gp/db';
+import {
+  attendanceDays,
+  attendanceSettings,
+  holidayCalendars,
+  holidays,
+  jobAssignments,
+  leaveRequests,
+  leaveTypes,
+  locations,
+  type Tx,
+} from '@gp/db';
+import { BD_RULES, ruleOn } from '@gp/country-packs';
 import type { EstablishmentKind } from '@gp/country-packs';
-import { DEFAULT_WEEKLY_OFF_DAYS, countLeaveDays } from '@gp/shared';
+import { DEFAULT_WEEKLY_OFF_DAYS, addDays, countLeaveDays } from '@gp/shared';
 import { and, asc, eq, gte, lte } from 'drizzle-orm';
 import { inForceOn } from '../employees/employee.queries.js';
 
@@ -67,7 +78,53 @@ export class WorkCalendarService {
     return new Map(rows.map((h) => [h.date, h.name]));
   }
 
-  /** Scheduled working days in a period. Attendance (M3) will replace this with days worked. */
+  /**
+   * Days worked in a period, for earning annual leave (s.117). Where attendance is tracked
+   * it counts present days, half days as half, and paid leave if the rule says so; before
+   * attendance went live, scheduled working days stand in.
+   */
+  async daysWorked(
+    tx: Tx,
+    employeeId: string,
+    calendar: WorkCalendar,
+    from: string,
+    to: string,
+  ): Promise<number> {
+    if (to < from) return 0;
+    const [settings] = await tx
+      .select({ trackingFrom: attendanceSettings.trackingFrom })
+      .from(attendanceSettings);
+    const trackedFrom = settings?.trackingFrom ?? addDays(to, 1);
+    const scheduledTo = trackedFrom <= to ? addDays(trackedFrom, -1) : to;
+    let days = await this.workingDays(tx, calendar, from, scheduledTo);
+    const start = trackedFrom > from ? trackedFrom : from;
+    if (start > to) return days;
+    const leaveCounts = ruleOn(BD_RULES, 'leave.annual.paid_leave_counts_as_worked', to).value;
+    const rows = await tx
+      .select({
+        status: attendanceDays.status,
+        leaveDays: attendanceDays.leaveDays,
+        paid: leaveTypes.paid,
+      })
+      .from(attendanceDays)
+      .leftJoin(leaveRequests, eq(leaveRequests.id, attendanceDays.leaveRequestId))
+      .leftJoin(leaveTypes, eq(leaveTypes.id, leaveRequests.leaveTypeId))
+      .where(
+        and(
+          eq(attendanceDays.employeeId, employeeId),
+          gte(attendanceDays.date, start),
+          lte(attendanceDays.date, to),
+        ),
+      );
+    for (const r of rows) {
+      if (r.status === 'present') days += 1;
+      else if (r.status === 'half_day') days += 0.5;
+      if (leaveCounts && r.paid && r.status !== 'present') days += r.leaveDays;
+    }
+    return days;
+  }
+
+  /** Scheduled working days in a period. */
   async workingDays(tx: Tx, calendar: WorkCalendar, from: string, to: string): Promise<number> {
     if (to < from) return 0;
     return countLeaveDays(from, to, {

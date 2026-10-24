@@ -339,6 +339,7 @@ const hrStepId = 'c0000000-0000-4000-8000-000000000002';
 /// casual leave at the manager step and a maternity leave at the HR step.
 List<Json> approvalsJson() => [
   {
+    'subjectType': 'leave_request',
     'stepId': managerStepId,
     'kind': 'manager',
     'request': leaveRequestJson(
@@ -366,6 +367,7 @@ List<Json> approvalsJson() => [
     'balance': balanceJson(casualLeaveJson, taken: 2, pending: 2, available: 6),
   },
   {
+    'subjectType': 'leave_request',
     'stepId': hrStepId,
     'kind': 'hr',
     'request': leaveRequestJson(

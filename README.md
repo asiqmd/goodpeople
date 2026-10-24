@@ -13,18 +13,24 @@ A multi-tenant HR and payroll platform, built for Bangladesh first and ready to 
   - **Phase 1 M2 (rules, holidays & leave):** a Bangladesh rules engine with legal references
     and review status, holiday calendars with tentative lunar dates, leave types, computed
     balances, requests with manager → HR approvals, and a team calendar.
+  - **Phase 1 M3 (attendance):** shifts and rotating rosters, punches from ZKTeco and
+    Hikvision devices through the on-site Edge Agent, geofenced punching from web and mobile,
+    daily processing (late, early out, overtime, absence) under the Labour Act's working
+    hours, and corrections approved in the same inbox as leave.
 - **Next:**
-  - Phase 1 M3: attendance.
-  - Then lifecycle and documents, notifications, and payroll.
+  - Phase 1 M4: lifecycle and documents.
+  - Then notifications and go-live, and payroll.
   - The plan is in [docs/phases/phase-1.md](docs/phases/phase-1.md).
 
 ## Repository layout
 
 ```
 apps/
-  api/       NestJS 12 (ESM) modular monolith: auth, tenancy, entitlements, platform admin, org, employees
+  api/       NestJS 12 (ESM) modular monolith: auth, tenancy, entitlements, platform admin, org,
+             employees, leave, attendance, approvals
   web/       Next.js 16: Super Admin console (/platform) and workspace app (/workspace), en/bn
-  mobile/    Flutter app: workspace sign-in, home and my profile, en/bn (see apps/mobile/README.md)
+  mobile/    Flutter app: sign-in, profile, leave, attendance with punching, approvals, en/bn
+  edge-agent/  On-site service that buffers ZKTeco and Hikvision punches (see its README)
 packages/
   shared/    Contract shared by API and web: billing modes, plans, resolveAccess(), zod schemas
   country-packs/  Statutory rules per country (Bangladesh first), each with legal references
@@ -61,15 +67,19 @@ pnpm --filter @gp/web dev
 
 **Seeded test accounts** (local only; the password is `SEED_PASSWORD` in `.env`):
 
-| Who                                | Sign in at        | Workspace       | Email                      |
-| ---------------------------------- | ----------------- | --------------- | -------------------------- |
-| Super Admin                        | `/platform/login` | –               | `SEED_SUPER_ADMIN_EMAIL`   |
-| Internal tenant (2 legal entities) | `/login`          | `my-group`      | `admin@my-group.test`      |
-| Employee self-service (Rahima)     | `/login`          | `my-group`      | `rahima@my-group.test`     |
-| Line supervisor, approves leave    | `/login`          | `my-group`      | `shirin@my-group.test`     |
-| Complimentary tenant               | `/login`          | `sponsored-ngo` | `admin@sponsored-ngo.test` |
-| Paid, payment overdue → read-only  | `/login`          | `acme-garments` | `admin@acme-garments.test` |
-| Trial on the Starter plan          | `/login`          | `trial-co`      | `admin@trial-co.test`      |
+| Who                                                        | Sign in at        | Workspace       | Email                      |
+| ---------------------------------------------------------- | ----------------- | --------------- | -------------------------- |
+| Super Admin                                                | `/platform/login` | –               | `SEED_SUPER_ADMIN_EMAIL`   |
+| Internal tenant (2 legal entities)                         | `/login`          | `my-group`      | `admin@my-group.test`      |
+| Employee self-service (Rahima)                             | `/login`          | `my-group`      | `rahima@my-group.test`     |
+| Line supervisor, approves leave and attendance corrections | `/login`          | `my-group`      | `shirin@my-group.test`     |
+| Complimentary tenant                                       | `/login`          | `sponsored-ngo` | `admin@sponsored-ngo.test` |
+| Paid, payment overdue → read-only                          | `/login`          | `acme-garments` | `admin@acme-garments.test` |
+| Trial on the Starter plan                                  | `/login`          | `trial-co`      | `admin@trial-co.test`      |
+
+The seed tracks attendance from 1 October 2026, with device punches for 1–23 October:
+the Gazipur factory on the day shift, Narayanganj on a day/night roster, the head office
+punching from the web. Device user 1010 is left unmatched on purpose, to try claiming it.
 
 ## Checks
 
@@ -77,6 +87,8 @@ pnpm --filter @gp/web dev
 pnpm lint && pnpm typecheck && pnpm test     # unit tests and API end-to-end tests (rebuild good_people_test)
 cd apps/mobile && flutter analyze && flutter test
 ```
+
+`pnpm test` includes the Edge Agent's tests.
 
 ## How the subscription bypass works
 

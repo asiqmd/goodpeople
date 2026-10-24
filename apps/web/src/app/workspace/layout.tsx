@@ -12,28 +12,44 @@ export default async function WorkspaceLayout({ children }: LayoutProps<'/worksp
   const tc = await getTranslations('common');
   const tr = await getTranslations('reasons');
   const tl = await getTranslations('leave.nav');
+  const ta = await getTranslations('attendance.nav');
   const result = await authedFetch<TenantAccessView>('tenant', '/tenant/access');
   const user = await currentTenantUser();
   const isHr = !!user && (HR_ROLES as readonly string[]).includes(user.role);
   const hasLeave = result.ok && result.data.access.features.includes('leave');
-  const approvals = hasLeave
-    ? await authedFetch<{ count: number }>('tenant', '/tenant/approvals/count')
-    : null;
+  const hasAttendance = result.ok && result.data.access.features.includes('attendance');
+  const approvals =
+    hasLeave || hasAttendance
+      ? await authedFetch<{ count: number }>('tenant', '/tenant/approvals/count')
+      : null;
   const waiting = approvals?.ok ? approvals.data.count : 0;
 
   const links = [
     { href: '/workspace', label: tn('home') },
-    ...(hasLeave
+    ...(hasAttendance
       ? [
-          { href: '/workspace/leave', label: tl('leave') },
-          { href: '/workspace/approvals', label: tl('approvals'), badge: waiting },
+          { href: '/workspace/attendance', label: ta('attendance') },
+          { href: '/workspace/attendance/team', label: ta('team') },
         ]
+      : []),
+    ...(hasLeave ? [{ href: '/workspace/leave', label: tl('leave') }] : []),
+    ...(hasLeave || hasAttendance
+      ? [{ href: '/workspace/approvals', label: tl('approvals'), badge: waiting }]
       : []),
     ...(isHr
       ? [
           { href: '/workspace/employees', label: tn('employees') },
           { href: '/workspace/organization', label: tn('organization') },
           ...(hasLeave ? [{ href: '/workspace/leave/settings', label: tl('settings') }] : []),
+          ...(hasAttendance
+            ? [
+                {
+                  href: '/workspace/attendance/settings',
+                  label: ta('setup'),
+                  match: ['roster', 'devices', 'summary'].map((p) => `/workspace/attendance/${p}`),
+                },
+              ]
+            : []),
         ]
       : []),
     { href: '/workspace/profile', label: tn('profile') },

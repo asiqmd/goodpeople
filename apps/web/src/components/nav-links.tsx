@@ -4,18 +4,26 @@ import { useFormatter } from 'next-intl';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-export function NavLinks({ links }: { links: { href: string; label: string; badge?: number }[] }) {
+type NavLink = {
+  href: string;
+  label: string;
+  badge?: number;
+  /** Other paths this link stands for, such as a section's sibling pages. */
+  match?: string[];
+};
+
+export function NavLinks({ links }: { links: NavLink[] }) {
   const pathname = usePathname();
   const format = useFormatter();
   // The most specific link wins, so /workspace/leave/settings does not also light up "Leave".
   const active = links
-    .map((l) => l.href)
-    .filter((href) =>
-      href === '/workspace'
-        ? pathname === href
-        : pathname === href || pathname.startsWith(`${href}/`),
+    .flatMap((l) => [l.href, ...(l.match ?? [])].map((path) => ({ href: l.href, path })))
+    .filter(({ path }) =>
+      path === '/workspace'
+        ? pathname === path
+        : pathname === path || pathname.startsWith(`${path}/`),
     )
-    .toSorted((a, b) => b.length - a.length)[0];
+    .toSorted((a, b) => b.path.length - a.path.length)[0]?.href;
   return (
     <nav className="flex gap-1 overflow-x-auto md:flex-col">
       {links.map((link) => (

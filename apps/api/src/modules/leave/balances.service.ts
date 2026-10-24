@@ -4,7 +4,7 @@ import { BD_RULES, bdEarnedLeaveRate, ruleOn } from '@gp/country-packs';
 import { addDays, todayIn, type LeaveBalanceView } from '@gp/shared';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { currentTenantId } from '../../common/request-context.js';
-import { WorkCalendarService, type WorkCalendar } from './work-calendar.service.js';
+import { WorkCalendarService, type WorkCalendar } from '../calendar/work-calendar.service.js';
 
 type Employee = Pick<typeof employees.$inferSelect, 'id' | 'joinedOn' | 'separatedOn'>;
 export type LeaveTypeRow = typeof leaveTypes.$inferSelect;
@@ -31,7 +31,9 @@ export class BalancesService {
   ): Promise<LeaveBalanceView[]> {
     const all = types ?? (await tx.select().from(leaveTypes).where(eq(leaveTypes.isActive, true)));
     const calendar = await this.calendars.forEmployee(tx, employee.id, todayIn());
-    return Promise.all(all.map((type) => this.balance(tx, employee, type, year, calendar)));
+    const balances = [];
+    for (const type of all) balances.push(await this.balance(tx, employee, type, year, calendar));
+    return balances;
   }
 
   async balance(
@@ -52,10 +54,8 @@ export class BalancesService {
       accrual: type.accrual,
       paid: type.paid,
     };
-    const [moves, pending] = await Promise.all([
-      this.ledgerSums(tx, employee.id, type.id, year),
-      this.pendingDays(tx, employee.id, type.id, year),
-    ]);
+    const moves = await this.ledgerSums(tx, employee.id, type.id, year);
+    const pending = await this.pendingDays(tx, employee.id, type.id, year);
 
     if (type.accrual === 'per_event') {
       return {
@@ -111,12 +111,12 @@ export class BalancesService {
         employee.separatedOn && employee.separatedOn < yearEnd ? employee.separatedOn : yearEnd;
       return halfDayFloor((full * daysInclusive(from, to)) / daysInclusive(yearStart, yearEnd));
     }
-    // earned: last year's working days divided by the rate in force at the end of last year.
+    // earned: last year's days worked divided by the rate in force at the end of last year.
     const lastYearStart = `${year - 1}-01-01`;
     const lastYearEnd = `${year - 1}-12-31`;
     if (employee.joinedOn > lastYearEnd) return 0;
     const from = employee.joinedOn > lastYearStart ? employee.joinedOn : lastYearStart;
-    const worked = await this.calendars.workingDays(tx, calendar, from, lastYearEnd);
+    const worked = await this.calendars.daysWorked(tx, employee.id, calendar, from, lastYearEnd);
     const rate = bdEarnedLeaveRate(type.workedDaysPerLeaveDay, calendar.establishment, lastYearEnd);
     return Math.floor(worked / rate);
   }

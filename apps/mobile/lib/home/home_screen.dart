@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../api/api_models.dart';
+import '../attendance/attendance_screen.dart';
 import '../auth/auth_controller.dart';
 import '../l10n/app_localizations.dart';
 import '../leave/leave_screen.dart';
@@ -22,6 +23,7 @@ class HomeScreen extends ConsumerWidget {
 
   static const myProfileKey = ValueKey('home-my-profile');
   static const leaveKey = ValueKey('home-leave');
+  static const attendanceKey = ValueKey('home-attendance');
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -126,6 +128,16 @@ class _AccessDetails extends StatelessWidget {
             title: l10n.leaveTitle,
             subtitle: l10n.leaveSubtitle,
             onTap: () => Navigator.of(context).push(LeaveScreen.route()),
+          ),
+        ],
+        if (view.access.hasFeature('attendance')) ...[
+          const SizedBox(height: 12),
+          _ShortcutCard(
+            key: HomeScreen.attendanceKey,
+            icon: Icons.fingerprint,
+            title: l10n.attendanceTitle,
+            subtitle: l10n.attendanceSubtitle,
+            onTap: () => Navigator.of(context).push(AttendanceScreen.route()),
           ),
         ],
         const SizedBox(height: 24),
@@ -239,7 +251,7 @@ class _ModuleTile extends StatelessWidget {
 }
 
 /// A tappable card on the home screen that opens a section, such as My
-/// profile or Leave.
+/// profile, Leave or Attendance.
 class _ShortcutCard extends StatelessWidget {
   const _ShortcutCard({
     super.key,

@@ -102,7 +102,7 @@ class AuthController extends Notifier<AuthState> {
   Future<List<ApprovalItem>> fetchApprovals() =>
       _withSession(_api.fetchApprovals);
 
-  Future<LeaveRequest> decideApproval(
+  Future<void> decideApproval(
     String stepId,
     ApprovalDecision decision, {
     String? comment,
@@ -112,6 +112,34 @@ class AuthController extends Notifier<AuthState> {
 
   Future<HolidayYear> fetchMyHolidays(int year) =>
       _withSession((token) => _api.fetchMyHolidays(token, year: year));
+
+  // ── Attendance ────────────────────────────────────────────────────────────
+  // Same refresh-once rule as leave. A 401 on a punch means the server did
+  // not record it, so retrying cannot punch twice.
+
+  Future<MyAttendanceToday> fetchMyAttendanceToday() =>
+      _withSession(_api.fetchMyAttendanceToday);
+
+  Future<MyAttendanceToday> punch({PunchLocation? location}) =>
+      _withSession((token) => _api.punch(token, location: location));
+
+  Future<AttendanceRange> fetchMyAttendance({
+    required DateTime from,
+    required DateTime to,
+  }) => _withSession(
+    (token) => _api.fetchMyAttendance(token, from: from, to: to),
+  );
+
+  Future<List<Regularization>> fetchMyRegularizations() =>
+      _withSession(_api.fetchMyRegularizations);
+
+  Future<Regularization> requestRegularization(RegularizationDraft draft) =>
+      _withSession((token) => _api.requestRegularization(token, draft));
+
+  Future<Regularization> cancelRegularization(String regularizationId) =>
+      _withSession(
+        (token) => _api.cancelRegularization(token, regularizationId),
+      );
 
   /// Runs [call] with the stored access token.
   ///

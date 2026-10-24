@@ -565,13 +565,26 @@ void main() {
         adapter.requests.single.headers['Authorization'],
         'Bearer access-1',
       );
-      expect(items.first.stepId, managerStepId);
-      expect(items.first.kind, ApprovalStepKind.manager);
-      expect(items.first.request.employee.fullName, 'Jamal Uddin');
-      expect(items.first.balance?.available, 6);
-      expect(items.last.kind, ApprovalStepKind.hr);
-      expect(items.last.request.days, 47);
-      expect(items.last.balance?.isOnRequest, isTrue);
+      final [first, last] = items.cast<LeaveApprovalItem>();
+      expect(first.stepId, managerStepId);
+      expect(first.kind, ApprovalStepKind.manager);
+      expect(first.request.employee.fullName, 'Jamal Uddin');
+      expect(first.request.employee.fullNameBn, isNull);
+      expect(first.balance?.available, 6);
+      expect(last.kind, ApprovalStepKind.hr);
+      expect(last.request.days, 47);
+      expect(last.balance?.isOnRequest, isTrue);
+    });
+
+    test('an inbox item without subjectType is leave, as before '
+        'attendance', () async {
+      final old = {...approvalsJson().first}..remove('subjectType');
+      final (api, _) = client(200, [old]);
+
+      final items = await api.fetchApprovals('access-1');
+
+      expect(items.single, isA<LeaveApprovalItem>());
+      expect(items.single.stepId, managerStepId);
     });
 
     test('approve and reject post the optional comment to the step', () async {
@@ -587,7 +600,7 @@ void main() {
         ),
       );
 
-      final decided = await api.decideApproval(
+      await api.decideApproval(
         'access-1',
         managerStepId,
         ApprovalDecision.approve,
@@ -602,7 +615,29 @@ void main() {
       expect(approve.data, {'comment': 'Get well soon'});
       expect(reject.uri.path, '/tenant/approvals/$hrStepId/reject');
       expect(reject.data, <String, Object?>{});
-      expect(decided.status, LeaveRequestStatus.approved);
+    });
+
+    test('approving a correction accepts the correction it answers', () async {
+      final (api, adapter) = client(
+        201,
+        regularizationJson(
+          id: 'ad000000-0000-4000-8000-000000000010',
+          date: '2026-10-22',
+          inTime: '08:02',
+          status: 'approved',
+        ),
+      );
+
+      await api.decideApproval(
+        'access-1',
+        correctionStepId,
+        ApprovalDecision.approve,
+      );
+
+      expect(
+        adapter.requests.single.uri.path,
+        '/tenant/approvals/$correctionStepId/approve',
+      );
     });
 
     test(
@@ -664,6 +699,342 @@ void main() {
         ),
       );
     });
+  });
+
+  group('attendance', () {
+    test(
+      'today parses the day, the punches and the self-punch rules',
+      () async {
+        final (api, adapter) = client(200, attendanceTodayJson());
+
+        final today = await api.fetchMyAttendanceToday('access-1');
+
+        final request = adapter.requests.single;
+        expect(request.method, 'GET');
+        expect(request.uri.path, '/tenant/me/attendance/today');
+        expect(request.headers['Authorization'], 'Bearer access-1');
+        expect(today.employee.fullNameBn, 'রহিমা খাতুন');
+        expect(today.timeZone, 'Asia/Dhaka');
+        expect(today.nextDirection, PunchDirection.punchOut);
+
+        final day = today.day;
+        expect(day.date, DateTime.utc(2026, 10, 24));
+        expect(day.dayType, DayType.working);
+        expect(day.status, AttendanceStatus.pending);
+        expect(day.shift?.name, 'General shift');
+        expect(day.shift?.startTime, const ClockTime(8, 0));
+        expect(day.shift?.endTime, const ClockTime(17, 0));
+        expect(day.firstIn, DateTime.utc(2026, 10, 24, 1, 55));
+        expect(day.lastOut, isNull);
+        expect(day.flags, isEmpty);
+        expect(day.regularization, isNull);
+
+        expect(today.punches, hasLength(2));
+        expect(today.punches.first.source, PunchSource.device);
+        expect(today.punches.first.direction, PunchDirection.punchIn);
+        expect(today.punches.first.device?.name, 'Main gate');
+        expect(today.punches.first.voided, isFalse);
+        expect(today.punches.last.voided, isTrue);
+        expect(today.punches.last.note, 'Double tap');
+
+        final selfPunch = today.selfPunch;
+        expect(selfPunch.mode, SelfPunchMode.geofenced);
+        expect(selfPunch.blockedReason, isNull);
+        expect(selfPunch.geofence?.radiusM, 200);
+        expect(selfPunch.canPunch, isTrue);
+        expect(selfPunch.needsLocation, isTrue);
+        expect(selfPunch.geofence!.distanceTo(atTheBazaar).round(), 801);
+        expect(selfPunch.geofence!.distanceTo(atTheFactory).round(), 15);
+      },
+    );
+
+    test(
+      'a blocked self-punch and unknown values do not break today',
+      () async {
+        final json = attendanceTodayJson(
+          mode: 'off',
+          blockedReason: 'disabled',
+          geofence: null,
+          nextDirection: 'in',
+          punches: [
+            punchJson(
+              id: 'p',
+              date: '2026-10-24',
+              time: '08:00',
+              source: 'kiosk',
+              direction: 'unknown',
+            ),
+          ],
+          day: dayJson(
+            date: '2026-10-24',
+            dayType: 'shutdown',
+            status: 'excused',
+            shift: null,
+            flags: ['late', 'new_flag'],
+          ),
+        );
+        final (api, _) = client(200, json);
+
+        final today = await api.fetchMyAttendanceToday('access-1');
+
+        expect(today.selfPunch.mode, SelfPunchMode.off);
+        expect(today.selfPunch.blockedReason, SelfPunchBlock.disabled);
+        expect(today.selfPunch.canPunch, isFalse);
+        expect(today.nextDirection, PunchDirection.punchIn);
+        expect(today.punches.single.source, PunchSource.unknown);
+        expect(today.punches.single.direction, PunchDirection.unknown);
+        expect(today.day.dayType, DayType.unknown);
+        expect(today.day.status, AttendanceStatus.unknown);
+        expect(today.day.shift, isNull);
+        expect(today.day.flags, {AttendanceFlag.late, AttendanceFlag.unknown});
+      },
+    );
+
+    test('punch posts the mobile source with or without a location', () async {
+      final (api, adapter) = client(201, attendanceTodayJson());
+
+      await api.punch('access-1', location: atTheFactory);
+      await api.punch(
+        'access-1',
+        location: const PunchLocation(latitude: 24, longitude: 90.4),
+      );
+      await api.punch('access-1');
+
+      final [located, noAccuracy, bare] = adapter.requests;
+      expect(located.method, 'POST');
+      expect(located.uri.path, '/tenant/me/attendance/punch');
+      expect(located.headers['Authorization'], 'Bearer access-1');
+      expect(located.data, {
+        'source': 'mobile',
+        'latitude': 24.0024,
+        'longitude': 90.4265,
+        'accuracyM': 12.0,
+      });
+      expect(noAccuracy.data, {
+        'source': 'mobile',
+        'latitude': 24.0,
+        'longitude': 90.4,
+      });
+      expect(bare.data, {'source': 'mobile'});
+    });
+
+    test('a refused punch carries the code and the API message', () async {
+      final (api, _) = client(400, {
+        'statusCode': 400,
+        'error': 'Bad Request',
+        'message': 'You are about 801 m away, outside the 200 m allowed',
+        'code': 'outside_geofence',
+      });
+
+      await expectLater(
+        api.punch('access-1', location: atTheBazaar),
+        throwsA(
+          isA<ApiException>()
+              .having((e) => e.statusCode, 'statusCode', 400)
+              .having((e) => e.code, 'code', 'outside_geofence')
+              .having(
+                (e) => e.message,
+                'message',
+                'You are about 801 m away, outside the 200 m allowed',
+              ),
+        ),
+      );
+    });
+
+    test('my attendance sends the dates and parses days and totals', () async {
+      final (api, adapter) = client(
+        200,
+        attendanceRangeJson('2026-10-01', '2026-10-24'),
+      );
+
+      final range = await api.fetchMyAttendance(
+        'access-1',
+        from: DateTime.utc(2026, 10),
+        to: DateTime.utc(2026, 10, 24),
+      );
+
+      final request = adapter.requests.single;
+      expect(request.uri.path, '/tenant/me/attendance');
+      expect(request.uri.queryParameters, {
+        'from': '2026-10-01',
+        'to': '2026-10-24',
+      });
+      expect(range.timeZone, 'Asia/Dhaka');
+      expect(range.from, DateTime.utc(2026, 10));
+      expect(range.days, hasLength(24));
+      final byDay = {for (final day in range.days) day.date.day: day};
+      expect(byDay[2]!.dayType, DayType.weeklyOff);
+      expect(byDay[2]!.isOffDay, isTrue);
+      expect(byDay[21]!.dayType, DayType.holiday);
+      expect(byDay[21]!.holidayName, 'Durga Puja');
+      expect(byDay[22]!.flags, {AttendanceFlag.late});
+      expect(byDay[22]!.lateMinutes, 25);
+      expect(byDay[19]!.overtimeMinutes, 120);
+      expect(byDay[14]!.leave?.code, 'CL');
+      expect(byDay[14]!.status, AttendanceStatus.onLeave);
+      expect(byDay[20]!.status, AttendanceStatus.missingPunch);
+      expect(byDay[20]!.regularization?.status, RegularizationStatus.pending);
+      expect(byDay[8]!.flags, {AttendanceFlag.onDuty});
+      expect(byDay[12]!.status, AttendanceStatus.halfDay);
+      expect(range.totals.present, 14);
+      expect(range.totals.halfDay, 1);
+      expect(range.totals.absent, 1);
+      expect(range.totals.onLeave, 1);
+      expect(range.totals.missingPunch, 1);
+      expect(range.totals.late, 1);
+      expect(range.totals.workedMinutes, 7250);
+      expect(range.totals.overtimeMinutes, 120);
+    });
+
+    test('corrections: list, ask and cancel', () async {
+      final (list, listAdapter) = client(200, myRegularizationsJson());
+      final corrections = await list.fetchMyRegularizations('access-1');
+      expect(
+        listAdapter.requests.single.uri.path,
+        '/tenant/me/attendance/regularizations',
+      );
+      expect(corrections.map((c) => c.status), [
+        RegularizationStatus.pending,
+        RegularizationStatus.approved,
+        RegularizationStatus.rejected,
+      ]);
+      expect(corrections.first.inTime, isNull);
+      expect(corrections.first.outTime, const ClockTime(17, 40));
+      expect(corrections.first.canCancel, isTrue);
+      expect(corrections[1].kind, RegularizationKind.onDuty);
+      expect(corrections[1].canCancel, isFalse);
+      expect(corrections.last.inTime, const ClockTime(8, 0));
+      expect(
+        corrections.last.steps.first.comment,
+        'The device has you at 9:40',
+      );
+
+      final (ask, askAdapter) = client(
+        201,
+        regularizationJson(id: 'new', date: '2026-10-22', inTime: '08:02'),
+      );
+      final created = await ask.requestRegularization(
+        'access-1',
+        RegularizationDraft(
+          date: DateTime.utc(2026, 10, 22),
+          kind: RegularizationKind.missedPunch,
+          inTime: const ClockTime(8, 2),
+          reason: 'The device did not read my finger',
+        ),
+      );
+      await ask.requestRegularization(
+        'access-1',
+        RegularizationDraft(
+          date: DateTime.utc(2026, 10, 8),
+          kind: RegularizationKind.onDuty,
+          // Times on an on-duty day are never sent.
+          inTime: const ClockTime(9, 0),
+          reason: 'Buyer inspection',
+        ),
+      );
+      final [missed, onDuty] = askAdapter.requests;
+      expect(missed.method, 'POST');
+      expect(missed.uri.path, '/tenant/me/attendance/regularizations');
+      expect(missed.data, {
+        'date': '2026-10-22',
+        'kind': 'missed_punch',
+        'inTime': '08:02',
+        'reason': 'The device did not read my finger',
+      });
+      expect(onDuty.data, {
+        'date': '2026-10-08',
+        'kind': 'on_duty',
+        'reason': 'Buyer inspection',
+      });
+      expect(created.inTime, const ClockTime(8, 2));
+
+      final (cancel, cancelAdapter) = client(
+        201,
+        regularizationJson(
+          id: pendingCorrectionId,
+          date: '2026-10-20',
+          outTime: '17:40',
+          status: 'cancelled',
+        ),
+      );
+      final cancelled = await cancel.cancelRegularization(
+        'access-1',
+        pendingCorrectionId,
+      );
+      expect(cancelAdapter.requests.single.method, 'POST');
+      expect(
+        cancelAdapter.requests.single.uri.path,
+        '/tenant/attendance/regularizations/$pendingCorrectionId/cancel',
+      );
+      expect(cancelled.status, RegularizationStatus.cancelled);
+    });
+
+    test('a refused correction carries its code', () async {
+      final (api, _) = client(409, {
+        'statusCode': 409,
+        'error': 'Conflict',
+        'message': 'A correction for this day is already waiting',
+        'code': 'already_pending',
+      });
+
+      await expectLater(
+        api.requestRegularization(
+          'access-1',
+          RegularizationDraft(
+            date: DateTime.utc(2026, 10, 20),
+            kind: RegularizationKind.missedPunch,
+            outTime: const ClockTime(17, 40),
+            reason: 'Card reader',
+          ),
+        ),
+        throwsA(
+          isA<ApiException>()
+              .having((e) => e.statusCode, 'statusCode', 409)
+              .having((e) => e.code, 'code', 'already_pending'),
+        ),
+      );
+    });
+
+    test('a bad HH:MM time breaks the contract', () {
+      expect(
+        () => Regularization.fromJson(
+          regularizationJson(id: 'x', date: '2026-10-20', inTime: '8:00'),
+        ),
+        throwsFormatException,
+      );
+      expect(() => ClockTime.parse('24:00'), throwsFormatException);
+      expect(ClockTime.parse('23:59').wire, '23:59');
+    });
+
+    test(
+      'a mixed inbox parses leave, corrections and unknown subjects',
+      () async {
+        final (api, _) = client(200, mixedApprovalsJson());
+
+        final items = await api.fetchApprovals('access-1');
+
+        expect(items, hasLength(3));
+        final [leave, correction, unknown] = items;
+        expect(leave, isA<LeaveApprovalItem>());
+        expect((leave as LeaveApprovalItem).request.days, 2);
+
+        expect(correction, isA<RegularizationApprovalItem>());
+        correction as RegularizationApprovalItem;
+        expect(correction.stepId, correctionStepId);
+        expect(correction.kind, ApprovalStepKind.manager);
+        expect(correction.regularization.employee.fullNameBn, 'কুলসুম আক্তার');
+        expect(correction.regularization.kind, RegularizationKind.missedPunch);
+        expect(correction.regularization.inTime, const ClockTime(8, 2));
+        expect(correction.regularization.date, DateTime.utc(2026, 10, 22));
+        expect(correction.day?.status, AttendanceStatus.missingPunch);
+
+        expect(unknown, isA<UnknownApprovalItem>());
+        unknown as UnknownApprovalItem;
+        expect(unknown.stepId, unknownStepId);
+        expect(unknown.kind, ApprovalStepKind.hr);
+        expect(unknown.subjectType, 'overtime_request');
+      },
+    );
   });
 
   test('a body that breaks the contract is a badResponse error', () async {

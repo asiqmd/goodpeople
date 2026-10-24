@@ -9,9 +9,10 @@ import {
   orgUnits,
   type Tx,
 } from '@gp/db';
-import type { JobAssignmentView } from '@gp/shared';
-import { and, desc, eq, gte, isNull, lte, or, type SQL } from 'drizzle-orm';
-import { alias } from 'drizzle-orm/pg-core';
+import { HR_ROLES, type JobAssignmentView } from '@gp/shared';
+import { and, desc, eq, gte, inArray, isNull, lte, or, type SQL } from 'drizzle-orm';
+import type { AuthUser } from '../../common/auth-user.js';
+import { alias, type AnyPgColumn } from 'drizzle-orm/pg-core';
 
 /** The job assignment in force on a date: started on or before it and not ended before it. */
 export const inForceOn = (date: string) =>
@@ -75,5 +76,67 @@ export function currentOf(history: JobAssignmentView[], today: string): JobAssig
     ) ??
     history.at(-1) ??
     null
+  );
+}
+
+type EmployeeRow = typeof employees.$inferSelect;
+
+export const isHr = (user: AuthUser) => (HR_ROLES as readonly string[]).includes(user.role);
+
+/** The employee record linked to a workspace login, if any. */
+export async function employeeOfUser(tx: Tx, userId: string): Promise<EmployeeRow | null> {
+  const [row] = await tx.select().from(employees).where(eq(employees.userId, userId));
+  return row ?? null;
+}
+
+/** A unit and every unit below it. */
+export async function unitAndBelow(tx: Tx, unitId: string): Promise<string[]> {
+  const all = await tx.select({ id: orgUnits.id, parentId: orgUnits.parentId }).from(orgUnits);
+  const ids = [unitId];
+  for (let i = 0; i < ids.length; i++) {
+    ids.push(...all.filter((u) => u.parentId === ids[i]).map((u) => u.id));
+  }
+  return ids;
+}
+
+/** Employees whose job on a date sits in one of these units, as a subquery. */
+export const employeesInUnits = (tx: Tx, units: string[], onDate: string) =>
+  tx
+    .select({ id: jobAssignments.employeeId })
+    .from(jobAssignments)
+    .where(and(inArray(jobAssignments.orgUnitId, units), inForceOn(onDate)));
+
+/**
+ * Whose team-level data a user may see, as a condition on an employee id column. HR sees
+ * everyone (or one unit and below); others see themselves, their direct reports and
+ * colleagues in their own unit. null: the user has no employee record and is not HR.
+ */
+export async function teamScope(
+  tx: Tx,
+  user: AuthUser,
+  employeeId: AnyPgColumn,
+  options: { onDate: string; orgUnitId?: string },
+): Promise<SQL | undefined | null> {
+  if (isHr(user)) {
+    if (!options.orgUnitId) return undefined;
+    const units = await unitAndBelow(tx, options.orgUnitId);
+    return inArray(employeeId, employeesInUnits(tx, units, options.onDate));
+  }
+  const me = await employeeOfUser(tx, user.id);
+  if (!me) return null;
+  const [myJob] = await tx
+    .select()
+    .from(jobAssignments)
+    .where(and(eq(jobAssignments.employeeId, me.id), inForceOn(options.onDate)));
+  const reports = tx
+    .select({ id: jobAssignments.employeeId })
+    .from(jobAssignments)
+    .where(and(eq(jobAssignments.managerId, me.id), inForceOn(options.onDate)));
+  return or(
+    eq(employeeId, me.id),
+    inArray(employeeId, reports),
+    myJob?.orgUnitId
+      ? inArray(employeeId, employeesInUnits(tx, [myJob.orgUnitId], options.onDate))
+      : undefined,
   );
 }

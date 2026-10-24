@@ -6,9 +6,12 @@ import 'package:good_people/api/api_exception.dart';
 import 'package:good_people/api/api_models.dart';
 import 'package:good_people/api/good_people_api.dart';
 import 'package:good_people/app.dart';
+import 'package:good_people/attendance/location_service.dart';
 
+import 'attendance_fixtures.dart';
 import 'leave_fixtures.dart';
 
+export 'attendance_fixtures.dart';
 export 'leave_fixtures.dart';
 
 /// `POST /auth/login` 200 body, exactly as the API contract shapes it.
@@ -425,7 +428,7 @@ class FakeGoodPeopleApi implements GoodPeopleApi {
   }
 
   @override
-  Future<LeaveRequest> decideApproval(
+  Future<void> decideApproval(
     String accessToken,
     String stepId,
     ApprovalDecision decision, {
@@ -434,10 +437,6 @@ class FakeGoodPeopleApi implements GoodPeopleApi {
     decisions.add((stepId: stepId, decision: decision, comment: comment));
     final item = approvals.firstWhere((json) => json['stepId'] == stepId);
     approvals = [...approvals]..remove(item);
-    return LeaveRequest.fromJson({
-      ...item['request']! as Json,
-      'status': decision == ApprovalDecision.approve ? 'approved' : 'rejected',
-    });
   }
 
   @override
@@ -448,6 +447,152 @@ class FakeGoodPeopleApi implements GoodPeopleApi {
     holidayYears.add(year);
     if (holidaysError case final error?) throw error;
     return HolidayYear.fromJson(holidays(year));
+  }
+
+  // ── Attendance ────────────────────────────────────────────────────────────
+
+  /// Answered by [fetchMyAttendanceToday]; a punch replaces it.
+  Json attendanceToday = attendanceTodayJson();
+
+  /// Thrown, one per call, by [fetchMyAttendanceToday] before it answers.
+  final attendanceTodayErrors = <Exception>[];
+  var attendanceTodayCalls = 0;
+
+  /// Thrown, one per call, by [punch] instead of punching.
+  final punchErrors = <Exception>[];
+
+  /// Each body sent to [punch], refused ones included.
+  final punchBodies = <Json>[];
+
+  /// Turns [attendanceToday] and a punch body into the answer, which then
+  /// becomes [attendanceToday].
+  Json Function(Json today, Json body) afterPunch = punchedJson;
+
+  /// Answers [fetchMyAttendance] for `YYYY-MM-DD` dates.
+  Json Function(String from, String to) attendanceRange = attendanceRangeJson;
+  final attendanceQueries = <({String from, String to})>[];
+
+  /// The user's corrections, as JSON so asking and cancelling can change
+  /// them.
+  List<Json> regularizations = myRegularizationsJson();
+  var regularizationCalls = 0;
+
+  /// Thrown by [requestRegularization] instead of creating one.
+  Exception? regularizationError;
+
+  /// Each body sent to [requestRegularization].
+  final regularizationBodies = <Json>[];
+
+  /// Thrown by [cancelRegularization] instead of cancelling.
+  Exception? cancelRegularizationError;
+  final cancelledRegularizationIds = <String>[];
+
+  @override
+  Future<MyAttendanceToday> fetchMyAttendanceToday(String accessToken) async {
+    attendanceTodayCalls++;
+    if (attendanceTodayErrors.isNotEmpty) {
+      throw attendanceTodayErrors.removeAt(0);
+    }
+    return MyAttendanceToday.fromJson(attendanceToday);
+  }
+
+  @override
+  Future<MyAttendanceToday> punch(
+    String accessToken, {
+    PunchLocation? location,
+  }) async {
+    final body = selfPunchBody(location);
+    punchBodies.add(body);
+    if (punchErrors.isNotEmpty) throw punchErrors.removeAt(0);
+    attendanceToday = afterPunch(attendanceToday, body);
+    return MyAttendanceToday.fromJson(attendanceToday);
+  }
+
+  @override
+  Future<AttendanceRange> fetchMyAttendance(
+    String accessToken, {
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    final query = (from: toWireDate(from), to: toWireDate(to));
+    attendanceQueries.add(query);
+    return AttendanceRange.fromJson(attendanceRange(query.from, query.to));
+  }
+
+  @override
+  Future<List<Regularization>> fetchMyRegularizations(
+    String accessToken,
+  ) async {
+    regularizationCalls++;
+    return [for (final json in regularizations) Regularization.fromJson(json)];
+  }
+
+  @override
+  Future<Regularization> requestRegularization(
+    String accessToken,
+    RegularizationDraft draft,
+  ) async {
+    final body = draft.toJson();
+    regularizationBodies.add(body);
+    if (regularizationError case final error?) throw error;
+    final json = regularizationJson(
+      id: 'ad000000-0000-4000-8000-0000000000ff',
+      date: body['date']! as String,
+      kind: body['kind']! as String,
+      inTime: body['inTime'] as String?,
+      outTime: body['outTime'] as String?,
+      reason: body['reason']! as String,
+      createdAt: '2026-10-24T09:00:00.000Z',
+    );
+    regularizations = [json, ...regularizations];
+    return Regularization.fromJson(json);
+  }
+
+  @override
+  Future<Regularization> cancelRegularization(
+    String accessToken,
+    String regularizationId,
+  ) async {
+    cancelledRegularizationIds.add(regularizationId);
+    if (cancelRegularizationError case final error?) throw error;
+    final index = regularizations.indexWhere(
+      (json) => json['id'] == regularizationId,
+    );
+    final cancelled = {
+      ...regularizations[index],
+      'status': 'cancelled',
+      'steps': [
+        for (final step in regularizations[index]['steps']! as List<Object?>)
+          {...step! as Json, 'status': 'cancelled'},
+      ],
+    };
+    regularizations = [...regularizations]..[index] = cancelled;
+    return Regularization.fromJson(cancelled);
+  }
+}
+
+/// A [LocationService] with no GPS: answers [result] and records calls.
+class FakeLocationService implements LocationService {
+  /// Returned by [currentLocation], or thrown when it is an exception.
+  Object result = atTheFactory;
+
+  /// The time limit of each [currentLocation] call.
+  final timeLimits = <Duration>[];
+  final openedSettings = <LocationProblem>[];
+
+  @override
+  Future<PunchLocation> currentLocation({required Duration timeLimit}) async {
+    timeLimits.add(timeLimit);
+    return switch (result) {
+      final PunchLocation location => location,
+      final Object error => throw error,
+    };
+  }
+
+  @override
+  Future<bool> openSettings(LocationProblem problem) async {
+    openedSettings.add(problem);
+    return true;
   }
 }
 

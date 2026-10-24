@@ -15,6 +15,7 @@ dependencies:
     sdk: flutter
   flutter_riverpod: ^3.4.3
   # Pinned by flutter_localizations; `any` lets the Flutter SDK choose.
+  geolocator: ^14.1.2
   intl: any
 
 dev_dependencies:

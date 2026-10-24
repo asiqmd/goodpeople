@@ -10,8 +10,8 @@ been walked through in the browser.
 | -------------------------------------------- | ------------------------------------------------------------------------------ | ---------- | ------ |
 | **M1 Org & employees**                       | Org structure, employee master, job history, roles, encrypted identity fields  | Phase 0    | Done   |
 | **M2 Rules, holidays & leave**               | BD country-pack rules engine, holiday calendars, leave and approvals           | M1         | Done   |
-| **M3 Attendance**                            | Shifts, punches, Edge Agent, daily processing, regularization                  | M1, M2     | Next   |
-| **M4 Lifecycle & documents**                 | Lifecycle events, documents vault, letters, ID card, service book, bulk import | M1         |        |
+| **M3 Attendance**                            | Shifts, punches, Edge Agent, daily processing, regularization                  | M1, M2     | Done   |
+| **M4 Lifecycle & documents**                 | Lifecycle events, documents vault, letters, ID card, service book, bulk import | M1         | Next   |
 | **M5 Notifications, self-service & go-live** | EN/BN templates, phone OTP, mobile v1, hardening                               | M2–M4      |        |
 
 **Carried into later milestones from M1:**
@@ -21,6 +21,19 @@ been walked through in the browser.
 - **Back-dated job corrections** (changing history before the latest change) are not
   supported yet (M4).
 - **Upazilas are free text** until the full gazetteer is added to the BD country pack (M2).
+
+**Carried into later milestones from M3:**
+
+- **Selfie punches** need the file store, so they arrive with the documents vault (M4).
+  Geofenced punching from the web and mobile apps is done.
+- **Adolescent working hours** (Labour Act s.41) are not flagged yet; they come with the RMG
+  pack's adolescent controls (Phase 3).
+- **Overtime caps** are flagged (over 10 hours a day, weeks over 60 hours) but not blocked.
+- **Payroll lock:** processed days can still be recomputed; payroll (Phase 2) adds locking.
+- **Edge Agent:** tested against simulated ZKTeco ADMS and Hikvision traffic, not real
+  devices yet. ZKTeco "PUSH 3" registration and Hikvision's older XML events are not handled.
+- **Forms clear after a refused submit** (React's default); keeping the entered values is a
+  cross-cutting fix for M5.
 
 ## M1: Org structure & employee master
 
@@ -164,14 +177,100 @@ has versions, and each version carries:
   types and holiday calendars, in English and Bangla.
 - **Mobile:** shows balances, applying, my requests and the approvals inbox.
 
+## M3: Attendance
+
+### Rules (`packages/country-packs`)
+
+| Rule                      | Value                                                       | Reference |
+| ------------------------- | ----------------------------------------------------------- | --------- |
+| Ordinary daily hours      | 8                                                           | BLA s.100 |
+| Daily hours with OT       | 10                                                          | s.100     |
+| Rest interval             | 30 min after 5 hours of work, 1 hour after 6                | s.101     |
+| Weekly hours              | 48; 60 with overtime; 56 average over a year (needs review) | s.102     |
+| Overtime rate             | 2 × the ordinary rate (basic + DA + ad hoc/interim)         | s.108     |
+| Paid leave as days worked | counted for earning annual leave (needs review)             | s.117     |
+
+A shift may schedule at most 8 hours of work (overtime is worked after it) and must allow the
+rest interval; anything else is refused quoting the section.
+
+### Shifts and rosters
+
+- **Shifts** have local start and end times (an early end runs past midnight), a break, grace
+  minutes for lateness and early leaving, thresholds for a half and a full day, and overtime
+  settings (minimum and rounding block). Every workspace gets a default general shift.
+- **Which shift applies on a date:** a roster entry (a shift or a day off), else the
+  employee's effective-dated shift assignment, else the default shift.
+- **Rotating rosters:** a pattern of shifts and days off repeated over a date range. A rostered
+  shift on a weekly holiday makes it a working day.
+- Weekly offs and holidays come from the location the employee is assigned to that day (M2).
+
+### Punches
+
+- **Sources:** devices (through the Edge Agent), the web and mobile apps, HR's manual entries,
+  and approved corrections. Punches are never deleted; HR voids a wrong one with a reason.
+- **App punching** is off, geofenced (default) or anywhere, per workspace. Geofenced punches
+  must come from inside the location's radius, allowing for GPS accuracy up to 50 m. A second
+  punch within a minute is refused.
+- **Devices** know people by their enrolment number. HR records it as the employee's
+  attendance PIN; punches from unknown numbers wait as "unmatched" and are claimed when the PIN
+  is set.
+
+### Edge Agent (`apps/edge-agent`)
+
+A small Node service at each site, with no third-party dependencies:
+
+- Receives ZKTeco ADMS pushes (`/iclock/*`) and Hikvision ISAPI event notifications.
+- Buffers every punch in SQLite before acknowledging the device, so nothing is lost offline.
+- Uploads in batches to `POST /edge/v1/punches` with its own revocable token; resends are
+  safe because the cloud treats the same device, user and second as one punch.
+- Keeps everything queued on 401/403 (revoked token, read-only workspace) and backs off on
+  errors; isolates a bad row by splitting the batch.
+- Reports its version, queue and devices to `POST /edge/v1/heartbeat`.
+
+### Daily processing
+
+- **Which day a punch belongs to:** up to four hours before the shift, and never past the
+  midpoint of the gap to the next shift, so a night shift's morning out-punch stays with the
+  night it started.
+- **A day's result:** first punch in, last punch out. The break is taken out of anything over
+  five hours. Late and early-out minutes count beyond the grace. Overtime is time after the
+  shift's end beyond the scheduled hours, in whole blocks; on weekly offs and holidays all
+  work is overtime. Over 10 hours is flagged.
+- **Statuses:** present, half day, absent, on leave (approved leave), missing punch (one punch
+  only), off, pending (the day is not over yet).
+- **Computed and stored:** screens compute days from the current inputs, so they are never
+  stale. The same computation is stored for reports and payroll: whenever a punch, leave,
+  holiday, shift, roster or correction changes, and every 15 minutes in the background (which
+  also catches up after downtime). Nothing before the workspace's attendance go-live date is
+  processed, so nobody shows absent for days before tracking started.
+- **Annual leave** is now earned from days actually worked where attendance is tracked
+  (scheduled days before that).
+
+### Corrections (regularization)
+
+- An employee asks to add a missed in or out time, or to count a day on official duty, within
+  the workspace's correction window (30 days by default).
+- Approved through the same approvals inbox as leave (manager, then HR; the chain is a
+  workspace setting). The inbox now holds both kinds of request.
+- An approved missed punch becomes a punch marked as a correction.
+
+### Screens
+
+- **Web:** my attendance (punch, month, corrections), team attendance by day, HR setup
+  (settings and shifts, shifts and roster, devices and agents, monthly summary), the
+  employee's Attendance tab (PIN, shifts, month, punches, manual punch), approvals.
+- **Mobile:** today with punching, my month, corrections, approvals of corrections.
+
+### Done when
+
+- Unit tests cover the rules, time zones, day boundaries and day evaluation.
+- API end-to-end tests cover device ingestion and deduplication, unmatched punches and PIN
+  claims, geofenced punching, manual and voided punches, corrections through approvals, leave
+  showing on attendance, shift rules and reassignment, rosters, team scope and the summary.
+- The Edge Agent has been run against the API with simulated ZKTeco and Hikvision traffic.
+
 ## Later milestones (outline; detailed when each starts)
 
-- **M3:**
-  - Shift and roster masters (night and rotating shifts).
-  - Punch ingestion from devices, web and mobile, with geo-fenced selfie punch.
-  - Edge Agent for ZKTeco ADMS and Hikvision, with an offline buffer.
-  - Daily processing: late, early-out, absent, OT hours.
-  - Regularization requests.
 - **M4:**
   - Probation, confirmation and separation workflows.
   - Documents vault (S3/MinIO) with expiry alerts.

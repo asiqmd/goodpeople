@@ -1099,6 +1099,516 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No holiday calendar has been set up yet.'**
   String get holidaysNoCalendar;
+
+  /// No description provided for @attendanceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Attendance'**
+  String get attendanceTitle;
+
+  /// Under "Attendance" on the home screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Punch in and out, your month and corrections'**
+  String get attendanceSubtitle;
+
+  /// No description provided for @attendanceTabToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get attendanceTabToday;
+
+  /// No description provided for @attendanceTabMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get attendanceTabMonth;
+
+  /// Tab with the user's attendance corrections (regularizations).
+  ///
+  /// In en, this message translates to:
+  /// **'Corrections'**
+  String get attendanceTabCorrections;
+
+  /// No description provided for @attendanceLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load your attendance.'**
+  String get attendanceLoadFailed;
+
+  /// No description provided for @attendanceNoEmployeeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Attendance belongs to an employee record, but none is linked to your login. If you think you should have one, ask your HR team.'**
+  String get attendanceNoEmployeeBody;
+
+  /// A day's attendance status from the API. pending: the day is not over yet. missing_punch: only one punch, so the hours are unknown.
+  ///
+  /// In en, this message translates to:
+  /// **'{status, select, present{Present} half_day{Half day} absent{Absent} on_leave{On leave} missing_punch{Missing punch} off{Off} pending{In progress} other{Unknown}}'**
+  String attendanceStatusName(String status);
+
+  /// A mark on an attendance day. over_daily_limit: worked more hours than the Labour Act allows in a day.
+  ///
+  /// In en, this message translates to:
+  /// **'{flag, select, late{Late} early_out{Left early} over_daily_limit{Over daily limit} regularized{Corrected} on_duty{On duty} outside_geofence{Outside work area} other{Note}}'**
+  String attendanceFlagName(String flag);
+
+  /// No description provided for @dayTypeName.
+  ///
+  /// In en, this message translates to:
+  /// **'{type, select, working{Working day} weekly_off{Weekly off} holiday{Holiday} other{Day}}'**
+  String dayTypeName(String type);
+
+  /// Where a punch came from: an attendance device, the web or mobile app, HR by hand, or an approved correction.
+  ///
+  /// In en, this message translates to:
+  /// **'{source, select, device{Device} web{Web} mobile{Mobile app} manual{Added by HR} regularization{Correction} other{Other}}'**
+  String punchSourceName(String source);
+
+  /// No description provided for @punchDirectionName.
+  ///
+  /// In en, this message translates to:
+  /// **'{direction, select, in{In} out{Out} other{Punch}}'**
+  String punchDirectionName(String direction);
+
+  /// missed_punch: add a punch the device missed. on_duty: official work away from the workplace.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind, select, missed_punch{Missed punch} on_duty{On duty} other{Correction}}'**
+  String regularizationKindName(String kind);
+
+  /// No description provided for @attendanceNoShift.
+  ///
+  /// In en, this message translates to:
+  /// **'No shift scheduled'**
+  String get attendanceNoShift;
+
+  /// No description provided for @attendanceFirstIn.
+  ///
+  /// In en, this message translates to:
+  /// **'First in'**
+  String get attendanceFirstIn;
+
+  /// No description provided for @attendanceLastOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Last out'**
+  String get attendanceLastOut;
+
+  /// Hours and minutes worked, shown as h:mm.
+  ///
+  /// In en, this message translates to:
+  /// **'Worked'**
+  String get attendanceWorked;
+
+  /// No description provided for @attendanceOvertime.
+  ///
+  /// In en, this message translates to:
+  /// **'Overtime'**
+  String get attendanceOvertime;
+
+  /// No description provided for @attendanceLateBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Late {duration}'**
+  String attendanceLateBy(String duration);
+
+  /// No description provided for @attendanceEarlyOutBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Left early {duration}'**
+  String attendanceEarlyOutBy(String duration);
+
+  /// Overtime badge on a day.
+  ///
+  /// In en, this message translates to:
+  /// **'OT {duration}'**
+  String attendanceOvertimeBy(String duration);
+
+  /// No description provided for @attendanceLeaveCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave: {code}'**
+  String attendanceLeaveCode(String code);
+
+  /// No description provided for @attendanceHolidayNamed.
+  ///
+  /// In en, this message translates to:
+  /// **'Holiday: {name}'**
+  String attendanceHolidayNamed(String name);
+
+  /// A correction asked for this day, and its status.
+  ///
+  /// In en, this message translates to:
+  /// **'Correction: {status}'**
+  String attendanceCorrectionStatus(String status);
+
+  /// No description provided for @punchIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Punch in'**
+  String get punchIn;
+
+  /// No description provided for @punchOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Punch out'**
+  String get punchOut;
+
+  /// No description provided for @punchedIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Punched in'**
+  String get punchedIn;
+
+  /// No description provided for @punchedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Punched out'**
+  String get punchedOut;
+
+  /// No description provided for @punchLocating.
+  ///
+  /// In en, this message translates to:
+  /// **'Finding your location…'**
+  String get punchLocating;
+
+  /// No description provided for @punchGeofencedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'When you punch, your location is checked against your workplace area.'**
+  String get punchGeofencedHint;
+
+  /// No description provided for @punchAnywhereHint.
+  ///
+  /// In en, this message translates to:
+  /// **'You can punch from anywhere. If you allow it, your location is sent too.'**
+  String get punchAnywhereHint;
+
+  /// No description provided for @punchBlockedDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Punching from the app is turned off for your workspace. Use the attendance device at work.'**
+  String get punchBlockedDisabled;
+
+  /// No description provided for @punchBlockedNoGeofence.
+  ///
+  /// In en, this message translates to:
+  /// **'Your workplace has no punch area set yet, so you can\'t punch from the app. Ask HR to set one.'**
+  String get punchBlockedNoGeofence;
+
+  /// No description provided for @punchBlockedOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Punching from the app isn\'t available right now.'**
+  String get punchBlockedOther;
+
+  /// No description provided for @todaysPunches.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s punches'**
+  String get todaysPunches;
+
+  /// No description provided for @noPunchesYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No punches yet.'**
+  String get noPunchesYet;
+
+  /// A punch HR voided: kept on record but not counted.
+  ///
+  /// In en, this message translates to:
+  /// **'Voided'**
+  String get punchVoided;
+
+  /// No description provided for @locationServicesOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Location is turned off on this phone. Turn it on to punch.'**
+  String get locationServicesOff;
+
+  /// No description provided for @locationPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow location access so the app can check that you are at your workplace.'**
+  String get locationPermissionDenied;
+
+  /// No description provided for @locationPermissionBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Location access is blocked for this app. Allow it in Settings to punch.'**
+  String get locationPermissionBlocked;
+
+  /// No description provided for @locationTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Your location could not be found. Move to an open area and try again.'**
+  String get locationTimeout;
+
+  /// No description provided for @locationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Your location could not be read. Please try again.'**
+  String get locationFailed;
+
+  /// No description provided for @openSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get openSettings;
+
+  /// No description provided for @punchErrorOutsideGeofence.
+  ///
+  /// In en, this message translates to:
+  /// **'You are about {distance} m from your workplace. You can punch within {radius} m of it.'**
+  String punchErrorOutsideGeofence(String distance, String radius);
+
+  /// No description provided for @punchErrorOutsideArea.
+  ///
+  /// In en, this message translates to:
+  /// **'You are outside your workplace area, so you can\'t punch here.'**
+  String get punchErrorOutsideArea;
+
+  /// No description provided for @punchErrorLocationRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow location access to punch in or out.'**
+  String get punchErrorLocationRequired;
+
+  /// No description provided for @punchErrorTooSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'You punched less than a minute ago. Wait a moment before punching again.'**
+  String get punchErrorTooSoon;
+
+  /// No description provided for @punchErrorSeparated.
+  ///
+  /// In en, this message translates to:
+  /// **'Your employment has ended, so you can\'t punch.'**
+  String get punchErrorSeparated;
+
+  /// No description provided for @correctionErrorFutureDay.
+  ///
+  /// In en, this message translates to:
+  /// **'You can only correct days that have already started.'**
+  String get correctionErrorFutureDay;
+
+  /// No description provided for @correctionErrorOutsideWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'This day is too far back to correct from the app. Ask HR to fix it.'**
+  String get correctionErrorOutsideWindow;
+
+  /// No description provided for @correctionErrorNotTracked.
+  ///
+  /// In en, this message translates to:
+  /// **'Attendance wasn\'t tracked on that day, so there is nothing to correct.'**
+  String get correctionErrorNotTracked;
+
+  /// No description provided for @correctionErrorWrongDay.
+  ///
+  /// In en, this message translates to:
+  /// **'That time belongs to another day\'s shift. Check the date and times.'**
+  String get correctionErrorWrongDay;
+
+  /// No description provided for @correctionErrorFuturePunch.
+  ///
+  /// In en, this message translates to:
+  /// **'A punch time can\'t be in the future.'**
+  String get correctionErrorFuturePunch;
+
+  /// No description provided for @correctionErrorAlreadyPending.
+  ///
+  /// In en, this message translates to:
+  /// **'A correction for this day is already waiting for approval.'**
+  String get correctionErrorAlreadyPending;
+
+  /// No description provided for @correctionErrorNotPending.
+  ///
+  /// In en, this message translates to:
+  /// **'This correction has already been decided.'**
+  String get correctionErrorNotPending;
+
+  /// No description provided for @attendanceMonthEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No attendance days yet this month.'**
+  String get attendanceMonthEmpty;
+
+  /// Spoken hint on a day in the month list; tapping it opens the correction form.
+  ///
+  /// In en, this message translates to:
+  /// **'Request a correction for this day'**
+  String get attendanceCorrectDay;
+
+  /// No description provided for @correctionRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Request correction'**
+  String get correctionRequest;
+
+  /// No description provided for @correctionsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'You haven\'t asked for any corrections.'**
+  String get correctionsEmpty;
+
+  /// No description provided for @correctionsLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load your corrections.'**
+  String get correctionsLoadFailed;
+
+  /// No description provided for @correctionInAt.
+  ///
+  /// In en, this message translates to:
+  /// **'In {time}'**
+  String correctionInAt(String time);
+
+  /// No description provided for @correctionOutAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Out {time}'**
+  String correctionOutAt(String time);
+
+  /// No description provided for @correctionCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel correction'**
+  String get correctionCancel;
+
+  /// No description provided for @correctionCancelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel this correction?'**
+  String get correctionCancelTitle;
+
+  /// No description provided for @correctionCancelBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your correction for {date} will be withdrawn.'**
+  String correctionCancelBody(String date);
+
+  /// No description provided for @correctionCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Correction cancelled'**
+  String get correctionCancelled;
+
+  /// The day the correction is for.
+  ///
+  /// In en, this message translates to:
+  /// **'Day'**
+  String get correctionDate;
+
+  /// No description provided for @correctionDateRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the day to correct'**
+  String get correctionDateRequired;
+
+  /// No description provided for @correctionInTime.
+  ///
+  /// In en, this message translates to:
+  /// **'In time'**
+  String get correctionInTime;
+
+  /// No description provided for @correctionOutTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Out time'**
+  String get correctionOutTime;
+
+  /// No description provided for @correctionChooseTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a time'**
+  String get correctionChooseTime;
+
+  /// No description provided for @correctionClearTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear time'**
+  String get correctionClearTime;
+
+  /// No description provided for @correctionTimesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Give the time you came in, the time you left, or both.'**
+  String get correctionTimesHint;
+
+  /// No description provided for @correctionTimesRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Give the in time, the out time or both.'**
+  String get correctionTimesRequired;
+
+  /// No description provided for @correctionOnDutyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'An on-duty day counts as your whole shift, so no times are needed.'**
+  String get correctionOnDutyHint;
+
+  /// No description provided for @correctionSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Send correction'**
+  String get correctionSubmit;
+
+  /// No description provided for @correctionSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Correction sent for approval'**
+  String get correctionSent;
+
+  /// No description provided for @approvalCorrectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Attendance correction'**
+  String get approvalCorrectionTitle;
+
+  /// Label over the times an employee asks to add.
+  ///
+  /// In en, this message translates to:
+  /// **'Asked for'**
+  String get approvalAskedFor;
+
+  /// Label over the day as the system has it now, to compare with the correction.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded now'**
+  String get approvalDayNow;
+
+  /// No description provided for @approveCorrectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve this correction?'**
+  String get approveCorrectionTitle;
+
+  /// No description provided for @rejectCorrectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject this correction?'**
+  String get rejectCorrectionTitle;
+
+  /// No description provided for @correctionApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Correction approved'**
+  String get correctionApproved;
+
+  /// No description provided for @correctionRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Correction rejected'**
+  String get correctionRejected;
+
+  /// No description provided for @approvalUnknownItem.
+  ///
+  /// In en, this message translates to:
+  /// **'This version of the app can\'t show this request. Decide it on the web.'**
+  String get approvalUnknownItem;
 }
 
 class _AppLocalizationsDelegate

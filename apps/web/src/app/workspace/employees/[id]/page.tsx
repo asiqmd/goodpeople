@@ -9,6 +9,7 @@ import {
   type LeaveTypeView,
   type OrgSnapshot,
   type Page,
+  type EmployeeAttendanceView,
 } from '@gp/shared';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
@@ -27,23 +28,28 @@ import { NomineesForm } from '@/components/hr/nominees-form';
 import { PaymentAccountsForm } from '@/components/hr/payment-accounts-form';
 import { BalanceCards, day, RequestList } from '@/components/leave/leave-views';
 import { AdjustLeaveForm } from '@/components/leave/settings-forms';
+import { ManualPunchForm, PinForm } from '@/components/attendance/attendance-forms';
+import { DaysTable, PunchList, TotalsBar } from '@/components/attendance/attendance-views';
 import { buttonClass, Card } from '@/components/ui';
 import { authedFetch, load } from '@/lib/api';
+import { MONTH, monthRange, shiftMonth } from '@/lib/month';
 
-const TABS = ['profile', 'job', 'nominees', 'payment', 'leave'] as const;
+const TABS = ['profile', 'job', 'nominees', 'payment', 'leave', 'attendance'] as const;
 
 export default async function EmployeePage({
   params,
   searchParams,
 }: PageProps<'/workspace/employees/[id]'>) {
   const { id } = await params;
-  const tabParam = (await searchParams).tab;
+  const sp = await searchParams;
+  const tabParam = sp.tab;
   const tab = typeof tabParam === 'string' ? tabParam : 'profile';
   const result = await authedFetch<EmployeeDetail>('tenant', `/tenant/employees/${id}`);
   if (!result.ok) notFound();
   const employee = result.data;
   const t = await getTranslations('hr');
   const tl = await getTranslations('leave');
+  const ta = await getTranslations('attendance');
 
   return (
     <>
@@ -70,7 +76,11 @@ export default async function EmployeePage({
                 : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
-            {name === 'leave' ? tl('employee.tab') : t(`detail.${name}`)}
+            {name === 'leave'
+              ? tl('employee.tab')
+              : name === 'attendance'
+                ? ta('employee.tab')
+                : t(`detail.${name}`)}
           </Link>
         ))}
       </nav>
@@ -98,6 +108,9 @@ export default async function EmployeePage({
         </Card>
       )}
       {tab === 'leave' && <LeaveTab employeeId={id} />}
+      {tab === 'attendance' && (
+        <AttendanceTab employeeId={id} month={typeof sp.month === 'string' ? sp.month : null} />
+      )}
       {tab === 'profile' && (
         <div className="grid gap-6 lg:grid-cols-2">
           <NomineeList employee={employee} />
@@ -191,6 +204,107 @@ async function LeaveTab({ employeeId }: { employeeId: string }) {
         </Card>
         <Card title={t('employee.adjust')}>
           <AdjustLeaveForm employeeId={employeeId} types={types} year={year} />
+        </Card>
+      </div>
+    </>
+  );
+}
+
+async function AttendanceTab({
+  employeeId,
+  month: asked,
+}: {
+  employeeId: string;
+  month: string | null;
+}) {
+  const t = await getTranslations('attendance');
+  const format = await getFormatter();
+  const today = todayIn();
+  const month = asked && MONTH.test(asked) ? asked : today.slice(0, 7);
+  const { from, to } = monthRange(month);
+  const result = await authedFetch<EmployeeAttendanceView>(
+    'tenant',
+    `/tenant/employees/${employeeId}/attendance?from=${from}&to=${to}`,
+  );
+  if (!result.ok) {
+    return (
+      <Card>
+        <p className="text-sm text-slate-600">
+          {result.error.code === 'feature_not_in_plan'
+            ? t('employee.notInPlan')
+            : result.error.message}
+        </p>
+      </Card>
+    );
+  }
+  const { attendancePin, shifts, range, punches } = result.data;
+  const tab = (m: string) => `/workspace/employees/${employeeId}?tab=attendance&month=${m}`;
+  return (
+    <>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card title={t('employee.devices')}>
+          <PinForm employeeId={employeeId} pin={attendancePin} />
+        </Card>
+        <Card title={t('employee.shifts')}>
+          {shifts.length === 0 ? (
+            <p className="text-sm text-slate-500">{t('employee.defaultShift')}</p>
+          ) : (
+            <ul className="divide-y divide-slate-100 text-sm">
+              {shifts.map((s) => (
+                <li key={s.id} className="flex justify-between gap-3 py-1.5">
+                  <span>
+                    <span className="font-mono text-xs text-slate-400">{s.shift.code}</span>{' '}
+                    {s.shift.name} · {s.shift.startTime}–{s.shift.endTime}
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    {day(format, s.effectiveFrom)} –{' '}
+                    {s.effectiveTo ? day(format, s.effectiveTo) : t('employee.now')}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <Link
+            href="/workspace/attendance/roster"
+            className="mt-3 inline-block text-xs font-medium text-brand-700 hover:underline"
+          >
+            {t('employee.changeShift')} →
+          </Link>
+        </Card>
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold">
+          {format.dateTime(new Date(`${from}T00:00:00Z`), {
+            month: 'long',
+            year: 'numeric',
+            timeZone: 'UTC',
+          })}
+        </h2>
+        <span className="flex gap-3 text-sm">
+          <Link href={tab(shiftMonth(month, -1))} className="text-slate-600 hover:text-slate-900">
+            ← {t('my.previous')}
+          </Link>
+          {month < today.slice(0, 7) && (
+            <Link href={tab(shiftMonth(month, 1))} className="text-slate-600 hover:text-slate-900">
+              {t('my.next')} →
+            </Link>
+          )}
+        </span>
+      </div>
+      <TotalsBar totals={range.totals} />
+      <Card>
+        {range.days.length === 0 ? (
+          <p className="text-sm text-slate-500">{t('my.notTracked')}</p>
+        ) : (
+          <DaysTable days={range.days} timeZone={range.timeZone} today={today} />
+        )}
+      </Card>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card title={t('employee.punches')}>
+          <PunchList punches={punches} timeZone={range.timeZone} voidable />
+        </Card>
+        <Card title={t('employee.addPunch')}>
+          <ManualPunchForm employeeId={employeeId} maxDate={today} />
         </Card>
       </div>
     </>

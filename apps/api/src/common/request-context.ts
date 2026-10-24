@@ -21,14 +21,23 @@ export function currentTenantId(): string {
   return tenantId;
 }
 
-/** Runs each tenant user's request inside an async context that carries their tenant id. */
+/** Runs work outside a request (background jobs) as one tenant. */
+export function runInTenantContext<T>(tenantId: string, fn: () => T): T {
+  return storage.run({ tenantId }, fn);
+}
+
+/**
+ * Runs each tenant request inside an async context that carries its tenant id: a workspace
+ * user's, or an Edge Agent's (whose token names the workspace).
+ */
 @Injectable()
 export class TenantContextInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
-    const user = context.switchToHttp().getRequest<AuthedRequest>().user;
-    if (user?.kind !== 'tenant') return next.handle();
+    const req = context.switchToHttp().getRequest<AuthedRequest>();
+    const tenantId = req.user?.kind === 'tenant' ? req.user.tenantId : req.edgeAgent?.tenantId;
+    if (!tenantId) return next.handle();
     return new Observable((subscriber) =>
-      storage.run({ tenantId: user.tenantId }, () => next.handle().subscribe(subscriber)),
+      storage.run({ tenantId }, () => next.handle().subscribe(subscriber)),
     );
   }
 }

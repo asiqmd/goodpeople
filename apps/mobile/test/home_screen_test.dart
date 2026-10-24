@@ -12,7 +12,12 @@ import 'support/fake_api.dart';
 
 void main() {
   /// Signs in through the fake API, then shows the app (so, HomeScreen).
+  /// The view is tall enough for every shortcut card and module row.
   Future<void> pumpSignedIn(WidgetTester tester, FakeGoodPeopleApi api) async {
+    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
     final container = ProviderContainer.test(
       overrides: [goodPeopleApiProvider.overrideWithValue(api)],
     );

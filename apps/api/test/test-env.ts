@@ -20,7 +20,10 @@ export function testEnv() {
 }
 
 export async function bootApp(): Promise<INestApplication> {
-  const app = await createApp(loadConfig({ DATABASE_URL: testEnv().appUrl }));
+  // Tests process attendance explicitly; the background job would race them.
+  const app = await createApp(
+    loadConfig({ DATABASE_URL: testEnv().appUrl, ATTENDANCE_JOB_INTERVAL_MINUTES: '0' }),
+  );
   await app.init();
   return app;
 }

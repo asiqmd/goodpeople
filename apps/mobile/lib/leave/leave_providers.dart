@@ -53,13 +53,6 @@ final myLeaveRequestsProvider = FutureProvider.autoDispose
       );
     }, retry: _noRetry);
 
-/// Approval steps waiting for the signed-in user. Usually empty for
-/// workers; the Leave screen shows its Approvals tab only when it is not.
-final approvalsProvider = FutureProvider.autoDispose<List<ApprovalItem>>((ref) {
-  _requireSession(ref);
-  return ref.read(authProvider.notifier).fetchApprovals();
-}, retry: _noRetry);
-
 /// The signed-in employee's holiday calendar for a year. `null` for a 404:
 /// the workspace has no holiday calendar yet.
 final myHolidaysProvider = FutureProvider.autoDispose.family<HolidayYear?, int>(

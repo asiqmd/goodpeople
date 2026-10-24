@@ -1,12 +1,18 @@
 import { bdHolidayTemplate, bdLeaveDefaults } from '@gp/country-packs';
 import { eq } from 'drizzle-orm';
 import type { Tx } from './client.js';
-import { holidayCalendars, holidays, leaveTypes } from './schema/index.js';
+import {
+  attendanceSettings,
+  holidayCalendars,
+  holidays,
+  leaveTypes,
+  shifts,
+} from './schema/index.js';
 
 /**
- * Gives a workspace its country pack's starting point: the statutory leave types and a
- * default holiday calendar for this year and next. Idempotent; call inside a transaction
- * scoped to the tenant (runAsTenant / scopeToTenant).
+ * Gives a workspace its country pack's starting point: the statutory leave types, a default
+ * holiday calendar for this year and next, a general shift and attendance settings.
+ * Idempotent; call inside a transaction scoped to the tenant (runAsTenant / scopeToTenant).
  */
 export async function provisionCountryDefaults(
   tx: Tx,
@@ -17,6 +23,28 @@ export async function provisionCountryDefaults(
     .insert(leaveTypes)
     .values(bdLeaveDefaults(options.today).map((policy) => ({ ...policy, tenantId })))
     .onConflictDoNothing();
+
+  await tx.insert(attendanceSettings).values({ tenantId }).onConflictDoNothing();
+  const [defaultShift] = await tx
+    .select({ id: shifts.id })
+    .from(shifts)
+    .where(eq(shifts.isDefault, true));
+  if (!defaultShift) {
+    // Eight hours of work with an hour's rest, within Labour Act ss.100–101.
+    await tx
+      .insert(shifts)
+      .values({
+        tenantId,
+        code: 'GEN',
+        name: 'General shift',
+        nameBn: 'সাধারণ শিফট',
+        startTime: '09:00',
+        endTime: '18:00',
+        breakMinutes: 60,
+        isDefault: true,
+      })
+      .onConflictDoNothing();
+  }
 
   const [calendar] = await tx
     .select({ id: holidayCalendars.id })

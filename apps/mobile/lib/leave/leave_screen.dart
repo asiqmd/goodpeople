@@ -2,14 +2,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../approvals/approvals_providers.dart';
+import '../approvals/approvals_tab.dart';
 import '../l10n/app_localizations.dart';
 import '../ui/format.dart';
 import '../ui/language_menu.dart';
 import 'apply_tab.dart';
-import 'approvals_tab.dart';
 import 'balances_tab.dart';
 import 'holidays_tab.dart';
-import 'leave_providers.dart';
 import 'requests_tab.dart';
 
 enum LeaveTab { balances, apply, requests, approvals, holidays }
@@ -18,7 +18,8 @@ enum LeaveTab { balances, apply, requests, approvals, holidays }
 /// requests, approvals waiting for them, and the holiday calendar.
 ///
 /// The Approvals tab shows only while the inbox is not empty, with the
-/// count as a badge. Tabs keep their state (a half-filled form survives a
+/// count as a badge. It is the whole inbox, attendance corrections
+/// included. Tabs keep their state (a half-filled form survives a
 /// look at the balances), and each loads the first time it is opened.
 class LeaveScreen extends ConsumerStatefulWidget {
   const LeaveScreen({super.key});

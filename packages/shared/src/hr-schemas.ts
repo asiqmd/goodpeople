@@ -28,6 +28,7 @@ import {
   WORKER_CATEGORIES,
 } from './hr.js';
 import { TENANT_ROLES } from './catalog.js';
+import { withoutDefaults } from './zod-helpers.js';
 
 const isoDate = z.iso.date();
 const id = z.uuid();
@@ -256,11 +257,13 @@ export type HireEmployeeInput = z.infer<typeof hireEmployeeSchema>;
 
 /** Personal details only; job changes go through the job-change endpoint. */
 export const updateEmployeeSchema = z
-  .object({
-    ...personalFields,
-    identity: identitySchema,
-    probationEndsOn: isoDate.nullable(),
-  })
+  .object(
+    withoutDefaults({
+      ...personalFields,
+      identity: identitySchema,
+      probationEndsOn: isoDate.nullable(),
+    }),
+  )
   .partial();
 export type UpdateEmployeeInput = z.infer<typeof updateEmployeeSchema>;
 

@@ -13,8 +13,8 @@ import {
 import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
 import { BD_RULES, allRules } from '@gp/country-packs';
 import {
-  decisionSchema,
   holidayCalendarInputSchema,
+  holidayCalendarUpdateSchema,
   holidayInputSchema,
   holidayUpdateSchema,
   holidayYearQuerySchema,
@@ -28,9 +28,8 @@ import {
   leaveTypeUpdateSchema,
   leaveYearQuerySchema,
   todayIn,
-  type ApprovalItem,
-  type DecisionInput,
   type HolidayCalendarInput,
+  type HolidayCalendarUpdate,
   type HolidayCalendarView,
   type HolidayChangeResult,
   type HolidayInput,
@@ -53,10 +52,10 @@ import { CurrentUser, type AuthUser } from '../../common/auth-user.js';
 import { HrOnly, TenantRolesGuard } from '../../common/roles.js';
 import { openApiBody, zod } from '../../common/zod.js';
 import { AccessStateGuard, FeatureGuard, RequireFeature } from '../entitlements/guards.js';
-import { ApprovalsService } from './approvals.service.js';
 import { EmployeeLeaveService, type EmployeeLeaveSummary } from './employee-leave.service.js';
 import { HolidaysService } from './holidays.service.js';
-import { isHr, LeaveRequestsService } from './leave-requests.service.js';
+import { isHr } from '../employees/employee.queries.js';
+import { LeaveRequestsService } from './leave-requests.service.js';
 import { LeaveTypesService } from './leave-types.service.js';
 
 const thisYear = () => Number(todayIn().slice(0, 4));
@@ -72,7 +71,6 @@ export class LeaveController {
     private readonly types: LeaveTypesService,
     private readonly requests: LeaveRequestsService,
     private readonly employeeLeave: EmployeeLeaveService,
-    private readonly approvals: ApprovalsService,
   ) {}
 
   /** The country pack's statutory rules, with every version and its legal reference. */
@@ -215,38 +213,6 @@ export class LeaveController {
   ): Promise<EmployeeLeaveSummary> {
     return this.employeeLeave.adjust(user, id, body);
   }
-
-  // ── Approvals ──────────────────────────────────────────────────────────────
-
-  @Get('approvals/count')
-  async approvalCount(@CurrentUser() user: AuthUser): Promise<{ count: number }> {
-    return { count: await this.approvals.count(user) };
-  }
-
-  @Get('approvals')
-  inbox(@CurrentUser() user: AuthUser): Promise<ApprovalItem[]> {
-    return this.approvals.inbox(user);
-  }
-
-  @Post('approvals/:stepId/approve')
-  @ApiBody(openApiBody(decisionSchema))
-  approve(
-    @CurrentUser() user: AuthUser,
-    @Param('stepId', ParseUUIDPipe) stepId: string,
-    @Body(zod(decisionSchema)) body: DecisionInput,
-  ): Promise<LeaveRequestView> {
-    return this.approvals.decide(user, stepId, 'approved', body);
-  }
-
-  @Post('approvals/:stepId/reject')
-  @ApiBody(openApiBody(decisionSchema))
-  reject(
-    @CurrentUser() user: AuthUser,
-    @Param('stepId', ParseUUIDPipe) stepId: string,
-    @Body(zod(decisionSchema)) body: DecisionInput,
-  ): Promise<LeaveRequestView> {
-    return this.approvals.decide(user, stepId, 'rejected', body);
-  }
 }
 
 /** Holiday calendars: everyone reads, HR changes. */
@@ -275,11 +241,11 @@ export class HolidaysController {
 
   @Patch('holiday-calendars/:id')
   @HrOnly()
-  @ApiBody(openApiBody(holidayCalendarInputSchema.partial()))
+  @ApiBody(openApiBody(holidayCalendarUpdateSchema))
   updateCalendar(
     @CurrentUser() user: AuthUser,
     @Param('id', ParseUUIDPipe) id: string,
-    @Body(zod(holidayCalendarInputSchema.partial())) body: Partial<HolidayCalendarInput>,
+    @Body(zod(holidayCalendarUpdateSchema)) body: HolidayCalendarUpdate,
   ): Promise<HolidayCalendarView> {
     return this.holidays.renameCalendar(user, id, body);
   }

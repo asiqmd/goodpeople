@@ -67,13 +67,17 @@ abstract interface class GoodPeopleApi {
   /// be cancelled gets a 409 [ApiException].
   Future<LeaveRequest> cancelLeaveRequest(String accessToken, String requestId);
 
-  /// `GET /tenant/approvals`: steps waiting for the signed-in user.
+  /// `GET /tenant/approvals`: steps waiting for the signed-in user, leave
+  /// requests and attendance corrections alike.
   Future<List<ApprovalItem>> fetchApprovals(String accessToken);
 
   /// `POST /tenant/approvals/{stepId}/approve` or `/reject`, with an optional
   /// comment. A step that is not this user's, or no longer open, gets a 403
   /// or 409 [ApiException].
-  Future<LeaveRequest> decideApproval(
+  ///
+  /// The API answers with the decided leave request or correction; the app
+  /// reloads the inbox instead of reading it, so any 2xx body is accepted.
+  Future<void> decideApproval(
     String accessToken,
     String stepId,
     ApprovalDecision decision, {
@@ -83,6 +87,52 @@ abstract interface class GoodPeopleApi {
   /// `GET /tenant/me/holidays?year=`: the employee's holiday calendar. A
   /// workspace with no calendar yet gets a 404 [ApiException].
   Future<HolidayYear> fetchMyHolidays(String accessToken, {required int year});
+
+  // ── Attendance ────────────────────────────────────────────────────────────
+  // Needs the workspace's `attendance` feature. The `/tenant/me/attendance`
+  // calls answer 404 for a login with no employee record, like
+  // [fetchMyEmployee]. Refusals carry a `code` in the [ApiException].
+
+  /// `GET /tenant/me/attendance/today`: today's day, its punches, and
+  /// whether the user can punch from the app.
+  Future<MyAttendanceToday> fetchMyAttendanceToday(String accessToken);
+
+  /// `POST /tenant/me/attendance/punch` from the mobile app, with the
+  /// phone's [location] when there is one. Answers with today as it is after
+  /// the punch. Refusals by `code`: `outside_geofence`, `location_required`
+  /// and `no_geofence` (400), `self_punch_disabled` and `separated` (403),
+  /// `too_soon` (409).
+  Future<MyAttendanceToday> punch(
+    String accessToken, {
+    PunchLocation? location,
+  });
+
+  /// `GET /tenant/me/attendance?from=&to=`: the employee's days, at most 62
+  /// at a time, with totals.
+  Future<AttendanceRange> fetchMyAttendance(
+    String accessToken, {
+    required DateTime from,
+    required DateTime to,
+  });
+
+  /// `GET /tenant/me/attendance/regularizations`: the user's corrections,
+  /// newest day first.
+  Future<List<Regularization>> fetchMyRegularizations(String accessToken);
+
+  /// `POST /tenant/me/attendance/regularizations`. Refusals by `code`:
+  /// `future_day`, `outside_window`, `not_tracked`, `wrong_day` and
+  /// `future_punch` (400), `already_pending` (409).
+  Future<Regularization> requestRegularization(
+    String accessToken,
+    RegularizationDraft draft,
+  );
+
+  /// `POST /tenant/attendance/regularizations/{id}/cancel`. A correction
+  /// that is no longer pending gets a 409 with code `not_pending`.
+  Future<Regularization> cancelRegularization(
+    String accessToken,
+    String regularizationId,
+  );
 }
 
 /// [GoodPeopleApi] over HTTP with dio.
@@ -216,19 +266,19 @@ class DioGoodPeopleApi implements GoodPeopleApi {
   );
 
   @override
-  Future<LeaveRequest> decideApproval(
+  Future<void> decideApproval(
     String accessToken,
     String stepId,
     ApprovalDecision decision, {
     String? comment,
-  }) => _call(
+  }) => _send(
     () => _dio.post<Object?>(
       '/tenant/approvals/${Uri.encodeComponent(stepId)}/'
       '${decision.pathSegment}',
       data: {'comment': ?comment},
       options: _bearer(accessToken),
     ),
-    LeaveRequest.fromJson,
+    (_) {},
   );
 
   @override
@@ -242,6 +292,78 @@ class DioGoodPeopleApi implements GoodPeopleApi {
       options: _bearer(accessToken),
     ),
     HolidayYear.fromJson,
+  );
+
+  @override
+  Future<MyAttendanceToday> fetchMyAttendanceToday(String accessToken) => _call(
+    () => _dio.get<Object?>(
+      '/tenant/me/attendance/today',
+      options: _bearer(accessToken),
+    ),
+    MyAttendanceToday.fromJson,
+  );
+
+  @override
+  Future<MyAttendanceToday> punch(
+    String accessToken, {
+    PunchLocation? location,
+  }) => _call(
+    () => _dio.post<Object?>(
+      '/tenant/me/attendance/punch',
+      data: selfPunchBody(location),
+      options: _bearer(accessToken),
+    ),
+    MyAttendanceToday.fromJson,
+  );
+
+  @override
+  Future<AttendanceRange> fetchMyAttendance(
+    String accessToken, {
+    required DateTime from,
+    required DateTime to,
+  }) => _call(
+    () => _dio.get<Object?>(
+      '/tenant/me/attendance',
+      queryParameters: {'from': toWireDate(from), 'to': toWireDate(to)},
+      options: _bearer(accessToken),
+    ),
+    AttendanceRange.fromJson,
+  );
+
+  @override
+  Future<List<Regularization>> fetchMyRegularizations(String accessToken) =>
+      _callList(
+        () => _dio.get<Object?>(
+          '/tenant/me/attendance/regularizations',
+          options: _bearer(accessToken),
+        ),
+        Regularization.fromJson,
+      );
+
+  @override
+  Future<Regularization> requestRegularization(
+    String accessToken,
+    RegularizationDraft draft,
+  ) => _call(
+    () => _dio.post<Object?>(
+      '/tenant/me/attendance/regularizations',
+      data: draft.toJson(),
+      options: _bearer(accessToken),
+    ),
+    Regularization.fromJson,
+  );
+
+  @override
+  Future<Regularization> cancelRegularization(
+    String accessToken,
+    String regularizationId,
+  ) => _call(
+    () => _dio.post<Object?>(
+      '/tenant/attendance/regularizations/'
+      '${Uri.encodeComponent(regularizationId)}/cancel',
+      options: _bearer(accessToken),
+    ),
+    Regularization.fromJson,
   );
 
   void close() => _dio.close(force: true);

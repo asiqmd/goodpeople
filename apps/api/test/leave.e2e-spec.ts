@@ -1,4 +1,9 @@
-import type { ApprovalItem, LeaveBalanceView, LeaveRequestView } from '@gp/shared';
+import type {
+  ApprovalItem,
+  LeaveApprovalItem,
+  LeaveBalanceView,
+  LeaveRequestView,
+} from '@gp/shared';
 import { addDays, todayIn, weekdayOf } from '@gp/shared';
 import type { INestApplication } from '@nestjs/common';
 import { api, bearer, bootApp, tenantLogin } from './test-env.js';
@@ -34,8 +39,12 @@ describe('leave', () => {
       .body as LeaveBalanceView[];
   const apply = (token: string, body: object) =>
     api(app).post('/tenant/me/leave/requests').set(bearer(token)).send(body);
-  const inbox = async (token: string) =>
+  const inboxAll = async (token: string) =>
     (await api(app).get('/tenant/approvals').set(bearer(token)).expect(200)).body as ApprovalItem[];
+  const inbox = async (token: string) =>
+    (await inboxAll(token)).filter(
+      (i): i is LeaveApprovalItem => i.subjectType === 'leave_request',
+    );
   const calendarCodes = async (token: string) =>
     (
       await api(app)
@@ -272,7 +281,7 @@ describe('leave', () => {
       const { count } = (
         await api(app).get('/tenant/approvals/count').set(bearer(token)).expect(200)
       ).body;
-      expect(count).toBe((await inbox(token)).length);
+      expect(count).toBe((await inboxAll(token)).length);
     }
   });
 

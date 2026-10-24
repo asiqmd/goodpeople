@@ -12,7 +12,7 @@ import { currentTenantId } from '../../common/request-context.js';
 import { TenantDb } from '../../db/db.module.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
 import { BalancesService } from './balances.service.js';
-import { employeeOfUser } from './leave-requests.service.js';
+import { employeeOfUser } from '../employees/employee.queries.js';
 import { loadRequests } from './leave-views.js';
 
 export interface EmployeeLeaveSummary {

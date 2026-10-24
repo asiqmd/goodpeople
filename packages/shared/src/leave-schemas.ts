@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { GENDERS } from './hr.js';
 import { APPROVAL_STEP_KINDS, HALF_DAYS, HOLIDAY_KINDS, LEAVE_ACCRUALS } from './leave.js';
+import { withoutDefaults } from './zod-helpers.js';
 
 const isoDate = z.iso.date();
 const id = z.uuid();
@@ -12,7 +13,11 @@ export const holidayCalendarInputSchema = z.object({
   name: z.string().trim().min(2).max(120),
   isDefault: z.boolean().default(false),
 });
+export const holidayCalendarUpdateSchema = z
+  .object(withoutDefaults(holidayCalendarInputSchema.shape))
+  .partial();
 export type HolidayCalendarInput = z.infer<typeof holidayCalendarInputSchema>;
+export type HolidayCalendarUpdate = z.infer<typeof holidayCalendarUpdateSchema>;
 
 export const holidayInputSchema = z.object({
   date: isoDate,
@@ -22,7 +27,7 @@ export const holidayInputSchema = z.object({
   /** A lunar date not yet confirmed by the moon-sighting announcement. */
   isTentative: z.boolean().default(false),
 });
-export const holidayUpdateSchema = holidayInputSchema.partial();
+export const holidayUpdateSchema = z.object(withoutDefaults(holidayInputSchema.shape)).partial();
 export type HolidayInput = z.infer<typeof holidayInputSchema>;
 export type HolidayUpdate = z.infer<typeof holidayUpdateSchema>;
 
@@ -72,7 +77,7 @@ export const leaveTypeInputSchema = z.object(leaveTypeFields).superRefine((t, ct
 });
 /** Code and accrual are fixed once a type exists, so balances keep their meaning. */
 export const leaveTypeUpdateSchema = z
-  .object(leaveTypeFields)
+  .object(withoutDefaults(leaveTypeFields))
   .omit({ code: true, accrual: true })
   .partial()
   .extend({ isActive: z.boolean().optional() });

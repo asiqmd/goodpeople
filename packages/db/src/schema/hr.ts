@@ -218,6 +218,8 @@ export const employees = pgTable(
     probationEndsOn: isoDate('probation_ends_on'),
     confirmedOn: isoDate('confirmed_on'),
     separatedOn: isoDate('separated_on'),
+    /** The number the employee is enrolled under on attendance devices. */
+    attendancePin: text('attendance_pin'),
     createdAt: createdAt(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -228,6 +230,9 @@ export const employees = pgTable(
       .on(t.tenantId, t.nidHash)
       .where(sql`${t.nidHash} is not null`),
     unique('employees_user_uq').on(t.userId),
+    uniqueIndex('employees_tenant_pin_uq')
+      .on(t.tenantId, t.attendancePin)
+      .where(sql`${t.attendancePin} is not null`),
     index('employees_tenant_name_idx').on(t.tenantId, t.fullName),
     foreignKey({
       name: 'employees_user_fk',

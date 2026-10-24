@@ -117,14 +117,6 @@ export interface LeaveRequestView {
   decidedAt: string | null;
 }
 
-/** One approval waiting for the signed-in user. */
-export interface ApprovalItem {
-  stepId: string;
-  kind: ApprovalStepKind;
-  request: LeaveRequestView;
-  balance: LeaveBalanceView | null;
-}
-
 export interface LeavePreview {
   days: number;
   excluded: ExcludedDay[];

@@ -5,6 +5,10 @@
 /// failing, so a newer API does not break an older app.
 library;
 
+import 'dart:math' as math;
+
+part 'approval_models.dart';
+part 'attendance_models.dart';
 part 'leave_models.dart';
 
 typedef Json = Map<String, Object?>;

@@ -8,6 +8,7 @@ import { holidayCalendars, holidays, locations, type Tx } from '@gp/db';
 import { BD_RULES, bdHolidayTemplate, ruleOn } from '@gp/country-packs';
 import type {
   HolidayCalendarInput,
+  HolidayCalendarUpdate,
   HolidayCalendarView,
   HolidayChangeResult,
   HolidayInput,
@@ -21,8 +22,9 @@ import type { AuthUser } from '../../common/auth-user.js';
 import { currentTenantId } from '../../common/request-context.js';
 import { TenantDb } from '../../db/db.module.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
-import { employeeOfUser, LeaveRequestsService } from './leave-requests.service.js';
-import { WorkCalendarService } from './work-calendar.service.js';
+import { employeeOfUser } from '../employees/employee.queries.js';
+import { LeaveRequestsService } from './leave-requests.service.js';
+import { WorkCalendarService } from '../calendar/work-calendar.service.js';
 
 const toHolidayView = (h: typeof holidays.$inferSelect): HolidayView => ({
   id: h.id,
@@ -247,7 +249,7 @@ export class HolidaysService {
     return calendar;
   }
 
-  async renameCalendar(actor: AuthUser, id: string, input: Partial<HolidayCalendarInput>) {
+  async renameCalendar(actor: AuthUser, id: string, input: HolidayCalendarUpdate) {
     await this.tenantDb.run(async (tx) => {
       await this.calendarOrThrow(tx, id);
       if (input.isDefault === false) {

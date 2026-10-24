@@ -4,6 +4,8 @@ import { DbErrorFilter } from './common/db-error.filter.js';
 import { TenantContextInterceptor } from './common/request-context.js';
 import { APP_CONFIG, type AppConfig } from './config.js';
 import { DbModule } from './db/db.module.js';
+import { ApprovalsModule } from './modules/approvals/approvals.module.js';
+import { AttendanceModule } from './modules/attendance/attendance.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { EmployeesModule } from './modules/employees/employees.module.js';
 import { HealthModule } from './modules/health/health.controller.js';
@@ -29,6 +31,8 @@ export class AppModule {
         OrgModule,
         EmployeesModule,
         LeaveModule,
+        AttendanceModule,
+        ApprovalsModule,
       ],
       providers: [
         { provide: APP_CONFIG, useValue: config },

@@ -11,6 +11,7 @@ import { createFieldCipher } from './field-cipher.js';
 import { hashPassword } from './passwords.js';
 import { provisionCountryDefaults } from './provision.js';
 import { seedGroupHr } from './seed-hr.js';
+import { seedGroupAttendance } from './seed-attendance.js';
 import { seedGroupLeave } from './seed-leave.js';
 import {
   legalEntities,
@@ -175,6 +176,7 @@ export async function seed(db: Database, opts: SeedOptions) {
           passwordHash,
         });
         await seedGroupLeave(tx, { tenantId: tenant!.id, passwordHash });
+        await seedGroupAttendance(tx, { tenantId: tenant!.id });
       }
     });
     created.push(t.slug);
