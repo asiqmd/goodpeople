@@ -61,6 +61,149 @@ final readOnlyWithoutPayroll = TenantAccessView.fromJson(
   ),
 );
 
+/// The current job inside [employeeJson], exactly as the API contract shapes
+/// it.
+Map<String, Object?> jobJson() => {
+  'id': '3c9a1f52-7e4b-4d2a-9b61-1f0e8d7c6b51',
+  'event': 'hire',
+  'effectiveFrom': '2020-03-01',
+  'effectiveTo': null,
+  'legalEntity': {
+    'id': 'a1b2c3d4-0000-4000-8000-000000000001',
+    'name': 'My Group Textiles Ltd',
+  },
+  'location': {
+    'id': 'a1b2c3d4-0000-4000-8000-000000000002',
+    'name': 'Gazipur Factory',
+  },
+  'orgUnit': {'id': 'a1b2c3d4-0000-4000-8000-000000000003', 'name': 'Line 1'},
+  'designation': {
+    'id': 'a1b2c3d4-0000-4000-8000-000000000004',
+    'name': 'Senior Sewing Operator',
+  },
+  'grade': {
+    'id': 'a1b2c3d4-0000-4000-8000-000000000005',
+    'name': 'Worker grade 3',
+  },
+  'costCentre': {
+    'id': 'a1b2c3d4-0000-4000-8000-000000000006',
+    'name': 'Production',
+  },
+  'manager': {
+    'id': 'a1b2c3d4-0000-4000-8000-000000000007',
+    'fullName': 'Shirin Akter',
+    'employeeCode': 'MG-0004',
+  },
+  'employmentType': 'permanent',
+  'workerCategory': 'worker',
+  'reason': 'Joined',
+  'createdAt': '2026-10-20T08:00:00.000Z',
+};
+
+/// `GET /tenant/me/employee` 200 body for the seeded worker MG-0005, exactly
+/// as the API contract shapes it. The bank account is extra, so the tests
+/// see a non-primary account with a branch and routing number.
+Map<String, Object?> employeeJson({bool isAdolescent = false}) => {
+  'id': '9e8d7c6b-5a49-4382-9170-6f5e4d3c2b1a',
+  'employeeCode': 'MG-0005',
+  'status': 'active',
+  'fullName': 'Rahima Khatun',
+  'fullNameBn': 'রহিমা খাতুন',
+  'fatherName': 'Abul Kashem',
+  'motherName': 'Monowara Begum',
+  'spouseName': null,
+  'dateOfBirth': '1996-04-08',
+  'gender': 'female',
+  'religion': 'islam',
+  'maritalStatus': 'married',
+  'bloodGroup': 'B+',
+  'nationality': 'BD',
+  'mobilePhone': '+8801711000005',
+  'workEmail': null,
+  'personalEmail': null,
+  'presentAddress': {
+    'line': 'Konabari Industrial Area',
+    'upazila': 'Gazipur Sadar',
+    'district': 'Gazipur',
+    'division': 'dhaka',
+  },
+  'permanentAddress': {
+    'line': 'Village Char Kalibari',
+    'district': 'Mymensingh',
+    'division': 'mymensingh',
+    'postcode': '2200',
+  },
+  'emergencyContact': {
+    'name': 'Jamal Uddin',
+    'relation': 'Husband',
+    'phone': '+8801811000005',
+  },
+  'identity': {
+    'nid': '1996000005',
+    'birthRegistration': null,
+    'passport': null,
+    'tin': null,
+  },
+  'joinedOn': '2020-03-01',
+  'probationEndsOn': null,
+  'confirmedOn': '2020-06-01',
+  'separatedOn': null,
+  'isAdolescent': isAdolescent,
+  'currentJob': jobJson(),
+  'nominees': [
+    {
+      'id': '5b4a3928-1706-4f5e-8d4c-3b2a19081726',
+      'name': 'Jamal Uddin',
+      'relation': 'Husband',
+      'sharePercent': 100,
+      'dateOfBirth': null,
+      'phone': null,
+    },
+  ],
+  'paymentAccounts': [
+    {
+      'id': '6c5b4a39-2817-4f60-9e5d-4c3b2a190817',
+      'method': 'mfs',
+      'provider': 'bkash',
+      'branchName': null,
+      'routingNumber': null,
+      'accountName': 'Rahima Khatun',
+      'accountNumberMasked': '•••• 0005',
+      'isPrimary': true,
+    },
+    {
+      'id': '7d6c5b4a-3928-4f71-8f6e-5d4c3b2a1908',
+      'method': 'bank',
+      'provider': 'Dutch-Bangla Bank',
+      'branchName': 'Konabari Branch',
+      'routingNumber': '090330468',
+      'accountName': 'Rahima Khatun',
+      'accountNumberMasked': '•••• 4321',
+      'isPrimary': false,
+    },
+  ],
+  'portalUser': {
+    'id': '8e7d6c5b-4a39-4f82-9a7f-6e5d4c3b2a19',
+    'email': 'rahima@my-group.test',
+    'role': 'employee',
+  },
+  'createdAt': '2026-10-20T08:00:00.000Z',
+  'updatedAt': '2026-10-21T09:30:00.000Z',
+};
+
+/// What `/tenant/me/employee` answers for a login with no employee record.
+const noEmployeeRecord = ApiException(
+  kind: ApiErrorKind.server,
+  statusCode: 404,
+  message: 'No employee record is linked to your login',
+);
+
+const tenantSuspended = ApiException(
+  kind: ApiErrorKind.server,
+  statusCode: 403,
+  message: 'This workspace is suspended',
+);
+
 const wrongPassword = ApiException(
   kind: ApiErrorKind.server,
   statusCode: 401,
@@ -89,9 +232,17 @@ class FakeGoodPeopleApi implements GoodPeopleApi {
     expiresIn: 900,
   );
 
+  /// Returned (or thrown, for exceptions) by successive [fetchMyEmployee]
+  /// calls; [employee] once it is empty.
+  final employeeResults = <Object>[];
+  EmployeeDetail employee = EmployeeDetail.fromJson(employeeJson());
+
   final logins = <({String tenant, String email, String password})>[];
   final refreshTokens = <String>[];
   final accessTokens = <String>[];
+
+  /// Access tokens sent to [fetchMyEmployee].
+  final employeeTokens = <String>[];
 
   @override
   Future<LoginResponse> login({
@@ -120,6 +271,18 @@ class FakeGoodPeopleApi implements GoodPeopleApi {
     final next = accessResults.isEmpty ? accessView : accessResults.removeAt(0);
     return switch (next) {
       final TenantAccessView view => view,
+      final Object error => throw error,
+    };
+  }
+
+  @override
+  Future<EmployeeDetail> fetchMyEmployee(String accessToken) async {
+    employeeTokens.add(accessToken);
+    final next = employeeResults.isEmpty
+        ? employee
+        : employeeResults.removeAt(0);
+    return switch (next) {
+      final EmployeeDetail detail => detail,
       final Object error => throw error,
     };
   }

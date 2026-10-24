@@ -1,4 +1,9 @@
 export * from './catalog.js';
 export * from './access.js';
 export * from './schemas.js';
+export * from './bd.js';
+export * from './dates.js';
+export * from './hr.js';
+export * from './hr-schemas.js';
 export type * from './api-types.js';
+export type * from './hr-types.js';

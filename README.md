@@ -3,18 +3,25 @@
 A multi-tenant HR and payroll platform, built for Bangladesh first and ready to grow abroad.
 
 - **Product and delivery plan:** [Good People plan (Claude Doc)](https://claude.ai/artifact/DwMQ6zCwCRhwhUe6PbijCf)
-- **Current state:** Phase 0 (foundation). This covers tenancy with row-level security, auth,
-  entitlements, the Super Admin console with **"Assign company" (subscription bypass)**, an
-  English/Bangla web app and a Flutter app shell.
-- **Not built yet:** HR modules (employees, attendance, leave, payroll). They arrive in Phases 1–2.
+- **Done:**
+  - **Phase 0 (foundation):** tenancy with row-level security, auth, entitlements, and the Super
+    Admin console with **"Assign company" (subscription bypass)**.
+  - **Phase 1 M1 (org & employees):** legal entities, locations and units, the employee master
+    with Bangladesh fields, encrypted identity and account numbers, effective-dated job history,
+    nominees, payment accounts and self-service profile. It works in web and mobile, in English
+    and Bangla.
+- **Next:**
+  - Phase 1 M2: leave, holidays and the BD rules engine.
+  - Then attendance, lifecycle and payroll.
+  - The plan is in [docs/phases/phase-1.md](docs/phases/phase-1.md).
 
 ## Repository layout
 
 ```
 apps/
-  api/       NestJS 12 (ESM) modular monolith: auth, tenancy, entitlements, platform admin
+  api/       NestJS 12 (ESM) modular monolith: auth, tenancy, entitlements, platform admin, org, employees
   web/       Next.js 16: Super Admin console (/platform) and workspace app (/workspace), en/bn
-  mobile/    Flutter app: workspace sign-in and home, en/bn (see apps/mobile/README.md)
+  mobile/    Flutter app: workspace sign-in, home and my profile, en/bn (see apps/mobile/README.md)
 packages/
   shared/    Contract shared by API and web: billing modes, plans, resolveAccess(), zod schemas
   db/        Drizzle schema, SQL migrations (incl. RLS), setup/migrate/seed scripts
@@ -54,6 +61,7 @@ pnpm --filter @gp/web dev
 | ---------------------------------- | ----------------- | --------------- | -------------------------- |
 | Super Admin                        | `/platform/login` | –               | `SEED_SUPER_ADMIN_EMAIL`   |
 | Internal tenant (2 legal entities) | `/login`          | `my-group`      | `admin@my-group.test`      |
+| Employee self-service (Rahima)     | `/login`          | `my-group`      | `rahima@my-group.test`     |
 | Complimentary tenant               | `/login`          | `sponsored-ngo` | `admin@sponsored-ngo.test` |
 | Paid, payment overdue → read-only  | `/login`          | `acme-garments` | `admin@acme-garments.test` |
 | Trial on the Starter plan          | `/login`          | `trial-co`      | `admin@trial-co.test`      |

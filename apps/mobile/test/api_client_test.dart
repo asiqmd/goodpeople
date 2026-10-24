@@ -83,6 +83,91 @@ void main() {
     expect(view.access.hasFeature('payroll'), isTrue);
   });
 
+  test('my employee sends the bearer token and parses the detail', () async {
+    final (api, adapter) = client(200, employeeJson());
+
+    final employee = await api.fetchMyEmployee('access-1');
+
+    expect(adapter.requests.single.method, 'GET');
+    expect(adapter.requests.single.uri.path, '/tenant/me/employee');
+    expect(adapter.requests.single.headers['Authorization'], 'Bearer access-1');
+    expect(employee.employeeCode, 'MG-0005');
+    expect(employee.fullNameBn, 'রহিমা খাতুন');
+    expect(employee.dateOfBirth, DateTime.utc(1996, 4, 8));
+    expect(employee.gender, Gender.female);
+    expect(employee.bloodGroup, BloodGroup.bPositive);
+    expect(employee.presentAddress.division, Division.dhaka);
+    expect(employee.presentAddress.postcode, isNull);
+    expect(employee.permanentAddress.postcode, '2200');
+    expect(employee.identity.nid, '1996000005');
+    expect(employee.identity.passport, isNull);
+    expect(employee.probationEndsOn, isNull);
+    final job = employee.currentJob!;
+    expect(job.employmentType, EmploymentType.permanent);
+    expect(job.workerCategory, WorkerCategory.worker);
+    expect(job.manager?.employeeCode, 'MG-0004');
+    expect(employee.nominees.single.sharePercent, 100);
+    expect(employee.paymentAccounts.first.method, PaymentMethod.mfs);
+    expect(employee.paymentAccounts.first.isPrimary, isTrue);
+    expect(employee.portalUser?.role, UserRole.employee);
+  });
+
+  test('my employee tolerates nulls and unknown enum values', () async {
+    final body = employeeJson()
+      ..['gender'] = 'not_yet_known'
+      ..['religion'] = null
+      ..['bloodGroup'] = null
+      ..['emergencyContact'] = null
+      ..['portalUser'] = null
+      ..['currentJob'] = {
+        ...jobJson(),
+        'event': 'secondment',
+        'location': null,
+        'orgUnit': null,
+        'designation': null,
+        'grade': null,
+        'costCentre': null,
+        'manager': null,
+        'reason': null,
+        'employmentType': 'gig',
+        'workerCategory': 'contractor',
+      };
+    final (api, _) = client(200, body);
+
+    final employee = await api.fetchMyEmployee('access-1');
+
+    expect(employee.gender, Gender.unknown);
+    expect(employee.religion, isNull);
+    expect(employee.bloodGroup, isNull);
+    expect(employee.emergencyContact, isNull);
+    expect(employee.portalUser, isNull);
+    final job = employee.currentJob!;
+    expect(job.legalEntity.name, 'My Group Textiles Ltd');
+    expect(job.event, JobEvent.unknown);
+    expect(job.location, isNull);
+    expect(job.manager, isNull);
+    expect(job.employmentType, EmploymentType.unknown);
+    expect(job.workerCategory, WorkerCategory.unknown);
+
+    final (noJobApi, _) = client(200, employeeJson()..['currentJob'] = null);
+    expect((await noJobApi.fetchMyEmployee('access-1')).currentJob, isNull);
+  });
+
+  test('my employee rejects a malformed date as a badResponse', () async {
+    final (api, _) = client(200, employeeJson()..['joinedOn'] = '2020-02-30');
+
+    await expectLater(
+      api.fetchMyEmployee('access-1'),
+      throwsA(
+        isA<ApiException>().having(
+          (e) => e.kind,
+          'kind',
+          ApiErrorKind.badResponse,
+        ),
+      ),
+    );
+  });
+
   test('error bodies become ApiException with message and issues', () async {
     final (api, _) = client(400, {
       'statusCode': 400,

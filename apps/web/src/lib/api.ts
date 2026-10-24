@@ -1,5 +1,5 @@
 import 'server-only';
-import type { ApiError } from '@gp/shared';
+import type { ApiError, TenantRole } from '@gp/shared';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { cookieNames, type SessionKind } from './session';
@@ -52,4 +52,20 @@ export async function load<T>(kind: SessionKind, path: string): Promise<T> {
   const result = await authedFetch<T>(kind, path);
   if (!result.ok) throw new Error(`${path}: ${result.error.message}`);
   return result.data;
+}
+
+/**
+ * The signed-in workspace user, read from their access token. For choosing what to show only:
+ * the API checks the token's signature and the role on every request.
+ */
+export async function currentTenantUser(): Promise<{ id: string; role: TenantRole } | null> {
+  const token = (await cookies()).get(cookieNames('tenant').access)?.value;
+  const payload = token?.split('.')[1];
+  if (!payload) return null;
+  try {
+    const claims = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+    return { id: claims.sub, role: claims.role };
+  } catch {
+    return null;
+  }
 }

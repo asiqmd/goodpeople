@@ -355,6 +355,300 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Try again'**
   String get retry;
+
+  /// No description provided for @myProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'My profile'**
+  String get myProfile;
+
+  /// Under "My profile" on the home screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Your job, personal and payment details'**
+  String get myProfileSubtitle;
+
+  /// Profile section heading.
+  ///
+  /// In en, this message translates to:
+  /// **'Job'**
+  String get profileJob;
+
+  /// Profile section heading.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal'**
+  String get profilePersonal;
+
+  /// Profile section heading.
+  ///
+  /// In en, this message translates to:
+  /// **'Identity documents'**
+  String get profileIdentity;
+
+  /// Profile section heading.
+  ///
+  /// In en, this message translates to:
+  /// **'Addresses'**
+  String get profileAddresses;
+
+  /// Profile section heading: people who receive the employee's dues if they die.
+  ///
+  /// In en, this message translates to:
+  /// **'Nominees'**
+  String get profileNominees;
+
+  /// Profile section heading: where salary is paid.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment accounts'**
+  String get profilePaymentAccounts;
+
+  /// No description provided for @legalEntityLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Legal entity'**
+  String get legalEntityLabel;
+
+  /// No description provided for @locationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get locationLabel;
+
+  /// Department, section, line or team.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit'**
+  String get orgUnitLabel;
+
+  /// No description provided for @designationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Designation'**
+  String get designationLabel;
+
+  /// No description provided for @gradeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Grade'**
+  String get gradeLabel;
+
+  /// No description provided for @managerLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Manager'**
+  String get managerLabel;
+
+  /// No description provided for @managerValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} ({code})'**
+  String managerValue(String name, String code);
+
+  /// No description provided for @employmentTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Employment type'**
+  String get employmentTypeLabel;
+
+  /// No description provided for @workerCategoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Worker category'**
+  String get workerCategoryLabel;
+
+  /// No description provided for @joinedOnLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Joined'**
+  String get joinedOnLabel;
+
+  /// Date the employee was made permanent after probation.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmed'**
+  String get confirmedOnLabel;
+
+  /// No description provided for @probationEndsOnLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Probation ends'**
+  String get probationEndsOnLabel;
+
+  /// No description provided for @noCurrentJob.
+  ///
+  /// In en, this message translates to:
+  /// **'No current job assignment'**
+  String get noCurrentJob;
+
+  /// No description provided for @fatherNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Father\'s name'**
+  String get fatherNameLabel;
+
+  /// No description provided for @motherNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Mother\'s name'**
+  String get motherNameLabel;
+
+  /// No description provided for @dateOfBirthLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Date of birth'**
+  String get dateOfBirthLabel;
+
+  /// No description provided for @genderLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Gender'**
+  String get genderLabel;
+
+  /// No description provided for @religionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Religion'**
+  String get religionLabel;
+
+  /// No description provided for @bloodGroupLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Blood group'**
+  String get bloodGroupLabel;
+
+  /// No description provided for @mobilePhoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Mobile phone'**
+  String get mobilePhoneLabel;
+
+  /// No description provided for @nidLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'National ID (NID)'**
+  String get nidLabel;
+
+  /// No description provided for @birthRegistrationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Birth registration'**
+  String get birthRegistrationLabel;
+
+  /// No description provided for @passportLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Passport'**
+  String get passportLabel;
+
+  /// Bangladesh taxpayer identification number (e-TIN).
+  ///
+  /// In en, this message translates to:
+  /// **'TIN'**
+  String get tinLabel;
+
+  /// No description provided for @presentAddressLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Present address'**
+  String get presentAddressLabel;
+
+  /// No description provided for @permanentAddressLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanent address'**
+  String get permanentAddressLabel;
+
+  /// Shown in a profile section that has no entries.
+  ///
+  /// In en, this message translates to:
+  /// **'None recorded'**
+  String get noneRecorded;
+
+  /// Under a nominee's name. relation is free text entered by HR.
+  ///
+  /// In en, this message translates to:
+  /// **'{relation} · {share}% share'**
+  String nomineeDetails(String relation, num share);
+
+  /// Marks the account salary is paid into by default.
+  ///
+  /// In en, this message translates to:
+  /// **'Primary'**
+  String get primaryAccount;
+
+  /// Chip for a worker aged 14 to 17, whose hours the Labour Act limits.
+  ///
+  /// In en, this message translates to:
+  /// **'Adolescent worker'**
+  String get adolescentWorker;
+
+  /// No description provided for @noEmployeeRecordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No employee record yet'**
+  String get noEmployeeRecordTitle;
+
+  /// No description provided for @noEmployeeRecordBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your login is not linked to an employee record, so there is no profile to show. Workspace admins often don\'t have one. If you think you should, ask your HR team.'**
+  String get noEmployeeRecordBody;
+
+  /// No description provided for @loadProfileFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load your profile.'**
+  String get loadProfileFailed;
+
+  /// A value from the API that this app version does not recognise.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get unknownValue;
+
+  /// Gender for a gender code from the API.
+  ///
+  /// In en, this message translates to:
+  /// **'{gender, select, male{Male} female{Female} third_gender{Third gender} other{Unknown}}'**
+  String genderName(String gender);
+
+  /// Religion for a religion code from the API. "other" is a real code; unknown codes arrive as "unknown".
+  ///
+  /// In en, this message translates to:
+  /// **'{religion, select, islam{Islam} hinduism{Hinduism} buddhism{Buddhism} christianity{Christianity} unknown{Unknown} other{Other}}'**
+  String religionName(String religion);
+
+  /// Worker class from Bangladesh Labour Act s.4. Use the Act's Bangla terms.
+  ///
+  /// In en, this message translates to:
+  /// **'{type, select, permanent{Permanent} probationer{Probationer} apprentice{Apprentice} badli{Badli (substitute)} casual{Casual} temporary{Temporary} seasonal{Seasonal} contractual{Contractual} other{Unknown}}'**
+  String employmentTypeName(String type);
+
+  /// A worker in the Labour Act sense, or officer and management staff.
+  ///
+  /// In en, this message translates to:
+  /// **'{category, select, worker{Worker} staff{Staff} other{Unknown}}'**
+  String workerCategoryName(String category);
+
+  /// How salary is paid. mfs is a mobile financial service such as bKash.
+  ///
+  /// In en, this message translates to:
+  /// **'{method, select, bank{Bank account} mfs{Mobile banking} cash{Cash} other{Unknown}}'**
+  String paymentMethodName(String method);
+
+  /// Mobile financial service brand for a provider key. Anything else, such as a bank name, is shown as sent.
+  ///
+  /// In en, this message translates to:
+  /// **'{provider, select, bkash{bKash} nagad{Nagad} rocket{Rocket} upay{Upay} other{{provider}}}'**
+  String paymentProviderName(String provider);
+
+  /// Name of a Bangladesh division for a division code from the API.
+  ///
+  /// In en, this message translates to:
+  /// **'{division, select, barishal{Barishal} chattogram{Chattogram} dhaka{Dhaka} khulna{Khulna} mymensingh{Mymensingh} rajshahi{Rajshahi} rangpur{Rangpur} sylhet{Sylhet} other{Unknown}}'**
+  String divisionName(String division);
 }
 
 class _AppLocalizationsDelegate

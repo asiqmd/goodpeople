@@ -161,4 +161,228 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get retry => 'Try again';
+
+  @override
+  String get myProfile => 'My profile';
+
+  @override
+  String get myProfileSubtitle => 'Your job, personal and payment details';
+
+  @override
+  String get profileJob => 'Job';
+
+  @override
+  String get profilePersonal => 'Personal';
+
+  @override
+  String get profileIdentity => 'Identity documents';
+
+  @override
+  String get profileAddresses => 'Addresses';
+
+  @override
+  String get profileNominees => 'Nominees';
+
+  @override
+  String get profilePaymentAccounts => 'Payment accounts';
+
+  @override
+  String get legalEntityLabel => 'Legal entity';
+
+  @override
+  String get locationLabel => 'Location';
+
+  @override
+  String get orgUnitLabel => 'Unit';
+
+  @override
+  String get designationLabel => 'Designation';
+
+  @override
+  String get gradeLabel => 'Grade';
+
+  @override
+  String get managerLabel => 'Manager';
+
+  @override
+  String managerValue(String name, String code) {
+    return '$name ($code)';
+  }
+
+  @override
+  String get employmentTypeLabel => 'Employment type';
+
+  @override
+  String get workerCategoryLabel => 'Worker category';
+
+  @override
+  String get joinedOnLabel => 'Joined';
+
+  @override
+  String get confirmedOnLabel => 'Confirmed';
+
+  @override
+  String get probationEndsOnLabel => 'Probation ends';
+
+  @override
+  String get noCurrentJob => 'No current job assignment';
+
+  @override
+  String get fatherNameLabel => 'Father\'s name';
+
+  @override
+  String get motherNameLabel => 'Mother\'s name';
+
+  @override
+  String get dateOfBirthLabel => 'Date of birth';
+
+  @override
+  String get genderLabel => 'Gender';
+
+  @override
+  String get religionLabel => 'Religion';
+
+  @override
+  String get bloodGroupLabel => 'Blood group';
+
+  @override
+  String get mobilePhoneLabel => 'Mobile phone';
+
+  @override
+  String get nidLabel => 'National ID (NID)';
+
+  @override
+  String get birthRegistrationLabel => 'Birth registration';
+
+  @override
+  String get passportLabel => 'Passport';
+
+  @override
+  String get tinLabel => 'TIN';
+
+  @override
+  String get presentAddressLabel => 'Present address';
+
+  @override
+  String get permanentAddressLabel => 'Permanent address';
+
+  @override
+  String get noneRecorded => 'None recorded';
+
+  @override
+  String nomineeDetails(String relation, num share) {
+    final intl.NumberFormat shareNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String shareString = shareNumberFormat.format(share);
+
+    return '$relation · $shareString% share';
+  }
+
+  @override
+  String get primaryAccount => 'Primary';
+
+  @override
+  String get adolescentWorker => 'Adolescent worker';
+
+  @override
+  String get noEmployeeRecordTitle => 'No employee record yet';
+
+  @override
+  String get noEmployeeRecordBody =>
+      'Your login is not linked to an employee record, so there is no profile to show. Workspace admins often don\'t have one. If you think you should, ask your HR team.';
+
+  @override
+  String get loadProfileFailed => 'We could not load your profile.';
+
+  @override
+  String get unknownValue => 'Unknown';
+
+  @override
+  String genderName(String gender) {
+    String _temp0 = intl.Intl.selectLogic(gender, {
+      'male': 'Male',
+      'female': 'Female',
+      'third_gender': 'Third gender',
+      'other': 'Unknown',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String religionName(String religion) {
+    String _temp0 = intl.Intl.selectLogic(religion, {
+      'islam': 'Islam',
+      'hinduism': 'Hinduism',
+      'buddhism': 'Buddhism',
+      'christianity': 'Christianity',
+      'unknown': 'Unknown',
+      'other': 'Other',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String employmentTypeName(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'permanent': 'Permanent',
+      'probationer': 'Probationer',
+      'apprentice': 'Apprentice',
+      'badli': 'Badli (substitute)',
+      'casual': 'Casual',
+      'temporary': 'Temporary',
+      'seasonal': 'Seasonal',
+      'contractual': 'Contractual',
+      'other': 'Unknown',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String workerCategoryName(String category) {
+    String _temp0 = intl.Intl.selectLogic(category, {
+      'worker': 'Worker',
+      'staff': 'Staff',
+      'other': 'Unknown',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String paymentMethodName(String method) {
+    String _temp0 = intl.Intl.selectLogic(method, {
+      'bank': 'Bank account',
+      'mfs': 'Mobile banking',
+      'cash': 'Cash',
+      'other': 'Unknown',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String paymentProviderName(String provider) {
+    String _temp0 = intl.Intl.selectLogic(provider, {
+      'bkash': 'bKash',
+      'nagad': 'Nagad',
+      'rocket': 'Rocket',
+      'upay': 'Upay',
+      'other': '$provider',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String divisionName(String division) {
+    String _temp0 = intl.Intl.selectLogic(division, {
+      'barishal': 'Barishal',
+      'chattogram': 'Chattogram',
+      'dhaka': 'Dhaka',
+      'khulna': 'Khulna',
+      'mymensingh': 'Mymensingh',
+      'rajshahi': 'Rajshahi',
+      'rangpur': 'Rangpur',
+      'sylhet': 'Sylhet',
+      'other': 'Unknown',
+    });
+    return '$_temp0';
+  }
 }

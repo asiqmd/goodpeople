@@ -72,5 +72,178 @@
   "unexpectedError": "Something went wrong. Please try again.",
   "sessionExpired": "Your session has ended. Please sign in again.",
   "loadAccessFailed": "We could not load your workspace.",
-  "retry": "Try again"
+  "retry": "Try again",
+  "myProfile": "My profile",
+  "myProfileSubtitle": "Your job, personal and payment details",
+  "@myProfileSubtitle": {
+    "description": "Under \"My profile\" on the home screen."
+  },
+  "profileJob": "Job",
+  "@profileJob": {
+    "description": "Profile section heading."
+  },
+  "profilePersonal": "Personal",
+  "@profilePersonal": {
+    "description": "Profile section heading."
+  },
+  "profileIdentity": "Identity documents",
+  "@profileIdentity": {
+    "description": "Profile section heading."
+  },
+  "profileAddresses": "Addresses",
+  "@profileAddresses": {
+    "description": "Profile section heading."
+  },
+  "profileNominees": "Nominees",
+  "@profileNominees": {
+    "description": "Profile section heading: people who receive the employee's dues if they die."
+  },
+  "profilePaymentAccounts": "Payment accounts",
+  "@profilePaymentAccounts": {
+    "description": "Profile section heading: where salary is paid."
+  },
+  "legalEntityLabel": "Legal entity",
+  "locationLabel": "Location",
+  "orgUnitLabel": "Unit",
+  "@orgUnitLabel": {
+    "description": "Department, section, line or team."
+  },
+  "designationLabel": "Designation",
+  "gradeLabel": "Grade",
+  "managerLabel": "Manager",
+  "managerValue": "{name} ({code})",
+  "@managerValue": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Shirin Akter"
+      },
+      "code": {
+        "type": "String",
+        "example": "MG-0004"
+      }
+    }
+  },
+  "employmentTypeLabel": "Employment type",
+  "workerCategoryLabel": "Worker category",
+  "joinedOnLabel": "Joined",
+  "confirmedOnLabel": "Confirmed",
+  "@confirmedOnLabel": {
+    "description": "Date the employee was made permanent after probation."
+  },
+  "probationEndsOnLabel": "Probation ends",
+  "noCurrentJob": "No current job assignment",
+  "fatherNameLabel": "Father's name",
+  "motherNameLabel": "Mother's name",
+  "dateOfBirthLabel": "Date of birth",
+  "genderLabel": "Gender",
+  "religionLabel": "Religion",
+  "bloodGroupLabel": "Blood group",
+  "mobilePhoneLabel": "Mobile phone",
+  "nidLabel": "National ID (NID)",
+  "birthRegistrationLabel": "Birth registration",
+  "passportLabel": "Passport",
+  "tinLabel": "TIN",
+  "@tinLabel": {
+    "description": "Bangladesh taxpayer identification number (e-TIN)."
+  },
+  "presentAddressLabel": "Present address",
+  "permanentAddressLabel": "Permanent address",
+  "noneRecorded": "None recorded",
+  "@noneRecorded": {
+    "description": "Shown in a profile section that has no entries."
+  },
+  "nomineeDetails": "{relation} · {share}% share",
+  "@nomineeDetails": {
+    "description": "Under a nominee's name. relation is free text entered by HR.",
+    "placeholders": {
+      "relation": {
+        "type": "String",
+        "example": "Husband"
+      },
+      "share": {
+        "type": "num",
+        "format": "decimalPattern",
+        "example": "100"
+      }
+    }
+  },
+  "primaryAccount": "Primary",
+  "@primaryAccount": {
+    "description": "Marks the account salary is paid into by default."
+  },
+  "adolescentWorker": "Adolescent worker",
+  "@adolescentWorker": {
+    "description": "Chip for a worker aged 14 to 17, whose hours the Labour Act limits."
+  },
+  "noEmployeeRecordTitle": "No employee record yet",
+  "noEmployeeRecordBody": "Your login is not linked to an employee record, so there is no profile to show. Workspace admins often don't have one. If you think you should, ask your HR team.",
+  "loadProfileFailed": "We could not load your profile.",
+  "unknownValue": "Unknown",
+  "@unknownValue": {
+    "description": "A value from the API that this app version does not recognise."
+  },
+  "genderName": "{gender, select, male{Male} female{Female} third_gender{Third gender} other{Unknown}}",
+  "@genderName": {
+    "description": "Gender for a gender code from the API.",
+    "placeholders": {
+      "gender": {
+        "type": "String"
+      }
+    }
+  },
+  "religionName": "{religion, select, islam{Islam} hinduism{Hinduism} buddhism{Buddhism} christianity{Christianity} unknown{Unknown} other{Other}}",
+  "@religionName": {
+    "description": "Religion for a religion code from the API. \"other\" is a real code; unknown codes arrive as \"unknown\".",
+    "placeholders": {
+      "religion": {
+        "type": "String"
+      }
+    }
+  },
+  "employmentTypeName": "{type, select, permanent{Permanent} probationer{Probationer} apprentice{Apprentice} badli{Badli (substitute)} casual{Casual} temporary{Temporary} seasonal{Seasonal} contractual{Contractual} other{Unknown}}",
+  "@employmentTypeName": {
+    "description": "Worker class from Bangladesh Labour Act s.4. Use the Act's Bangla terms.",
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "workerCategoryName": "{category, select, worker{Worker} staff{Staff} other{Unknown}}",
+  "@workerCategoryName": {
+    "description": "A worker in the Labour Act sense, or officer and management staff.",
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "paymentMethodName": "{method, select, bank{Bank account} mfs{Mobile banking} cash{Cash} other{Unknown}}",
+  "@paymentMethodName": {
+    "description": "How salary is paid. mfs is a mobile financial service such as bKash.",
+    "placeholders": {
+      "method": {
+        "type": "String"
+      }
+    }
+  },
+  "paymentProviderName": "{provider, select, bkash{bKash} nagad{Nagad} rocket{Rocket} upay{Upay} other{{provider}}}",
+  "@paymentProviderName": {
+    "description": "Mobile financial service brand for a provider key. Anything else, such as a bank name, is shown as sent.",
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "divisionName": "{division, select, barishal{Barishal} chattogram{Chattogram} dhaka{Dhaka} khulna{Khulna} mymensingh{Mymensingh} rajshahi{Rajshahi} rangpur{Rangpur} sylhet{Sylhet} other{Unknown}}",
+  "@divisionName": {
+    "description": "Name of a Bangladesh division for a division code from the API.",
+    "placeholders": {
+      "division": {
+        "type": "String"
+      }
+    }
+  }
 }

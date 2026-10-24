@@ -1,7 +1,9 @@
 import { PLAN_CATALOG, type BillingMode, type IndustryTemplate, type PlanCode } from '@gp/shared';
 import { eq } from 'drizzle-orm';
 import { scopeToTenant, type Database } from './client.js';
+import { createFieldCipher } from './field-cipher.js';
 import { hashPassword } from './passwords.js';
+import { seedGroupHr } from './seed-hr.js';
 import {
   legalEntities,
   plans,
@@ -74,6 +76,8 @@ export const seedAdminEmail = (slug: string) => `admin@${slug}.test`;
 export interface SeedOptions {
   superAdminEmail: string;
   password: string;
+  /** FIELD_ENCRYPTION_KEY, for the seeded employees' identity numbers. */
+  fieldKey: string;
   now?: Date;
 }
 
@@ -146,9 +150,19 @@ export async function seed(db: Database, opts: SeedOptions) {
         passwordHash,
         role: 'tenant_admin',
       });
-      await tx
+      const entities = await tx
         .insert(legalEntities)
-        .values(t.entities.map((name) => ({ tenantId: tenant!.id, name })));
+        .values(t.entities.map((name) => ({ tenantId: tenant!.id, name })))
+        .returning({ id: legalEntities.id });
+      if (t.slug === 'my-group') {
+        await seedGroupHr(tx, {
+          tenantId: tenant!.id,
+          textilesId: entities[0]!.id,
+          foodsId: entities[1]!.id,
+          cipher: createFieldCipher(opts.fieldKey),
+          passwordHash,
+        });
+      }
     });
     created.push(t.slug);
   }

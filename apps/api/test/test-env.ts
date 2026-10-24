@@ -15,6 +15,7 @@ export function testEnv() {
     appUrl: withDatabase(requireEnv('DATABASE_URL'), name),
     superAdminEmail: requireEnv('SEED_SUPER_ADMIN_EMAIL'),
     password: requireEnv('SEED_PASSWORD'),
+    fieldKey: requireEnv('FIELD_ENCRYPTION_KEY'),
   };
 }
 

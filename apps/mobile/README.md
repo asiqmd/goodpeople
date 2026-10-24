@@ -2,7 +2,10 @@
 
 Flutter app for Good People (Android and iOS). Phase 0 is the shell: sign in
 to a workspace, then see the tenant's plan, billing mode, access state and
-which modules are enabled. English and Bangla.
+which modules are enabled. Phase 1 adds **My profile**: the signed-in user's
+own employee record (job, personal details, identity documents, addresses,
+nominees, payment accounts) from `GET /tenant/me/employee`, opened from a
+card on the home screen. English and Bangla.
 
 Needs Flutter 3.47 (Dart 3.13) or newer. Run every command below from
 `apps/mobile`. This app is not part of the pnpm workspace; use `flutter`, not
@@ -40,20 +43,30 @@ On a physical phone, use your computer's LAN address, for example
 | `lib/api/` | Hand-written dio client, models, `ApiException`, token store |
 | `lib/auth/` | Auth state, sign in and out, token refresh, login screen |
 | `lib/home/` | Home screen and the module list |
+| `lib/profile/` | My profile screen and `myEmployeeProvider` |
 | `lib/settings/` | Language choice (in memory) |
-| `lib/ui/` | Theme, language menu, shared widgets |
+| `lib/ui/` | Theme, language menu, shared widgets, date formatting |
 | `lib/l10n/` | ARB files and the generated `AppLocalizations` |
 
 State is Riverpod. `AuthGate` in `lib/app.dart` shows the login or home
 screen from the auth state, so signing in, signing out and an expired session
-all switch screens in one place.
+all switch screens in one place. Signing out also pops any screen pushed on
+top of home, such as the profile.
 
 Sessions: tokens stay in memory (`InMemoryTokenStore`), so a restart signs the
 user out. Phase 1 replaces it with `flutter_secure_storage`. When
-`/tenant/access` returns 401, the app calls `/auth/refresh` once and retries.
+`/tenant/access` or `/tenant/me/employee` returns 401, the app calls
+`/auth/refresh` once and retries.
 If the refresh is rejected, or the retry is still a 401, it returns to login
 with a "session ended" notice. If the refresh fails because the network is
-down, home shows the error with a retry button instead.
+down, the screen shows the error with a retry button instead.
+
+My profile: a 404 from `/tenant/me/employee` means the login has no employee
+record (usual for tenant admins), and the screen shows an empty state, not an
+error. Other errors, such as a 403 for a suspended workspace, show the API's
+message with a retry button. Payment accounts show only the masked number
+the API sends; the app re-masks to the last four characters if a longer
+number ever arrives.
 
 ## Localization
 
@@ -65,8 +78,11 @@ flutter gen-l10n
 ```
 
 `flutter pub get` and `flutter run` also regenerate them (`generate: true` in
-`pubspec.yaml`, options in `l10n.yaml`). The generated
-`lib/l10n/app_localizations*.dart` files are committed so analysis works on a
+`pubspec.yaml`, options in `l10n.yaml`). API enum values (gender, religion,
+employment type, division and so on) are translated with ICU `select`
+messages keyed by the wire value, for example `genderName`. Dates go through
+`formatDate` in `lib/ui/format.dart` (intl), so Bangla shows Bangla digits.
+The generated `lib/l10n/app_localizations*.dart` files are committed so analysis works on a
 fresh checkout. Every key in `app_en.arb` needs a Bangla entry in
 `app_bn.arb`.
 

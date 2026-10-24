@@ -164,4 +164,228 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get retry => 'আবার চেষ্টা করুন';
+
+  @override
+  String get myProfile => 'আমার প্রোফাইল';
+
+  @override
+  String get myProfileSubtitle => 'আপনার চাকরি, ব্যক্তিগত ও পেমেন্টের তথ্য';
+
+  @override
+  String get profileJob => 'চাকরি';
+
+  @override
+  String get profilePersonal => 'ব্যক্তিগত তথ্য';
+
+  @override
+  String get profileIdentity => 'পরিচয়পত্র';
+
+  @override
+  String get profileAddresses => 'ঠিকানা';
+
+  @override
+  String get profileNominees => 'নমিনি';
+
+  @override
+  String get profilePaymentAccounts => 'পেমেন্ট অ্যাকাউন্ট';
+
+  @override
+  String get legalEntityLabel => 'আইনি প্রতিষ্ঠান';
+
+  @override
+  String get locationLabel => 'কর্মস্থল';
+
+  @override
+  String get orgUnitLabel => 'ইউনিট';
+
+  @override
+  String get designationLabel => 'পদবি';
+
+  @override
+  String get gradeLabel => 'গ্রেড';
+
+  @override
+  String get managerLabel => 'ম্যানেজার';
+
+  @override
+  String managerValue(String name, String code) {
+    return '$name ($code)';
+  }
+
+  @override
+  String get employmentTypeLabel => 'চাকরির ধরন';
+
+  @override
+  String get workerCategoryLabel => 'কর্মীর শ্রেণি';
+
+  @override
+  String get joinedOnLabel => 'যোগদানের তারিখ';
+
+  @override
+  String get confirmedOnLabel => 'স্থায়ীকরণের তারিখ';
+
+  @override
+  String get probationEndsOnLabel => 'শিক্ষানবিশকাল শেষ';
+
+  @override
+  String get noCurrentJob => 'বর্তমানে কোনো পদে নিয়োগের তথ্য নেই';
+
+  @override
+  String get fatherNameLabel => 'পিতার নাম';
+
+  @override
+  String get motherNameLabel => 'মাতার নাম';
+
+  @override
+  String get dateOfBirthLabel => 'জন্ম তারিখ';
+
+  @override
+  String get genderLabel => 'লিঙ্গ';
+
+  @override
+  String get religionLabel => 'ধর্ম';
+
+  @override
+  String get bloodGroupLabel => 'রক্তের গ্রুপ';
+
+  @override
+  String get mobilePhoneLabel => 'মোবাইল নম্বর';
+
+  @override
+  String get nidLabel => 'জাতীয় পরিচয়পত্র (এনআইডি)';
+
+  @override
+  String get birthRegistrationLabel => 'জন্ম নিবন্ধন';
+
+  @override
+  String get passportLabel => 'পাসপোর্ট';
+
+  @override
+  String get tinLabel => 'টিআইএন';
+
+  @override
+  String get presentAddressLabel => 'বর্তমান ঠিকানা';
+
+  @override
+  String get permanentAddressLabel => 'স্থায়ী ঠিকানা';
+
+  @override
+  String get noneRecorded => 'কোনো তথ্য নেই';
+
+  @override
+  String nomineeDetails(String relation, num share) {
+    final intl.NumberFormat shareNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String shareString = shareNumberFormat.format(share);
+
+    return '$relation · $shareString% অংশ';
+  }
+
+  @override
+  String get primaryAccount => 'প্রধান';
+
+  @override
+  String get adolescentWorker => 'কিশোর শ্রমিক';
+
+  @override
+  String get noEmployeeRecordTitle => 'এখনো কোনো কর্মী রেকর্ড নেই';
+
+  @override
+  String get noEmployeeRecordBody =>
+      'আপনার লগইনের সাথে কোনো কর্মী রেকর্ড যুক্ত নেই, তাই দেখানোর মতো কোনো প্রোফাইল নেই। ওয়ার্কস্পেস অ্যাডমিনদের সাধারণত এটি থাকে না। আপনার থাকার কথা মনে হলে আপনার এইচআর টিমকে জানান।';
+
+  @override
+  String get loadProfileFailed => 'আপনার প্রোফাইল লোড করা যায়নি।';
+
+  @override
+  String get unknownValue => 'অজানা';
+
+  @override
+  String genderName(String gender) {
+    String _temp0 = intl.Intl.selectLogic(gender, {
+      'male': 'পুরুষ',
+      'female': 'নারী',
+      'third_gender': 'তৃতীয় লিঙ্গ',
+      'other': 'অজানা',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String religionName(String religion) {
+    String _temp0 = intl.Intl.selectLogic(religion, {
+      'islam': 'ইসলাম',
+      'hinduism': 'হিন্দু',
+      'buddhism': 'বৌদ্ধ',
+      'christianity': 'খ্রিস্টান',
+      'unknown': 'অজানা',
+      'other': 'অন্যান্য',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String employmentTypeName(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'permanent': 'স্থায়ী',
+      'probationer': 'শিক্ষানবিশ',
+      'apprentice': 'শিক্ষাধীন',
+      'badli': 'বদলি',
+      'casual': 'সাময়িক',
+      'temporary': 'অস্থায়ী',
+      'seasonal': 'মৌসুমী',
+      'contractual': 'চুক্তিভিত্তিক',
+      'other': 'অজানা',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String workerCategoryName(String category) {
+    String _temp0 = intl.Intl.selectLogic(category, {
+      'worker': 'শ্রমিক',
+      'staff': 'কর্মচারী',
+      'other': 'অজানা',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String paymentMethodName(String method) {
+    String _temp0 = intl.Intl.selectLogic(method, {
+      'bank': 'ব্যাংক হিসাব',
+      'mfs': 'মোবাইল ব্যাংকিং',
+      'cash': 'নগদ অর্থ',
+      'other': 'অজানা',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String paymentProviderName(String provider) {
+    String _temp0 = intl.Intl.selectLogic(provider, {
+      'bkash': 'বিকাশ',
+      'nagad': 'নগদ',
+      'rocket': 'রকেট',
+      'upay': 'উপায়',
+      'other': '$provider',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String divisionName(String division) {
+    String _temp0 = intl.Intl.selectLogic(division, {
+      'barishal': 'বরিশাল',
+      'chattogram': 'চট্টগ্রাম',
+      'dhaka': 'ঢাকা',
+      'khulna': 'খুলনা',
+      'mymensingh': 'ময়মনসিংহ',
+      'rajshahi': 'রাজশাহী',
+      'rangpur': 'রংপুর',
+      'sylhet': 'সিলেট',
+      'other': 'অজানা',
+    });
+    return '$_temp0';
+  }
 }

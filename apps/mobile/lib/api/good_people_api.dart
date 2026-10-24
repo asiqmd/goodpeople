@@ -5,7 +5,7 @@ import '../config/app_config.dart';
 import 'api_exception.dart';
 import 'api_models.dart';
 
-/// The Good People HTTP API, as far as the Phase 0 app needs it.
+/// The Good People HTTP API, as far as the app needs it.
 ///
 /// Hand-written on purpose: the app does not use the code from
 /// `tool/gen_api.sh` in Phase 0. Every method throws [ApiException] on
@@ -23,6 +23,12 @@ abstract interface class GoodPeopleApi {
 
   /// `GET /tenant/access` with `Authorization: Bearer <accessToken>`.
   Future<TenantAccessView> getTenantAccess(String accessToken);
+
+  /// `GET /tenant/me/employee`: the signed-in user's own employee record.
+  ///
+  /// A login with no linked employee record (usual for tenant admins) gets a
+  /// 404 [ApiException].
+  Future<EmployeeDetail> fetchMyEmployee(String accessToken);
 }
 
 /// [GoodPeopleApi] over HTTP with dio.
@@ -68,14 +74,21 @@ class DioGoodPeopleApi implements GoodPeopleApi {
 
   @override
   Future<TenantAccessView> getTenantAccess(String accessToken) => _call(
-    () => _dio.get<Object?>(
-      '/tenant/access',
-      options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
-    ),
+    () => _dio.get<Object?>('/tenant/access', options: _bearer(accessToken)),
     TenantAccessView.fromJson,
   );
 
+  @override
+  Future<EmployeeDetail> fetchMyEmployee(String accessToken) => _call(
+    () =>
+        _dio.get<Object?>('/tenant/me/employee', options: _bearer(accessToken)),
+    EmployeeDetail.fromJson,
+  );
+
   void close() => _dio.close(force: true);
+
+  static Options _bearer(String accessToken) =>
+      Options(headers: {'Authorization': 'Bearer $accessToken'});
 
   Future<T> _call<T>(
     Future<Response<Object?>> Function() send,

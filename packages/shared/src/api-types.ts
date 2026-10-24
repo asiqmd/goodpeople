@@ -72,13 +72,6 @@ export interface AuditEntry {
   createdAt: string;
 }
 
-export interface LegalEntity {
-  id: string;
-  name: string;
-  tin: string | null;
-  createdAt: string;
-}
-
 export interface ApiError {
   statusCode: number;
   error: string;

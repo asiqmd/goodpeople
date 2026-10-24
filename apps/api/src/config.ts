@@ -8,6 +8,7 @@ const configSchema = z.object({
   JWT_ACCESS_SECRET: z.string().min(32, 'JWT_ACCESS_SECRET must be at least 32 characters'),
   ACCESS_TOKEN_TTL_SECONDS: z.coerce.number().int().positive().default(900),
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(30),
+  FIELD_ENCRYPTION_KEY: z.string().min(40, 'FIELD_ENCRYPTION_KEY must be 32 bytes, base64-encoded'),
 });
 
 export type AppConfig = z.infer<typeof configSchema>;

@@ -29,12 +29,18 @@ class GoodPeopleApp extends ConsumerWidget {
 /// Shows the login screen or the home screen for the current auth state.
 ///
 /// Signing in, signing out and an expired session all switch screens here,
-/// so no screen has to navigate on its own.
+/// so no screen has to navigate on its own. Signing out also closes any
+/// screen pushed on top of home, such as the profile.
 class AuthGate extends ConsumerWidget {
   const AuthGate({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen(authProvider, (previous, next) {
+      if (next is SignedOut) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+    });
     return switch (ref.watch(authProvider)) {
       final SignedIn session => HomeScreen(session: session),
       SignedOut(:final sessionExpired) => LoginScreen(

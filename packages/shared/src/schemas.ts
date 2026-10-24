@@ -92,13 +92,3 @@ export const createGrantSchema = z.discriminatedUnion('kind', [
   }),
 ]);
 export type CreateGrantInput = z.infer<typeof createGrantSchema>;
-
-export const createLegalEntitySchema = z.object({
-  name: z.string().trim().min(2).max(160),
-  /** Bangladesh e-TIN: 12 digits. */
-  tin: z
-    .string()
-    .regex(/^\d{12}$/, 'A Bangladesh e-TIN has 12 digits')
-    .optional(),
-});
-export type CreateLegalEntityInput = z.infer<typeof createLegalEntitySchema>;

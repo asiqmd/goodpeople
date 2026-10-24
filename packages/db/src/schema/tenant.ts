@@ -1,9 +1,21 @@
-import { TENANT_ROLES } from '@gp/shared';
-import { index, pgEnum, pgTable, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
+import { TENANT_ROLES, type Address } from '@gp/shared';
+import {
+  boolean,
+  index,
+  jsonb,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  unique,
+  uuid,
+} from 'drizzle-orm/pg-core';
 import { tenants } from './platform.js';
 
-// Every table in this file carries tenant_id and is isolated by row-level security
-// (see migrations/0001_rls.sql). Query them only inside runAsTenant().
+// Every table in this file and in hr.ts carries tenant_id and is isolated by row-level
+// security (migrations 0001 and 0003). Query them only inside runAsTenant().
+// Each has a (tenant_id, id) unique key so other tenant tables can reference it with a
+// composite foreign key: the database then refuses links to another tenant's rows.
 
 export const tenantRole = pgEnum('tenant_role', TENANT_ROLES);
 
@@ -20,7 +32,10 @@ export const tenantUsers = pgTable(
     role: tenantRole('role').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [unique('tenant_users_tenant_email_uq').on(t.tenantId, t.email)],
+  (t) => [
+    unique('tenant_users_tenant_email_uq').on(t.tenantId, t.email),
+    unique('tenant_users_tenant_id_uq').on(t.tenantId, t.id),
+  ],
 );
 
 /** A company inside a tenant: a group's sister concerns are separate legal entities. */
@@ -32,11 +47,19 @@ export const legalEntities = pgTable(
       .notNull()
       .references(() => tenants.id, { onDelete: 'cascade' }),
     name: text('name').notNull(),
+    legalName: text('legal_name'),
+    code: text('code'),
+    /** RJSC registration number. */
+    registrationNo: text('registration_no'),
     tin: text('tin'),
+    bin: text('bin'),
+    address: jsonb('address').$type<Address>(),
+    isActive: boolean('is_active').notNull().default(true),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index('legal_entities_tenant_idx').on(t.tenantId)],
+  (t) => [
+    index('legal_entities_tenant_idx').on(t.tenantId),
+    unique('legal_entities_tenant_id_uq').on(t.tenantId, t.id),
+    unique('legal_entities_tenant_code_uq').on(t.tenantId, t.code),
+  ],
 );
-
-/** Tables protected by the tenant_isolation policy. Tests assert this list matches the database. */
-export const RLS_TABLES = ['tenant_users', 'legal_entities'] as const;

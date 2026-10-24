@@ -1,0 +1,74 @@
+import { createCipheriv, createDecipheriv, createHmac, hkdfSync, randomBytes } from 'node:crypto';
+
+/**
+ * Application-level encryption for identity and account numbers (AES-256-GCM).
+ *
+ * - Ciphertext is bound to its tenant and field (additional authenticated data), so a value
+ *   copied into another tenant's row or another column fails to decrypt.
+ * - Blind indexes (keyed HMAC, per tenant) let us enforce uniqueness and look up an NID
+ *   without storing it in plain text.
+ * - Stored format: `v1:<iv>:<tag>:<ciphertext>`; the version prefix allows key rotation.
+ */
+export interface FieldCipher {
+  encrypt(plain: string, context: CipherContext): string;
+  decrypt(stored: string, context: CipherContext): string;
+  blindIndex(value: string, context: CipherContext): string;
+}
+
+export interface CipherContext {
+  tenantId: string;
+  field: CipherField;
+}
+
+/** Every encrypted column, named once so encryption and decryption always agree. */
+export const CIPHER_FIELDS = {
+  nid: 'employees.nid',
+  birthRegistration: 'employees.birth_registration',
+  passport: 'employees.passport',
+  tin: 'employees.tin',
+  accountNumber: 'employee_payment_accounts.account_number',
+} as const;
+export type CipherField = (typeof CIPHER_FIELDS)[keyof typeof CIPHER_FIELDS];
+
+const aad = ({ tenantId, field }: CipherContext) => Buffer.from(`${tenantId}:${field}`);
+
+export function createFieldCipher(masterKeyBase64: string): FieldCipher {
+  const master = Buffer.from(masterKeyBase64, 'base64');
+  if (master.length !== 32) {
+    throw new Error('FIELD_ENCRYPTION_KEY must be 32 random bytes, base64-encoded');
+  }
+  const derive = (info: string) =>
+    Buffer.from(hkdfSync('sha256', master, Buffer.alloc(0), info, 32));
+  const encKey = derive('good-people:field-encryption:v1');
+  const macKey = derive('good-people:blind-index:v1');
+
+  return {
+    encrypt(plain, context) {
+      const iv = randomBytes(12);
+      const cipher = createCipheriv('aes-256-gcm', encKey, iv);
+      cipher.setAAD(aad(context));
+      const ciphertext = Buffer.concat([cipher.update(plain, 'utf8'), cipher.final()]);
+      return ['v1', iv, cipher.getAuthTag(), ciphertext]
+        .map((p) => (typeof p === 'string' ? p : p.toString('base64url')))
+        .join(':');
+    },
+    decrypt(stored, context) {
+      const [version, iv, tag, ciphertext] = stored.split(':');
+      if (version !== 'v1' || !iv || !tag || !ciphertext) {
+        throw new Error('Unrecognised encrypted value');
+      }
+      const decipher = createDecipheriv('aes-256-gcm', encKey, Buffer.from(iv, 'base64url'));
+      decipher.setAAD(aad(context));
+      decipher.setAuthTag(Buffer.from(tag, 'base64url'));
+      return Buffer.concat([
+        decipher.update(Buffer.from(ciphertext, 'base64url')),
+        decipher.final(),
+      ]).toString('utf8');
+    },
+    blindIndex(value, { tenantId, field }) {
+      return createHmac('sha256', macKey)
+        .update(`${tenantId}:${field}:${value.trim().toUpperCase()}`)
+        .digest('base64url');
+    },
+  };
+}

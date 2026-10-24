@@ -4,8 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../api/api_models.dart';
 import '../auth/auth_controller.dart';
 import '../l10n/app_localizations.dart';
-import '../ui/error_text.dart';
+import '../profile/profile_screen.dart';
 import '../ui/language_menu.dart';
+import '../ui/load_error_view.dart';
 import '../ui/notice_card.dart';
 import '../ui/theme.dart';
 import 'modules.dart';
@@ -17,6 +18,8 @@ class HomeScreen extends ConsumerWidget {
 
   static ValueKey<String> moduleTileKey(String feature) =>
       ValueKey('module-$feature');
+
+  static const myProfileKey = ValueKey('home-my-profile');
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -43,7 +46,8 @@ class HomeScreen extends ConsumerWidget {
           ),
           AsyncError(:final error)
               when !access.isLoading && error is! SessionExpiredException =>
-            _LoadError(
+            LoadErrorView(
+              title: l10n.loadAccessFailed,
               error: error,
               onRetry: () => ref.invalidate(tenantAccessProvider),
             ),
@@ -104,6 +108,8 @@ class _AccessDetails extends StatelessWidget {
             ),
           ),
         ),
+        const SizedBox(height: 12),
+        const _MyProfileCard(),
         const SizedBox(height: 24),
         Text(l10n.yourModules, style: theme.textTheme.titleMedium),
         const SizedBox(height: 8),
@@ -214,34 +220,54 @@ class _ModuleTile extends StatelessWidget {
   }
 }
 
-class _LoadError extends StatelessWidget {
-  const _LoadError({required this.error, required this.onRetry});
-
-  final Object error;
-  final VoidCallback onRetry;
+/// Opens [ProfileScreen].
+class _MyProfileCard extends StatelessWidget {
+  const _MyProfileCard();
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.cloud_off, size: 48, color: theme.colorScheme.outline),
-            const SizedBox(height: 16),
-            Text(
-              l10n.loadAccessFailed,
-              style: theme.textTheme.titleMedium,
-              textAlign: TextAlign.center,
+    final scheme = theme.colorScheme;
+
+    return Card.filled(
+      key: HomeScreen.myProfileKey,
+      margin: EdgeInsets.zero,
+      color: scheme.secondaryContainer,
+      clipBehavior: Clip.antiAlias,
+      child: Semantics(
+        button: true,
+        child: InkWell(
+          onTap: () => Navigator.of(context).push(ProfileScreen.route()),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Icon(Icons.badge_outlined, color: scheme.onSecondaryContainer),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.myProfile,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: scheme.onSecondaryContainer,
+                        ),
+                      ),
+                      Text(
+                        l10n.myProfileSubtitle,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: scheme.onSecondaryContainer,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.chevron_right, color: scheme.onSecondaryContainer),
+              ],
             ),
-            const SizedBox(height: 8),
-            Text(describeError(l10n, error), textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            FilledButton.tonal(onPressed: onRetry, child: Text(l10n.retry)),
-          ],
+          ),
         ),
       ),
     );

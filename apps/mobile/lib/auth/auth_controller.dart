@@ -63,19 +63,30 @@ class AuthController extends Notifier<AuthState> {
     state = SignedOut(sessionExpired: sessionExpired);
   }
 
-  /// Loads `/tenant/access` for the signed-in user.
+  /// Loads `/tenant/access` for the signed-in user, refreshing the session
+  /// once if needed (see [_withSession]).
+  Future<TenantAccessView> fetchTenantAccess() =>
+      _withSession(_api.getTenantAccess);
+
+  /// Loads `/tenant/me/employee` for the signed-in user, refreshing the
+  /// session once if needed (see [_withSession]). A 404 (no employee record
+  /// linked to this login) is thrown like any other [ApiException].
+  Future<EmployeeDetail> fetchMyEmployee() =>
+      _withSession(_api.fetchMyEmployee);
+
+  /// Runs [call] with the stored access token.
   ///
   /// On a 401 it calls `/auth/refresh` once and retries with the new access
   /// token. If the refresh is rejected, or the retry is still a 401, the user
   /// is signed out (back to login) and [SessionExpiredException] is thrown.
   /// A network failure during the refresh is rethrown instead, so the user
   /// can retry without signing in again.
-  Future<TenantAccessView> fetchTenantAccess() async {
+  Future<T> _withSession<T>(Future<T> Function(String accessToken) call) async {
     final tokens = await _tokens.read();
     if (tokens == null) return _expire();
 
     try {
-      return await _api.getTenantAccess(tokens.accessToken);
+      return await call(tokens.accessToken);
     } on ApiException catch (error) {
       if (!error.isUnauthorized) rethrow;
     }
@@ -90,7 +101,7 @@ class AuthController extends Notifier<AuthState> {
     await _tokens.write(refreshed);
 
     try {
-      return await _api.getTenantAccess(refreshed.accessToken);
+      return await call(refreshed.accessToken);
     } on ApiException catch (error) {
       if (error.isUnauthorized) return _expire();
       rethrow;

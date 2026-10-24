@@ -16,7 +16,11 @@ export default async function setup() {
   await runMigrations(env.ownerUrl);
   const { db, pool } = createDb(env.ownerUrl, { max: 2 });
   try {
-    await seed(db, { superAdminEmail: env.superAdminEmail, password: env.password });
+    await seed(db, {
+      superAdminEmail: env.superAdminEmail,
+      password: env.password,
+      fieldKey: env.fieldKey,
+    });
   } finally {
     await pool.end();
   }
