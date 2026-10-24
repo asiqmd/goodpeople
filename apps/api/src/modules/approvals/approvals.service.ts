@@ -13,10 +13,12 @@ import { RegularizationsService } from '../attendance/regularizations.service.js
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
 import { employeeOfUser, isHr } from '../employees/employee.queries.js';
 import { LeaveRequestsService } from '../leave/leave-requests.service.js';
+import { SeparationsService } from '../lifecycle/separations.service.js';
 import { cancelOpenSteps, type ApprovalSubjectHandler } from './approval-steps.js';
 
 /**
- * Deciding approval steps, whatever they approve. Manager steps belong to one employee; HR
+ * Deciding approval steps, whatever they approve (leave, attendance corrections,
+ * resignations). Manager steps belong to one employee; HR
  * steps to any HR admin. Nobody decides their own request, and the first rejection ends the
  * chain.
  */
@@ -29,8 +31,13 @@ export class ApprovalsService {
     private readonly audit: TenantAuditService,
     leave: LeaveRequestsService,
     regularizations: RegularizationsService,
+    separations: SeparationsService,
   ) {
-    this.handlers = { leave_request: leave, regularization: regularizations };
+    this.handlers = {
+      leave_request: leave,
+      regularization: regularizations,
+      separation: separations,
+    };
   }
 
   /**

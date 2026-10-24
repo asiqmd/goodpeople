@@ -9,11 +9,12 @@ import '../leave/leave_widgets.dart';
 import '../ui/error_text.dart';
 import '../ui/format.dart';
 import '../ui/load_error_view.dart';
+import '../ui/theme.dart';
 import 'approvals_providers.dart';
 
-/// Other people's leave and attendance corrections waiting for the
-/// signed-in user's decision. The Leave and Attendance screens both show
-/// it, since it is one inbox.
+/// Other people's leave, attendance corrections and resignations waiting
+/// for the signed-in user's decision. The Leave and Attendance screens both
+/// show it, since it is one inbox.
 class ApprovalsTab extends ConsumerWidget {
   const ApprovalsTab({super.key});
 
@@ -85,18 +86,27 @@ class _ApprovalCardState extends ConsumerState<_ApprovalCard> {
     // Still usable if this card is gone by the time the call returns.
     final container = ProviderScope.containerOf(context, listen: false);
     final approve = decision == ApprovalDecision.approve;
-    final correction = widget.item is RegularizationApprovalItem;
+    // The dialog's question and what the snack bar says once decided.
+    final (title, done) = switch (widget.item) {
+      LeaveApprovalItem() =>
+        approve
+            ? (l10n.approveTitle, l10n.leaveApproved)
+            : (l10n.rejectTitle, l10n.leaveRejected),
+      RegularizationApprovalItem() =>
+        approve
+            ? (l10n.approveCorrectionTitle, l10n.correctionApproved)
+            : (l10n.rejectCorrectionTitle, l10n.correctionRejected),
+      SeparationApprovalItem() =>
+        approve
+            ? (l10n.approveSeparationTitle, l10n.separationApproved)
+            : (l10n.rejectSeparationTitle, l10n.separationRejected),
+      // Never decided here: an unknown item has no buttons.
+      UnknownApprovalItem() =>
+        approve ? (l10n.approve, l10n.approve) : (l10n.reject, l10n.reject),
+    };
     final comment = await showDialog<String>(
       context: context,
-      builder: (context) => _DecisionDialog(
-        decision: decision,
-        title: switch ((correction, approve)) {
-          (false, true) => l10n.approveTitle,
-          (false, false) => l10n.rejectTitle,
-          (true, true) => l10n.approveCorrectionTitle,
-          (true, false) => l10n.rejectCorrectionTitle,
-        },
-      ),
+      builder: (context) => _DecisionDialog(decision: decision, title: title),
     );
     // `null` means the dialog was dismissed; an empty string, no comment.
     if (comment == null || !mounted) return;
@@ -110,16 +120,7 @@ class _ApprovalCardState extends ConsumerState<_ApprovalCard> {
             decision,
             comment: comment.isEmpty ? null : comment,
           );
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(switch ((correction, approve)) {
-            (false, true) => l10n.leaveApproved,
-            (false, false) => l10n.leaveRejected,
-            (true, true) => l10n.correctionApproved,
-            (true, false) => l10n.correctionRejected,
-          }),
-        ),
-      );
+      messenger.showSnackBar(SnackBar(content: Text(done)));
       container.invalidate(approvalsProvider);
     } on SessionExpiredException {
       // AuthGate is already showing the login screen.
@@ -142,6 +143,7 @@ class _ApprovalCardState extends ConsumerState<_ApprovalCard> {
     final details = switch (item) {
       LeaveApprovalItem() => _leaveDetails(context, item),
       RegularizationApprovalItem() => _correctionDetails(context, item),
+      SeparationApprovalItem() => _separationDetails(context, item),
       UnknownApprovalItem() => [
         _header(context),
         Text(
@@ -341,6 +343,58 @@ class _ApprovalCardState extends ConsumerState<_ApprovalCard> {
       if (correction.steps.length > 1) ...[
         const Divider(height: 8),
         ApprovalTrail(steps: correction.steps),
+      ],
+    ];
+  }
+
+  List<Widget> _separationDetails(
+    BuildContext context,
+    SeparationApprovalItem item,
+  ) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final warning = StatusColors.of(context);
+    final separation = item.separation;
+    final employee = separation.employee;
+
+    return [
+      _header(
+        context,
+        name: localizedName(l10n, employee.fullName, employee.fullNameBn),
+        code: employee.employeeCode,
+      ),
+      Text(
+        l10n.separationTypeName(separation.type.wire),
+        style: theme.textTheme.titleSmall,
+      ),
+      Text(
+        l10n.approvalSeparationDates(
+          formatShortDate(l10n, separation.noticeDate),
+          formatShortDate(l10n, separation.lastWorkingDay),
+        ),
+        style: theme.textTheme.bodyMedium,
+      ),
+      if (separation.noticeShortfallDays > 0)
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: LeavePill(
+            label: l10n.approvalNoticeShort(
+              l10n.leaveDays(separation.noticeShortfallDays),
+            ),
+            background: warning.warningContainer,
+            foreground: warning.onWarningContainer,
+          ),
+        ),
+      Text(
+        separation.reason,
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: scheme.onSurfaceVariant,
+        ),
+      ),
+      if (separation.steps.length > 1) ...[
+        const Divider(height: 8),
+        ApprovalTrail(steps: separation.steps),
       ],
     ];
   }

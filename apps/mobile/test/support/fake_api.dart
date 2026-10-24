@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,13 +7,17 @@ import 'package:good_people/api/api_exception.dart';
 import 'package:good_people/api/api_models.dart';
 import 'package:good_people/api/good_people_api.dart';
 import 'package:good_people/app.dart';
+import 'package:good_people/attendance/camera_service.dart';
 import 'package:good_people/attendance/location_service.dart';
+import 'package:good_people/documents/file_opener.dart';
 
 import 'attendance_fixtures.dart';
 import 'leave_fixtures.dart';
+import 'lifecycle_fixtures.dart';
 
 export 'attendance_fixtures.dart';
 export 'leave_fixtures.dart';
+export 'lifecycle_fixtures.dart';
 
 /// `POST /auth/login` 200 body, exactly as the API contract shapes it.
 const loginJson = <String, Object?>{
@@ -461,12 +466,17 @@ class FakeGoodPeopleApi implements GoodPeopleApi {
   /// Thrown, one per call, by [punch] instead of punching.
   final punchErrors = <Exception>[];
 
-  /// Each body sent to [punch], refused ones included.
+  /// Each body sent to [punch], refused ones included: the JSON body, or
+  /// the form's fields when a selfie came with it.
   final punchBodies = <Json>[];
+
+  /// The selfie sent with each punch, `null` for a JSON punch.
+  final punchSelfies = <PunchSelfie?>[];
 
   /// Turns [attendanceToday] and a punch body into the answer, which then
   /// becomes [attendanceToday].
-  Json Function(Json today, Json body) afterPunch = punchedJson;
+  Json Function(Json today, Json body, {bool withSelfie}) afterPunch =
+      punchedJson;
 
   /// Answers [fetchMyAttendance] for `YYYY-MM-DD` dates.
   Json Function(String from, String to) attendanceRange = attendanceRangeJson;
@@ -500,11 +510,19 @@ class FakeGoodPeopleApi implements GoodPeopleApi {
   Future<MyAttendanceToday> punch(
     String accessToken, {
     PunchLocation? location,
+    PunchSelfie? selfie,
   }) async {
-    final body = selfPunchBody(location);
+    final body = selfie == null
+        ? selfPunchBody(location)
+        : selfPunchFields(location);
     punchBodies.add(body);
+    punchSelfies.add(selfie);
     if (punchErrors.isNotEmpty) throw punchErrors.removeAt(0);
-    attendanceToday = afterPunch(attendanceToday, body);
+    attendanceToday = afterPunch(
+      attendanceToday,
+      body,
+      withSelfie: selfie != null,
+    );
     return MyAttendanceToday.fromJson(attendanceToday);
   }
 
@@ -569,6 +587,167 @@ class FakeGoodPeopleApi implements GoodPeopleApi {
     regularizations = [...regularizations]..[index] = cancelled;
     return Regularization.fromJson(cancelled);
   }
+
+  // ── Documents and lifecycle ───────────────────────────────────────────────
+
+  /// Answered by [fetchMyDocuments].
+  List<Json> documents = myDocumentsJson();
+
+  /// Thrown, one per call, by [fetchMyDocuments] before it answers.
+  final documentsErrors = <Exception>[];
+  var documentsCalls = 0;
+
+  /// Answered by [downloadDocument], by document id.
+  Map<String, FileDownload> files = documentFiles();
+
+  /// Thrown, one per call, by [downloadDocument] instead of answering.
+  final downloadErrors = <Exception>[];
+  final downloadedIds = <String>[];
+
+  /// Answered by [fetchMyServiceBook]; each language asked is recorded.
+  FileDownload Function(LetterLanguage language) serviceBook = (language) =>
+      FileDownload(
+        bytes: pdfBytes,
+        contentType: 'application/pdf',
+        fileName: 'service-book-MG-0005-${language.wire}.pdf',
+      );
+  final serviceBookLanguages = <LetterLanguage>[];
+
+  /// The user's separations, as JSON so resigning and cancelling can change
+  /// them.
+  List<Json> separations = [];
+  var separationCalls = 0;
+
+  /// Thrown by [resign] instead of resigning.
+  Exception? resignError;
+
+  /// Each body sent to [resign].
+  final resignations = <Json>[];
+
+  /// Thrown by [cancelSeparation] instead of cancelling.
+  Exception? cancelSeparationError;
+  final cancelledSeparationIds = <String>[];
+
+  @override
+  Future<List<EmployeeDocument>> fetchMyDocuments(String accessToken) async {
+    documentsCalls++;
+    if (documentsErrors.isNotEmpty) throw documentsErrors.removeAt(0);
+    return [for (final json in documents) EmployeeDocument.fromJson(json)];
+  }
+
+  @override
+  Future<FileDownload> downloadDocument(
+    String accessToken,
+    String documentId,
+  ) async {
+    downloadedIds.add(documentId);
+    if (downloadErrors.isNotEmpty) throw downloadErrors.removeAt(0);
+    return files[documentId] ??
+        (throw const ApiException(
+          kind: ApiErrorKind.server,
+          statusCode: 404,
+          message: 'Document not found',
+        ));
+  }
+
+  @override
+  Future<FileDownload> fetchMyServiceBook(
+    String accessToken, {
+    required LetterLanguage language,
+  }) async {
+    serviceBookLanguages.add(language);
+    return serviceBook(language);
+  }
+
+  @override
+  Future<List<Separation>> fetchMySeparations(String accessToken) async {
+    separationCalls++;
+    return [for (final json in separations) Separation.fromJson(json)];
+  }
+
+  @override
+  Future<Separation> resign(String accessToken, ResignationDraft draft) async {
+    final body = draft.toJson();
+    resignations.add(body);
+    if (resignError case final error?) throw error;
+    final json = separationJson(
+      id: 'db000000-0000-4000-8000-0000000000ff',
+      // Notice is given today.
+      noticeDate: toWireDate(leaveToday),
+      lastWorkingDay: body['lastWorkingDay']! as String,
+      reason: body['reason']! as String,
+    );
+    separations = [json, ...separations];
+    return Separation.fromJson(json);
+  }
+
+  @override
+  Future<Separation> cancelSeparation(
+    String accessToken,
+    String separationId,
+  ) async {
+    cancelledSeparationIds.add(separationId);
+    if (cancelSeparationError case final error?) throw error;
+    final index = separations.indexWhere((json) => json['id'] == separationId);
+    final cancelled = {
+      ...separations[index],
+      'status': 'cancelled',
+      'steps': [
+        for (final step in separations[index]['steps']! as List<Object?>)
+          {...step! as Json, 'status': 'cancelled'},
+      ],
+    };
+    separations = [...separations]..[index] = cancelled;
+    return Separation.fromJson(cancelled);
+  }
+}
+
+/// A [CameraService] with no camera: answers [result] and records calls.
+class FakeCameraService implements CameraService {
+  /// Returned by [takeSelfie] (a [PunchSelfie], or `null` for backing out),
+  /// or thrown when it is an exception.
+  Object? result = PunchSelfie(bytes: tinyPng);
+
+  var calls = 0;
+  var openedSettings = 0;
+
+  @override
+  Future<PunchSelfie?> takeSelfie() async {
+    calls++;
+    return switch (result) {
+      final PunchSelfie selfie => selfie,
+      null => null,
+      final Object error => throw error,
+    };
+  }
+
+  @override
+  Future<bool> openSettings() async {
+    openedSettings++;
+    return true;
+  }
+}
+
+/// A [FileOpener] with no other app: records what it was asked to open.
+class FakeFileOpener implements FileOpener {
+  /// Thrown by [open] instead of opening, while set.
+  Exception? error;
+
+  final opened = <({Uint8List bytes, String fileName, String contentType})>[];
+  var clears = 0;
+
+  @override
+  Future<void> open(
+    Uint8List bytes, {
+    required String fileName,
+    required String contentType,
+  }) async {
+    if (error case final error?) throw error;
+    opened.add((bytes: bytes, fileName: fileName, contentType: contentType));
+  }
+
+  @override
+  Future<void> clear() async => clears++;
 }
 
 /// A [LocationService] with no GPS: answers [result] and records calls.

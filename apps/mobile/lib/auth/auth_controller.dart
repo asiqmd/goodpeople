@@ -120,8 +120,12 @@ class AuthController extends Notifier<AuthState> {
   Future<MyAttendanceToday> fetchMyAttendanceToday() =>
       _withSession(_api.fetchMyAttendanceToday);
 
-  Future<MyAttendanceToday> punch({PunchLocation? location}) =>
-      _withSession((token) => _api.punch(token, location: location));
+  Future<MyAttendanceToday> punch({
+    PunchLocation? location,
+    PunchSelfie? selfie,
+  }) => _withSession(
+    (token) => _api.punch(token, location: location, selfie: selfie),
+  );
 
   Future<AttendanceRange> fetchMyAttendance({
     required DateTime from,
@@ -140,6 +144,29 @@ class AuthController extends Notifier<AuthState> {
       _withSession(
         (token) => _api.cancelRegularization(token, regularizationId),
       );
+
+  // ── Documents and lifecycle ───────────────────────────────────────────────
+  // Same refresh-once rule. A 401 on a resignation means it was not saved.
+
+  Future<List<EmployeeDocument>> fetchMyDocuments() =>
+      _withSession(_api.fetchMyDocuments);
+
+  Future<FileDownload> downloadDocument(String documentId) =>
+      _withSession((token) => _api.downloadDocument(token, documentId));
+
+  Future<FileDownload> fetchMyServiceBook(LetterLanguage language) =>
+      _withSession(
+        (token) => _api.fetchMyServiceBook(token, language: language),
+      );
+
+  Future<List<Separation>> fetchMySeparations() =>
+      _withSession(_api.fetchMySeparations);
+
+  Future<Separation> resign(ResignationDraft draft) =>
+      _withSession((token) => _api.resign(token, draft));
+
+  Future<Separation> cancelSeparation(String separationId) =>
+      _withSession((token) => _api.cancelSeparation(token, separationId));
 
   /// Runs [call] with the stored access token.
   ///

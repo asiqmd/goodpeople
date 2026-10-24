@@ -1,4 +1,6 @@
-import { BD_DIVISIONS, type Address, type OrgUnitView } from '@gp/shared';
+import type { OrgUnitView } from '@gp/shared';
+
+export { divisionName, formatAddress } from '@gp/shared';
 
 /** Org units in tree order (parents before children), each with its depth. */
 export function treeOrder(units: OrgUnitView[]): { unit: OrgUnitView; depth: number }[] {
@@ -20,21 +22,4 @@ export function unitPath(units: OrgUnitView[], id: string): string {
     parts.unshift(at.name);
   }
   return parts.join(' › ');
-}
-
-export function divisionName(code: string, locale: string): string {
-  const division = BD_DIVISIONS.find((d) => d.code === code);
-  return division ? (locale === 'bn' ? division.nameBn : division.name) : code;
-}
-
-export function formatAddress(address: Address, locale: string): string {
-  return [
-    address.line,
-    address.upazila,
-    address.district,
-    divisionName(address.division, locale),
-    address.postcode,
-  ]
-    .filter(Boolean)
-    .join(', ');
 }

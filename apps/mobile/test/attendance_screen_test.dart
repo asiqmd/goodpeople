@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,6 +11,7 @@ import 'package:good_people/approvals/approvals_tab.dart';
 import 'package:good_people/attendance/attendance_providers.dart';
 import 'package:good_people/attendance/attendance_screen.dart';
 import 'package:good_people/attendance/attendance_widgets.dart';
+import 'package:good_people/attendance/camera_service.dart';
 import 'package:good_people/attendance/correction_form_screen.dart';
 import 'package:good_people/attendance/corrections_tab.dart';
 import 'package:good_people/attendance/location_service.dart';
@@ -40,13 +43,17 @@ ApiException _refusal(int status, String code, String message) => ApiException(
 
 void main() {
   late FakeLocationService location;
+  late FakeCameraService camera;
 
-  setUp(() => location = FakeLocationService());
+  setUp(() {
+    location = FakeLocationService();
+    camera = FakeCameraService();
+  });
 
-  /// Signs in through the fake API with "today" fixed at [leaveToday] and
-  /// [location] as the phone's GPS, shows the app in [locale] and, if
-  /// [open], opens Attendance from the home screen. The screen is
-  /// phone-width, so overflow fails the test.
+  /// Signs in through the fake API with "today" fixed at [leaveToday],
+  /// [location] as the phone's GPS and [camera] as its camera, shows the
+  /// app in [locale] and, if [open], opens Attendance from the home screen.
+  /// The screen is phone-width, so overflow fails the test.
   Future<ProviderContainer> pumpAttendance(
     WidgetTester tester,
     FakeGoodPeopleApi api, {
@@ -62,6 +69,7 @@ void main() {
         goodPeopleApiProvider.overrideWithValue(api),
         todayProvider.overrideWithValue(leaveToday),
         locationServiceProvider.overrideWithValue(location),
+        cameraServiceProvider.overrideWithValue(camera),
       ],
     );
     container.read(localeProvider.notifier).select(locale);
@@ -236,6 +244,10 @@ void main() {
         'longitude': 90.4265,
         'accuracyM': 12.0,
       });
+      // No photo asked for: no camera, and JSON as before.
+      expect(camera.calls, 0);
+      expect(api.punchSelfies.single, isNull);
+      expect(find.byKey(TodayTab.selfieHintKey), findsNothing);
       expect(findText('Punched out'), findsOneWidget);
       // The answer is shown without loading today again.
       expect(api.attendanceTodayCalls, 1);
@@ -434,6 +446,149 @@ void main() {
         findsOneWidget,
       );
       expect(findText('We could not load your attendance.'), findsNothing);
+    });
+  });
+
+  group('selfie', () {
+    FakeGoodPeopleApi selfieApi() =>
+        FakeGoodPeopleApi()
+          ..attendanceToday = attendanceTodayJson(requireSelfie: true);
+
+    Finder error(String text) => within(TodayTab.punchErrorKey, findText(text));
+
+    testWidgets('the front camera opens first, then the punch goes with the '
+        'photo and the location', (tester) async {
+      final api = selfieApi();
+      await pumpAttendance(tester, api);
+
+      expect(
+        tester.widget<Text>(find.byKey(TodayTab.selfieHintKey)).data,
+        'Your workspace asks for a photo with each punch. The front camera '
+        'opens when you punch.',
+      );
+      await punch(tester);
+
+      expect(camera.calls, 1);
+      expect(location.timeLimits, [TodayTab.requiredFixTime]);
+      final selfie = api.punchSelfies.single!;
+      expect(selfie.bytes, tinyPng);
+      expect(selfie.fileName, 'selfie.jpg');
+      // Sent as a form: every field is text.
+      expect(api.punchBodies.single, {
+        'source': 'mobile',
+        'latitude': '24.0024',
+        'longitude': '90.4265',
+        'accuracyM': '12.0',
+      });
+      expect(findText('Punched out'), findsOneWidget);
+      expect(find.byKey(TodayTab.punchErrorKey), findsNothing);
+      // The new punch is marked as having a photo; the device's is not.
+      expect(find.byKey(TodayTab.punchPhotoKey(mobilePunchId)), findsOneWidget);
+      expect(find.byKey(TodayTab.punchPhotoKey(devicePunchId)), findsNothing);
+    });
+
+    testWidgets('backing out of the camera punches nothing and says so', (
+      tester,
+    ) async {
+      final api = selfieApi();
+      camera.result = null;
+      await pumpAttendance(tester, api);
+
+      await punch(tester);
+
+      expect(camera.calls, 1);
+      expect(api.punchBodies, isEmpty);
+      // Not even the location was read.
+      expect(location.timeLimits, isEmpty);
+      expect(
+        error(
+          "No photo was taken, so you weren't punched. Punch again and take "
+          'the photo.',
+        ),
+        findsOneWidget,
+      );
+      expect(punchLabel(tester), 'Punch out');
+
+      camera.result = PunchSelfie(bytes: tinyPng);
+      await punch(tester);
+      expect(api.punchSelfies.single, isNotNull);
+      expect(find.byKey(TodayTab.punchErrorKey), findsNothing);
+      expect(findText('Punched out'), findsOneWidget);
+    });
+
+    testWidgets('camera refused: says so with Open settings; a photo too '
+        'large is not sent', (tester) async {
+      final api = selfieApi();
+      camera.result = const CameraUnavailable(CameraProblem.permissionDenied);
+      await pumpAttendance(tester, api);
+
+      await punch(tester);
+      expect(
+        error(
+          'Camera access is off for this app. Allow it in Settings to take '
+          'the photo for your punch.',
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(find.byKey(TodayTab.openSettingsKey));
+      await tester.pumpAndSettle();
+      expect(camera.openedSettings, 1);
+      expect(location.openedSettings, isEmpty);
+
+      camera.result = PunchSelfie(bytes: Uint8List(PunchSelfie.maxBytes + 1));
+      await punch(tester);
+      expect(
+        error('The photo is too large to send. Please take it again.'),
+        findsOneWidget,
+      );
+      expect(find.byKey(TodayTab.openSettingsKey), findsNothing);
+      expect(api.punchBodies, isEmpty);
+
+      // The API's own size limit reads the same.
+      camera.result = PunchSelfie(bytes: tinyPng);
+      api.punchErrors.add(
+        const ApiException(
+          kind: ApiErrorKind.server,
+          statusCode: 413,
+          message: 'File too large',
+        ),
+      );
+      await punch(tester);
+      expect(
+        error('The photo is too large to send. Please take it again.'),
+        findsOneWidget,
+      );
+      expect(api.punchSelfies, hasLength(1));
+    });
+
+    testWidgets('selfie_required: the workspace turned it on since the day '
+        'loaded; the next punch takes the photo', (tester) async {
+      final api = FakeGoodPeopleApi()
+        ..punchErrors.add(
+          _refusal(400, 'selfie_required', 'Take a photo to punch'),
+        );
+      await pumpAttendance(tester, api);
+      api.attendanceToday = attendanceTodayJson(requireSelfie: true);
+
+      await punch(tester);
+
+      expect(camera.calls, 0);
+      expect(api.punchSelfies.single, isNull);
+      expect(
+        error(
+          'Your workspace now asks for a photo with each punch. Punch again '
+          'to take one.',
+        ),
+        findsOneWidget,
+      );
+      // Today reloads, and now asks for the photo.
+      expect(api.attendanceTodayCalls, 2);
+      expect(find.byKey(TodayTab.selfieHintKey), findsOneWidget);
+
+      await punch(tester);
+      expect(camera.calls, 1);
+      expect(api.punchSelfies.last, isNotNull);
+      expect(findText('Punched out'), findsOneWidget);
     });
   });
 
@@ -876,6 +1031,63 @@ void main() {
     expect(api.decisions.last.stepId, managerStepId);
     expect(api.decisions.last.decision, ApprovalDecision.reject);
     // The unknown item stays, so the tab does too.
+    expect(
+      within(AttendanceScreen.approvalsBadgeKey, findText('1')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('approvals: a resignation shows the notice and the shortfall, '
+      'and is decided through its step', (tester) async {
+    final api = FakeGoodPeopleApi()
+      ..approvals = [separationApprovalJson(), approvalsJson().first];
+    await pumpAttendance(tester, api);
+    await openTab(tester, AttendanceTab.approvals);
+
+    final card = ApprovalsTab.itemKey(separationStepId);
+    for (final text in [
+      'Kulsum Akter',
+      'MG-0012',
+      'Your step: Manager',
+      'Resignation',
+      'Notice Oct 24, 2026 → last day Nov 24, 2026',
+      'Notice short by 29 days',
+      'Getting married and moving to Sylhet',
+      'Manager: Shirin Akter',
+    ]) {
+      expect(within(card, findText(text)), findsOneWidget, reason: text);
+    }
+
+    // Reject asks its own question; backing out decides nothing.
+    await tester.tap(find.byKey(ApprovalsTab.rejectKey(separationStepId)));
+    await tester.pumpAndSettle();
+    expect(findText('Reject this resignation?'), findsOneWidget);
+    final cancel = MaterialLocalizations.of(
+      tester.element(find.byType(AlertDialog)),
+    ).cancelButtonLabel;
+    await tester.tap(findText(cancel));
+    await tester.pumpAndSettle();
+    expect(api.decisions, isEmpty);
+
+    await tester.tap(find.byKey(ApprovalsTab.approveKey(separationStepId)));
+    await tester.pumpAndSettle();
+    expect(findText('Approve this resignation?'), findsOneWidget);
+    await tester.enterText(
+      find.byKey(ApprovalsTab.commentFieldKey),
+      'Best wishes',
+    );
+    await tester.tap(find.byKey(ApprovalsTab.confirmKey));
+    await tester.pumpAndSettle();
+
+    expect(api.decisions, [
+      (
+        stepId: separationStepId,
+        decision: ApprovalDecision.approve,
+        comment: 'Best wishes',
+      ),
+    ]);
+    expect(findText('Resignation approved'), findsOneWidget);
+    expect(find.byKey(card), findsNothing);
     expect(
       within(AttendanceScreen.approvalsBadgeKey, findText('1')),
       findsOneWidget,

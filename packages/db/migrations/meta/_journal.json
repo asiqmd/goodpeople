@@ -57,6 +57,20 @@
       "when": 1792851584518,
       "tag": "0007_attendance_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792856820714,
+      "tag": "0008_lifecycle",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792856821047,
+      "tag": "0009_lifecycle_rls",
+      "breakpoints": true
     }
   ]
 }

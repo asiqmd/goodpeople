@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../api/api_models.dart';
 import '../attendance/attendance_screen.dart';
 import '../auth/auth_controller.dart';
+import '../documents/documents_screen.dart';
 import '../l10n/app_localizations.dart';
 import '../leave/leave_screen.dart';
 import '../profile/profile_screen.dart';
@@ -24,6 +25,7 @@ class HomeScreen extends ConsumerWidget {
   static const myProfileKey = ValueKey('home-my-profile');
   static const leaveKey = ValueKey('home-leave');
   static const attendanceKey = ValueKey('home-attendance');
+  static const documentsKey = ValueKey('home-documents');
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -140,6 +142,17 @@ class _AccessDetails extends StatelessWidget {
             onTap: () => Navigator.of(context).push(AttendanceScreen.route()),
           ),
         ],
+        // Part of core HR, which every plan has.
+        if (view.access.hasFeature('core_hr')) ...[
+          const SizedBox(height: 12),
+          _ShortcutCard(
+            key: HomeScreen.documentsKey,
+            icon: Icons.folder_outlined,
+            title: l10n.documentsTitle,
+            subtitle: l10n.documentsSubtitle,
+            onTap: () => Navigator.of(context).push(DocumentsScreen.route()),
+          ),
+        ],
         const SizedBox(height: 24),
         Text(l10n.yourModules, style: theme.textTheme.titleMedium),
         const SizedBox(height: 8),
@@ -251,7 +264,7 @@ class _ModuleTile extends StatelessWidget {
 }
 
 /// A tappable card on the home screen that opens a section, such as My
-/// profile, Leave or Attendance.
+/// profile, Leave, Attendance or My documents.
 class _ShortcutCard extends StatelessWidget {
   const _ShortcutCard({
     super.key,

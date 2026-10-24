@@ -1,5 +1,6 @@
+import { rm } from 'node:fs/promises';
 import { createDb, databaseName, ensureDatabases, resetSchema, runMigrations, seed } from '@gp/db';
-import { testEnv } from './test-env.js';
+import { testEnv, testStorageDir } from './test-env.js';
 
 /** Rebuilds the test database from migrations and seed data before every run. */
 export default async function setup() {
@@ -13,6 +14,7 @@ export default async function setup() {
     });
   }
   await resetSchema(env.ownerUrl, env.appUrl);
+  await rm(testStorageDir, { recursive: true, force: true });
   await runMigrations(env.ownerUrl);
   const { db, pool } = createDb(env.ownerUrl, { max: 2 });
   try {

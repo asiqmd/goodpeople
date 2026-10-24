@@ -267,19 +267,26 @@ export const updateEmployeeSchema = z
   .partial();
 export type UpdateEmployeeInput = z.infer<typeof updateEmployeeSchema>;
 
+/** Fields a job change or correction may set; null clears an optional one. */
+export const jobChangesSchema = jobInputSchema.partial().extend({
+  locationId: id.nullable().optional(),
+  orgUnitId: id.nullable().optional(),
+  designationId: id.nullable().optional(),
+  gradeId: id.nullable().optional(),
+  costCentreId: id.nullable().optional(),
+  managerId: id.nullable().optional(),
+});
+
+/**
+ * A job event from a date. A date before the latest change is a back-dated change: it splits
+ * the row in force then, and later rows take the new values unless they changed them.
+ */
 export const jobChangeSchema = z
   .object({
     event: z.enum(JOB_CHANGE_EVENTS),
     effectiveFrom: isoDate,
     reason: z.string().trim().min(3).max(500),
-    changes: jobInputSchema.partial().extend({
-      locationId: id.nullable().optional(),
-      orgUnitId: id.nullable().optional(),
-      designationId: id.nullable().optional(),
-      gradeId: id.nullable().optional(),
-      costCentreId: id.nullable().optional(),
-      managerId: id.nullable().optional(),
-    }),
+    changes: jobChangesSchema,
   })
   .superRefine((c, ctx) => {
     const changed = (keys: (keyof typeof c.changes)[]) =>

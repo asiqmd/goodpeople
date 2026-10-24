@@ -11,21 +11,19 @@ been walked through in the browser.
 | **M1 Org & employees**                       | Org structure, employee master, job history, roles, encrypted identity fields  | Phase 0    | Done   |
 | **M2 Rules, holidays & leave**               | BD country-pack rules engine, holiday calendars, leave and approvals           | M1         | Done   |
 | **M3 Attendance**                            | Shifts, punches, Edge Agent, daily processing, regularization                  | M1, M2     | Done   |
-| **M4 Lifecycle & documents**                 | Lifecycle events, documents vault, letters, ID card, service book, bulk import | M1         | Next   |
-| **M5 Notifications, self-service & go-live** | EN/BN templates, phone OTP, mobile v1, hardening                               | M2–M4      |        |
+| **M4 Lifecycle & documents**                 | Lifecycle events, documents vault, letters, ID card, service book, bulk import | M1         | Done   |
+| **M5 Notifications, self-service & go-live** | EN/BN templates, phone OTP, mobile v1, hardening                               | M2–M4      | Next   |
 
 **Carried into later milestones from M1:**
 
 - **API error messages are English only.** The web and mobile apps should translate them from
   the `code` field (M5).
-- **Back-dated job corrections** (changing history before the latest change) are not
-  supported yet (M4).
+- ~~Back-dated job corrections~~: done in M4.
 - **Upazilas are free text** until the full gazetteer is added to the BD country pack (M2).
 
 **Carried into later milestones from M3:**
 
-- **Selfie punches** need the file store, so they arrive with the documents vault (M4).
-  Geofenced punching from the web and mobile apps is done.
+- ~~Selfie punches~~: done in M4, with the documents vault.
 - **Adolescent working hours** (Labour Act s.41) are not flagged yet; they come with the RMG
   pack's adolescent controls (Phase 3).
 - **Overtime caps** are flagged (over 10 hours a day, weeks over 60 hours) but not blocked.
@@ -34,6 +32,17 @@ been walked through in the browser.
   devices yet. ZKTeco "PUSH 3" registration and Hikvision's older XML events are not handled.
 - **Forms clear after a refused submit** (React's default); keeping the entered values is a
   cross-cutting fix for M5.
+
+**Carried into later milestones from M4:**
+
+- **Notifications** for expiring documents, probation ending and separations: M4 lists them on
+  the People events page; email, SMS and push come in M5.
+- **Final settlement** (dues, wages in lieu of notice, gratuity, the resignation benefit) is
+  payroll's job (Phase 2). M4 records the separation and the notice shortfall.
+- **Legal entities have no Bangla name** yet, so letterheads stay in English.
+- **The S3 driver** is tested against a stand-in S3 server, not MinIO or AWS itself.
+- **Pay** is not in letters yet: an appointment letter asks for wages as an extra field until
+  pay structures arrive (Phase 2).
 
 ## M1: Org structure & employee master
 
@@ -269,13 +278,107 @@ A small Node service at each site, with no third-party dependencies:
   showing on attendance, shift rules and reassignment, rosters, team scope and the summary.
 - The Edge Agent has been run against the API with simulated ZKTeco and Hikvision traffic.
 
+## M4: Lifecycle & documents
+
+### Rules (`packages/country-packs`)
+
+| Rule                | Value                                                                       | Reference |
+| ------------------- | --------------------------------------------------------------------------- | --------- |
+| Probation           | 3 months; 6 for clerical work; +3 for a skilled worker                      | BLA s.4   |
+| Deemed permanent    | working on after probation without a decision                               | s.4       |
+| Resignation notice  | permanent 60 days; temporary 30 (monthly-rated) or 14 days (needs review)   | s.27      |
+| Termination notice  | permanent 120 days (monthly-rated) or 60; temporary 30 or 14 (needs review) | s.26      |
+| Retrenchment notice | 30 days                                                                     | s.20      |
+| Retirement age      | 60                                                                          | s.28      |
+
+Staff are treated as clerical for probation, and workers as monthly-rated for notice, until pay
+structures say otherwise.
+
+### Lifecycle
+
+- **Probation:** a probationer hired without an end date gets the statutory one. HR confirms
+  (the existing confirmation change) or extends it, never beyond the Act's limit. People
+  past probation without a decision are flagged as deemed permanent.
+- **Separation:** resignation, termination, dismissal, discharge, retrenchment, retirement,
+  death or end of contract.
+  - An employee resigns from their profile; it goes to their manager, then HR.
+  - What HR records stands approved.
+  - Each shows the notice the Act asks for and any shortfall.
+  - After the last working day it completes, hourly in the background:
+    - the employee is separated and their job and shift end;
+    - future rosters and pending leave are cleared;
+    - their login is disabled and their sessions revoked.
+- **Back-dated changes and corrections:**
+  - A job change dated before the latest one splits the history at that date.
+  - A correction fixes an entry in place.
+  - Either way, later entries take the new values unless they had changed those fields
+    themselves.
+  - Attendance is reprocessed from that date.
+- **People events:** probation ending in 30 days, separations in progress, people turning 60
+  within six months, and documents expired or expiring within 60 days.
+
+### Documents vault
+
+- **What it holds:** PDFs and images (checked by content, not by name), up to 10 MB, with a
+  kind, an issue date and an expiry date.
+- **Visibility:** each document is shown to the employee or kept for HR.
+- **Encryption:** files are encrypted for their workspace and document (AES-256-GCM) before
+  they reach the store: a local directory in development, or S3 / MinIO.
+- **Deleting** removes the file and keeps a record that it existed.
+- **Selfie punches:** when a workspace requires one, an app punch carries a photo, kept as a
+  document and shown with the punch.
+
+### Letters, ID cards and the service book
+
+- **Letter templates:**
+  - Six letters in English and Bangla come from the country pack: appointment, confirmation,
+    probation extension, transfer or promotion, acceptance of resignation, and certificate of
+    service (s.31).
+  - HR edits the text and can reset it to the standard.
+  - Placeholders (`{{employee.name}}`) fill from the record, in the letter's language.
+  - `{{extra.…}}` fields are asked for when issuing.
+- **Issuing:** a letter is previewed first, cannot be issued with a placeholder left empty,
+  and is numbered per legal entity and year (`MGT/HR/2026/0001`). It is saved as a PDF in the
+  employee's documents.
+- **ID cards (s.5)** and **the service book (s.6):** PDFs in English or Bangla; employees can
+  download their own service book.
+- **PDF rendering:** headless Chrome with Noto Sans Bengali embedded, so Bangla conjuncts
+  shape correctly. JavaScript is off and network requests are blocked while rendering.
+
+### Bulk import
+
+- HR downloads an Excel template listing the workspace's codes, then uploads it. Every row is
+  checked with the same rules as the hire form, plus:
+  - duplicates in the file and in the workspace (employee code, NID, PIN)
+  - codes that do not exist
+  - managers who are not employees yet and not earlier in the file
+- Nothing is created until HR imports, all rows or only the valid ones, in one transaction
+  within the plan's employee limit.
+- The checked rows are kept encrypted for a day.
+
+### Done when
+
+- **Unit tests:** probation and notice rules, file-type checks, template filling, file stores
+  (including S3 against a stand-in server).
+- **API end-to-end tests:**
+  - encryption at rest and what employees may see
+  - expiry and deletion
+  - resignation through the approvals inbox
+  - completing a separation and disabling the login
+  - probation limits
+  - back-dated changes and corrections
+  - letters in both languages with numbering
+  - templates, ID cards and service books
+  - the Excel import
+  - selfie punches
+  - isolation between workspaces
+- **Web:** HR does all of the above, and employees see their documents and resign, in English
+  and Bangla.
+- **Mobile:** employees see their documents and service book, resign, and punch with a selfie
+  when required; managers approve resignations.
+
 ## Later milestones (outline; detailed when each starts)
 
-- **M4:**
-  - Probation, confirmation and separation workflows.
-  - Documents vault (S3/MinIO) with expiry alerts.
-  - EN/BN letters rendered to PDF in headless Chromium, ID cards and the service book.
-  - Excel bulk import with a validation report.
 - **M5:**
   - Email, SMS and push notification templates (EN/BN), and phone OTP sign-in.
   - Mobile v1: team view, push and offline queue.

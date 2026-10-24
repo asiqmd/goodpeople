@@ -35,8 +35,8 @@ export class AttendanceJobs implements OnApplicationBootstrap, OnApplicationShut
   ) {}
 
   onApplicationBootstrap() {
+    if (!this.config.BACKGROUND_JOBS) return;
     const minutes = this.config.ATTENDANCE_JOB_INTERVAL_MINUTES;
-    if (minutes <= 0) return;
     const tick = () => {
       this.running ??= this.runAll().finally(() => (this.running = undefined));
     };

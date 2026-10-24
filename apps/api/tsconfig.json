@@ -6,7 +6,7 @@
     "strictPropertyInitialization": false,
     "rootDir": ".",
     "outDir": "./dist",
-    "types": ["vitest/globals", "node"]
+    "types": ["vitest/globals", "node", "multer"]
   },
   "include": ["src", "test", "vitest.config.ts"]
 }

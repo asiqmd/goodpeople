@@ -1065,4 +1065,283 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get approvalUnknownItem =>
       'This version of the app can\'t show this request. Decide it on the web.';
+
+  @override
+  String get punchSelfieHint =>
+      'Your workspace asks for a photo with each punch. The front camera opens when you punch.';
+
+  @override
+  String get punchTakingPhoto => 'Taking your photo…';
+
+  @override
+  String get punchNoPhoto =>
+      'No photo was taken, so you weren\'t punched. Punch again and take the photo.';
+
+  @override
+  String get punchWithPhoto => 'With photo';
+
+  @override
+  String get punchErrorSelfieRequired =>
+      'Your workspace now asks for a photo with each punch. Punch again to take one.';
+
+  @override
+  String get punchErrorSelfieTooLarge =>
+      'The photo is too large to send. Please take it again.';
+
+  @override
+  String get punchErrorSelfieUnreadable =>
+      'The photo could not be read. Please take it again.';
+
+  @override
+  String get cameraPermissionDenied =>
+      'Camera access is off for this app. Allow it in Settings to take the photo for your punch.';
+
+  @override
+  String get cameraUnavailable =>
+      'This phone has no camera the app can use, so you can\'t punch with a photo.';
+
+  @override
+  String get cameraFailed =>
+      'The camera could not be opened. Please try again.';
+
+  @override
+  String get documentsTitle => 'My documents';
+
+  @override
+  String get documentsSubtitle => 'Letters, certificates and your service book';
+
+  @override
+  String get documentsLoadFailed => 'We could not load your documents.';
+
+  @override
+  String get documentsEmpty => 'HR hasn\'t shared any documents with you yet.';
+
+  @override
+  String get documentsNoEmployeeBody =>
+      'Documents belong to an employee record, but none is linked to your login. If you think you should have one, ask your HR team.';
+
+  @override
+  String documentCategoryName(String category) {
+    String _temp0 = intl.Intl.selectLogic(category, {
+      'photo': 'Photo',
+      'nid': 'National ID card',
+      'birth_certificate': 'Birth certificate',
+      'passport': 'Passport',
+      'educational_certificate': 'Educational certificate',
+      'experience_certificate': 'Experience certificate',
+      'appointment_letter': 'Appointment letter',
+      'contract': 'Contract',
+      'medical_certificate': 'Medical certificate',
+      'police_verification': 'Police verification',
+      'nominee_form': 'Nominee form',
+      'letter': 'Letter',
+      'punch_selfie': 'Punch photo',
+      'other': 'Document',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String documentIssuedOn(String date) {
+    return 'Issued $date';
+  }
+
+  @override
+  String documentExpiresOn(String date) {
+    return 'Expires $date';
+  }
+
+  @override
+  String get documentExpired => 'Expired';
+
+  @override
+  String get documentExpiresSoon => 'Expires soon';
+
+  @override
+  String get documentSourceLetter => 'Letter from HR';
+
+  @override
+  String get documentSourceUpload => 'Uploaded by HR';
+
+  @override
+  String documentRefNo(String refNo) {
+    return 'Ref. $refNo';
+  }
+
+  @override
+  String get documentErrorNotShared =>
+      'This document is no longer shared with you.';
+
+  @override
+  String get documentErrorGone => 'This document has been removed.';
+
+  @override
+  String get fileNoApp =>
+      'No app on this phone can open this file. Install a PDF reader and try again.';
+
+  @override
+  String get fileOpenFailed =>
+      'The file could not be opened. Please try again.';
+
+  @override
+  String get imageLoadFailed => 'This image could not be shown.';
+
+  @override
+  String get serviceBookTitle => 'My service book';
+
+  @override
+  String get serviceBookBody =>
+      'Your service record, kept under section 6 of the Labour Act. It opens as a PDF in the app\'s language.';
+
+  @override
+  String get serviceBookOpen => 'Open PDF';
+
+  @override
+  String get resignationTitle => 'Resignation';
+
+  @override
+  String get resignationEntrySubtitle =>
+      'Give notice, or follow your resignation';
+
+  @override
+  String get separationsLoadFailed => 'We could not load your resignation.';
+
+  @override
+  String get separationsNoEmployeeBody =>
+      'Resigning needs an employee record, but none is linked to your login. If you think you should have one, ask your HR team.';
+
+  @override
+  String get separationsEarlier => 'Earlier';
+
+  @override
+  String separationTypeName(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'resignation': 'Resignation',
+      'termination': 'Termination',
+      'dismissal': 'Dismissal',
+      'discharge': 'Discharge',
+      'retrenchment': 'Retrenchment',
+      'retirement': 'Retirement',
+      'death': 'Death',
+      'contract_end': 'End of contract',
+      'other': 'Separation',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String separationStatusName(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'pending': 'Pending',
+      'approved': 'Approved',
+      'completed': 'Completed',
+      'rejected': 'Rejected',
+      'cancelled': 'Cancelled',
+      'other': 'Unknown',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get separationNoticeDate => 'Notice given on';
+
+  @override
+  String get separationLastWorkingDay => 'Last working day';
+
+  @override
+  String get separationNoticeRequired => 'Notice required';
+
+  @override
+  String get separationNoticeGiven => 'Notice given';
+
+  @override
+  String get separationNoNoticeRequired => 'None';
+
+  @override
+  String separationShortfall(String days) {
+    return 'That is $days short of the notice the Labour Act asks for. Wages for the missing days may be deducted from your final settlement.';
+  }
+
+  @override
+  String get resignationCancel => 'Withdraw resignation';
+
+  @override
+  String get resignationCancelTitle => 'Withdraw your resignation?';
+
+  @override
+  String resignationCancelBody(String date) {
+    return 'Your resignation with the last working day $date will be withdrawn, and you stay in your job.';
+  }
+
+  @override
+  String get resignationCancelled => 'Resignation withdrawn';
+
+  @override
+  String get resignHeading => 'Resign from your job';
+
+  @override
+  String get resignNoticeInfo =>
+      'Under the Bangladesh Labour Act (section 27), a permanent worker gives 60 days\' written notice to resign, and a temporary worker on monthly wages 30 days. Your notice starts today. If you give less, wages for the missing days may be deducted from your final settlement.';
+
+  @override
+  String get resignLastDayRequired => 'Choose your last working day';
+
+  @override
+  String resignNoticeGiven(String days) {
+    return 'That gives $days of notice.';
+  }
+
+  @override
+  String get resignSubmit => 'Send resignation';
+
+  @override
+  String get resignConfirmTitle => 'Send your resignation?';
+
+  @override
+  String resignConfirmBody(String date) {
+    return 'Your last working day will be $date. It goes to your manager, then HR. You can withdraw it while it is pending.';
+  }
+
+  @override
+  String get resignConfirm => 'Resign';
+
+  @override
+  String get resignSent => 'Resignation sent for approval';
+
+  @override
+  String get resignErrorOpen =>
+      'A resignation or separation is already in progress.';
+
+  @override
+  String get resignErrorSeparated => 'Your employment has already ended.';
+
+  @override
+  String get resignErrorPastLastDay =>
+      'The last working day can\'t be in the past.';
+
+  @override
+  String get resignErrorNotOpen =>
+      'This resignation has already been decided, so it can\'t be withdrawn.';
+
+  @override
+  String approvalSeparationDates(String notice, String lastDay) {
+    return 'Notice $notice → last day $lastDay';
+  }
+
+  @override
+  String approvalNoticeShort(String days) {
+    return 'Notice short by $days';
+  }
+
+  @override
+  String get approveSeparationTitle => 'Approve this resignation?';
+
+  @override
+  String get rejectSeparationTitle => 'Reject this resignation?';
+
+  @override
+  String get separationApproved => 'Resignation approved';
+
+  @override
+  String get separationRejected => 'Resignation rejected';
 }

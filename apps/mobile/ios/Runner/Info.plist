@@ -31,6 +31,10 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>When your workspace asks for a photo with each punch, Good People takes one with the front camera as you punch in or out, for attendance checks. The camera is used only at the moment you punch.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Good People does not read your photo library. Punch photos are taken with the camera at the moment you punch.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>When you punch in or out, Good People checks your location against your workplace geofence. Your location is only read at the moment you punch.</string>
 	<key>UIApplicationSceneManifest</key>

@@ -97,7 +97,11 @@ export default async function MyAttendancePage({
               </p>
             ) : (
               <>
-                <PunchButton direction={today.data.nextDirection} mode={selfPunch.mode} />
+                <PunchButton
+                  direction={today.data.nextDirection}
+                  mode={selfPunch.mode}
+                  requireSelfie={selfPunch.requireSelfie}
+                />
                 {selfPunch.mode === 'geofenced' && (
                   <p className="text-xs text-slate-500">
                     {t('punch.geofenced', {

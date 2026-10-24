@@ -424,6 +424,7 @@ class Punch {
     this.distanceM,
     this.insideGeofence,
     this.note,
+    this.selfieDocumentId,
   });
 
   factory Punch.fromJson(Json json) => Punch(
@@ -436,6 +437,8 @@ class Punch {
     insideGeofence: _read<bool?>(json, 'insideGeofence'),
     note: _read<String?>(json, 'note'),
     voided: _read<bool>(json, 'voided'),
+    // Missing before selfie punches; read as none.
+    selfieDocumentId: _read<String?>(json, 'selfieDocumentId'),
   );
 
   final String id;
@@ -456,6 +459,9 @@ class Punch {
 
   /// Voided by HR: kept on record but not counted.
   final bool voided;
+
+  /// The photo taken with an app punch, a document HR can read.
+  final String? selfieDocumentId;
 }
 
 /// A work location's geofence: a circle around a point.
@@ -493,7 +499,12 @@ class Geofence {
 
 /// Whether and how the user can punch from the app.
 class SelfPunch {
-  const SelfPunch({required this.mode, this.blockedReason, this.geofence});
+  const SelfPunch({
+    required this.mode,
+    this.blockedReason,
+    this.geofence,
+    this.requireSelfie = false,
+  });
 
   factory SelfPunch.fromJson(Json json) => SelfPunch(
     mode: SelfPunchMode.fromWire(_read<String>(json, 'mode')),
@@ -503,6 +514,8 @@ class SelfPunch {
       SelfPunchBlock.fromWire,
     ),
     geofence: _readOptional(json, 'geofence', Geofence.fromJson),
+    // Missing before selfie punches, when no workspace asked for one.
+    requireSelfie: _read<bool?>(json, 'requireSelfie') ?? false,
   );
 
   final SelfPunchMode mode;
@@ -510,6 +523,9 @@ class SelfPunch {
   /// Why punching from the app is not possible, if it is not.
   final SelfPunchBlock? blockedReason;
   final Geofence? geofence;
+
+  /// Each punch from the app must come with a photo of the employee.
+  final bool requireSelfie;
 
   /// The app can offer the punch button.
   bool get canPunch =>
@@ -572,6 +588,19 @@ class PunchLocation {
   final double? accuracyM;
 }
 
+/// The photo taken for a selfie punch, a JPEG.
+class PunchSelfie {
+  const PunchSelfie({required this.bytes, this.fileName = 'selfie.jpg'});
+
+  /// The API refuses a larger photo (413).
+  static const maxBytes = 2 * 1024 * 1024;
+
+  final Uint8List bytes;
+  final String fileName;
+
+  bool get isTooLarge => bytes.length > maxBytes;
+}
+
 /// `POST /tenant/me/attendance/punch` body from the mobile app. Without a
 /// [location] no coordinates are sent, which only the `anywhere` mode
 /// accepts.
@@ -584,6 +613,13 @@ Json selfPunchBody(PunchLocation? location) => {
       // The API takes 0 to 100 km.
       'accuracyM': accuracy.clamp(0, 100000),
   },
+};
+
+/// The same fields as [selfPunchBody] as text, for the multipart form a
+/// punch with a selfie is sent as. The API reads the numbers back.
+Map<String, String> selfPunchFields(PunchLocation? location) => {
+  for (final MapEntry(:key, :value) in selfPunchBody(location).entries)
+    key: '$value',
 };
 
 /// An attendance correction (the API's `RegularizationView`).

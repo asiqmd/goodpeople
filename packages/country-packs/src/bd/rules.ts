@@ -46,6 +46,23 @@ export interface BdRules {
   'work.weekly_average_max_hours': number;
   'work.rest_intervals': readonly RestInterval[];
   'work.overtime_rate_multiplier': number;
+  'lifecycle.probation_months': Record<ProbationCategory, number>;
+  'lifecycle.probation_extension_months': number;
+  'separation.resignation_notice_days': NoticeTable;
+  'separation.termination_notice_days': NoticeTable;
+  'separation.retrenchment_notice_days': number;
+  'separation.retirement_age': number;
+}
+
+/** Clerical work has a longer probation than other work (s.4). */
+export type ProbationCategory = 'clerical' | 'other';
+
+/** Notice in days by tenure and wage period; s.26–27 distinguish monthly-rated workers. */
+export interface NoticeTable {
+  permanent_monthly: number;
+  permanent_other: number;
+  temporary_monthly: number;
+  temporary_other: number;
 }
 
 /** Work beyond `overHours` in a day needs at least `minutes` of rest or meal interval. */
@@ -220,5 +237,71 @@ export const BD_RULES: Rulebook<BdRules> = {
         note: 'Ordinary rate: basic wage plus dearness allowance and any ad hoc or interim wage.',
       },
     ],
+  },
+  'lifecycle.probation_months': {
+    title: 'Probation period, in months',
+    versions: [
+      {
+        from: ACT_START,
+        value: { clerical: 6, other: 3 },
+        reference: BLA('4'),
+        status: 'verified',
+        note: 'A worker who keeps working after probation without a decision is deemed permanent.',
+      },
+    ],
+  },
+  'lifecycle.probation_extension_months': {
+    title: 'Probation extension for a skilled worker, in months',
+    versions: [{ from: ACT_START, value: 3, reference: BLA('4'), status: 'verified' }],
+  },
+  'separation.resignation_notice_days': {
+    title: 'Notice a worker gives to resign, in days',
+    versions: [
+      {
+        from: ACT_START,
+        value: {
+          permanent_monthly: 60,
+          permanent_other: 60,
+          temporary_monthly: 30,
+          temporary_other: 14,
+        },
+        reference: BLA('27'),
+        status: 'needs_review',
+        note: 'Without notice, wages for the notice period may be deducted. Confirm the 2025 amendment left this unchanged.',
+      },
+    ],
+  },
+  'separation.termination_notice_days': {
+    title: 'Notice an employer gives to terminate (other than for misconduct), in days',
+    versions: [
+      {
+        from: ACT_START,
+        value: {
+          permanent_monthly: 120,
+          permanent_other: 60,
+          temporary_monthly: 30,
+          temporary_other: 14,
+        },
+        reference: BLA('26'),
+        status: 'needs_review',
+        note: 'Or wages in lieu of notice. Confirm the 2025 amendment left this unchanged.',
+      },
+    ],
+  },
+  'separation.retrenchment_notice_days': {
+    title: 'Notice before retrenchment, in days',
+    versions: [
+      {
+        from: ACT_START,
+        value: 30,
+        reference: BLA('20'),
+        status: 'verified',
+        note: 'Or wages in lieu of notice; the inspector must be told.',
+      },
+    ],
+  },
+  'separation.retirement_age': {
+    title: 'Retirement age',
+    versions: [{ from: ACT_START, value: 60, reference: BLA('28'), status: 'verified' }],
   },
 };

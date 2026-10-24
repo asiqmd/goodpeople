@@ -216,20 +216,24 @@ describe('employees', () => {
     expect(history[1]).toMatchObject({ event: 'hire', effectiveTo: '2026-12-31' });
   });
 
-  it('does not let a change start on or before the latest one', async () => {
+  it('refuses a change on the same day as another, or before joining', async () => {
     const shirin = (await list('search=MG-0004')).items[0]!;
-    const res = await api(app)
-      .post(`/tenant/employees/${shirin.id}/job-changes`)
-      .set(bearer(hr))
-      .send({
-        event: 'change',
-        effectiveFrom: '2021-06-01',
-        reason: 'Back-dated',
-        changes: { gradeId: org.grades[0]!.id },
-      })
-      .expect(400);
-    expect(res.body.message).toBe(
-      'The change must take effect after 2022-01-01, when the latest one did',
+    const change = (effectiveFrom: string) =>
+      api(app)
+        .post(`/tenant/employees/${shirin.id}/job-changes`)
+        .set(bearer(hr))
+        .send({
+          event: 'change',
+          effectiveFrom,
+          reason: 'Back-dated',
+          changes: { gradeId: org.grades[0]!.id },
+        })
+        .expect(400);
+    expect((await change('2022-01-01')).body.message).toBe(
+      'A change already takes effect on 2022-01-01; correct that entry instead',
+    );
+    expect((await change('2018-06-01')).body.message).toBe(
+      'The change cannot be before joining on 2019-01-10',
     );
   });
 

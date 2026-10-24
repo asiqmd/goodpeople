@@ -37,11 +37,53 @@ class _StubAdapter implements HttpClientAdapter {
   void close({bool force = false}) {}
 }
 
+/// Answers every request with [status], the raw [bytes] and [headers], as
+/// a file download does, and records the request.
+class _FileAdapter implements HttpClientAdapter {
+  _FileAdapter(this.status, this.bytes, this.headers);
+
+  final int status;
+  final List<int> bytes;
+  final Map<String, List<String>> headers;
+  final requests = <RequestOptions>[];
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    requests.add(options);
+    return ResponseBody.fromBytes(bytes, status, headers: headers);
+  }
+
+  @override
+  void close({bool force = false}) {}
+}
+
 void main() {
   (DioGoodPeopleApi, _StubAdapter) client(int status, Object? body) {
     final adapter = _StubAdapter(status, body);
     final dio = Dio(BaseOptions(baseUrl: 'http://localhost:4000'))
       ..httpClientAdapter = adapter;
+    return (DioGoodPeopleApi(dio), adapter);
+  }
+
+  /// The app's real client setup (JSON by default) with a file answer.
+  (DioGoodPeopleApi, _FileAdapter) fileClient(
+    int status,
+    List<int> bytes, {
+    Map<String, List<String>> headers = const {},
+  }) {
+    final adapter = _FileAdapter(status, bytes, headers);
+    final dio = Dio(
+      BaseOptions(
+        baseUrl: 'http://localhost:4000',
+        contentType: Headers.jsonContentType,
+        responseType: ResponseType.json,
+        headers: const {'Accept': 'application/json'},
+      ),
+    )..httpClientAdapter = adapter;
     return (DioGoodPeopleApi(dio), adapter);
   }
 
@@ -1035,6 +1077,370 @@ void main() {
         expect(unknown.subjectType, 'overtime_request');
       },
     );
+  });
+
+  group('selfie punches', () {
+    test('today reads requireSelfie and a punch\'s selfie; an older body '
+        'without them asks for none', () async {
+      final (api, _) = client(
+        200,
+        attendanceTodayJson(
+          requireSelfie: true,
+          punches: [
+            punchJson(
+              id: mobilePunchId,
+              date: '2026-10-24',
+              time: '07:55',
+              source: 'mobile',
+              selfieDocumentId: selfieDocumentId,
+            ),
+          ],
+        ),
+      );
+
+      final today = await api.fetchMyAttendanceToday('access-1');
+
+      expect(today.selfPunch.requireSelfie, isTrue);
+      expect(today.punches.single.selfieDocumentId, selfieDocumentId);
+
+      final older = attendanceTodayJson();
+      (older['selfPunch']! as Json).remove('requireSelfie');
+      for (final punch in older['punches']! as List<Object?>) {
+        (punch! as Json).remove('selfieDocumentId');
+      }
+      final (oldApi, _) = client(200, older);
+      final before = await oldApi.fetchMyAttendanceToday('access-1');
+      expect(before.selfPunch.requireSelfie, isFalse);
+      expect(before.punches.first.selfieDocumentId, isNull);
+    });
+
+    test('a punch with a selfie is a multipart form: text fields and the '
+        'photo in "selfie"', () async {
+      final (api, adapter) = fileClient(
+        201,
+        utf8.encode(jsonEncode(attendanceTodayJson())),
+        headers: {
+          Headers.contentTypeHeader: [Headers.jsonContentType],
+        },
+      );
+
+      final today = await api.punch(
+        'access-1',
+        location: atTheFactory,
+        selfie: PunchSelfie(bytes: tinyPng),
+      );
+
+      final request = adapter.requests.single;
+      expect(request.method, 'POST');
+      expect(request.uri.path, '/tenant/me/attendance/punch');
+      expect(request.headers['Authorization'], 'Bearer access-1');
+      expect(request.contentType, startsWith('multipart/form-data; boundary='));
+      final form = request.data as FormData;
+      expect(Map.fromEntries(form.fields), {
+        'source': 'mobile',
+        'latitude': '24.0024',
+        'longitude': '90.4265',
+        'accuracyM': '12.0',
+      });
+      final (field, file) = (form.files.single.key, form.files.single.value);
+      expect(field, 'selfie');
+      expect(file.filename, 'selfie.jpg');
+      expect(file.contentType.toString(), 'image/jpeg');
+      expect(file.length, tinyPng.length);
+      expect(today.nextDirection, PunchDirection.punchOut);
+    });
+
+    test('a refused selfie punch carries its code', () async {
+      final (api, _) = client(400, {
+        'statusCode': 400,
+        'error': 'Bad Request',
+        'message': 'Take a photo to punch',
+        'code': 'selfie_required',
+      });
+
+      await expectLater(
+        api.punch('access-1', location: atTheFactory),
+        throwsA(
+          isA<ApiException>()
+              .having((e) => e.statusCode, 'statusCode', 400)
+              .having((e) => e.code, 'code', 'selfie_required'),
+        ),
+      );
+    });
+  });
+
+  group('documents and lifecycle', () {
+    test('my documents parse categories, sources, dates and unknown '
+        'values', () async {
+      final body = [
+        ...myDocumentsJson(),
+        documentJson(
+          id: 'da000000-0000-4000-8000-000000000099',
+          title: 'Something new',
+          category: 'tax_card',
+          source: 'scanned',
+        ),
+      ];
+      final (api, adapter) = client(200, body);
+
+      final documents = await api.fetchMyDocuments('access-1');
+
+      final request = adapter.requests.single;
+      expect(request.method, 'GET');
+      expect(request.uri.path, '/tenant/me/documents');
+      expect(request.headers['Authorization'], 'Bearer access-1');
+      final byId = {for (final d in documents) d.id: d};
+      final letter = byId[appointmentLetterId]!;
+      expect(letter.category, DocumentCategory.letter);
+      expect(letter.source, DocumentSource.generated);
+      expect(letter.refNo, 'MG/HR/2020/0005');
+      expect(letter.issuedOn, DateTime.utc(2020, 3));
+      expect(letter.expiresOn, isNull);
+      expect(letter.uploadedBy, isNull);
+      expect(letter.employee.employeeCode, 'MG-0005');
+      final scan = byId[nidScanId]!;
+      expect(scan.category, DocumentCategory.nid);
+      expect(scan.isImage, isTrue);
+      expect(scan.sizeBytes, 48213);
+      expect(byId[medicalCertificateId]!.expiresOn, DateTime.utc(2026, 11, 30));
+      final unknown = byId['da000000-0000-4000-8000-000000000099']!;
+      expect(unknown.category, DocumentCategory.unknown);
+      expect(unknown.source, DocumentSource.unknown);
+    });
+
+    test('expiry: expired before today, soon within 60 days, else none', () {
+      EmployeeDocument expiring(String? date) => EmployeeDocument.fromJson(
+        documentJson(id: 'x', title: 'x', expiresOn: date),
+      );
+
+      expect(
+        expiring('2026-10-23').expiryOn(leaveToday),
+        DocumentExpiry.expired,
+      );
+      expect(expiring('2026-10-24').expiryOn(leaveToday), DocumentExpiry.soon);
+      expect(expiring('2026-12-23').expiryOn(leaveToday), DocumentExpiry.soon);
+      expect(expiring('2026-12-24').expiryOn(leaveToday), DocumentExpiry.none);
+      expect(expiring(null).expiryOn(leaveToday), DocumentExpiry.none);
+    });
+
+    test('downloading a document asks for bytes and returns them with the '
+        'type and name', () async {
+      final (api, adapter) = fileClient(
+        200,
+        tinyPng,
+        headers: {
+          Headers.contentTypeHeader: ['image/png'],
+          'content-disposition': [
+            'inline; filename="nid-front.png"; '
+                "filename*=UTF-8''nid-front.png",
+          ],
+        },
+      );
+
+      final file = await api.downloadDocument('access-1', nidScanId);
+
+      final request = adapter.requests.single;
+      expect(request.method, 'GET');
+      expect(request.uri.path, '/tenant/documents/$nidScanId/file');
+      expect(request.headers['Authorization'], 'Bearer access-1');
+      expect(request.headers['Accept'], '*/*');
+      expect(request.responseType, ResponseType.bytes);
+      expect(file.bytes, tinyPng);
+      expect(file.contentType, 'image/png');
+      expect(file.fileName, 'nid-front.png');
+    });
+
+    test('the service book sends the language and reads a Bangla file '
+        'name', () async {
+      final (api, adapter) = fileClient(
+        200,
+        pdfBytes,
+        headers: {
+          Headers.contentTypeHeader: ['application/pdf; charset=binary'],
+          'content-disposition': [
+            'inline; filename="service-book-____.pdf"; '
+                "filename*=UTF-8''service-book-%E0%A6%AC%E0%A6%87.pdf",
+          ],
+        },
+      );
+
+      final file = await api.fetchMyServiceBook(
+        'access-1',
+        language: LetterLanguage.bn,
+      );
+
+      final request = adapter.requests.single;
+      expect(request.uri.path, '/tenant/me/service-book');
+      expect(request.uri.queryParameters, {'language': 'bn'});
+      expect(request.headers['Authorization'], 'Bearer access-1');
+      expect(file.bytes, pdfBytes);
+      expect(file.contentType, 'application/pdf');
+      expect(file.fileName, 'service-book-বই.pdf');
+    });
+
+    test('a refused download carries the API error from its bytes', () async {
+      final (api, _) = fileClient(
+        403,
+        utf8.encode(
+          jsonEncode({
+            'statusCode': 403,
+            'error': 'Forbidden',
+            'message': 'This document is not shared with you',
+          }),
+        ),
+        headers: {
+          Headers.contentTypeHeader: [Headers.jsonContentType],
+        },
+      );
+
+      await expectLater(
+        api.downloadDocument('access-1', nidScanId),
+        throwsA(
+          isA<ApiException>()
+              .having((e) => e.kind, 'kind', ApiErrorKind.server)
+              .having((e) => e.statusCode, 'statusCode', 403)
+              .having(
+                (e) => e.message,
+                'message',
+                'This document is not shared with you',
+              ),
+        ),
+      );
+    });
+
+    test('file names come from filename*, else filename, else none', () {
+      expect(fileNameFromDisposition(null), isNull);
+      expect(fileNameFromDisposition('inline'), isNull);
+      expect(
+        fileNameFromDisposition('attachment; filename="letter.pdf"'),
+        'letter.pdf',
+      );
+      expect(
+        fileNameFromDisposition('inline; filename=plain.pdf'),
+        'plain.pdf',
+      );
+      expect(
+        fileNameFromDisposition(
+          "inline; filename=\"a.pdf\"; filename*=UTF-8''%ZZ.pdf",
+        ),
+        'a.pdf',
+      );
+    });
+
+    test('separations parse the notice, the shortfall and the trail', () async {
+      final (api, adapter) = client(200, [
+        ...pendingSeparationsJson(),
+        separationJson(
+          id: 'db000000-0000-4000-8000-000000000003',
+          type: 'dismissal',
+          status: 'completed',
+          noticeDaysRequired: null,
+          initiatedBy: 'hr',
+          steps: const [],
+          decidedAt: '2025-01-10T04:00:00.000Z',
+          completedAt: '2025-01-11T04:00:00.000Z',
+        ),
+        separationJson(
+          id: 'db000000-0000-4000-8000-000000000004',
+          type: 'secondment',
+          status: 'paused',
+          initiatedBy: 'union',
+        ),
+      ]);
+
+      final [pending, dismissal, unknown] = await api.fetchMySeparations(
+        'access-1',
+      );
+
+      expect(adapter.requests.single.uri.path, '/tenant/me/separations');
+      expect(
+        adapter.requests.single.headers['Authorization'],
+        'Bearer access-1',
+      );
+      expect(pending.type, SeparationType.resignation);
+      expect(pending.status, SeparationStatus.pending);
+      expect(pending.noticeDate, DateTime.utc(2026, 10, 24));
+      expect(pending.lastWorkingDay, DateTime.utc(2026, 11, 24));
+      expect(pending.noticeDaysRequired, 60);
+      expect(pending.noticeGivenDays, 31);
+      expect(pending.noticeShortfallDays, 29);
+      expect(pending.initiatedBy, SeparationInitiator.employee);
+      expect(pending.steps, hasLength(2));
+      expect(pending.isOpen, isTrue);
+      expect(pending.canCancel, isTrue);
+      expect(dismissal.noticeDaysRequired, isNull);
+      expect(dismissal.noticeShortfallDays, 0);
+      expect(dismissal.initiatedBy, SeparationInitiator.hr);
+      expect(dismissal.completedAt, DateTime.utc(2025, 1, 11, 4));
+      expect(dismissal.isOpen, isFalse);
+      expect(unknown.type, SeparationType.unknown);
+      expect(unknown.status, SeparationStatus.unknown);
+      expect(unknown.initiatedBy, SeparationInitiator.unknown);
+      expect(unknown.canCancel, isFalse);
+    });
+
+    test('resigning posts the last day and reason; cancelling posts to the '
+        'separation', () async {
+      final (api, adapter) = client(201, pendingSeparationsJson().single);
+
+      final created = await api.resign(
+        'access-1',
+        ResignationDraft(
+          lastWorkingDay: DateTime.utc(2026, 11, 24),
+          reason: 'Moving back to my village to care for my mother',
+        ),
+      );
+      await api.cancelSeparation('access-1', pendingResignationId);
+
+      final [resign, cancel] = adapter.requests;
+      expect(resign.method, 'POST');
+      expect(resign.uri.path, '/tenant/me/resignation');
+      expect(resign.headers['Authorization'], 'Bearer access-1');
+      expect(resign.data, {
+        'lastWorkingDay': '2026-11-24',
+        'reason': 'Moving back to my village to care for my mother',
+      });
+      expect(created.id, pendingResignationId);
+      expect(cancel.method, 'POST');
+      expect(
+        cancel.uri.path,
+        '/tenant/separations/$pendingResignationId/cancel',
+      );
+    });
+
+    test('a refused resignation carries its code', () async {
+      final (api, _) = client(409, {
+        'statusCode': 409,
+        'error': 'Conflict',
+        'message': 'A separation is already in progress',
+        'code': 'separation_open',
+      });
+
+      await expectLater(
+        api.resign(
+          'access-1',
+          ResignationDraft(lastWorkingDay: DateTime.utc(2026, 12), reason: 'x'),
+        ),
+        throwsA(
+          isA<ApiException>()
+              .having((e) => e.statusCode, 'statusCode', 409)
+              .having((e) => e.code, 'code', 'separation_open'),
+        ),
+      );
+    });
+
+    test('a resignation in the inbox parses as a separation item', () async {
+      final (api, _) = client(200, [separationApprovalJson()]);
+
+      final item = (await api.fetchApprovals('access-1')).single;
+
+      expect(item, isA<SeparationApprovalItem>());
+      item as SeparationApprovalItem;
+      expect(item.stepId, separationStepId);
+      expect(item.kind, ApprovalStepKind.manager);
+      expect(item.separation.employee.fullName, 'Kulsum Akter');
+      expect(item.separation.noticeShortfallDays, 29);
+    });
   });
 
   test('a body that breaks the contract is a badResponse error', () async {

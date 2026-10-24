@@ -4,9 +4,14 @@ import { DbErrorFilter } from './common/db-error.filter.js';
 import { TenantContextInterceptor } from './common/request-context.js';
 import { APP_CONFIG, type AppConfig } from './config.js';
 import { DbModule } from './db/db.module.js';
+import { StorageModule } from './storage/storage.module.js';
 import { ApprovalsModule } from './modules/approvals/approvals.module.js';
 import { AttendanceModule } from './modules/attendance/attendance.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
+import { DocumentsModule } from './modules/documents/documents.module.js';
+import { ImportsModule } from './modules/imports/imports.module.js';
+import { LettersModule } from './modules/letters/letters.module.js';
+import { LifecycleModule } from './modules/lifecycle/lifecycle.module.js';
 import { EmployeesModule } from './modules/employees/employees.module.js';
 import { HealthModule } from './modules/health/health.controller.js';
 import { LeaveModule } from './modules/leave/leave.module.js';
@@ -23,6 +28,7 @@ export class AppModule {
       global: true,
       imports: [
         DbModule,
+        StorageModule,
         AuthModule,
         HealthModule,
         ReferenceModule,
@@ -33,6 +39,10 @@ export class AppModule {
         LeaveModule,
         AttendanceModule,
         ApprovalsModule,
+        DocumentsModule,
+        LifecycleModule,
+        LettersModule,
+        ImportsModule,
       ],
       providers: [
         { provide: APP_CONFIG, useValue: config },

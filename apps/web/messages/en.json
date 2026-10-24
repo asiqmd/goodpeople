@@ -657,8 +657,10 @@
         "self_punch_disabled": "Punching from the app is turned off.",
         "too_soon": "You punched less than a minute ago.",
         "separated": "Separated employees cannot punch.",
-        "location_denied": "Location access was refused or timed out. Allow it in your browser and try again."
-      }
+        "location_denied": "Location access was refused or timed out. Allow it in your browser and try again.",
+        "selfie_required": "Take a photo to punch."
+      },
+      "selfieHint": "Your camera opens first: a photo is taken with each punch."
     },
     "correction": {
       "title": "Ask for a correction",
@@ -775,7 +777,8 @@
         "roster": "Roster",
         "assignment": "Assigned shift",
         "default": "Default shift"
-      }
+      },
+      "requireSelfie": "App punches need a photo"
     },
     "devices": {
       "agentsTitle": "Edge Agents",
@@ -825,6 +828,180 @@
       "punchAdded": "Punch added.",
       "void": "Void",
       "voidReason": "Why is it wrong?"
+    },
+    "selfie": "Photo"
+  },
+  "lifecycle": {
+    "nav": {
+      "people": "People events",
+      "letters": "Letters"
+    },
+    "documents": {
+      "tab": "Documents",
+      "heading": "Documents",
+      "mine": "My documents",
+      "none": "No documents yet.",
+      "issued": "Issued {date}",
+      "expires": "Expires {date}",
+      "expired": "Expired",
+      "expiring": "Expires soon",
+      "download": "Download",
+      "uploaded": "Uploaded.",
+      "file": "File",
+      "fileHint": "PDF, JPEG, PNG or WebP, up to 10 MB. Stored encrypted.",
+      "category": "Kind",
+      "docTitle": "Title",
+      "issuedOn": "Issued on",
+      "expiresOn": "Expires on",
+      "share": "Show it to the employee",
+      "upload": "Upload",
+      "shared": "Shared",
+      "delete": "Delete",
+      "deleteConfirm": "Delete this document for good? Only a record that it existed is kept.",
+      "serviceBook": "Service book",
+      "serviceBookBn": "সার্ভিস বই (বাংলা)",
+      "uploadTitle": "Add a document",
+      "categories": {
+        "photo": "Photo",
+        "nid": "National ID",
+        "birth_certificate": "Birth certificate",
+        "passport": "Passport",
+        "educational_certificate": "Educational certificate",
+        "experience_certificate": "Experience certificate",
+        "appointment_letter": "Appointment letter",
+        "contract": "Contract",
+        "medical_certificate": "Medical certificate",
+        "police_verification": "Police verification",
+        "nominee_form": "Nominee form",
+        "letter": "Letter",
+        "punch_selfie": "Punch photo",
+        "other": "Other"
+      }
+    },
+    "letters": {
+      "title": "Letters",
+      "intro": "The letters HR issues, in English and Bangla. Each starts from the standard text for Bangladesh; edit it to your company's wording. Issued letters are numbered and filed with the employee's documents.",
+      "issued": "Letter {refNo} issued.",
+      "open": "Open the PDF",
+      "template": "Letter",
+      "date": "Letter date",
+      "extraHint": "Filled into the letter where it says so.",
+      "share": "Show it to the employee",
+      "preview": "Preview",
+      "issue": "Issue letter",
+      "missing": "Fill in before issuing: {fields}",
+      "saved": "Saved.",
+      "name": "Name",
+      "subject": "Subject",
+      "body": "Text",
+      "bodyHint": "Blank lines separate paragraphs. **Bold**, and lines starting with \"- \" make a list. Placeholders go in double braces.",
+      "active": "In use",
+      "save": "Save",
+      "reset": "Back to the standard text",
+      "resetConfirm": "Replace your text with the standard one?",
+      "issueTitle": "Issue a letter",
+      "customized": "Edited",
+      "inactive": "Not in use",
+      "fields": "Placeholders",
+      "fieldsHint": "Use these in a letter. An extra.anything placeholder asks HR for a value when issuing."
+    },
+    "separation": {
+      "title": "Separation",
+      "mine": "Leaving",
+      "none": "None.",
+      "types": {
+        "resignation": "Resignation",
+        "termination": "Termination",
+        "dismissal": "Dismissal",
+        "discharge": "Discharge",
+        "retrenchment": "Retrenchment",
+        "retirement": "Retirement",
+        "death": "Death",
+        "contract_end": "End of contract"
+      },
+      "statuses": {
+        "pending": "Waiting for approval",
+        "approved": "Approved",
+        "completed": "Left",
+        "rejected": "Rejected",
+        "cancelled": "Cancelled"
+      },
+      "dates": "Notice {notice} · last working day {last}",
+      "noticeRequired": "the Labour Act asks for {days} days' notice",
+      "shortfall": "{days} days short of the notice: wages in lieu may apply in the final settlement.",
+      "recorded": "Recorded. It completes after the last working day.",
+      "type": "Kind",
+      "noticeDate": "Notice given on",
+      "lastWorkingDay": "Last working day",
+      "reason": "Reason",
+      "recordHint": "Recording it here approves it. After the last working day the job ends, future plans are cleared and the login stops working.",
+      "record": "Record separation",
+      "resignationSent": "Your resignation has gone for approval.",
+      "resignHint": "A permanent worker gives 60 days' notice under the Labour Act (s.27). Your manager and then HR will decide.",
+      "resign": "Resign",
+      "cancel": "Call off",
+      "cancelConfirm": "Call off this separation?",
+      "recordTitle": "Record a separation",
+      "resignTitle": "Resign",
+      "badge": "Separation"
+    },
+    "probation": {
+      "title": "Probation",
+      "endsOn": "Probation ends on {date}.",
+      "noDate": "No end date recorded.",
+      "deemed": "Probation is over without a decision: under s.4 of the Labour Act this worker counts as permanent. Confirm them.",
+      "extended": "Probation extended.",
+      "until": "Extend until",
+      "untilHint": "At most the Act's period, plus three months for a skilled worker (s.4).",
+      "reason": "Reason",
+      "extend": "Extend probation"
+    },
+    "job": {
+      "correct": "Correct this entry",
+      "corrected": "Corrected.",
+      "reason": "What was wrong",
+      "correctHint": "For mistakes. Later entries take the corrected values unless they changed them.",
+      "saveCorrection": "Save correction",
+      "backDatedHint": "A date before the latest change is recorded as a back-dated change, and later entries follow it."
+    },
+    "import": {
+      "title": "Import employees",
+      "back": "Employees",
+      "step1": "1. Fill in the template",
+      "step1Hint": "The template lists your codes for entities, locations, units, designations and grades. Up to {max} employees per file.",
+      "template": "Download the Excel template",
+      "step2": "2. Upload and check",
+      "step2Hint": "Every row is checked with the same rules as the hire form. Nothing is created until you import.",
+      "file": "Filled-in template (.xlsx)",
+      "check": "Check the file",
+      "checked": "{valid} of {total} rows are ready to import.",
+      "committed": "Imported {count, plural, one {# employee} other {# employees}}.",
+      "row": "Row",
+      "employee": "Employee",
+      "problems": "Problems",
+      "importAll": "Import {count, plural, one {# employee} other {# employees}}",
+      "importValid": "Import the {count} valid rows and skip the rest"
+    },
+    "idCards": {
+      "title": "ID cards",
+      "back": "Employees",
+      "hint": "Tick the people whose cards to print. Each card's photo is their newest Photo document.",
+      "language": "Language",
+      "validUntil": "Valid until",
+      "print": "Print cards"
+    },
+    "people": {
+      "title": "People events",
+      "probation": "Probation ending",
+      "noProbation": "No probation ends in the next 30 days.",
+      "ends": "ends {date}",
+      "deemed": "Deemed permanent",
+      "probationHint": "Confirm, extend or separate from the employee's Job tab.",
+      "retirement": "Reaching retirement age",
+      "noRetirement": "Nobody turns 60 in the next six months.",
+      "retires": "turns 60 on {date}",
+      "separations": "Separations in progress",
+      "documents": "Documents expired or expiring within 60 days"
     }
   }
 }

@@ -118,6 +118,7 @@ const toSettingsView = (s: typeof attendanceSettings.$inferSelect): AttendanceSe
   regularizationChain: s.regularizationChain,
   regularizationWindowDays: s.regularizationWindowDays,
   trackingFrom: s.trackingFrom,
+  requireSelfie: s.requireSelfie,
 });
 
 /** Reading attendance. Every view is computed from the current inputs, so it is never stale. */
@@ -197,6 +198,7 @@ export class AttendanceService {
                 ? 'no_geofence'
                 : null,
           geofence,
+          requireSelfie: settings.requireSelfie,
         },
         nextDirection: live.length % 2 === 0 ? 'in' : 'out',
       };

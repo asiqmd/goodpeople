@@ -9,6 +9,13 @@ import {
 } from './leave.js';
 import { BD_RULES } from './rules.js';
 import { bdShiftViolations, bdWorkLimits } from './attendance.js';
+import {
+  addMonths,
+  bdNoticeDays,
+  bdProbationEnd,
+  bdProbationLatestEnd,
+  bdRetirementDate,
+} from './lifecycle.js';
 
 describe('rule lookup across the 2025 amendment', () => {
   it('gives 112 days of maternity leave before 17 November 2025 and 120 from that day', () => {
@@ -130,5 +137,32 @@ describe('working time', () => {
 
   it('caps a day at 10 hours and a week at 60 with overtime', () => {
     expect(bdWorkLimits('2026-10-24')).toEqual({ dailyMaxMinutes: 600, weeklyMaxMinutes: 3600 });
+  });
+});
+
+describe('lifecycle', () => {
+  it('sets probation at three months, six for clerical work, plus three for skilled workers', () => {
+    expect(bdProbationEnd('2026-01-15', 'other')).toBe('2026-04-14');
+    expect(bdProbationEnd('2026-01-15', 'clerical')).toBe('2026-07-14');
+    expect(bdProbationLatestEnd('2026-01-15', 'other', true)).toBe('2026-07-14');
+    expect(bdProbationLatestEnd('2026-01-15', 'other', false)).toBe('2026-04-14');
+    expect(addMonths('2026-01-31', 1)).toBe('2026-02-28');
+  });
+
+  it('gives notice periods by tenure, and none for dismissal', () => {
+    const permanent = { permanent: true, monthlyRated: true };
+    const temporary = { permanent: false, monthlyRated: true };
+    expect(bdNoticeDays('resignation', permanent, '2026-10-24')).toBe(60);
+    expect(bdNoticeDays('termination', permanent, '2026-10-24')).toBe(120);
+    expect(
+      bdNoticeDays('termination', { permanent: true, monthlyRated: false }, '2026-10-24'),
+    ).toBe(60);
+    expect(bdNoticeDays('resignation', temporary, '2026-10-24')).toBe(30);
+    expect(bdNoticeDays('retrenchment', permanent, '2026-10-24')).toBe(30);
+    expect(bdNoticeDays('dismissal', permanent, '2026-10-24')).toBeNull();
+  });
+
+  it('retires at 60', () => {
+    expect(bdRetirementDate('1970-03-05')).toBe('2030-03-05');
   });
 });

@@ -15,6 +15,7 @@ import {
   employeeListQuerySchema,
   hireEmployeeSchema,
   jobChangeSchema,
+  jobCorrectionSchema,
   nomineesSchema,
   paymentAccountsSchema,
   updateEmployeeSchema,
@@ -25,6 +26,7 @@ import {
   type HireResult,
   type JobAssignmentView,
   type JobChangeInput,
+  type JobCorrectionInput,
   type NomineesInput,
   type NomineeView,
   type Page,
@@ -94,6 +96,18 @@ export class EmployeesController {
     @Body(zod(jobChangeSchema)) body: JobChangeInput,
   ): Promise<EmployeeDetail> {
     return this.employees.changeJob(actor, id, body);
+  }
+
+  /** Corrects a mistake in a job history entry; real changes go through job-changes. */
+  @Patch(':id/jobs/:jobId')
+  @ApiBody(openApiBody(jobCorrectionSchema))
+  correctJob(
+    @CurrentUser() actor: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('jobId', ParseUUIDPipe) jobId: string,
+    @Body(zod(jobCorrectionSchema)) body: JobCorrectionInput,
+  ): Promise<EmployeeDetail> {
+    return this.employees.correctJob(actor, id, jobId, body);
   }
 
   @Put(':id/nominees')

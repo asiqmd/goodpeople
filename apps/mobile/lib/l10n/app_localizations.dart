@@ -1609,6 +1609,408 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This version of the app can\'t show this request. Decide it on the web.'**
   String get approvalUnknownItem;
+
+  /// No description provided for @punchSelfieHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your workspace asks for a photo with each punch. The front camera opens when you punch.'**
+  String get punchSelfieHint;
+
+  /// On the punch button while the camera is open.
+  ///
+  /// In en, this message translates to:
+  /// **'Taking your photo…'**
+  String get punchTakingPhoto;
+
+  /// No description provided for @punchNoPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'No photo was taken, so you weren\'t punched. Punch again and take the photo.'**
+  String get punchNoPhoto;
+
+  /// Spoken label of the camera icon on a punch that came with a selfie.
+  ///
+  /// In en, this message translates to:
+  /// **'With photo'**
+  String get punchWithPhoto;
+
+  /// No description provided for @punchErrorSelfieRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Your workspace now asks for a photo with each punch. Punch again to take one.'**
+  String get punchErrorSelfieRequired;
+
+  /// No description provided for @punchErrorSelfieTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'The photo is too large to send. Please take it again.'**
+  String get punchErrorSelfieTooLarge;
+
+  /// No description provided for @punchErrorSelfieUnreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'The photo could not be read. Please take it again.'**
+  String get punchErrorSelfieUnreadable;
+
+  /// No description provided for @cameraPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera access is off for this app. Allow it in Settings to take the photo for your punch.'**
+  String get cameraPermissionDenied;
+
+  /// No description provided for @cameraUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This phone has no camera the app can use, so you can\'t punch with a photo.'**
+  String get cameraUnavailable;
+
+  /// No description provided for @cameraFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The camera could not be opened. Please try again.'**
+  String get cameraFailed;
+
+  /// Home card and screen title: files HR shared with the employee.
+  ///
+  /// In en, this message translates to:
+  /// **'My documents'**
+  String get documentsTitle;
+
+  /// Under "My documents" on the home screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Letters, certificates and your service book'**
+  String get documentsSubtitle;
+
+  /// No description provided for @documentsLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load your documents.'**
+  String get documentsLoadFailed;
+
+  /// No description provided for @documentsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'HR hasn\'t shared any documents with you yet.'**
+  String get documentsEmpty;
+
+  /// No description provided for @documentsNoEmployeeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Documents belong to an employee record, but none is linked to your login. If you think you should have one, ask your HR team.'**
+  String get documentsNoEmployeeBody;
+
+  /// What a document is, for a category from the API. "other" is a real category and also covers unknown ones.
+  ///
+  /// In en, this message translates to:
+  /// **'{category, select, photo{Photo} nid{National ID card} birth_certificate{Birth certificate} passport{Passport} educational_certificate{Educational certificate} experience_certificate{Experience certificate} appointment_letter{Appointment letter} contract{Contract} medical_certificate{Medical certificate} police_verification{Police verification} nominee_form{Nominee form} letter{Letter} punch_selfie{Punch photo} other{Document}}'**
+  String documentCategoryName(String category);
+
+  /// No description provided for @documentIssuedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Issued {date}'**
+  String documentIssuedOn(String date);
+
+  /// No description provided for @documentExpiresOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires {date}'**
+  String documentExpiresOn(String date);
+
+  /// No description provided for @documentExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get documentExpired;
+
+  /// A document that expires within 60 days.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires soon'**
+  String get documentExpiresSoon;
+
+  /// A document the system generated from a letter template.
+  ///
+  /// In en, this message translates to:
+  /// **'Letter from HR'**
+  String get documentSourceLetter;
+
+  /// No description provided for @documentSourceUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploaded by HR'**
+  String get documentSourceUpload;
+
+  /// A letter's reference number.
+  ///
+  /// In en, this message translates to:
+  /// **'Ref. {refNo}'**
+  String documentRefNo(String refNo);
+
+  /// No description provided for @documentErrorNotShared.
+  ///
+  /// In en, this message translates to:
+  /// **'This document is no longer shared with you.'**
+  String get documentErrorNotShared;
+
+  /// No description provided for @documentErrorGone.
+  ///
+  /// In en, this message translates to:
+  /// **'This document has been removed.'**
+  String get documentErrorGone;
+
+  /// No description provided for @fileNoApp.
+  ///
+  /// In en, this message translates to:
+  /// **'No app on this phone can open this file. Install a PDF reader and try again.'**
+  String get fileNoApp;
+
+  /// No description provided for @fileOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The file could not be opened. Please try again.'**
+  String get fileOpenFailed;
+
+  /// No description provided for @imageLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'This image could not be shown.'**
+  String get imageLoadFailed;
+
+  /// The employee's service record that the Labour Act (s.6) requires.
+  ///
+  /// In en, this message translates to:
+  /// **'My service book'**
+  String get serviceBookTitle;
+
+  /// No description provided for @serviceBookBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your service record, kept under section 6 of the Labour Act. It opens as a PDF in the app\'s language.'**
+  String get serviceBookBody;
+
+  /// No description provided for @serviceBookOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open PDF'**
+  String get serviceBookOpen;
+
+  /// No description provided for @resignationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Resignation'**
+  String get resignationTitle;
+
+  /// Under "Resignation" at the bottom of My profile.
+  ///
+  /// In en, this message translates to:
+  /// **'Give notice, or follow your resignation'**
+  String get resignationEntrySubtitle;
+
+  /// No description provided for @separationsLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load your resignation.'**
+  String get separationsLoadFailed;
+
+  /// No description provided for @separationsNoEmployeeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Resigning needs an employee record, but none is linked to your login. If you think you should have one, ask your HR team.'**
+  String get separationsNoEmployeeBody;
+
+  /// Heading over resignations that are withdrawn, rejected or completed.
+  ///
+  /// In en, this message translates to:
+  /// **'Earlier'**
+  String get separationsEarlier;
+
+  /// How employment ends, in the Bangladesh Labour Act's terms (ss.19–28). Use the Act's Bangla terms.
+  ///
+  /// In en, this message translates to:
+  /// **'{type, select, resignation{Resignation} termination{Termination} dismissal{Dismissal} discharge{Discharge} retrenchment{Retrenchment} retirement{Retirement} death{Death} contract_end{End of contract} other{Separation}}'**
+  String separationTypeName(String type);
+
+  /// A separation's status. approved: decided, waiting for the last working day. completed: the employee has left.
+  ///
+  /// In en, this message translates to:
+  /// **'{status, select, pending{Pending} approved{Approved} completed{Completed} rejected{Rejected} cancelled{Cancelled} other{Unknown}}'**
+  String separationStatusName(String status);
+
+  /// No description provided for @separationNoticeDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Notice given on'**
+  String get separationNoticeDate;
+
+  /// No description provided for @separationLastWorkingDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Last working day'**
+  String get separationLastWorkingDay;
+
+  /// Days of notice the Labour Act asks for.
+  ///
+  /// In en, this message translates to:
+  /// **'Notice required'**
+  String get separationNoticeRequired;
+
+  /// Days from the notice to the last working day.
+  ///
+  /// In en, this message translates to:
+  /// **'Notice given'**
+  String get separationNoticeGiven;
+
+  /// No description provided for @separationNoNoticeRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get separationNoNoticeRequired;
+
+  /// No description provided for @separationShortfall.
+  ///
+  /// In en, this message translates to:
+  /// **'That is {days} short of the notice the Labour Act asks for. Wages for the missing days may be deducted from your final settlement.'**
+  String separationShortfall(String days);
+
+  /// No description provided for @resignationCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdraw resignation'**
+  String get resignationCancel;
+
+  /// No description provided for @resignationCancelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdraw your resignation?'**
+  String get resignationCancelTitle;
+
+  /// No description provided for @resignationCancelBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your resignation with the last working day {date} will be withdrawn, and you stay in your job.'**
+  String resignationCancelBody(String date);
+
+  /// No description provided for @resignationCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Resignation withdrawn'**
+  String get resignationCancelled;
+
+  /// No description provided for @resignHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Resign from your job'**
+  String get resignHeading;
+
+  /// No description provided for @resignNoticeInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Under the Bangladesh Labour Act (section 27), a permanent worker gives 60 days\' written notice to resign, and a temporary worker on monthly wages 30 days. Your notice starts today. If you give less, wages for the missing days may be deducted from your final settlement.'**
+  String get resignNoticeInfo;
+
+  /// No description provided for @resignLastDayRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your last working day'**
+  String get resignLastDayRequired;
+
+  /// Under the last working day: days from today to it.
+  ///
+  /// In en, this message translates to:
+  /// **'That gives {days} of notice.'**
+  String resignNoticeGiven(String days);
+
+  /// No description provided for @resignSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Send resignation'**
+  String get resignSubmit;
+
+  /// No description provided for @resignConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Send your resignation?'**
+  String get resignConfirmTitle;
+
+  /// No description provided for @resignConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your last working day will be {date}. It goes to your manager, then HR. You can withdraw it while it is pending.'**
+  String resignConfirmBody(String date);
+
+  /// No description provided for @resignConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Resign'**
+  String get resignConfirm;
+
+  /// No description provided for @resignSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Resignation sent for approval'**
+  String get resignSent;
+
+  /// No description provided for @resignErrorOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'A resignation or separation is already in progress.'**
+  String get resignErrorOpen;
+
+  /// No description provided for @resignErrorSeparated.
+  ///
+  /// In en, this message translates to:
+  /// **'Your employment has already ended.'**
+  String get resignErrorSeparated;
+
+  /// No description provided for @resignErrorPastLastDay.
+  ///
+  /// In en, this message translates to:
+  /// **'The last working day can\'t be in the past.'**
+  String get resignErrorPastLastDay;
+
+  /// No description provided for @resignErrorNotOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'This resignation has already been decided, so it can\'t be withdrawn.'**
+  String get resignErrorNotOpen;
+
+  /// No description provided for @approvalSeparationDates.
+  ///
+  /// In en, this message translates to:
+  /// **'Notice {notice} → last day {lastDay}'**
+  String approvalSeparationDates(String notice, String lastDay);
+
+  /// No description provided for @approvalNoticeShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Notice short by {days}'**
+  String approvalNoticeShort(String days);
+
+  /// No description provided for @approveSeparationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve this resignation?'**
+  String get approveSeparationTitle;
+
+  /// No description provided for @rejectSeparationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject this resignation?'**
+  String get rejectSeparationTitle;
+
+  /// No description provided for @separationApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Resignation approved'**
+  String get separationApproved;
+
+  /// No description provided for @separationRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Resignation rejected'**
+  String get separationRejected;
 }
 
 class _AppLocalizationsDelegate

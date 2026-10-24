@@ -9,7 +9,10 @@ import {
   type LeaveTypeView,
   type OrgSnapshot,
   type Page,
+  type DocumentView,
   type EmployeeAttendanceView,
+  type LetterTemplateView,
+  type SeparationView,
 } from '@gp/shared';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
@@ -30,11 +33,18 @@ import { BalanceCards, day, RequestList } from '@/components/leave/leave-views';
 import { AdjustLeaveForm } from '@/components/leave/settings-forms';
 import { ManualPunchForm, PinForm } from '@/components/attendance/attendance-forms';
 import { DaysTable, PunchList, TotalsBar } from '@/components/attendance/attendance-views';
+import {
+  ExtendProbationForm,
+  IssueLetterForm,
+  RecordSeparationForm,
+  UploadDocumentForm,
+} from '@/components/lifecycle/lifecycle-forms';
+import { DocumentList, SeparationList } from '@/components/lifecycle/lifecycle-views';
 import { buttonClass, Card } from '@/components/ui';
 import { authedFetch, load } from '@/lib/api';
 import { MONTH, monthRange, shiftMonth } from '@/lib/month';
 
-const TABS = ['profile', 'job', 'nominees', 'payment', 'leave', 'attendance'] as const;
+const TABS = ['profile', 'job', 'documents', 'nominees', 'payment', 'leave', 'attendance'] as const;
 
 export default async function EmployeePage({
   params,
@@ -50,6 +60,7 @@ export default async function EmployeePage({
   const t = await getTranslations('hr');
   const tl = await getTranslations('leave');
   const ta = await getTranslations('attendance');
+  const tlc = await getTranslations('lifecycle');
 
   return (
     <>
@@ -80,7 +91,9 @@ export default async function EmployeePage({
               ? tl('employee.tab')
               : name === 'attendance'
                 ? ta('employee.tab')
-                : t(`detail.${name}`)}
+                : name === 'documents'
+                  ? tlc('documents.tab')
+                  : t(`detail.${name}`)}
           </Link>
         ))}
       </nav>
@@ -108,6 +121,7 @@ export default async function EmployeePage({
         </Card>
       )}
       {tab === 'leave' && <LeaveTab employeeId={id} />}
+      {tab === 'documents' && <DocumentsTab employeeId={id} />}
       {tab === 'attendance' && (
         <AttendanceTab employeeId={id} month={typeof sp.month === 'string' ? sp.month : null} />
       )}
@@ -122,30 +136,119 @@ export default async function EmployeePage({
 }
 
 async function JobTab({ employee }: { employee: EmployeeDetail }) {
-  const [history, org, people] = await Promise.all([
+  const [history, org, people, separations] = await Promise.all([
     load<JobAssignmentView[]>('tenant', `/tenant/employees/${employee.id}/job-history`),
     load<OrgSnapshot>('tenant', '/tenant/org'),
     load<Page<EmployeeListItem>>('tenant', '/tenant/employees?status=active&pageSize=100'),
+    load<SeparationView[]>('tenant', `/tenant/employees/${employee.id}/separations`),
   ]);
   const t = await getTranslations('hr.detail');
+  const tl = await getTranslations('lifecycle');
+  const format = await getFormatter();
+  const today = todayIn();
   const managers = people.items.map((e) => ({
     id: e.id,
     name: `${e.fullName} (${e.employeeCode})`,
   }));
+  const onProbation =
+    employee.status === 'active' &&
+    !employee.confirmedOn &&
+    employee.currentJob?.employmentType === 'probationer';
+  const open = separations.some((s) => s.status === 'pending' || s.status === 'approved');
   return (
     <>
       <div className="grid gap-6 lg:grid-cols-2">
         <JobSummary employee={employee} />
-        <JobHistory history={history} />
+        <JobHistory history={history} correction={{ employeeId: employee.id, org, managers }} />
       </div>
-      <Card title={t('recordChange')}>
-        <JobChangeForm
-          employeeId={employee.id}
-          current={employee.currentJob}
-          org={org}
-          managers={managers}
+      {onProbation && (
+        <Card title={tl('probation.title')}>
+          <p className="mb-3 text-sm text-slate-600">
+            {employee.probationEndsOn
+              ? tl('probation.endsOn', { date: day(format, employee.probationEndsOn) })
+              : tl('probation.noDate')}
+            {employee.probationEndsOn && employee.probationEndsOn < today && (
+              <span className="block text-amber-700">{tl('probation.deemed')}</span>
+            )}
+          </p>
+          <ExtendProbationForm
+            employeeId={employee.id}
+            current={employee.probationEndsOn ?? today}
+          />
+        </Card>
+      )}
+      {employee.status === 'active' && (
+        <Card title={t('recordChange')}>
+          <JobChangeForm
+            employeeId={employee.id}
+            current={employee.currentJob}
+            org={org}
+            managers={managers}
+          />
+          <p className="mt-2 text-xs text-slate-500">{tl('job.backDatedHint')}</p>
+        </Card>
+      )}
+      <Card title={tl('separation.title')}>
+        <SeparationList
+          separations={separations}
+          cancellable={(s) => s.status === 'pending' || s.status === 'approved'}
         />
+        {employee.status === 'active' && !open && (
+          <details className="mt-4">
+            <summary className="cursor-pointer text-sm font-medium text-brand-700">
+              {tl('separation.recordTitle')}
+            </summary>
+            <div className="mt-4">
+              <RecordSeparationForm employeeId={employee.id} today={today} />
+            </div>
+          </details>
+        )}
       </Card>
+    </>
+  );
+}
+
+async function DocumentsTab({ employeeId }: { employeeId: string }) {
+  const [documents, templates] = await Promise.all([
+    load<DocumentView[]>('tenant', `/tenant/employees/${employeeId}/documents`),
+    load<LetterTemplateView[]>('tenant', '/tenant/letter-templates'),
+  ]);
+  const t = await getTranslations('lifecycle');
+  return (
+    <>
+      <Card
+        title={t('documents.heading')}
+        action={
+          <span className="flex gap-3 text-sm">
+            <a
+              href={`/workspace/files/service-book/${employeeId}?language=en`}
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-brand-700 hover:underline"
+            >
+              {t('documents.serviceBook')}
+            </a>
+            <a
+              href={`/workspace/files/service-book/${employeeId}?language=bn`}
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-brand-700 hover:underline"
+            >
+              {t('documents.serviceBookBn')}
+            </a>
+          </span>
+        }
+      >
+        <DocumentList documents={documents} today={todayIn()} manage />
+      </Card>
+      <div className="grid gap-6 xl:grid-cols-2">
+        <Card title={t('documents.uploadTitle')}>
+          <UploadDocumentForm employeeId={employeeId} />
+        </Card>
+        <Card title={t('letters.issueTitle')}>
+          <IssueLetterForm employeeId={employeeId} templates={templates} />
+        </Card>
+      </div>
     </>
   );
 }

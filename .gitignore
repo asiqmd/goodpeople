@@ -13,3 +13,5 @@ apps/mobile/build/
 apps/mobile/.flutter-plugins*
 apps/mobile/ios/Pods/
 apps/api/openapi.json
+# Local document store (STORAGE_DRIVER=local)
+apps/api/storage/

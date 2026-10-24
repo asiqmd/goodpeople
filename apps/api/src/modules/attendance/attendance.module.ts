@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TenantRolesGuard } from '../../common/roles.js';
 import { AuditModule } from '../audit/audit.module.js';
+import { DocumentsModule } from '../documents/documents.module.js';
 import { EntitlementsModule } from '../entitlements/entitlements.module.js';
 import { AttendanceController, EdgeController } from './attendance.controller.js';
 import { AttendanceJobs } from './attendance-jobs.service.js';
@@ -14,7 +15,7 @@ import { ScheduleService } from './schedule.service.js';
 import { ShiftsService } from './shifts.service.js';
 
 @Module({
-  imports: [AuditModule, EntitlementsModule],
+  imports: [AuditModule, EntitlementsModule, DocumentsModule],
   controllers: [AttendanceController, EdgeController],
   providers: [
     ScheduleService,

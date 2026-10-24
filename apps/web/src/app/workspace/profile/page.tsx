@@ -1,4 +1,4 @@
-import type { EmployeeDetail } from '@gp/shared';
+import { todayIn, type DocumentView, type EmployeeDetail, type SeparationView } from '@gp/shared';
 import { getTranslations } from 'next-intl/server';
 import {
   AccountList,
@@ -7,8 +7,10 @@ import {
   NomineeList,
   PersonalDetails,
 } from '@/components/hr/employee-views';
+import { ResignForm } from '@/components/lifecycle/lifecycle-forms';
+import { DocumentList, SeparationList } from '@/components/lifecycle/lifecycle-views';
 import { Card } from '@/components/ui';
-import { authedFetch } from '@/lib/api';
+import { authedFetch, load } from '@/lib/api';
 
 export default async function MyProfilePage() {
   const t = await getTranslations('hr.profile');
@@ -23,6 +25,13 @@ export default async function MyProfilePage() {
     );
   }
   const employee = result.data;
+  const tl = await getTranslations('lifecycle');
+  const today = todayIn();
+  const [documents, separations] = await Promise.all([
+    load<DocumentView[]>('tenant', '/tenant/me/documents'),
+    load<SeparationView[]>('tenant', '/tenant/me/separations'),
+  ]);
+  const open = separations.some((s) => s.status === 'pending' || s.status === 'approved');
   return (
     <>
       <EmployeeHeader employee={employee} />
@@ -32,6 +41,53 @@ export default async function MyProfilePage() {
         <NomineeList employee={employee} />
         <AccountList employee={employee} />
       </div>
+      <Card
+        title={tl('documents.mine')}
+        action={
+          <span className="flex gap-3 text-sm">
+            <a
+              href="/workspace/files/my-service-book?language=en"
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-brand-700 hover:underline"
+            >
+              {tl('documents.serviceBook')}
+            </a>
+            <a
+              href="/workspace/files/my-service-book?language=bn"
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-brand-700 hover:underline"
+            >
+              {tl('documents.serviceBookBn')}
+            </a>
+          </span>
+        }
+      >
+        <DocumentList documents={documents} today={today} />
+      </Card>
+      {employee.status === 'active' && (
+        <Card title={tl('separation.mine')}>
+          {separations.length > 0 && (
+            <div className="mb-4">
+              <SeparationList
+                separations={separations}
+                cancellable={(s) => s.status === 'pending'}
+              />
+            </div>
+          )}
+          {!open && (
+            <details>
+              <summary className="cursor-pointer text-sm font-medium text-slate-600">
+                {tl('separation.resignTitle')}
+              </summary>
+              <div className="mt-4">
+                <ResignForm today={today} />
+              </div>
+            </details>
+          )}
+        </Card>
+      )}
     </>
   );
 }

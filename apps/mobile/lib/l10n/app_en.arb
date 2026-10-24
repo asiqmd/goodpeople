@@ -783,5 +783,207 @@
   "rejectCorrectionTitle": "Reject this correction?",
   "correctionApproved": "Correction approved",
   "correctionRejected": "Correction rejected",
-  "approvalUnknownItem": "This version of the app can't show this request. Decide it on the web."
+  "approvalUnknownItem": "This version of the app can't show this request. Decide it on the web.",
+  "punchSelfieHint": "Your workspace asks for a photo with each punch. The front camera opens when you punch.",
+  "punchTakingPhoto": "Taking your photo…",
+  "@punchTakingPhoto": {
+    "description": "On the punch button while the camera is open."
+  },
+  "punchNoPhoto": "No photo was taken, so you weren't punched. Punch again and take the photo.",
+  "punchWithPhoto": "With photo",
+  "@punchWithPhoto": {
+    "description": "Spoken label of the camera icon on a punch that came with a selfie."
+  },
+  "punchErrorSelfieRequired": "Your workspace now asks for a photo with each punch. Punch again to take one.",
+  "punchErrorSelfieTooLarge": "The photo is too large to send. Please take it again.",
+  "punchErrorSelfieUnreadable": "The photo could not be read. Please take it again.",
+  "cameraPermissionDenied": "Camera access is off for this app. Allow it in Settings to take the photo for your punch.",
+  "cameraUnavailable": "This phone has no camera the app can use, so you can't punch with a photo.",
+  "cameraFailed": "The camera could not be opened. Please try again.",
+  "documentsTitle": "My documents",
+  "@documentsTitle": {
+    "description": "Home card and screen title: files HR shared with the employee."
+  },
+  "documentsSubtitle": "Letters, certificates and your service book",
+  "@documentsSubtitle": {
+    "description": "Under \"My documents\" on the home screen."
+  },
+  "documentsLoadFailed": "We could not load your documents.",
+  "documentsEmpty": "HR hasn't shared any documents with you yet.",
+  "documentsNoEmployeeBody": "Documents belong to an employee record, but none is linked to your login. If you think you should have one, ask your HR team.",
+  "documentCategoryName": "{category, select, photo{Photo} nid{National ID card} birth_certificate{Birth certificate} passport{Passport} educational_certificate{Educational certificate} experience_certificate{Experience certificate} appointment_letter{Appointment letter} contract{Contract} medical_certificate{Medical certificate} police_verification{Police verification} nominee_form{Nominee form} letter{Letter} punch_selfie{Punch photo} other{Document}}",
+  "@documentCategoryName": {
+    "description": "What a document is, for a category from the API. \"other\" is a real category and also covers unknown ones.",
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "documentIssuedOn": "Issued {date}",
+  "@documentIssuedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "Mar 1, 2020"
+      }
+    }
+  },
+  "documentExpiresOn": "Expires {date}",
+  "@documentExpiresOn": {
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "Nov 30, 2026"
+      }
+    }
+  },
+  "documentExpired": "Expired",
+  "documentExpiresSoon": "Expires soon",
+  "@documentExpiresSoon": {
+    "description": "A document that expires within 60 days."
+  },
+  "documentSourceLetter": "Letter from HR",
+  "@documentSourceLetter": {
+    "description": "A document the system generated from a letter template."
+  },
+  "documentSourceUpload": "Uploaded by HR",
+  "documentRefNo": "Ref. {refNo}",
+  "@documentRefNo": {
+    "description": "A letter's reference number.",
+    "placeholders": {
+      "refNo": {
+        "type": "String",
+        "example": "MG/HR/2026/0012"
+      }
+    }
+  },
+  "documentErrorNotShared": "This document is no longer shared with you.",
+  "documentErrorGone": "This document has been removed.",
+  "fileNoApp": "No app on this phone can open this file. Install a PDF reader and try again.",
+  "fileOpenFailed": "The file could not be opened. Please try again.",
+  "imageLoadFailed": "This image could not be shown.",
+  "serviceBookTitle": "My service book",
+  "@serviceBookTitle": {
+    "description": "The employee's service record that the Labour Act (s.6) requires."
+  },
+  "serviceBookBody": "Your service record, kept under section 6 of the Labour Act. It opens as a PDF in the app's language.",
+  "serviceBookOpen": "Open PDF",
+  "resignationTitle": "Resignation",
+  "resignationEntrySubtitle": "Give notice, or follow your resignation",
+  "@resignationEntrySubtitle": {
+    "description": "Under \"Resignation\" at the bottom of My profile."
+  },
+  "separationsLoadFailed": "We could not load your resignation.",
+  "separationsNoEmployeeBody": "Resigning needs an employee record, but none is linked to your login. If you think you should have one, ask your HR team.",
+  "separationsEarlier": "Earlier",
+  "@separationsEarlier": {
+    "description": "Heading over resignations that are withdrawn, rejected or completed."
+  },
+  "separationTypeName": "{type, select, resignation{Resignation} termination{Termination} dismissal{Dismissal} discharge{Discharge} retrenchment{Retrenchment} retirement{Retirement} death{Death} contract_end{End of contract} other{Separation}}",
+  "@separationTypeName": {
+    "description": "How employment ends, in the Bangladesh Labour Act's terms (ss.19–28). Use the Act's Bangla terms.",
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "separationStatusName": "{status, select, pending{Pending} approved{Approved} completed{Completed} rejected{Rejected} cancelled{Cancelled} other{Unknown}}",
+  "@separationStatusName": {
+    "description": "A separation's status. approved: decided, waiting for the last working day. completed: the employee has left.",
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "separationNoticeDate": "Notice given on",
+  "separationLastWorkingDay": "Last working day",
+  "separationNoticeRequired": "Notice required",
+  "@separationNoticeRequired": {
+    "description": "Days of notice the Labour Act asks for."
+  },
+  "separationNoticeGiven": "Notice given",
+  "@separationNoticeGiven": {
+    "description": "Days from the notice to the last working day."
+  },
+  "separationNoNoticeRequired": "None",
+  "separationShortfall": "That is {days} short of the notice the Labour Act asks for. Wages for the missing days may be deducted from your final settlement.",
+  "@separationShortfall": {
+    "placeholders": {
+      "days": {
+        "type": "String",
+        "example": "29 days"
+      }
+    }
+  },
+  "resignationCancel": "Withdraw resignation",
+  "resignationCancelTitle": "Withdraw your resignation?",
+  "resignationCancelBody": "Your resignation with the last working day {date} will be withdrawn, and you stay in your job.",
+  "@resignationCancelBody": {
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "December 23, 2026"
+      }
+    }
+  },
+  "resignationCancelled": "Resignation withdrawn",
+  "resignHeading": "Resign from your job",
+  "resignNoticeInfo": "Under the Bangladesh Labour Act (section 27), a permanent worker gives 60 days' written notice to resign, and a temporary worker on monthly wages 30 days. Your notice starts today. If you give less, wages for the missing days may be deducted from your final settlement.",
+  "resignLastDayRequired": "Choose your last working day",
+  "resignNoticeGiven": "That gives {days} of notice.",
+  "@resignNoticeGiven": {
+    "description": "Under the last working day: days from today to it.",
+    "placeholders": {
+      "days": {
+        "type": "String",
+        "example": "60 days"
+      }
+    }
+  },
+  "resignSubmit": "Send resignation",
+  "resignConfirmTitle": "Send your resignation?",
+  "resignConfirmBody": "Your last working day will be {date}. It goes to your manager, then HR. You can withdraw it while it is pending.",
+  "@resignConfirmBody": {
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "December 23, 2026"
+      }
+    }
+  },
+  "resignConfirm": "Resign",
+  "resignSent": "Resignation sent for approval",
+  "resignErrorOpen": "A resignation or separation is already in progress.",
+  "resignErrorSeparated": "Your employment has already ended.",
+  "resignErrorPastLastDay": "The last working day can't be in the past.",
+  "resignErrorNotOpen": "This resignation has already been decided, so it can't be withdrawn.",
+  "approvalSeparationDates": "Notice {notice} → last day {lastDay}",
+  "@approvalSeparationDates": {
+    "placeholders": {
+      "notice": {
+        "type": "String",
+        "example": "Oct 24, 2026"
+      },
+      "lastDay": {
+        "type": "String",
+        "example": "Nov 24, 2026"
+      }
+    }
+  },
+  "approvalNoticeShort": "Notice short by {days}",
+  "@approvalNoticeShort": {
+    "placeholders": {
+      "days": {
+        "type": "String",
+        "example": "29 days"
+      }
+    }
+  },
+  "approveSeparationTitle": "Approve this resignation?",
+  "rejectSeparationTitle": "Reject this resignation?",
+  "separationApproved": "Resignation approved",
+  "separationRejected": "Resignation rejected"
 }

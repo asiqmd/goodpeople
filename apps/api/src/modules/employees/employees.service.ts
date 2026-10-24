@@ -22,6 +22,7 @@ import {
   type FieldCipher,
   type Tx,
 } from '@gp/db';
+import { bdProbationEnd } from '@gp/country-packs';
 import {
   BD_NID,
   addDays,
@@ -35,6 +36,7 @@ import {
   type IdentityInput,
   type JobAssignmentView,
   type JobChangeInput,
+  type JobCorrectionInput,
   type JobInput,
   type NomineesInput,
   type NomineeView,
@@ -44,11 +46,12 @@ import {
   type TenantWithAccess,
   type UpdateEmployeeInput,
 } from '@gp/shared';
-import { and, asc, count, eq, ilike, inArray, isNull, or, type SQL } from 'drizzle-orm';
+import { and, asc, count, eq, ilike, inArray, or, type SQL } from 'drizzle-orm';
 import type { AuthUser } from '../../common/auth-user.js';
 import { forbidden } from '../../common/errors.js';
 import { currentTenantId } from '../../common/request-context.js';
 import { FIELD_CIPHER, TenantDb } from '../../db/db.module.js';
+import { AttendanceProcessor } from '../attendance/processor.service.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
 import { currentOf, inForceOn, selectAssignments, toJobView } from './employee.queries.js';
 
@@ -90,6 +93,75 @@ function personalColumns(input: PersonalInput): Partial<EmployeeRow> {
   return Object.fromEntries(Object.entries(columns).filter(([, v]) => v !== undefined));
 }
 
+type JobRow = typeof jobAssignments.$inferSelect;
+type JobChanges = JobChangeInput['changes'];
+
+const JOB_FIELDS = [
+  'legalEntityId',
+  'locationId',
+  'orgUnitId',
+  'designationId',
+  'gradeId',
+  'costCentreId',
+  'managerId',
+  'employmentType',
+  'workerCategory',
+] as const;
+
+const jobFields = (row: JobRow) =>
+  Object.fromEntries(JOB_FIELDS.map((k) => [k, row[k]])) as Pick<
+    JobRow,
+    (typeof JOB_FIELDS)[number]
+  >;
+
+/** A row's job fields with the changes applied: undefined keeps a value, null clears it. */
+function applyJobChanges(row: JobRow, c: JobChanges, event: JobRow['event']) {
+  const keep = <K extends keyof JobChanges & keyof JobRow>(key: K) =>
+    c[key] === undefined ? row[key] : c[key];
+  return {
+    legalEntityId: c.legalEntityId ?? row.legalEntityId,
+    locationId: keep('locationId') as string | null,
+    orgUnitId: keep('orgUnitId') as string | null,
+    designationId: keep('designationId') as string | null,
+    gradeId: keep('gradeId') as string | null,
+    costCentreId: keep('costCentreId') as string | null,
+    managerId: keep('managerId') as string | null,
+    // Confirming a probationer makes them permanent unless the change says otherwise.
+    employmentType:
+      c.employmentType ??
+      (event === 'confirmation' && row.employmentType === 'probationer'
+        ? 'permanent'
+        : row.employmentType),
+    workerCategory: c.workerCategory ?? row.workerCategory,
+  };
+}
+
+/**
+ * After an earlier entry changes from `before` to `after`, later entries that still had the
+ * old value of a field get the new one; a field a later entry changed itself stays. Returns
+ * how many entries changed.
+ */
+async function carryForward(
+  tx: Tx,
+  later: JobRow[],
+  before: JobRow,
+  after: ReturnType<typeof applyJobChanges>,
+): Promise<number> {
+  let changed = 0;
+  const previous: Record<string, unknown> = { ...before };
+  for (const row of later) {
+    const patch: Record<string, unknown> = {};
+    for (const key of JOB_FIELDS) {
+      if (previous[key] !== after[key] && row[key] === previous[key]) patch[key] = after[key];
+    }
+    if (Object.keys(patch).length) {
+      await tx.update(jobAssignments).set(patch).where(eq(jobAssignments.id, row.id));
+      changed += 1;
+    }
+  }
+  return changed;
+}
+
 /**
  * Employee records. Every query runs through TenantDb (row-level security) and identity and
  * account numbers are encrypted before they reach the database.
@@ -99,6 +171,7 @@ export class EmployeesService {
   constructor(
     private readonly tenantDb: TenantDb,
     private readonly audit: TenantAuditService,
+    private readonly attendance: AttendanceProcessor,
     @Inject(FIELD_CIPHER) private readonly cipher: FieldCipher,
   ) {}
 
@@ -213,73 +286,96 @@ export class EmployeesService {
     const passwordHash = password ? await hashPassword(password) : undefined;
 
     const id = await this.tenantDb.run(async (tx) => {
-      if (limit !== null) {
-        const [{ value: active } = { value: 0 }] = await tx
-          .select({ value: count() })
-          .from(employees)
-          .where(eq(employees.status, 'active'));
-        if (active >= limit) {
-          throw forbidden('limit_reached', `Your plan allows ${limit} active employees`);
-        }
-      }
-      await this.checkJobRefs(tx, input.job);
-      const tenantId = currentTenantId();
-      const userId = portal
-        ? (
-            await tx
-              .insert(tenantUsers)
-              .values({
-                tenantId,
-                email: portal.email.toLowerCase(),
-                name: input.fullName,
-                passwordHash: passwordHash!,
-                role: portal.role,
-              })
-              .returning({ id: tenantUsers.id })
-          )[0]!.id
-        : null;
-      const [row] = await tx
-        .insert(employees)
-        .values({
-          ...(personalColumns(input) as typeof employees.$inferInsert),
-          ...this.identityColumns(input.identity),
-          tenantId,
-          employeeCode: input.employeeCode,
-          userId,
-          joinedOn: input.joinedOn,
-          probationEndsOn: input.probationEndsOn ?? null,
-          confirmedOn: input.job.employmentType === 'permanent' ? input.joinedOn : null,
-        })
-        .returning({ id: employees.id });
-      await tx.insert(jobAssignments).values({
-        ...input.job,
-        tenantId,
-        employeeId: row!.id,
-        event: 'hire',
-        effectiveFrom: input.joinedOn,
-        reason: 'Joined',
-        createdBy: actor.id,
-      });
-      await this.audit.record(tx, {
-        actorUserId: actor.id,
-        action: 'employee.hire',
-        entityType: 'employee',
-        entityId: row!.id,
-        after: {
-          employeeCode: input.employeeCode,
-          fullName: input.fullName,
-          joinedOn: input.joinedOn,
-          job: input.job,
-          portalAccess: portal ? { email: portal.email, role: portal.role } : null,
-        },
-      });
-      return row!.id;
+      await this.checkLimit(tx, limit, 1);
+      return this.insertHire(tx, actor, input, passwordHash);
     });
 
     return {
       employee: await this.get(id),
       ...(portal && !portal.password ? { temporaryPassword: password } : {}),
     };
+  }
+
+  /** Refuses hiring past the plan's active-employee limit. */
+  async checkLimit(tx: Tx, limit: number | null, adding: number) {
+    if (limit === null) return;
+    const [{ value: active } = { value: 0 }] = await tx
+      .select({ value: count() })
+      .from(employees)
+      .where(eq(employees.status, 'active'));
+    if (active + adding > limit) {
+      throw forbidden('limit_reached', `Your plan allows ${limit} active employees`);
+    }
+  }
+
+  /** Creates the employee, their first job and any login, inside the caller's transaction. */
+  async insertHire(
+    tx: Tx,
+    actor: AuthUser,
+    input: HireEmployeeInput,
+    passwordHash?: string,
+  ): Promise<string> {
+    const portal = input.portalAccess;
+    await this.checkJobRefs(tx, input.job);
+    const tenantId = currentTenantId();
+    const userId = portal
+      ? (
+          await tx
+            .insert(tenantUsers)
+            .values({
+              tenantId,
+              email: portal.email.toLowerCase(),
+              name: input.fullName,
+              passwordHash: passwordHash!,
+              role: portal.role,
+            })
+            .returning({ id: tenantUsers.id })
+        )[0]!.id
+      : null;
+    const [row] = await tx
+      .insert(employees)
+      .values({
+        ...(personalColumns(input) as typeof employees.$inferInsert),
+        ...this.identityColumns(input.identity),
+        tenantId,
+        employeeCode: input.employeeCode,
+        userId,
+        joinedOn: input.joinedOn,
+        // A probationer's probation defaults to the statutory period (s.4).
+        probationEndsOn:
+          input.probationEndsOn ??
+          (input.job.employmentType === 'probationer'
+            ? bdProbationEnd(
+                input.joinedOn,
+                input.job.workerCategory === 'staff' ? 'clerical' : 'other',
+              )
+            : null),
+        confirmedOn: input.job.employmentType === 'permanent' ? input.joinedOn : null,
+      })
+      .returning({ id: employees.id });
+    await tx.insert(jobAssignments).values({
+      ...input.job,
+      tenantId,
+      employeeId: row!.id,
+      event: 'hire',
+      effectiveFrom: input.joinedOn,
+      reason: 'Joined',
+      createdBy: actor.id,
+    });
+    await this.audit.record(tx, {
+      actorUserId: actor.id,
+      action: 'employee.hire',
+      entityType: 'employee',
+      entityId: row!.id,
+      after: {
+        employeeCode: input.employeeCode,
+        fullName: input.fullName,
+        joinedOn: input.joinedOn,
+        job: input.job,
+        portalAccess: portal ? { email: portal.email, role: portal.role } : null,
+      },
+    });
+    return row!.id;
   }
 
   async update(actor: AuthUser, id: string, input: UpdateEmployeeInput): Promise<EmployeeDetail> {
@@ -313,8 +409,10 @@ export class EmployeesService {
   }
 
   /**
-   * Records a job event from a date. The open assignment ends the day before and a new one
-   * starts, carrying over whatever the change leaves out. Back-dated corrections come later.
+   * Records a job event from a date. The assignment in force then ends the day before and a
+   * new one starts, carrying over whatever the change leaves out. A date before the latest
+   * change is a back-dated change: later assignments take the new values too, unless they
+   * changed those fields themselves.
    */
   async changeJob(actor: AuthUser, id: string, input: JobChangeInput): Promise<EmployeeDetail> {
     await this.tenantDb.run(async (tx) => {
@@ -327,80 +425,120 @@ export class EmployeesService {
       if (employee.status !== 'active') {
         throw new ConflictException('This employee has separated');
       }
-      const [latest] = await tx
+      const history = await tx
         .select()
         .from(jobAssignments)
-        .where(and(eq(jobAssignments.employeeId, id), isNull(jobAssignments.effectiveTo)));
-      if (!latest) throw new ConflictException('This employee has no open job assignment');
-      if (input.effectiveFrom <= latest.effectiveFrom) {
+        .where(eq(jobAssignments.employeeId, id))
+        .orderBy(asc(jobAssignments.effectiveFrom));
+      if (history.length === 0) {
+        throw new ConflictException('This employee has no job assignment');
+      }
+      const date = input.effectiveFrom;
+      if (date < employee.joinedOn) {
         throw new BadRequestException(
-          `The change must take effect after ${latest.effectiveFrom}, when the latest one did`,
+          `The change cannot be before joining on ${employee.joinedOn}`,
         );
       }
-      const c = input.changes;
-      if (c.managerId === id) {
+      const target = history.find(
+        (r) => r.effectiveFrom <= date && (r.effectiveTo === null || r.effectiveTo >= date),
+      );
+      if (!target) throw new ConflictException(`No job assignment is in force on ${date}`);
+      if (target.effectiveFrom === date) {
+        throw new BadRequestException(
+          `A change already takes effect on ${date}; correct that entry instead`,
+        );
+      }
+      if (input.changes.managerId === id) {
         throw new BadRequestException('An employee cannot report to themself');
       }
-      const keep = <K extends keyof typeof c & keyof typeof latest>(key: K) =>
-        c[key] === undefined ? latest[key] : c[key];
-      const next = {
-        legalEntityId: c.legalEntityId ?? latest.legalEntityId,
-        locationId: keep('locationId'),
-        orgUnitId: keep('orgUnitId'),
-        designationId: keep('designationId'),
-        gradeId: keep('gradeId'),
-        costCentreId: keep('costCentreId'),
-        managerId: keep('managerId'),
-        // Confirming a probationer makes them permanent unless the change says otherwise.
-        employmentType:
-          c.employmentType ??
-          (input.event === 'confirmation' && latest.employmentType === 'probationer'
-            ? 'permanent'
-            : latest.employmentType),
-        workerCategory: c.workerCategory ?? latest.workerCategory,
-      };
+      const next = applyJobChanges(target, input.changes, input.event);
       await this.checkJobRefs(tx, next);
 
       await tx
         .update(jobAssignments)
-        .set({ effectiveTo: addDays(input.effectiveFrom, -1) })
-        .where(eq(jobAssignments.id, latest.id));
+        .set({ effectiveTo: addDays(date, -1) })
+        .where(eq(jobAssignments.id, target.id));
       await tx.insert(jobAssignments).values({
         ...next,
         tenantId: currentTenantId(),
         employeeId: id,
         event: input.event,
-        effectiveFrom: input.effectiveFrom,
+        effectiveFrom: date,
+        effectiveTo: target.effectiveTo,
         reason: input.reason,
         createdBy: actor.id,
       });
+      const carried = await carryForward(
+        tx,
+        history.filter((r) => r.effectiveFrom > date),
+        target,
+        next,
+      );
       if (input.event === 'confirmation') {
         await tx
           .update(employees)
-          .set({ confirmedOn: input.effectiveFrom, updatedAt: new Date() })
+          .set({ confirmedOn: date, updatedAt: new Date() })
           .where(eq(employees.id, id));
       }
-      const {
-        id: _id,
-        tenantId: _t,
-        employeeId: _e,
-        createdAt: _c,
-        createdBy: _b,
-        ...before
-      } = latest;
       await this.audit.record(tx, {
         actorUserId: actor.id,
         action: `employee.job.${input.event}`,
         entityType: 'employee',
         entityId: id,
-        before,
+        before: jobFields(target),
         after: {
           ...next,
           event: input.event,
-          effectiveFrom: input.effectiveFrom,
+          effectiveFrom: date,
           reason: input.reason,
+          backDated: target.effectiveTo !== null,
+          laterRowsUpdated: carried,
         },
       });
+      await this.attendance.processSince(tx, [id], date);
+    });
+    return this.get(id);
+  }
+
+  /**
+   * Corrects a job history entry in place, for mistakes rather than real changes. Later
+   * entries take the corrected values too, unless they changed those fields themselves.
+   */
+  async correctJob(
+    actor: AuthUser,
+    id: string,
+    jobId: string,
+    input: JobCorrectionInput,
+  ): Promise<EmployeeDetail> {
+    await this.tenantDb.run(async (tx) => {
+      const history = await tx
+        .select()
+        .from(jobAssignments)
+        .where(eq(jobAssignments.employeeId, id))
+        .orderBy(asc(jobAssignments.effectiveFrom));
+      const row = history.find((r) => r.id === jobId);
+      if (!row) throw new NotFoundException('Job history entry not found');
+      if (input.changes.managerId === id) {
+        throw new BadRequestException('An employee cannot report to themself');
+      }
+      const next = applyJobChanges(row, input.changes, row.event);
+      await this.checkJobRefs(tx, next);
+      await tx.update(jobAssignments).set(next).where(eq(jobAssignments.id, jobId));
+      const carried = await carryForward(
+        tx,
+        history.filter((r) => r.effectiveFrom > row.effectiveFrom),
+        row,
+        next,
+      );
+      await this.audit.record(tx, {
+        actorUserId: actor.id,
+        action: 'employee.job.correct',
+        entityType: 'employee',
+        entityId: id,
+        before: jobFields(row),
+        after: { ...next, jobId, reason: input.reason, laterRowsUpdated: carried },
+      });
+      await this.attendance.processSince(tx, [id], row.effectiveFrom);
     });
     return this.get(id);
   }

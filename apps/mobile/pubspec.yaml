@@ -14,9 +14,15 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   flutter_riverpod: ^3.4.3
-  # Pinned by flutter_localizations; `any` lets the Flutter SDK choose.
   geolocator: ^14.1.2
+  # The front camera for selfie punches.
+  image_picker: ^1.2.4
+  # Pinned by flutter_localizations; `any` lets the Flutter SDK choose.
   intl: any
+  # Opens a downloaded PDF in the phone's own viewer.
+  open_filex: ^5.0.0
+  # The app's cache directory, where that PDF is saved first.
+  path_provider: ^2.1.6
 
 dev_dependencies:
   flutter_lints: ^6.0.0

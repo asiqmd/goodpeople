@@ -4,11 +4,12 @@ import { AttendanceModule } from '../attendance/attendance.module.js';
 import { AuditModule } from '../audit/audit.module.js';
 import { EntitlementsModule } from '../entitlements/entitlements.module.js';
 import { LeaveModule } from '../leave/leave.module.js';
+import { LifecycleModule } from '../lifecycle/lifecycle.module.js';
 import { ApprovalsController } from './approvals.controller.js';
 import { ApprovalsService } from './approvals.service.js';
 
 @Module({
-  imports: [AuditModule, EntitlementsModule, LeaveModule, AttendanceModule],
+  imports: [AuditModule, EntitlementsModule, LeaveModule, AttendanceModule, LifecycleModule],
   controllers: [ApprovalsController],
   providers: [ApprovalsService, TenantRolesGuard],
 })

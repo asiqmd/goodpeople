@@ -12,6 +12,7 @@ import type {
 import type { Ref } from './hr-types.js';
 import type { ApprovalStepKind } from './leave.js';
 import type { ApprovalStepView, LeaveBalanceView, LeaveRequestView } from './leave-types.js';
+import type { SeparationApprovalItem } from './lifecycle-types.js';
 
 export interface EmployeeRef {
   id: string;
@@ -103,6 +104,8 @@ export interface PunchView {
   insideGeofence: boolean | null;
   note: string | null;
   voided: boolean;
+  /** The photo taken with an app punch, a document readable by HR. */
+  selfieDocumentId: string | null;
 }
 
 export interface MyAttendanceToday {
@@ -115,6 +118,7 @@ export interface MyAttendanceToday {
     /** Why punching from the app is not possible, if it is not. */
     blockedReason: 'disabled' | 'no_geofence' | null;
     geofence: { latitude: number; longitude: number; radiusM: number } | null;
+    requireSelfie: boolean;
   };
   nextDirection: 'in' | 'out';
 }
@@ -164,6 +168,7 @@ export interface AttendanceSettingsView {
   regularizationChain: ApprovalStepKind[];
   regularizationWindowDays: number;
   trackingFrom: string;
+  requireSelfie: boolean;
 }
 
 export interface EdgeAgentView {
@@ -245,4 +250,4 @@ export interface RegularizationApprovalItem {
 }
 
 /** One approval waiting for the signed-in user. */
-export type ApprovalItem = LeaveApprovalItem | RegularizationApprovalItem;
+export type ApprovalItem = LeaveApprovalItem | RegularizationApprovalItem | SeparationApprovalItem;

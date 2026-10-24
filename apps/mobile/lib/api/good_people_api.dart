@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -99,12 +101,17 @@ abstract interface class GoodPeopleApi {
 
   /// `POST /tenant/me/attendance/punch` from the mobile app, with the
   /// phone's [location] when there is one. Answers with today as it is after
-  /// the punch. Refusals by `code`: `outside_geofence`, `location_required`
-  /// and `no_geofence` (400), `self_punch_disabled` and `separated` (403),
-  /// `too_soon` (409).
+  /// the punch. Refusals by `code`: `outside_geofence`, `location_required`,
+  /// `no_geofence` and `selfie_required` (400), `self_punch_disabled` and
+  /// `separated` (403), `too_soon` (409).
+  ///
+  /// With a [selfie] the punch goes as a multipart form, the photo in the
+  /// `selfie` field; without one, as JSON. A photo over 2 MB gets a 413, one
+  /// that is not an image a 415 with code `unsupported_file`.
   Future<MyAttendanceToday> punch(
     String accessToken, {
     PunchLocation? location,
+    PunchSelfie? selfie,
   });
 
   /// `GET /tenant/me/attendance?from=&to=`: the employee's days, at most 62
@@ -133,6 +140,38 @@ abstract interface class GoodPeopleApi {
     String accessToken,
     String regularizationId,
   );
+
+  // ── Documents and lifecycle ───────────────────────────────────────────────
+  // Part of `core_hr`. The `/tenant/me/...` calls answer 404 for a login with
+  // no employee record, like [fetchMyEmployee].
+
+  /// `GET /tenant/me/documents`: what HR shared with the employee, newest
+  /// first.
+  Future<List<EmployeeDocument>> fetchMyDocuments(String accessToken);
+
+  /// `GET /tenant/documents/{id}/file`: the file itself. A document no
+  /// longer shared gets a 403, a removed one a 404.
+  Future<FileDownload> downloadDocument(String accessToken, String documentId);
+
+  /// `GET /tenant/me/service-book?language=`: the employee's service book
+  /// (Labour Act s.6) as a PDF.
+  Future<FileDownload> fetchMyServiceBook(
+    String accessToken, {
+    required LetterLanguage language,
+  });
+
+  /// `GET /tenant/me/separations`: the employee's resignations and any
+  /// separation HR recorded, newest first.
+  Future<List<Separation>> fetchMySeparations(String accessToken);
+
+  /// `POST /tenant/me/resignation`, giving notice today. Refusals by `code`:
+  /// `past_last_day` (400), `separation_open` and `separated` (409).
+  Future<Separation> resign(String accessToken, ResignationDraft draft);
+
+  /// `POST /tenant/separations/{id}/cancel`. An employee can withdraw only
+  /// a pending resignation: a 403 otherwise, or a 409 with code `not_open`
+  /// once it is decided.
+  Future<Separation> cancelSeparation(String accessToken, String separationId);
 }
 
 /// [GoodPeopleApi] over HTTP with dio.
@@ -307,10 +346,22 @@ class DioGoodPeopleApi implements GoodPeopleApi {
   Future<MyAttendanceToday> punch(
     String accessToken, {
     PunchLocation? location,
+    PunchSelfie? selfie,
   }) => _call(
     () => _dio.post<Object?>(
       '/tenant/me/attendance/punch',
-      data: selfPunchBody(location),
+      // Built per call: a FormData can be sent only once, and a refreshed
+      // session sends the punch again.
+      data: selfie == null
+          ? selfPunchBody(location)
+          : FormData.fromMap({
+              ...selfPunchFields(location),
+              'selfie': MultipartFile.fromBytes(
+                selfie.bytes,
+                filename: selfie.fileName,
+                contentType: DioMediaType('image', 'jpeg'),
+              ),
+            }),
       options: _bearer(accessToken),
     ),
     MyAttendanceToday.fromJson,
@@ -366,10 +417,114 @@ class DioGoodPeopleApi implements GoodPeopleApi {
     Regularization.fromJson,
   );
 
+  @override
+  Future<List<EmployeeDocument>> fetchMyDocuments(String accessToken) =>
+      _callList(
+        () => _dio.get<Object?>(
+          '/tenant/me/documents',
+          options: _bearer(accessToken),
+        ),
+        EmployeeDocument.fromJson,
+      );
+
+  @override
+  Future<FileDownload> downloadDocument(
+    String accessToken,
+    String documentId,
+  ) => _download(
+    () => _dio.get<List<int>>(
+      '/tenant/documents/${Uri.encodeComponent(documentId)}/file',
+      options: _fileOptions(accessToken),
+    ),
+  );
+
+  @override
+  Future<FileDownload> fetchMyServiceBook(
+    String accessToken, {
+    required LetterLanguage language,
+  }) => _download(
+    () => _dio.get<List<int>>(
+      '/tenant/me/service-book',
+      queryParameters: {'language': language.wire},
+      options: _fileOptions(accessToken),
+    ),
+  );
+
+  @override
+  Future<List<Separation>> fetchMySeparations(String accessToken) => _callList(
+    () => _dio.get<Object?>(
+      '/tenant/me/separations',
+      options: _bearer(accessToken),
+    ),
+    Separation.fromJson,
+  );
+
+  @override
+  Future<Separation> resign(String accessToken, ResignationDraft draft) =>
+      _call(
+        () => _dio.post<Object?>(
+          '/tenant/me/resignation',
+          data: draft.toJson(),
+          options: _bearer(accessToken),
+        ),
+        Separation.fromJson,
+      );
+
+  @override
+  Future<Separation> cancelSeparation(
+    String accessToken,
+    String separationId,
+  ) => _call(
+    () => _dio.post<Object?>(
+      '/tenant/separations/${Uri.encodeComponent(separationId)}/cancel',
+      options: _bearer(accessToken),
+    ),
+    Separation.fromJson,
+  );
+
   void close() => _dio.close(force: true);
 
   static Options _bearer(String accessToken) =>
       Options(headers: {'Authorization': 'Bearer $accessToken'});
+
+  /// A file download: the body as bytes, whatever its type. The service
+  /// book is rendered on request, so it gets longer than a JSON call.
+  static Options _fileOptions(String accessToken) => Options(
+    headers: {'Authorization': 'Bearer $accessToken', 'Accept': '*/*'},
+    responseType: ResponseType.bytes,
+    receiveTimeout: const Duration(seconds: 60),
+  );
+
+  /// A call whose 2xx body is a file.
+  Future<FileDownload> _download(
+    Future<Response<List<int>>> Function() send,
+  ) async {
+    final Response<List<int>> response;
+    try {
+      response = await send();
+    } on DioException catch (error) {
+      throw ApiException.fromDio(error);
+    }
+    final data = response.data;
+    if (data == null) {
+      throw ApiException(
+        kind: ApiErrorKind.badResponse,
+        statusCode: response.statusCode,
+        message: 'Expected a file',
+      );
+    }
+    final type = response.headers.value(Headers.contentTypeHeader);
+    return FileDownload(
+      bytes: data is Uint8List ? data : Uint8List.fromList(data),
+      contentType: switch (type?.split(';').first.trim().toLowerCase()) {
+        final String media when media.isNotEmpty => media,
+        _ => 'application/octet-stream',
+      },
+      fileName: fileNameFromDisposition(
+        response.headers.value('content-disposition'),
+      ),
+    );
+  }
 
   /// A call whose 2xx body is a JSON object.
   Future<T> _call<T>(

@@ -1,4 +1,6 @@
 import { databaseName, loadRootEnv, requireEnv, seedAdminEmail, withDatabase } from '@gp/db';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { createApp } from '../src/app.js';
@@ -19,10 +21,17 @@ export function testEnv() {
   };
 }
 
+/** Documents written by the tests, wiped by the global setup before each run. */
+export const testStorageDir = join(tmpdir(), 'good-people-test-storage');
+
 export async function bootApp(): Promise<INestApplication> {
-  // Tests process attendance explicitly; the background job would race them.
+  // Tests process attendance explicitly; background work would race them.
   const app = await createApp(
-    loadConfig({ DATABASE_URL: testEnv().appUrl, ATTENDANCE_JOB_INTERVAL_MINUTES: '0' }),
+    loadConfig({
+      DATABASE_URL: testEnv().appUrl,
+      BACKGROUND_JOBS: 'off',
+      STORAGE_DIR: testStorageDir,
+    }),
   );
   await app.init();
   return app;

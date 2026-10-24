@@ -17,9 +17,13 @@ A multi-tenant HR and payroll platform, built for Bangladesh first and ready to 
     Hikvision devices through the on-site Edge Agent, geofenced punching from web and mobile,
     daily processing (late, early out, overtime, absence) under the Labour Act's working
     hours, and corrections approved in the same inbox as leave.
+  - **Phase 1 M4 (lifecycle & documents):** probation by the Labour Act, separations with
+    statutory notice (employees resign through approvals), back-dated job changes, an
+    encrypted documents vault, English and Bangla letters, ID cards and service books as PDFs,
+    Excel bulk import, and selfie punches.
 - **Next:**
-  - Phase 1 M4: lifecycle and documents.
-  - Then notifications and go-live, and payroll.
+  - Phase 1 M5: notifications, self-service and go-live.
+  - Then payroll (Phase 2).
   - The plan is in [docs/phases/phase-1.md](docs/phases/phase-1.md).
 
 ## Repository layout
@@ -27,9 +31,10 @@ A multi-tenant HR and payroll platform, built for Bangladesh first and ready to 
 ```
 apps/
   api/       NestJS 12 (ESM) modular monolith: auth, tenancy, entitlements, platform admin, org,
-             employees, leave, attendance, approvals
+             employees, leave, attendance, approvals, documents, lifecycle, letters, imports
   web/       Next.js 16: Super Admin console (/platform) and workspace app (/workspace), en/bn
-  mobile/    Flutter app: sign-in, profile, leave, attendance with punching, approvals, en/bn
+  mobile/    Flutter app: sign-in, profile, documents, leave, attendance (location and selfie
+             punching), resignation, approvals, en/bn
   edge-agent/  On-site service that buffers ZKTeco and Hikvision punches (see its README)
 packages/
   shared/    Contract shared by API and web: billing modes, plans, resolveAccess(), zod schemas
@@ -47,6 +52,8 @@ infra/       Docker Compose for local services (optional)
   - Homebrew: `brew install postgresql@17 && brew services start postgresql@17`
   - Docker: `docker compose -f infra/docker-compose.yml up -d`
 - **Flutter 3.47+**, for `apps/mobile` only.
+- **Chrome or Chromium**, for letters, ID cards and service books (PDF). Found automatically
+  where it is usually installed; on servers set `CHROME_PATH`.
 
 ## First run
 

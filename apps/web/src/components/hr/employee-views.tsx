@@ -1,7 +1,14 @@
-import { ageOn, todayIn, type EmployeeDetail, type JobAssignmentView } from '@gp/shared';
+import {
+  ageOn,
+  todayIn,
+  type EmployeeDetail,
+  type JobAssignmentView,
+  type OrgSnapshot,
+} from '@gp/shared';
 import { getFormatter, getLocale, getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { formatAddress } from '@/lib/org';
+import { CorrectJobForm } from '../lifecycle/lifecycle-forms';
 import { Badge, Card } from '../ui';
 
 function Dl({ items }: { items: [string, ReactNode][] }) {
@@ -141,7 +148,14 @@ export async function JobSummary({ employee }: { employee: EmployeeDetail }) {
   );
 }
 
-export async function JobHistory({ history }: { history: JobAssignmentView[] }) {
+export async function JobHistory({
+  history,
+  correction,
+}: {
+  history: JobAssignmentView[];
+  /** For HR: what correcting an entry needs. */
+  correction?: { employeeId: string; org: OrgSnapshot; managers: { id: string; name: string }[] };
+}) {
   const t = await getTranslations('hr');
   const format = await getFormatter();
   return (
@@ -174,6 +188,7 @@ export async function JobHistory({ history }: { history: JobAssignmentView[] }) 
                 .join(' · ')}
             </p>
             {j.reason && <p className="text-xs text-slate-500">{j.reason}</p>}
+            {correction && <CorrectJobForm job={j} {...correction} />}
           </li>
         ))}
       </ol>

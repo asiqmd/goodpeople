@@ -122,6 +122,11 @@ export function AttendanceSettingsForm({ settings }: { settings: AttendanceSetti
         </div>
         <p className="text-xs text-slate-500">{t('chainHint')}</p>
       </fieldset>
+      <Check
+        name="requireSelfie"
+        label={t('requireSelfie')}
+        defaultChecked={settings.requireSelfie}
+      />
       <SubmitButton>{t('save')}</SubmitButton>
     </form>
   );

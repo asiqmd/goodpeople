@@ -2,11 +2,12 @@
 
 import type { RegularizationKind, RegularizationView, SelfPunchMode } from '@gp/shared';
 import { useTranslations } from 'next-intl';
-import { useActionState, useState, useTransition } from 'react';
+import { useActionState, useRef, useState, useTransition } from 'react';
 import {
   addManualPunch,
   cancelRegularization,
   punch,
+  punchWithSelfie,
   requestRegularization,
   setAttendancePin,
   voidPunch,
@@ -25,6 +26,7 @@ const PUNCH_ERRORS = [
   'too_soon',
   'separated',
   'location_denied',
+  'selfie_required',
 ] as const;
 
 function position(): Promise<GeolocationPosition> {
@@ -37,16 +39,39 @@ function position(): Promise<GeolocationPosition> {
   );
 }
 
+/** A camera photo shrunk to at most 1024 px as a JPEG, well under the API's 2 MB limit. */
+async function shrink(file: File): Promise<Blob> {
+  const image = await createImageBitmap(file);
+  const scale = Math.min(1, 1024 / Math.max(image.width, image.height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(image.width * scale);
+  canvas.height = Math.round(image.height * scale);
+  canvas.getContext('2d')!.drawImage(image, 0, 0, canvas.width, canvas.height);
+  return new Promise((resolve, reject) =>
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('No image'))), 'image/jpeg', 0.75),
+  );
+}
+
 /**
  * Punch in or out from the browser. The position goes with it so the API can check the
- * geofence; where the workspace allows punching anywhere, a refused position is fine.
+ * geofence; where the workspace allows punching anywhere, a refused position is fine. When
+ * a selfie is required, the button opens the camera first.
  */
-export function PunchButton({ direction, mode }: { direction: 'in' | 'out'; mode: SelfPunchMode }) {
+export function PunchButton({
+  direction,
+  mode,
+  requireSelfie,
+}: {
+  direction: 'in' | 'out';
+  mode: SelfPunchMode;
+  requireSelfie: boolean;
+}) {
   const t = useTranslations('attendance.punch');
   const [state, setState] = useState<PunchState>();
   const [pending, start] = useTransition();
+  const camera = useRef<HTMLInputElement>(null);
 
-  const go = () =>
+  const go = (selfie?: File) =>
     start(async () => {
       let coords: { latitude?: number; longitude?: number; accuracyM?: number } = {};
       try {
@@ -62,20 +87,43 @@ export function PunchButton({ direction, mode }: { direction: 'in' | 'out'; mode
           return;
         }
       }
-      setState(await punch(coords));
+      if (!selfie) {
+        setState(await punch(coords));
+        return;
+      }
+      const form = new FormData();
+      form.set('source', 'web');
+      for (const [key, value] of Object.entries(coords)) form.set(key, String(value));
+      form.set('selfie', await shrink(selfie), 'selfie.jpg');
+      setState(await punchWithSelfie(form));
     });
 
   const known = state?.code && (PUNCH_ERRORS as readonly string[]).includes(state.code);
   return (
     <div className="space-y-3">
+      {requireSelfie && (
+        <input
+          ref={camera}
+          type="file"
+          accept="image/*"
+          capture="user"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            e.target.value = '';
+            if (file) go(file);
+          }}
+        />
+      )}
       <button
         type="button"
-        onClick={go}
+        onClick={() => (requireSelfie ? camera.current?.click() : go())}
         disabled={pending}
         className={`${buttonClass.primary} px-6 py-3 text-base`}
       >
         {pending ? t('locating') : direction === 'in' ? t('in') : t('out')}
       </button>
+      {requireSelfie && <p className="text-xs text-slate-500">{t('selfieHint')}</p>}
       {state?.ok && <Banner tone="green">{t('done')}</Banner>}
       {(state?.code || state?.error) && (
         <Banner tone="red">

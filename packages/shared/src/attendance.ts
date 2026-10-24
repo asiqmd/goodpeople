@@ -49,7 +49,7 @@ export const SELF_PUNCH_MODES = ['off', 'geofenced', 'anywhere'] as const;
 export type SelfPunchMode = (typeof SELF_PUNCH_MODES)[number];
 
 /** What an approval step decides. */
-export const APPROVAL_SUBJECTS = ['leave_request', 'regularization'] as const;
+export const APPROVAL_SUBJECTS = ['leave_request', 'regularization', 'separation'] as const;
 export type ApprovalSubject = (typeof APPROVAL_SUBJECTS)[number];
 
 // ── Time zones ───────────────────────────────────────────────────────────────

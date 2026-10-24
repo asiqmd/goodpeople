@@ -208,6 +208,16 @@ export async function PunchList({
               </span>
             )}
             {p.note && <span className="block text-xs text-slate-500">{p.note}</span>}
+            {p.selfieDocumentId && (
+              <a
+                href={`/workspace/files/documents/${p.selfieDocumentId}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs font-medium text-brand-700 hover:underline"
+              >
+                {t('selfie')}
+              </a>
+            )}
           </span>
           {voidable && !p.voided && <VoidPunchForm punchId={p.id} />}
           {p.voided && <Badge tone="red">{t('voided')}</Badge>}

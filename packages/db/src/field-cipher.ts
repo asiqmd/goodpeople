@@ -13,7 +13,18 @@ export interface FieldCipher {
   encrypt(plain: string, context: CipherContext): string;
   decrypt(stored: string, context: CipherContext): string;
   blindIndex(value: string, context: CipherContext): string;
+  /** Files (documents, import batches): `GPF1` + iv + tag + ciphertext. */
+  encryptBytes(plain: Buffer, context: FileCipherContext): Buffer;
+  decryptBytes(stored: Buffer, context: FileCipherContext): Buffer;
 }
+
+/** A file is bound to its tenant and to what it is (e.g. `document:<id>`). */
+export interface FileCipherContext {
+  tenantId: string;
+  purpose: string;
+}
+
+const FILE_MAGIC = Buffer.from('GPF1');
 
 export interface CipherContext {
   tenantId: string;
@@ -31,6 +42,7 @@ export const CIPHER_FIELDS = {
 export type CipherField = (typeof CIPHER_FIELDS)[keyof typeof CIPHER_FIELDS];
 
 const aad = ({ tenantId, field }: CipherContext) => Buffer.from(`${tenantId}:${field}`);
+const fileAad = ({ tenantId, purpose }: FileCipherContext) => Buffer.from(`${tenantId}:${purpose}`);
 
 export function createFieldCipher(masterKeyBase64: string): FieldCipher {
   const master = Buffer.from(masterKeyBase64, 'base64');
@@ -41,6 +53,7 @@ export function createFieldCipher(masterKeyBase64: string): FieldCipher {
     Buffer.from(hkdfSync('sha256', master, Buffer.alloc(0), info, 32));
   const encKey = derive('good-people:field-encryption:v1');
   const macKey = derive('good-people:blind-index:v1');
+  const fileKey = derive('good-people:file-encryption:v1');
 
   return {
     encrypt(plain, context) {
@@ -64,6 +77,20 @@ export function createFieldCipher(masterKeyBase64: string): FieldCipher {
         decipher.update(Buffer.from(ciphertext, 'base64url')),
         decipher.final(),
       ]).toString('utf8');
+    },
+    encryptBytes(plain, context) {
+      const iv = randomBytes(12);
+      const cipher = createCipheriv('aes-256-gcm', fileKey, iv);
+      cipher.setAAD(fileAad(context));
+      const ciphertext = Buffer.concat([cipher.update(plain), cipher.final()]);
+      return Buffer.concat([FILE_MAGIC, iv, cipher.getAuthTag(), ciphertext]);
+    },
+    decryptBytes(stored, context) {
+      if (!stored.subarray(0, 4).equals(FILE_MAGIC)) throw new Error('Unrecognised encrypted file');
+      const decipher = createDecipheriv('aes-256-gcm', fileKey, stored.subarray(4, 16));
+      decipher.setAAD(fileAad(context));
+      decipher.setAuthTag(stored.subarray(16, 32));
+      return Buffer.concat([decipher.update(stored.subarray(32)), decipher.final()]);
     },
     blindIndex(value, { tenantId, field }) {
       return createHmac('sha256', macKey)

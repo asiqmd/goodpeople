@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'auth/auth_controller.dart';
 import 'auth/login_screen.dart';
+import 'documents/file_opener.dart';
 import 'home/home_screen.dart';
 import 'l10n/app_localizations.dart';
 import 'settings/locale_controller.dart';
@@ -30,7 +33,8 @@ class GoodPeopleApp extends ConsumerWidget {
 ///
 /// Signing in, signing out and an expired session all switch screens here,
 /// so no screen has to navigate on its own. Signing out also closes any
-/// screen pushed on top of home, such as the profile.
+/// screen pushed on top of home, such as the profile, and deletes the
+/// document last opened in the phone's viewer.
 class AuthGate extends ConsumerWidget {
   const AuthGate({super.key});
 
@@ -39,6 +43,9 @@ class AuthGate extends ConsumerWidget {
     ref.listen(authProvider, (previous, next) {
       if (next is SignedOut) {
         Navigator.of(context).popUntil((route) => route.isFirst);
+        if (previous is SignedIn) {
+          unawaited(ref.read(fileOpenerProvider).clear());
+        }
       }
     });
     return switch (ref.watch(authProvider)) {

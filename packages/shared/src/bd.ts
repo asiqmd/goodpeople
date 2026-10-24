@@ -138,3 +138,30 @@ export const BD_ROUTING_NUMBER = /^\d{9}$/;
 /** The Labour Act bars employing children under 14; 14–17 are adolescents with limits. */
 export const BD_MIN_WORKING_AGE = 14;
 export const BD_ADULT_AGE = 18;
+
+export function divisionName(code: string, locale: string): string {
+  const division = BD_DIVISIONS.find((d) => d.code === code);
+  return division ? (locale === 'bn' ? division.nameBn : division.name) : code;
+}
+
+/** An address on one line: "House 12, Road 5, Gulshan, Dhaka, Dhaka Division, 1212". */
+export function formatAddress(
+  address: {
+    line: string;
+    upazila?: string | null;
+    district: string;
+    division: string;
+    postcode?: string | null;
+  },
+  locale: string,
+): string {
+  return [
+    address.line,
+    address.upazila,
+    address.district,
+    divisionName(address.division, locale),
+    address.postcode,
+  ]
+    .filter(Boolean)
+    .join(', ');
+}

@@ -123,5 +123,6 @@ export function toPunchView(
     insideGeofence: p.insideGeofence,
     note: p.voidReason ?? p.note,
     voided: p.voidedAt !== null,
+    selfieDocumentId: p.selfieDocumentId,
   };
 }

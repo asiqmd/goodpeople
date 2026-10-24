@@ -22,6 +22,10 @@ export async function apiFetch<T>(
     body: init.body === undefined ? undefined : JSON.stringify(init.body),
     cache: 'no-store',
   });
+  return toResult<T>(res);
+}
+
+async function toResult<T>(res: Response): Promise<ApiResult<T>> {
   if (res.status === 204) return { ok: true, data: undefined as T };
   const json = await res.json().catch(() => ({}));
   if (res.ok) return { ok: true, data: json as T };
@@ -68,4 +72,55 @@ export async function currentTenantUser(): Promise<{ id: string; role: TenantRol
   } catch {
     return null;
   }
+}
+
+/** Sends a form with files (multipart) as the signed-in workspace user. */
+export async function authedUpload<T>(path: string, form: FormData): Promise<ApiResult<T>> {
+  const token = (await cookies()).get(cookieNames('tenant').access)?.value;
+  if (!token) redirect(`${LOGIN.tenant}?expired=1`);
+  const res = await fetch(`${API_URL}${path}`, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${token}` },
+    body: form,
+    cache: 'no-store',
+  });
+  if (res.status === 401) redirect(`${LOGIN.tenant}?expired=1`);
+  return toResult<T>(res);
+}
+
+/**
+ * Passes a file from the API (a document, a PDF, a spreadsheet) through to the browser, for
+ * route handlers: the browser never holds the API token.
+ */
+export async function proxyFile(
+  path: string,
+  init: { method?: string; body?: unknown } = {},
+): Promise<Response> {
+  const token = (await cookies()).get(cookieNames('tenant').access)?.value;
+  if (!token) return new Response('Sign in again', { status: 401 });
+  const res = await fetch(`${API_URL}${path}`, {
+    method: init.method ?? 'GET',
+    headers: {
+      authorization: `Bearer ${token}`,
+      ...(init.body === undefined ? {} : { 'content-type': 'application/json' }),
+    },
+    body: init.body === undefined ? undefined : JSON.stringify(init.body),
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ message: res.statusText }));
+    return new Response(error.message ?? 'Not available', {
+      status: res.status,
+      headers: { 'content-type': 'text/plain; charset=utf-8' },
+    });
+  }
+  const headers = new Headers({
+    'cache-control': 'private, no-store',
+    'x-content-type-options': 'nosniff',
+  });
+  for (const name of ['content-type', 'content-disposition', 'content-length']) {
+    const value = res.headers.get(name);
+    if (value) headers.set(name, value);
+  }
+  return new Response(res.body, { status: 200, headers });
 }

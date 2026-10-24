@@ -27,6 +27,7 @@ export default async function EmployeesPage({ searchParams }: PageProps<'/worksp
     load<OrgSnapshot>('tenant', '/tenant/org'),
   ]);
   const t = await getTranslations('hr');
+  const tl = await getTranslations('lifecycle');
   const format = await getFormatter();
   const pages = Math.max(1, Math.ceil(list.total / PAGE_SIZE));
   const pageLink = (p: number) => {
@@ -45,9 +46,17 @@ export default async function EmployeesPage({ searchParams }: PageProps<'/worksp
     <Card
       title={`${t('employees.title')} · ${t('employees.total', { count: list.total })}`}
       action={
-        <Link href="/workspace/employees/new" className={buttonClass.primary}>
-          {t('employees.hire')}
-        </Link>
+        <span className="flex flex-wrap gap-2">
+          <Link href="/workspace/employees/id-cards" className={buttonClass.secondary}>
+            {tl('idCards.title')}
+          </Link>
+          <Link href="/workspace/employees/import" className={buttonClass.secondary}>
+            {tl('import.title')}
+          </Link>
+          <Link href="/workspace/employees/new" className={buttonClass.primary}>
+            {t('employees.hire')}
+          </Link>
+        </span>
       }
     >
       <form className="mb-4 grid gap-3 sm:grid-cols-[2fr_1fr_1fr_auto]">

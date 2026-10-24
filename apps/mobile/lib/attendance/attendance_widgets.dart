@@ -7,6 +7,7 @@ import '../leave/leave_widgets.dart';
 import '../ui/error_text.dart';
 import '../ui/format.dart';
 import '../ui/theme.dart';
+import 'camera_service.dart';
 import 'location_service.dart';
 
 /// The zone the approvals inbox shows a day's punches in. Inbox items carry
@@ -48,9 +49,9 @@ String? dayPunchesText(AppLocalizations l10n, AttendanceDay day, String? zone) {
       : '$start – ${formatInstantClock(l10n, lastOut, zone)}';
 }
 
-/// User-facing text for an attendance error: a localized message for the
-/// API's refusal codes, else what [describeError] says (the API's own
-/// message for other server errors).
+/// User-facing text for an attendance error: a localized message for
+/// location and camera problems and the API's refusal codes, else what
+/// [describeError] says (the API's own message for other server errors).
 ///
 /// For `outside_geofence` the distance is worked out from [location] and
 /// [geofence], the same way the API does, when both are known.
@@ -60,10 +61,24 @@ String attendanceErrorText(
   PunchLocation? location,
   Geofence? geofence,
 }) {
-  if (error is LocationUnavailable) {
-    return locationProblemText(l10n, error.problem);
+  switch (error) {
+    case LocationUnavailable(:final problem):
+      return locationProblemText(l10n, problem);
+    case CameraUnavailable(:final problem):
+      return switch (problem) {
+        CameraProblem.permissionDenied => l10n.cameraPermissionDenied,
+        CameraProblem.unavailable => l10n.cameraUnavailable,
+        CameraProblem.failed => l10n.cameraFailed,
+      };
+    case SelfieNotSent(:final problem):
+      return switch (problem) {
+        SelfieProblem.skipped => l10n.punchNoPhoto,
+        SelfieProblem.tooLarge => l10n.punchErrorSelfieTooLarge,
+      };
   }
   if (error is ApiException && error.kind == ApiErrorKind.server) {
+    // Multer's size limit answers 413 with no code.
+    if (error.statusCode == 413) return l10n.punchErrorSelfieTooLarge;
     switch (error.code) {
       case 'outside_geofence':
         if (location != null && geofence != null) {
@@ -83,6 +98,10 @@ String attendanceErrorText(
         return l10n.punchErrorTooSoon;
       case 'separated':
         return l10n.punchErrorSeparated;
+      case 'selfie_required':
+        return l10n.punchErrorSelfieRequired;
+      case 'unsupported_file':
+        return l10n.punchErrorSelfieUnreadable;
       case 'future_day':
         return l10n.correctionErrorFutureDay;
       case 'outside_window':

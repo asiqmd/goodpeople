@@ -1,4 +1,9 @@
-import type { ApprovalItem, LeaveApprovalItem, RegularizationApprovalItem } from '@gp/shared';
+import type {
+  ApprovalItem,
+  LeaveApprovalItem,
+  RegularizationApprovalItem,
+  SeparationApprovalItem,
+} from '@gp/shared';
 import { getFormatter, getLocale, getTranslations } from 'next-intl/server';
 import { StatusBadge } from '@/components/attendance/attendance-views';
 import { DecisionForm } from '@/components/leave/leave-forms';
@@ -23,8 +28,10 @@ export default async function ApprovalsPage() {
             <div className="flex flex-wrap items-start justify-between gap-6">
               {item.subjectType === 'leave_request' ? (
                 <LeaveItem item={item} />
-              ) : (
+              ) : item.subjectType === 'regularization' ? (
                 <CorrectionItem item={item} />
+              ) : (
+                <SeparationItem item={item} />
               )}
               <div className="w-full max-w-sm">
                 <DecisionForm stepId={item.stepId} />
@@ -93,6 +100,32 @@ async function CorrectionItem({
       )}
       <div className="flex gap-2">
         <Badge tone="violet">{t('correction.badge')}</Badge>
+        <Badge tone="blue">{tl(`step.${kind}`)}</Badge>
+      </div>
+    </div>
+  );
+}
+
+async function SeparationItem({ item: { kind, separation: s } }: { item: SeparationApprovalItem }) {
+  const t = await getTranslations('lifecycle.separation');
+  const tl = await getTranslations('leave');
+  const format = await getFormatter();
+  return (
+    <div className="min-w-0 space-y-1">
+      <p className="font-medium text-slate-900">
+        {s.employee.fullName}{' '}
+        <span className="font-mono text-xs text-slate-400">{s.employee.employeeCode}</span>
+      </p>
+      <p className="text-sm text-slate-700">
+        {t(`types.${s.type}`)} ·{' '}
+        {t('dates', { notice: day(format, s.noticeDate), last: day(format, s.lastWorkingDay) })}
+      </p>
+      <p className="text-sm text-slate-600">{s.reason}</p>
+      {s.noticeShortfallDays > 0 && (
+        <p className="text-xs text-amber-700">{t('shortfall', { days: s.noticeShortfallDays })}</p>
+      )}
+      <div className="flex gap-2">
+        <Badge tone="red">{t('badge')}</Badge>
         <Badge tone="blue">{tl(`step.${kind}`)}</Badge>
       </div>
     </div>

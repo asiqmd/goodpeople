@@ -114,9 +114,10 @@ export const rosterQuerySchema = z.intersection(
 export const selfPunchSchema = z
   .object({
     source: z.enum(['web', 'mobile']),
-    latitude: z.number().min(-90).max(90).optional(),
-    longitude: z.number().min(-180).max(180).optional(),
-    accuracyM: z.number().min(0).max(100_000).optional(),
+    // Coerced: a punch with a selfie arrives as a multipart form.
+    latitude: z.coerce.number().min(-90).max(90).optional(),
+    longitude: z.coerce.number().min(-180).max(180).optional(),
+    accuracyM: z.coerce.number().min(0).max(100_000).optional(),
   })
   .refine((p) => (p.latitude === undefined) === (p.longitude === undefined), {
     message: 'Send both latitude and longitude, or neither',
@@ -172,6 +173,8 @@ export const attendanceSettingsSchema = z
     regularizationWindowDays: z.number().int().min(0).max(90),
     /** Attendance go-live; days before it are not processed. */
     trackingFrom: isoDate,
+    /** App punches must include a photo taken at the time. */
+    requireSelfie: z.boolean(),
   })
   .partial();
 export type AttendanceSettingsInput = z.infer<typeof attendanceSettingsSchema>;

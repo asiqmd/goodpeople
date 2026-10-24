@@ -3,14 +3,15 @@ part of 'api_models.dart';
 // ── Approvals inbox: `GET /tenant/approvals` ────────────────────────────────
 //
 // One inbox for everything waiting on the signed-in user. Each item says
-// what it approves in `subjectType`: a leave request or an attendance
-// correction (regularization). The approve and reject calls are the same
-// for both.
+// what it approves in `subjectType`: a leave request, an attendance
+// correction (regularization) or a resignation (separation). The approve
+// and reject calls are the same for all of them.
 
 /// What an approval step decides.
 enum ApprovalSubjectType implements WireValue {
   leaveRequest('leave_request'),
   regularization('regularization'),
+  separation('separation'),
   unknown('unknown');
 
   const ApprovalSubjectType(this.wire);
@@ -39,6 +40,7 @@ sealed class ApprovalItem {
       ApprovalSubjectType.regularization => RegularizationApprovalItem.fromJson(
         json,
       ),
+      ApprovalSubjectType.separation => SeparationApprovalItem.fromJson(json),
       ApprovalSubjectType.unknown => UnknownApprovalItem(
         stepId: _read<String>(json, 'stepId'),
         kind: ApprovalStepKind.fromWire(_read<String>(json, 'kind')),
@@ -100,6 +102,24 @@ final class RegularizationApprovalItem extends ApprovalItem {
   /// The day as processed now, to compare with what is asked. `null` when
   /// the day was never processed.
   final AttendanceDay? day;
+}
+
+/// A resignation waiting for the signed-in user. Only resignations go for
+/// approval; what HR records stands approved.
+final class SeparationApprovalItem extends ApprovalItem {
+  const SeparationApprovalItem({
+    required super.stepId,
+    required super.kind,
+    required this.separation,
+  });
+
+  factory SeparationApprovalItem.fromJson(Json json) => SeparationApprovalItem(
+    stepId: _read<String>(json, 'stepId'),
+    kind: ApprovalStepKind.fromWire(_read<String>(json, 'kind')),
+    separation: Separation.fromJson(_read<Json>(json, 'separation')),
+  );
+
+  final Separation separation;
 }
 
 /// An item whose `subjectType` this app does not know yet. It can be shown,

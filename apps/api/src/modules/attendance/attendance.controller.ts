@@ -9,10 +9,14 @@ import {
   Post,
   Query,
   Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
 import {
+  MAX_SELFIE_BYTES,
   attendanceDailyQuerySchema,
   attendanceMonthQuerySchema,
   attendanceProcessSchema,
@@ -105,13 +109,16 @@ export class AttendanceController {
     return this.attendance.today(user);
   }
 
+  /** JSON, or a multipart form with a `selfie` photo when the workspace asks for one. */
   @Post('me/attendance/punch')
   @ApiBody(openApiBody(selfPunchSchema))
+  @UseInterceptors(FileInterceptor('selfie', { limits: { fileSize: MAX_SELFIE_BYTES, files: 1 } }))
   punch(
     @CurrentUser() user: AuthUser,
     @Body(zod(selfPunchSchema)) body: SelfPunchInput,
+    @UploadedFile() selfie: Express.Multer.File | undefined,
   ): Promise<MyAttendanceToday> {
-    return this.punches.selfPunch(user, body);
+    return this.punches.selfPunch(user, body, selfie);
   }
 
   @Get('me/attendance')

@@ -1,4 +1,4 @@
-import { bdHolidayTemplate, bdLeaveDefaults } from '@gp/country-packs';
+import { BD_LETTER_TEMPLATES, bdHolidayTemplate, bdLeaveDefaults } from '@gp/country-packs';
 import { eq } from 'drizzle-orm';
 import type { Tx } from './client.js';
 import {
@@ -6,12 +6,14 @@ import {
   holidayCalendars,
   holidays,
   leaveTypes,
+  letterTemplates,
   shifts,
 } from './schema/index.js';
 
 /**
  * Gives a workspace its country pack's starting point: the statutory leave types, a default
- * holiday calendar for this year and next, a general shift and attendance settings.
+ * holiday calendar for this year and next, a general shift, attendance settings and the
+ * standard letters in English and Bangla.
  * Idempotent; call inside a transaction scoped to the tenant (runAsTenant / scopeToTenant).
  */
 export async function provisionCountryDefaults(
@@ -25,6 +27,10 @@ export async function provisionCountryDefaults(
     .onConflictDoNothing();
 
   await tx.insert(attendanceSettings).values({ tenantId }).onConflictDoNothing();
+  await tx
+    .insert(letterTemplates)
+    .values(BD_LETTER_TEMPLATES.map((l) => ({ ...l, tenantId })))
+    .onConflictDoNothing();
   const [defaultShift] = await tx
     .select({ id: shifts.id })
     .from(shifts)

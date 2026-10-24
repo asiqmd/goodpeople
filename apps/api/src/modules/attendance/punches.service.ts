@@ -19,6 +19,7 @@ import { badRequest, conflict, forbidden } from '../../common/errors.js';
 import { currentTenantId } from '../../common/request-context.js';
 import { TenantDb } from '../../db/db.module.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
+import { DocumentsService } from '../documents/documents.service.js';
 import { employeeOfUser } from '../employees/employee.queries.js';
 import { AttendanceService, punchesOf, timeZoneOf } from './attendance.service.js';
 import { toPunchView } from './attendance-views.js';
@@ -37,6 +38,7 @@ export class PunchesService {
     private readonly tenantDb: TenantDb,
     private readonly processor: AttendanceProcessor,
     private readonly attendance: AttendanceService,
+    private readonly documents: DocumentsService,
     private readonly audit: TenantAuditService,
   ) {}
 
@@ -44,7 +46,11 @@ export class PunchesService {
    * In or out from the web or mobile app. With a geofence the employee must be inside their
    * location's radius, allowing for the phone's reported accuracy up to 50 m.
    */
-  async selfPunch(user: AuthUser, input: SelfPunchInput): Promise<MyAttendanceToday> {
+  async selfPunch(
+    user: AuthUser,
+    input: SelfPunchInput,
+    selfie?: { originalname: string; buffer: Buffer },
+  ): Promise<MyAttendanceToday> {
     await this.tenantDb.run(async (tx) => {
       const me = await employeeOfUser(tx, user.id);
       if (!me) throw new NotFoundException('No employee record is linked to your login');
@@ -87,6 +93,9 @@ export class PunchesService {
           );
         }
       }
+      if (settings.requireSelfie && !selfie) {
+        throw badRequest('selfie_required', 'Take a photo to punch');
+      }
       const [last] = await tx
         .select({ punchedAt: attendancePunches.punchedAt })
         .from(attendancePunches)
@@ -99,6 +108,18 @@ export class PunchesService {
       const today = (await punchesOf(tx, me.id, day.opensAt, day.closesAt)).filter(
         (p) => !p.voided,
       );
+      const photo = selfie
+        ? await this.documents.save(tx, {
+            employeeId: me.id,
+            category: 'punch_selfie',
+            title: `Punch ${new Date().toISOString()}`,
+            fileName: selfie.originalname || 'selfie.jpg',
+            bytes: selfie.buffer,
+            source: 'upload',
+            visibleToEmployee: true,
+            uploadedBy: user.id,
+          })
+        : null;
       await tx.insert(attendancePunches).values({
         tenantId: currentTenantId(),
         employeeId: me.id,
@@ -110,6 +131,7 @@ export class PunchesService {
         accuracyM: input.accuracyM ?? null,
         distanceM,
         insideGeofence,
+        selfieDocumentId: photo?.id ?? null,
         createdBy: user.id,
       });
       await this.processor.process(tx, {

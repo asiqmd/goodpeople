@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 
 enum ApiErrorKind {
@@ -45,7 +47,11 @@ class ApiException implements Exception {
     var message = response.statusMessage ?? 'HTTP ${response.statusCode}';
     String? code;
     var issues = const <ApiIssue>[];
-    final body = response.data;
+    final body = switch (response.data) {
+      // A call that downloads a file gets its error body as bytes too.
+      final List<int> bytes => _jsonOrNull(bytes),
+      final Object? data => data,
+    };
     if (body is Map<String, Object?>) {
       if (body['code'] case final String bodyCode when bodyCode.isNotEmpty) {
         code = bodyCode;
@@ -96,4 +102,13 @@ class ApiException implements Exception {
 
   @override
   String toString() => 'ApiException(${kind.name}, $statusCode): $message';
+}
+
+/// [bytes] as UTF-8 JSON, or `null` when they are not.
+Object? _jsonOrNull(List<int> bytes) {
+  try {
+    return jsonDecode(utf8.decode(bytes));
+  } on FormatException {
+    return null;
+  }
 }

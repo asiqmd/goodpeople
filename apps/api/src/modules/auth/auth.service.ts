@@ -80,6 +80,9 @@ export class AuthService {
     if (tenant.status === 'suspended' || tenant.status === 'archived') {
       throw forbidden('tenant_suspended', 'This workspace is suspended');
     }
+    if (user.disabledAt) {
+      throw forbidden('login_disabled', 'This login is no longer active');
+    }
     const tokens = await this.issue(
       { kind: 'tenant', id: user.id, tenantId: tenant.id },
       {
@@ -169,6 +172,7 @@ export class AuthService {
       return row;
     });
     if (!user) throw new UnauthorizedException('User no longer exists');
+    if (user.disabledAt) throw new UnauthorizedException('This login is no longer active');
     return { sub: user.id, kind: 'tenant', role: user.role, tid: tenantId! };
   }
 

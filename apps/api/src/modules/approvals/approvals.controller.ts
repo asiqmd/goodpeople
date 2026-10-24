@@ -7,7 +7,7 @@ import { openApiBody, zod } from '../../common/zod.js';
 import { AccessStateGuard } from '../entitlements/guards.js';
 import { ApprovalsService } from './approvals.service.js';
 
-/** One inbox for everything waiting on the signed-in user: leave, attendance corrections. */
+/** One inbox for everything waiting on the signed-in user: leave, corrections, resignations. */
 @ApiTags('approvals')
 @ApiBearerAuth()
 @UseGuards(AccessStateGuard, TenantRolesGuard)
@@ -25,7 +25,7 @@ export class ApprovalsController {
     return this.approvals.inbox(user);
   }
 
-  /** Returns the decided leave request or regularization. */
+  /** Returns what was decided: the leave request, correction or separation. */
   @Post('approvals/:stepId/approve')
   @ApiBody(openApiBody(decisionSchema))
   approve(

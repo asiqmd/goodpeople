@@ -6,9 +6,11 @@ which modules are enabled. Phase 1 adds **My profile**: the signed-in user's
 own employee record (job, personal details, identity documents, addresses,
 nominees, payment accounts) from `GET /tenant/me/employee`, opened from a
 card on the home screen, **Leave**: balances, applying for leave,
-the user's own requests, approvals and the holiday calendar, and
-**Attendance**: punching in and out with the phone's location, this month's
-days and attendance corrections. English and Bangla.
+the user's own requests, approvals and the holiday calendar,
+**Attendance**: punching in and out with the phone's location (and a selfie
+when the workspace asks for one), this month's days and attendance
+corrections, **My documents**: what HR shared and the service book, and
+**Resignation**, from the bottom of My profile. English and Bangla.
 
 Needs Flutter 3.47 (Dart 3.13) or newer. Run every command below from
 `apps/mobile`. This app is not part of the pnpm workspace; use `flutter`, not
@@ -48,8 +50,10 @@ On a physical phone, use your computer's LAN address, for example
 | `lib/home/` | Home screen and the module list |
 | `lib/profile/` | My profile screen and `myEmployeeProvider` |
 | `lib/leave/` | Leave screen, one file per tab, and the leave providers |
-| `lib/attendance/` | Attendance screen, its tabs, the correction form, the providers and `LocationService` |
-| `lib/approvals/` | The approvals inbox tab (leave and corrections) and `approvalsProvider`, shared by Leave and Attendance |
+| `lib/attendance/` | Attendance screen, its tabs, the correction form, the providers, `LocationService` and `CameraService` |
+| `lib/approvals/` | The approvals inbox tab (leave, corrections and resignations) and `approvalsProvider`, shared by Leave and Attendance |
+| `lib/documents/` | My documents, the in-app image viewer, `myDocumentsProvider` and `FileOpener` |
+| `lib/resignation/` | The resignation screen and form, `mySeparationsProvider` and the status pill |
 | `lib/settings/` | Language choice (in memory) |
 | `lib/ui/` | Theme, language menu, shared widgets, date formatting |
 | `lib/l10n/` | ARB files and the generated `AppLocalizations` |
@@ -61,8 +65,9 @@ top of home, such as the profile.
 
 Sessions: tokens stay in memory (`InMemoryTokenStore`), so a restart signs the
 user out. Phase 1 replaces it with `flutter_secure_storage`. When any
-authenticated call (`/tenant/access`, `/tenant/me/employee`, every leave and
-attendance call) returns 401, the app calls `/auth/refresh` once and retries.
+authenticated call (`/tenant/access`, `/tenant/me/employee`, every leave,
+attendance, document and resignation call) returns 401, the app calls
+`/auth/refresh` once and retries.
 If the refresh is rejected, or the retry is still a 401, it returns to login
 with a "session ended" notice. If the refresh fails because the network is
 down, the screen shows the error with a retry button instead.
@@ -103,7 +108,7 @@ has the `attendance` module. The screen has three tabs, plus Approvals:
 | Today | `GET /tenant/me/attendance/today`, `POST /tenant/me/attendance/punch` | The shift, the day's status, first in, last out, hours worked and the punches (with where each came from). One large Punch in / Punch out button, following `nextDirection`. When `selfPunch.blockedReason` is set (punching from the app is off, or the location has no geofence) the tab says why instead. The punch answers with the whole day, which replaces the shown one. |
 | This month | `GET /tenant/me/attendance?from=&to=` | The 1st of this month to today, newest day first, with the totals on top. Status chips, late, left-early and overtime badges, a "Correction: Pending" mark; weekly offs and holidays are muted. Tapping a day opens the correction form for it. |
 | Corrections | `GET /tenant/me/attendance/regularizations`, `POST` to the same path, `POST /tenant/attendance/regularizations/{id}/cancel` | The user's corrections with status, times and approval trail; Cancel (with a confirmation) for pending ones. **Request correction** opens a form: the day, a missed punch (in time, out time or both) or an on-duty day (no times), and a reason (3 to 500 characters). |
-| Approvals | as on Leave | The same inbox. A correction shows who asks, the day, the times asked for, the reason and the day as recorded now. An item of a kind this app does not know is listed without buttons, with a note to decide it on the web. |
+| Approvals | as on Leave | The same inbox. A correction shows who asks, the day, the times asked for, the reason and the day as recorded now. A resignation shows who, the notice date and last working day, how many days the notice is short (when it is) and the reason. An item of a kind this app does not know is listed without buttons, with a note to decide it on the web. |
 
 Times (`firstIn`, `lastOut`, punches) are shown in the response's
 `timeZone`. Only fixed-offset zones are known without a time zone database
@@ -124,14 +129,63 @@ punches without coordinates if it gets none. The permission texts are in
 `android/app/src/main/AndroidManifest.xml` (`ACCESS_FINE_LOCATION`,
 `ACCESS_COARSE_LOCATION`).
 
+Selfie punches: when `selfPunch.requireSelfie` is set, Punch first opens
+the camera through `CameraService` (`lib/attendance/camera_service.dart`,
+[image_picker](https://pub.dev/packages/image_picker) on a device, a fake in
+widget tests), asking for the front camera; some Android camera apps open
+the back one anyway. The photo is scaled to 1024 px and saved as a JPEG at
+quality 70, well under the API's 2 MB limit. Backing out of the camera sends
+nothing (the location is not even read) and says so. Then the location is
+read as above, and the punch goes as `multipart/form-data`: `source`,
+`latitude`, `longitude` and `accuracyM` as text fields and the photo in
+`selfie`. Without the requirement it is JSON, as before. Refused camera
+access shows **Open settings**. A punch that came with a photo shows a
+camera icon. The camera text is `NSCameraUsageDescription` in
+`ios/Runner/Info.plist`; Android needs no permission, because the phone's
+camera app takes the photo.
+
 Refusals are shown in the UI language by their `code`: `outside_geofence`
 (with the distance, worked out from the phone's fix and the geofence the
 same way the API does), `location_required`, `no_geofence`,
-`self_punch_disabled`, `too_soon`, `separated`, and for corrections
+`self_punch_disabled`, `too_soon`, `separated`, `selfie_required` (the
+workspace turned selfies on since the day loaded: the day reloads),
+`unsupported_file` and a 413 for the photo, and for corrections
 `future_day`, `outside_window`, `not_tracked`, `wrong_day`, `future_punch`,
 `already_pending` and `not_pending`. Any other error shows the API's message,
 as elsewhere. A 404 from the `/tenant/me/attendance...` calls means no
 employee record, as on My profile.
+
+My documents: the home screen shows a **My documents** card (part of
+`core_hr`, which every workspace has). The list is
+`GET /tenant/me/documents`: title, kind, issued and expiry dates, an
+**Expires soon** mark within 60 days of expiry and **Expired** after it, and
+whether it is a letter from HR (with its reference number) or an upload.
+Tapping one downloads `GET /tenant/documents/{id}/file`: photos and scans
+open in the app (pinch or double-tap to zoom), PDFs in the phone's own
+viewer. **My service book** fetches `GET /tenant/me/service-book?language=`
+in the app's language and opens it the same way. Opening a PDF goes through
+`FileOpener` (`lib/documents/file_opener.dart`): it saves the file in the
+app's cache ([path_provider](https://pub.dev/packages/path_provider)) and
+hands it to the viewer ([open_filex](https://pub.dev/packages/open_filex):
+an Android intent through its FileProvider, a QuickLook preview on iOS).
+Only the file opened last is kept, and signing out deletes it. open_filex
+declares storage and media permissions this app does not need, so
+`android/app/src/main/AndroidManifest.xml` removes them from the merged
+manifest. A 403 or 404 on a download (no longer shared, removed) says so and
+reloads the list.
+
+Resignation: the last entry of My profile opens it. It lists
+`GET /tenant/me/separations` with the type, status, notice date, last
+working day, the notice the Labour Act asks for, the notice given, the days
+short (with a note that wages for them may be deducted), the reason and the
+approval trail. A pending resignation has **Withdraw** (with a confirmation,
+`POST /tenant/separations/{id}/cancel`). When none is pending or approved,
+a form explains the Act's notice (60 days for a permanent worker, 30 for a
+temporary one on monthly wages), then takes the last working day (today or
+later; the picker opens 60 days ahead) and a reason (3 to 500 characters),
+and after a confirmation sends `POST /tenant/me/resignation`. Refusals by
+`code`: `past_last_day`, `separated`, `separation_open` (the list reloads to
+show the open one) and `not_open` on a withdrawal.
 
 ## Localization
 
@@ -167,13 +221,20 @@ flutter test
 ```
 
 Widget tests replace the HTTP client with `FakeGoodPeopleApi`
-(`test/support/fake_api.dart`, fixtures in `test/support/leave_fixtures.dart`
-and `test/support/attendance_fixtures.dart`) through a Riverpod override.
-Leave and attendance tests also override `todayProvider` so "this year",
-"this month" and "has it started" are fixed, and attendance tests replace
-the GPS with `FakeLocationService` through `locationServiceProvider`.
-`test/api_client_test.dart` runs the real dio client against a stub adapter
-that returns the contract's JSON.
+(`test/support/fake_api.dart`, fixtures in `test/support/leave_fixtures.dart`,
+`test/support/attendance_fixtures.dart` and
+`test/support/lifecycle_fixtures.dart`) through a Riverpod override.
+Leave, attendance, document and resignation tests also override
+`todayProvider` so "this year", "this month", "has it started" and "expires
+soon" are fixed. Attendance tests replace the GPS with `FakeLocationService`
+(`locationServiceProvider`) and the camera with `FakeCameraService`
+(`cameraServiceProvider`); document tests replace the phone's viewer with
+`FakeFileOpener` (`fileOpenerProvider`). `test/api_client_test.dart` runs the
+real dio client against stub adapters that return the contract's JSON, or a
+file's bytes and headers.
+
+There is no device check in the tests: the camera, the PDF viewer and the
+permission prompts need a phone or a simulator.
 
 ## Generated API client (`tool/gen_api.sh`)
 

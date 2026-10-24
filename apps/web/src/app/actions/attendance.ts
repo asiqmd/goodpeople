@@ -2,7 +2,7 @@
 
 import type { EdgeAgentCreated, MyAttendanceToday, RegularizationView } from '@gp/shared';
 import { revalidatePath } from 'next/cache';
-import { authedFetch } from '@/lib/api';
+import { authedFetch, authedUpload } from '@/lib/api';
 import { nest, toNumber } from '@/lib/form';
 import type { ActionState } from './platform';
 
@@ -26,6 +26,14 @@ export async function punch(position: {
     method: 'POST',
     body: { source: 'web', ...position },
   });
+  if (!result.ok) return fail(result);
+  revalidatePath('/workspace/attendance');
+  return { ok: true };
+}
+
+/** A punch with a photo, as the workspace asks: the form carries the position and `selfie`. */
+export async function punchWithSelfie(form: FormData): Promise<PunchState> {
+  const result = await authedUpload<MyAttendanceToday>('/tenant/me/attendance/punch', form);
   if (!result.ok) return fail(result);
   revalidatePath('/workspace/attendance');
   return { ok: true };
@@ -71,6 +79,7 @@ export async function updateAttendanceSettings(
       regularizationChain: form.getAll('regularizationChain'),
       regularizationWindowDays: toNumber(data.regularizationWindowDays),
       trackingFrom: data.trackingFrom,
+      requireSelfie: form.has('requireSelfie'),
     },
   });
   if (!result.ok) return fail(result);

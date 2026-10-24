@@ -105,6 +105,7 @@ Json punchJson({
   bool? insideGeofence,
   String? note,
   bool voided = false,
+  String? selfieDocumentId,
 }) => {
   'id': id,
   'punchedAt': dhaka(date, time),
@@ -115,7 +116,11 @@ Json punchJson({
   'insideGeofence': insideGeofence,
   'note': note,
   'voided': voided,
+  'selfieDocumentId': selfieDocumentId,
 };
+
+/// The document the API stores a punch's selfie as.
+const selfieDocumentId = 'da000000-0000-4000-8000-0000000000ff';
 
 const devicePunchId = 'ac000000-0000-4000-8000-000000000001';
 const voidedPunchId = 'ac000000-0000-4000-8000-000000000002';
@@ -127,6 +132,7 @@ Json attendanceTodayJson({
   String mode = 'geofenced',
   String? blockedReason,
   Json? geofence = gazipurGeofence,
+  bool requireSelfie = false,
   List<Json>? punches,
   String nextDirection = 'out',
   Json? day,
@@ -158,13 +164,15 @@ Json attendanceTodayJson({
     'mode': mode,
     'blockedReason': blockedReason,
     'geofence': geofence,
+    'requireSelfie': requireSelfie,
   },
   'nextDirection': nextDirection,
 };
 
 /// What the API answers a punch at 17:10 with: [today] plus a mobile punch
-/// in its next direction, inside the geofence when [body] has a location.
-Json punchedJson(Json today, Json body) {
+/// in its next direction, inside the geofence when [body] has a location,
+/// and with a selfie document when one came [withSelfie].
+Json punchedJson(Json today, Json body, {bool withSelfie = false}) {
   final day = today['day']! as Json;
   final date = day['date']! as String;
   final direction = today['nextDirection']! as String;
@@ -191,6 +199,7 @@ Json punchedJson(Json today, Json body) {
         direction: direction,
         distanceM: located ? 15 : null,
         insideGeofence: located ? true : null,
+        selfieDocumentId: withSelfie ? selfieDocumentId : null,
       ),
     ],
     'nextDirection': direction == 'in' ? 'out' : 'in',

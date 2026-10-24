@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../api/api_models.dart';
 import '../auth/auth_controller.dart';
 import '../l10n/app_localizations.dart';
+import '../resignation/resignation_screen.dart';
 import '../ui/format.dart';
 import '../ui/language_menu.dart';
 import '../ui/load_error_view.dart';
@@ -16,6 +17,7 @@ class ProfileScreen extends ConsumerWidget {
   static const headerKey = ValueKey('profile-header');
   static const paymentAccountsKey = ValueKey('profile-payment-accounts');
   static const emptyStateKey = ValueKey('profile-empty');
+  static const resignationKey = ValueKey('profile-resignation');
 
   static ValueKey<String> paymentAccountKey(String id) =>
       ValueKey('payment-account-$id');
@@ -200,6 +202,23 @@ class _ProfileDetails extends StatelessWidget {
               ),
             if (e.paymentAccounts.isEmpty) const _NoneRecorded(),
           ],
+        ),
+        // Last and plain: resigning is rare, and not what the profile is for.
+        Padding(
+          padding: const EdgeInsets.only(top: 24),
+          child: Card.outlined(
+            margin: EdgeInsets.zero,
+            clipBehavior: Clip.antiAlias,
+            child: ListTile(
+              key: ProfileScreen.resignationKey,
+              leading: const Icon(Icons.exit_to_app),
+              title: Text(l10n.resignationTitle),
+              subtitle: Text(l10n.resignationEntrySubtitle),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () =>
+                  Navigator.of(context).push(ResignationScreen.route()),
+            ),
+          ),
         ),
       ],
     );

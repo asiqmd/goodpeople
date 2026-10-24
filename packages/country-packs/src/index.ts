@@ -3,3 +3,5 @@ export * from './bd/rules.js';
 export * from './bd/holidays.js';
 export * from './bd/leave.js';
 export * from './bd/attendance.js';
+export * from './bd/lifecycle.js';
+export * from './bd/letters.js';

@@ -13,15 +13,16 @@ export default async function WorkspaceLayout({ children }: LayoutProps<'/worksp
   const tr = await getTranslations('reasons');
   const tl = await getTranslations('leave.nav');
   const ta = await getTranslations('attendance.nav');
+  const tlc = await getTranslations('lifecycle.nav');
   const result = await authedFetch<TenantAccessView>('tenant', '/tenant/access');
   const user = await currentTenantUser();
   const isHr = !!user && (HR_ROLES as readonly string[]).includes(user.role);
   const hasLeave = result.ok && result.data.access.features.includes('leave');
   const hasAttendance = result.ok && result.data.access.features.includes('attendance');
-  const approvals =
-    hasLeave || hasAttendance
-      ? await authedFetch<{ count: number }>('tenant', '/tenant/approvals/count')
-      : null;
+  // Resignations need approval in every workspace; leave and corrections where enabled.
+  const approvals = result.ok
+    ? await authedFetch<{ count: number }>('tenant', '/tenant/approvals/count')
+    : null;
   const waiting = approvals?.ok ? approvals.data.count : 0;
 
   const links = [
@@ -33,13 +34,13 @@ export default async function WorkspaceLayout({ children }: LayoutProps<'/worksp
         ]
       : []),
     ...(hasLeave ? [{ href: '/workspace/leave', label: tl('leave') }] : []),
-    ...(hasLeave || hasAttendance
-      ? [{ href: '/workspace/approvals', label: tl('approvals'), badge: waiting }]
-      : []),
+    { href: '/workspace/approvals', label: tl('approvals'), badge: waiting },
     ...(isHr
       ? [
           { href: '/workspace/employees', label: tn('employees') },
+          { href: '/workspace/people', label: tlc('people') },
           { href: '/workspace/organization', label: tn('organization') },
+          { href: '/workspace/letters', label: tlc('letters') },
           ...(hasLeave ? [{ href: '/workspace/leave/settings', label: tl('settings') }] : []),
           ...(hasAttendance
             ? [

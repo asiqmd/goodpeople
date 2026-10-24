@@ -1065,4 +1065,285 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get approvalUnknownItem =>
       'অ্যাপের এই সংস্করণে এই আবেদনটি দেখানো যায় না। ওয়েব থেকে সিদ্ধান্ত দিন।';
+
+  @override
+  String get punchSelfieHint =>
+      'আপনার ওয়ার্কস্পেসে প্রতিটি পাঞ্চের সাথে একটি ছবি লাগে। পাঞ্চ করলে সামনের ক্যামেরা খুলবে।';
+
+  @override
+  String get punchTakingPhoto => 'আপনার ছবি তোলা হচ্ছে…';
+
+  @override
+  String get punchNoPhoto =>
+      'কোনো ছবি তোলা হয়নি, তাই পাঞ্চ হয়নি। আবার পাঞ্চ করে ছবিটি তুলুন।';
+
+  @override
+  String get punchWithPhoto => 'ছবিসহ';
+
+  @override
+  String get punchErrorSelfieRequired =>
+      'আপনার ওয়ার্কস্পেসে এখন প্রতিটি পাঞ্চের সাথে ছবি লাগে। ছবি তুলতে আবার পাঞ্চ করুন।';
+
+  @override
+  String get punchErrorSelfieTooLarge =>
+      'ছবিটি পাঠানোর জন্য অনেক বড়। অনুগ্রহ করে আবার তুলুন।';
+
+  @override
+  String get punchErrorSelfieUnreadable =>
+      'ছবিটি পড়া যায়নি। অনুগ্রহ করে আবার তুলুন।';
+
+  @override
+  String get cameraPermissionDenied =>
+      'এই অ্যাপের জন্য ক্যামেরা ব্যবহারের অনুমতি বন্ধ আছে। পাঞ্চের ছবি তুলতে সেটিংসে গিয়ে অনুমতি দিন।';
+
+  @override
+  String get cameraUnavailable =>
+      'এই ফোনে অ্যাপটি ব্যবহার করতে পারে এমন কোনো ক্যামেরা নেই, তাই ছবিসহ পাঞ্চ করা যাবে না।';
+
+  @override
+  String get cameraFailed =>
+      'ক্যামেরা খোলা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।';
+
+  @override
+  String get documentsTitle => 'আমার কাগজপত্র';
+
+  @override
+  String get documentsSubtitle => 'চিঠি, সনদপত্র ও আপনার সার্ভিস বই';
+
+  @override
+  String get documentsLoadFailed => 'আপনার কাগজপত্র লোড করা যায়নি।';
+
+  @override
+  String get documentsEmpty =>
+      'এইচআর এখনো আপনার সাথে কোনো কাগজপত্র শেয়ার করেনি।';
+
+  @override
+  String get documentsNoEmployeeBody =>
+      'কাগজপত্র কর্মী রেকর্ডের সাথে যুক্ত থাকে, কিন্তু আপনার লগইনের সাথে কোনো কর্মী রেকর্ড যুক্ত নেই। আপনার থাকার কথা মনে হলে আপনার এইচআর টিমকে জানান।';
+
+  @override
+  String documentCategoryName(String category) {
+    String _temp0 = intl.Intl.selectLogic(category, {
+      'photo': 'ছবি',
+      'nid': 'জাতীয় পরিচয়পত্র',
+      'birth_certificate': 'জন্ম নিবন্ধন সনদ',
+      'passport': 'পাসপোর্ট',
+      'educational_certificate': 'শিক্ষাগত সনদ',
+      'experience_certificate': 'অভিজ্ঞতার সনদ',
+      'appointment_letter': 'নিয়োগপত্র',
+      'contract': 'চুক্তিপত্র',
+      'medical_certificate': 'মেডিকেল সনদ',
+      'police_verification': 'পুলিশ ভেরিফিকেশন',
+      'nominee_form': 'নমিনি ফরম',
+      'letter': 'চিঠি',
+      'punch_selfie': 'পাঞ্চের ছবি',
+      'other': 'কাগজপত্র',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String documentIssuedOn(String date) {
+    return 'ইস্যু: $date';
+  }
+
+  @override
+  String documentExpiresOn(String date) {
+    return 'মেয়াদ শেষ: $date';
+  }
+
+  @override
+  String get documentExpired => 'মেয়াদোত্তীর্ণ';
+
+  @override
+  String get documentExpiresSoon => 'শীঘ্রই মেয়াদ শেষ';
+
+  @override
+  String get documentSourceLetter => 'এইচআরের চিঠি';
+
+  @override
+  String get documentSourceUpload => 'এইচআর আপলোড করেছে';
+
+  @override
+  String documentRefNo(String refNo) {
+    return 'স্মারক নং $refNo';
+  }
+
+  @override
+  String get documentErrorNotShared =>
+      'এই কাগজটি আর আপনার সাথে শেয়ার করা নেই।';
+
+  @override
+  String get documentErrorGone => 'এই কাগজটি সরিয়ে ফেলা হয়েছে।';
+
+  @override
+  String get fileNoApp =>
+      'এই ফোনে ফাইলটি খোলার মতো কোনো অ্যাপ নেই। একটি পিডিএফ রিডার ইনস্টল করে আবার চেষ্টা করুন।';
+
+  @override
+  String get fileOpenFailed =>
+      'ফাইলটি খোলা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।';
+
+  @override
+  String get imageLoadFailed => 'ছবিটি দেখানো যাচ্ছে না।';
+
+  @override
+  String get serviceBookTitle => 'আমার সার্ভিস বই';
+
+  @override
+  String get serviceBookBody =>
+      'শ্রম আইনের ধারা ৬ অনুযায়ী সংরক্ষিত আপনার চাকরির রেকর্ড। এটি অ্যাপের ভাষায় পিডিএফ হিসেবে খুলবে।';
+
+  @override
+  String get serviceBookOpen => 'পিডিএফ খুলুন';
+
+  @override
+  String get resignationTitle => 'পদত্যাগ';
+
+  @override
+  String get resignationEntrySubtitle =>
+      'নোটিশ দিন, অথবা আপনার পদত্যাগের অবস্থা দেখুন';
+
+  @override
+  String get separationsLoadFailed => 'আপনার পদত্যাগের তথ্য লোড করা যায়নি।';
+
+  @override
+  String get separationsNoEmployeeBody =>
+      'পদত্যাগের জন্য কর্মী রেকর্ড লাগে, কিন্তু আপনার লগইনের সাথে কোনো কর্মী রেকর্ড যুক্ত নেই। আপনার থাকার কথা মনে হলে আপনার এইচআর টিমকে জানান।';
+
+  @override
+  String get separationsEarlier => 'আগের';
+
+  @override
+  String separationTypeName(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'resignation': 'পদত্যাগ',
+      'termination': 'চাকরির অবসান',
+      'dismissal': 'বরখাস্ত',
+      'discharge': 'ডিসচার্জ',
+      'retrenchment': 'ছাঁটাই',
+      'retirement': 'অবসর',
+      'death': 'মৃত্যু',
+      'contract_end': 'চুক্তির মেয়াদ শেষ',
+      'other': 'চাকরি থেকে অব্যাহতি',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String separationStatusName(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'pending': 'অপেক্ষমাণ',
+      'approved': 'অনুমোদিত',
+      'completed': 'সম্পন্ন',
+      'rejected': 'প্রত্যাখ্যাত',
+      'cancelled': 'বাতিল',
+      'other': 'অজানা',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get separationNoticeDate => 'নোটিশের তারিখ';
+
+  @override
+  String get separationLastWorkingDay => 'শেষ কর্মদিবস';
+
+  @override
+  String get separationNoticeRequired => 'প্রয়োজনীয় নোটিশ';
+
+  @override
+  String get separationNoticeGiven => 'দেওয়া নোটিশ';
+
+  @override
+  String get separationNoNoticeRequired => 'প্রয়োজন নেই';
+
+  @override
+  String separationShortfall(String days) {
+    return 'শ্রম আইনে যে নোটিশ চাওয়া হয়, এটি তার চেয়ে $days কম। ঘাটতির দিনগুলোর মজুরি আপনার চূড়ান্ত পাওনা থেকে কেটে রাখা হতে পারে।';
+  }
+
+  @override
+  String get resignationCancel => 'পদত্যাগ প্রত্যাহার করুন';
+
+  @override
+  String get resignationCancelTitle => 'পদত্যাগ প্রত্যাহার করবেন?';
+
+  @override
+  String resignationCancelBody(String date) {
+    return '$date শেষ কর্মদিবস ধরে দেওয়া আপনার পদত্যাগপত্র প্রত্যাহার করা হবে, এবং আপনার চাকরি বহাল থাকবে।';
+  }
+
+  @override
+  String get resignationCancelled => 'পদত্যাগ প্রত্যাহার করা হয়েছে';
+
+  @override
+  String get resignHeading => 'চাকরি থেকে পদত্যাগ';
+
+  @override
+  String get resignNoticeInfo =>
+      'বাংলাদেশ শ্রম আইনের ২৭ ধারা অনুযায়ী, পদত্যাগ করতে স্থায়ী শ্রমিককে ৬০ দিনের এবং মাসিক মজুরির অস্থায়ী শ্রমিককে ৩০ দিনের লিখিত নোটিশ দিতে হয়। আপনার নোটিশ আজ থেকে শুরু হবে। এর চেয়ে কম নোটিশ দিলে ঘাটতির দিনগুলোর মজুরি আপনার চূড়ান্ত পাওনা থেকে কেটে রাখা হতে পারে।';
+
+  @override
+  String get resignLastDayRequired => 'আপনার শেষ কর্মদিবস বেছে নিন';
+
+  @override
+  String resignNoticeGiven(String days) {
+    return 'এতে $days নোটিশ দেওয়া হবে।';
+  }
+
+  @override
+  String get resignSubmit => 'পদত্যাগপত্র পাঠান';
+
+  @override
+  String get resignConfirmTitle => 'পদত্যাগপত্র পাঠাবেন?';
+
+  @override
+  String resignConfirmBody(String date) {
+    return 'আপনার শেষ কর্মদিবস হবে $date। এটি প্রথমে আপনার ম্যানেজার, তারপর এইচআরের কাছে যাবে। অপেক্ষমাণ থাকা অবস্থায় আপনি এটি প্রত্যাহার করতে পারবেন।';
+  }
+
+  @override
+  String get resignConfirm => 'পদত্যাগ করুন';
+
+  @override
+  String get resignSent => 'পদত্যাগপত্র অনুমোদনের জন্য পাঠানো হয়েছে';
+
+  @override
+  String get resignErrorOpen =>
+      'একটি পদত্যাগ বা চাকরি ছাড়ার প্রক্রিয়া ইতিমধ্যে চলমান আছে।';
+
+  @override
+  String get resignErrorSeparated =>
+      'আপনার চাকরির মেয়াদ ইতিমধ্যে শেষ হয়ে গেছে।';
+
+  @override
+  String get resignErrorPastLastDay =>
+      'শেষ কর্মদিবস অতীতের কোনো তারিখ হতে পারবে না।';
+
+  @override
+  String get resignErrorNotOpen =>
+      'এই পদত্যাগের বিষয়ে ইতিমধ্যে সিদ্ধান্ত হয়ে গেছে, তাই এটি প্রত্যাহার করা যাবে না।';
+
+  @override
+  String approvalSeparationDates(String notice, String lastDay) {
+    return 'নোটিশ $notice → শেষ কর্মদিবস $lastDay';
+  }
+
+  @override
+  String approvalNoticeShort(String days) {
+    return 'নোটিশ $days কম';
+  }
+
+  @override
+  String get approveSeparationTitle => 'এই পদত্যাগ অনুমোদন করবেন?';
+
+  @override
+  String get rejectSeparationTitle => 'এই পদত্যাগ প্রত্যাখ্যান করবেন?';
+
+  @override
+  String get separationApproved => 'পদত্যাগ অনুমোদন করা হয়েছে';
+
+  @override
+  String get separationRejected => 'পদত্যাগ প্রত্যাখ্যান করা হয়েছে';
 }

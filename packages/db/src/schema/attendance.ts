@@ -29,6 +29,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { employees, locations } from './hr.js';
 import { approvalStepKind, leaveRequests } from './leave.js';
+import { documents } from './lifecycle.js';
 import { tenants } from './platform.js';
 
 export const punchSource = pgEnum('punch_source', PUNCH_SOURCES);
@@ -247,6 +248,7 @@ export const attendancePunches = pgTable(
     distanceM: integer('distance_m'),
     insideGeofence: boolean('inside_geofence'),
     regularizationId: uuid('regularization_id'),
+    selfieDocumentId: uuid('selfie_document_id'),
     note: text('note'),
     createdBy: uuid('created_by'),
     createdAt: createdAt(),
@@ -270,6 +272,11 @@ export const attendancePunches = pgTable(
       name: 'attendance_punches_device_fk',
       columns: [t.tenantId, t.deviceId],
       foreignColumns: [attendanceDevices.tenantId, attendanceDevices.id],
+    }),
+    foreignKey({
+      name: 'attendance_punches_selfie_fk',
+      columns: [t.tenantId, t.selfieDocumentId],
+      foreignColumns: [documents.tenantId, documents.id],
     }),
     foreignKey({
       name: 'attendance_punches_regularization_fk',
@@ -345,5 +352,7 @@ export const attendanceSettings = pgTable('attendance_settings', {
     .default(sql`current_date`),
   /** The last day the background processing has reached. */
   processedThrough: isoDate('processed_through'),
+  /** App punches must include a photo taken at the time. */
+  requireSelfie: boolean('require_selfie').notNull().default(false),
   updatedAt: instant('updated_at').notNull().defaultNow(),
 });

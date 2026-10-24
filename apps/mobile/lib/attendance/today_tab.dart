@@ -11,6 +11,7 @@ import '../ui/load_error_view.dart';
 import '../ui/notice_card.dart';
 import 'attendance_providers.dart';
 import 'attendance_widgets.dart';
+import 'camera_service.dart';
 import 'location_service.dart';
 
 /// Today for the signed-in employee: the shift, how the day stands, the
@@ -19,13 +20,15 @@ import 'location_service.dart';
 /// With a geofence (`geofenced`) a punch needs the phone's location; when
 /// it cannot be read, the tab says why and sends nothing. With `anywhere`
 /// the location is sent when it can be read, and the punch goes without it
-/// otherwise.
+/// otherwise. When the workspace asks for a selfie, the front camera opens
+/// first; no photo, no punch.
 class TodayTab extends ConsumerStatefulWidget {
   const TodayTab({super.key});
 
   static const dayCardKey = ValueKey('attendance-today-day');
   static const punchButtonKey = ValueKey('attendance-punch');
   static const punchHintKey = ValueKey('attendance-punch-hint');
+  static const selfieHintKey = ValueKey('attendance-selfie-hint');
   static const blockedKey = ValueKey('attendance-punch-blocked');
   static const punchErrorKey = ValueKey('attendance-punch-error');
   static const openSettingsKey = ValueKey('attendance-open-settings');
@@ -33,6 +36,8 @@ class TodayTab extends ConsumerStatefulWidget {
 
   static ValueKey<String> punchKey(String punchId) =>
       ValueKey('attendance-punch-$punchId');
+  static ValueKey<String> punchPhotoKey(String punchId) =>
+      ValueKey('attendance-punch-photo-$punchId');
 
   /// How long a punch waits for a location fix when the geofence needs it,
   /// and when it is only nice to have.
@@ -44,17 +49,18 @@ class TodayTab extends ConsumerStatefulWidget {
 }
 
 class _TodayTabState extends ConsumerState<TodayTab> {
+  bool _capturing = false;
   bool _locating = false;
   bool _punching = false;
 
-  /// Why the last punch failed: an [ApiException], a [LocationUnavailable]
-  /// or anything else.
+  /// Why the last punch failed: an [ApiException], a [LocationUnavailable],
+  /// a [CameraUnavailable], a [SelfieNotSent] or anything else.
   Object? _error;
 
   /// The location sent with the failed punch, to say how far away it was.
   PunchLocation? _errorLocation;
 
-  bool get _busy => _locating || _punching;
+  bool get _busy => _capturing || _locating || _punching;
 
   Future<void> _punch(MyAttendanceToday today) async {
     final l10n = AppLocalizations.of(context);
@@ -63,10 +69,38 @@ class _TodayTabState extends ConsumerState<TodayTab> {
     final container = ProviderScope.containerOf(context, listen: false);
     final selfPunch = today.selfPunch;
     setState(() {
-      _locating = true;
+      _capturing = selfPunch.requireSelfie;
       _error = null;
       _errorLocation = null;
     });
+
+    // The photo comes first, so backing out of the camera stops the punch
+    // before the location is even read.
+    PunchSelfie? selfie;
+    if (selfPunch.requireSelfie) {
+      Object? problem;
+      try {
+        selfie = await container.read(cameraServiceProvider).takeSelfie();
+        problem = switch (selfie) {
+          null => const SelfieNotSent(SelfieProblem.skipped),
+          PunchSelfie(isTooLarge: true) => const SelfieNotSent(
+            SelfieProblem.tooLarge,
+          ),
+          _ => null,
+        };
+      } on CameraUnavailable catch (error) {
+        problem = error;
+      } on Object {
+        problem = const CameraUnavailable(CameraProblem.failed);
+      }
+      if (!mounted) return;
+      setState(() {
+        _capturing = false;
+        _error = problem;
+      });
+      if (problem != null) return;
+    }
+    setState(() => _locating = true);
 
     PunchLocation? location;
     try {
@@ -98,7 +132,7 @@ class _TodayTabState extends ConsumerState<TodayTab> {
     try {
       final after = await container
           .read(authProvider.notifier)
-          .punch(location: location);
+          .punch(location: location, selfie: selfie);
       // Once the screen has closed the day is not needed; showing it would
       // only load it again.
       if (mounted) container.read(attendanceTodayProvider.notifier).show(after);
@@ -128,6 +162,7 @@ class _TodayTabState extends ConsumerState<TodayTab> {
             'self_punch_disabled',
             'no_geofence',
             'location_required',
+            'selfie_required',
           }.contains(error.code)) {
         container.invalidate(attendanceTodayProvider);
       }
@@ -183,13 +218,22 @@ class _TodayTabState extends ConsumerState<TodayTab> {
     final scheme = theme.colorScheme;
     final selfPunch = today.selfPunch;
     final error = _error;
-    final problem = switch (error) {
+    final hintStyle = theme.textTheme.bodySmall?.copyWith(
+      color: scheme.onSurfaceVariant,
+    );
+    // Only the system settings can fix these.
+    final VoidCallback? openSettings = switch (error) {
       LocationUnavailable(:final problem)
           when problem == LocationProblem.servicesOff ||
               problem == LocationProblem.permissionDeniedForever =>
-        problem,
+        () => ref.read(locationServiceProvider).openSettings(problem),
+      CameraUnavailable(problem: CameraProblem.permissionDenied) =>
+        () => ref.read(cameraServiceProvider).openSettings(),
       _ => null,
     };
+    // Backing out of the camera is not a failure: say so quietly.
+    final skipped =
+        error is SelfieNotSent && error.problem == SelfieProblem.skipped;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -198,7 +242,11 @@ class _TodayTabState extends ConsumerState<TodayTab> {
         if (selfPunch.canPunch) ...[
           _PunchButton(
             direction: today.nextDirection,
-            locating: _locating,
+            label: _capturing
+                ? l10n.punchTakingPhoto
+                : _locating
+                ? l10n.punchLocating
+                : null,
             busy: _busy,
             onPressed: () => _punch(today),
           ),
@@ -208,10 +256,15 @@ class _TodayTabState extends ConsumerState<TodayTab> {
                 : l10n.punchAnywhereHint,
             key: TodayTab.punchHintKey,
             textAlign: TextAlign.center,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: scheme.onSurfaceVariant,
-            ),
+            style: hintStyle,
           ),
+          if (selfPunch.requireSelfie)
+            Text(
+              l10n.punchSelfieHint,
+              key: TodayTab.selfieHintKey,
+              textAlign: TextAlign.center,
+              style: hintStyle,
+            ),
         ] else
           NoticeCard(
             key: TodayTab.blockedKey,
@@ -229,25 +282,29 @@ class _TodayTabState extends ConsumerState<TodayTab> {
         if (error != null) ...[
           NoticeCard(
             key: TodayTab.punchErrorKey,
-            icon: error is LocationUnavailable
-                ? Icons.location_off_outlined
-                : Icons.error_outline,
+            icon: switch (error) {
+              LocationUnavailable() => Icons.location_off_outlined,
+              CameraUnavailable() => Icons.no_photography_outlined,
+              _ when skipped => Icons.photo_camera_outlined,
+              _ => Icons.error_outline,
+            },
             message: attendanceErrorText(
               l10n,
               error,
               location: _errorLocation,
               geofence: selfPunch.geofence,
             ),
-            background: scheme.errorContainer,
-            foreground: scheme.onErrorContainer,
+            background: skipped
+                ? scheme.surfaceContainerHigh
+                : scheme.errorContainer,
+            foreground: skipped ? scheme.onSurface : scheme.onErrorContainer,
           ),
-          if (problem != null)
+          if (openSettings != null)
             Align(
               alignment: AlignmentDirectional.centerEnd,
               child: TextButton.icon(
                 key: TodayTab.openSettingsKey,
-                onPressed: () =>
-                    ref.read(locationServiceProvider).openSettings(problem),
+                onPressed: openSettings,
                 icon: const Icon(Icons.settings_outlined),
                 label: Text(l10n.openSettings),
               ),
@@ -261,23 +318,23 @@ class _TodayTabState extends ConsumerState<TodayTab> {
 class _PunchButton extends StatelessWidget {
   const _PunchButton({
     required this.direction,
-    required this.locating,
     required this.busy,
     required this.onPressed,
+    this.label,
   });
 
   final PunchDirection direction;
-  final bool locating;
   final bool busy;
   final VoidCallback onPressed;
+
+  /// What the punch is doing now, in place of Punch in / Punch out.
+  final String? label;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final out = direction == PunchDirection.punchOut;
-    final label = locating
-        ? l10n.punchLocating
-        : (out ? l10n.punchOut : l10n.punchIn);
+    final label = this.label ?? (out ? l10n.punchOut : l10n.punchIn);
     return FilledButton.icon(
       key: TodayTab.punchButtonKey,
       style: FilledButton.styleFrom(
@@ -504,6 +561,17 @@ class _PunchRow extends StatelessWidget {
                 ],
               ),
             ),
+            if (punch.selfieDocumentId != null)
+              Padding(
+                padding: const EdgeInsetsDirectional.only(end: 8),
+                child: Icon(
+                  Icons.photo_camera_outlined,
+                  key: TodayTab.punchPhotoKey(punch.id),
+                  size: 18,
+                  color: scheme.onSurfaceVariant,
+                  semanticLabel: l10n.punchWithPhoto,
+                ),
+              ),
             if (punch.voided)
               LeavePill(
                 label: l10n.punchVoided,
