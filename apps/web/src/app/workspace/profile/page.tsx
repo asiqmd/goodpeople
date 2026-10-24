@@ -1,4 +1,10 @@
-import { todayIn, type DocumentView, type EmployeeDetail, type SeparationView } from '@gp/shared';
+import {
+  todayIn,
+  type DocumentView,
+  type EmployeeDetail,
+  type EmployeePayView,
+  type SeparationView,
+} from '@gp/shared';
 import { getTranslations } from 'next-intl/server';
 import {
   AccountList,
@@ -9,6 +15,7 @@ import {
 } from '@/components/hr/employee-views';
 import { ResignForm } from '@/components/lifecycle/lifecycle-forms';
 import { DocumentList, SeparationList } from '@/components/lifecycle/lifecycle-views';
+import { PayBreakdown, PayRecordSummary } from '@/components/payroll/payroll-views';
 import { Card } from '@/components/ui';
 import { authedFetch, load } from '@/lib/api';
 
@@ -26,16 +33,27 @@ export default async function MyProfilePage() {
   }
   const employee = result.data;
   const tl = await getTranslations('lifecycle');
+  const tp = await getTranslations('payroll');
   const today = todayIn();
-  const [documents, separations] = await Promise.all([
+  const [documents, separations, pay] = await Promise.all([
     load<DocumentView[]>('tenant', '/tenant/me/documents'),
     load<SeparationView[]>('tenant', '/tenant/me/separations'),
+    // Only in workspaces with payroll; otherwise nothing to show.
+    authedFetch<EmployeePayView>('tenant', '/tenant/me/pay'),
   ]);
   const open = separations.some((s) => s.status === 'pending' || s.status === 'approved');
   return (
     <>
       <EmployeeHeader employee={employee} />
       <JobSummary employee={employee} />
+      {pay.ok && pay.data.current && (
+        <Card title={tp('pay.mine')}>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <PayRecordSummary record={pay.data.current} />
+            <PayBreakdown lines={pay.data.current.lines} gross={pay.data.current.gross} />
+          </div>
+        </Card>
+      )}
       <PersonalDetails employee={employee} />
       <div className="grid gap-6 lg:grid-cols-2">
         <NomineeList employee={employee} />

@@ -16,6 +16,10 @@ export interface ApprovalSummary {
   summary: Record<UserLanguage, string>;
   /** Where the requester sees the outcome. */
   link: string;
+  /** Maker-checker: the login that proposed it, never asked to approve it. */
+  madeBy?: string | null;
+  /** Who hears the decision; by default the employee whose request it is. */
+  decisionRecipients?: Recipient[];
 }
 
 const bnNumber = (n: number) => new Intl.NumberFormat('bn-BD').format(n);
@@ -92,10 +96,10 @@ export async function noticeRequested(
     if (step.kind === 'manager') {
       recipients = step.approverEmployeeId ? [{ employeeId: step.approverEmployeeId }] : [];
     } else {
-      // Nobody decides their own request, so the requester is not asked.
-      recipients = (await usersWith(tx, 'approvals.hr')).filter(
-        (r) => r.userId !== requester?.userId,
-      );
+      // Nobody decides their own request, or approves a change they proposed.
+      recipients = (
+        await usersWith(tx, step.kind === 'payroll' ? 'payroll.approve' : 'approvals.hr')
+      ).filter((r) => r.userId !== requester?.userId && r.userId !== summary.madeBy);
     }
     await notifications.notify(tx, {
       event: 'approval.requested',
@@ -122,7 +126,7 @@ export async function noticeDecided(
       : { en: 'rejected', bn: 'প্রত্যাখ্যাত' };
   await notifications.notify(tx, {
     event: 'approval.decided',
-    recipients: [{ employeeId: summary.employeeId }],
+    recipients: summary.decisionRecipients ?? [{ employeeId: summary.employeeId }],
     values: {
       'request.summary': summary.summary,
       'decision.outcome': outcome,

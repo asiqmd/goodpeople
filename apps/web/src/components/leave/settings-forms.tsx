@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  APPROVAL_STEP_KINDS,
+  CHAIN_STEP_KINDS,
   HOLIDAY_KINDS,
   LEAVE_ACCRUALS,
   type HolidayCalendarView,
@@ -152,7 +152,7 @@ function PolicyFields({
       </Field>
       <div className="space-y-1">
         <p className="text-sm font-medium text-slate-800">{t('chain')}</p>
-        {APPROVAL_STEP_KINDS.map((kind) => (
+        {CHAIN_STEP_KINDS.map((kind) => (
           <Check
             key={kind}
             name="approvalChain"

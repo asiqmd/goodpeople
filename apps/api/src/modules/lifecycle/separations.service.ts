@@ -14,13 +14,14 @@ import {
 import { bdNoticeDays } from '@gp/country-packs';
 import {
   addDays,
-  todayIn,
   type ApprovalItem,
+  type ChainStepKind,
   type ResignationInput,
   type SeparationInput,
   type SeparationStatus,
   type SeparationType,
   type SeparationView,
+  todayIn,
 } from '@gp/shared';
 import { and, desc, eq, gt, inArray, isNull, or, type SQL } from 'drizzle-orm';
 import type { AuthUser } from '../../common/auth-user.js';
@@ -441,7 +442,12 @@ export class SeparationsService implements ApprovalSubjectHandler<SeparationView
       if (!separation) continue;
       items.push({
         sortKey: separation.lastWorkingDay,
-        item: { subjectType: 'separation', stepId: step.id, kind: step.kind, separation },
+        item: {
+          subjectType: 'separation',
+          stepId: step.id,
+          kind: step.kind as ChainStepKind,
+          separation,
+        },
       });
     }
     return items;

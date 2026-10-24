@@ -6,7 +6,7 @@ import {
   REGULARIZATION_KINDS,
   SELF_PUNCH_MODES,
 } from './attendance.js';
-import { APPROVAL_STEP_KINDS } from './leave.js';
+import { CHAIN_STEP_KINDS } from './leave.js';
 import { withoutDefaults } from './zod-helpers.js';
 
 const isoDate = z.iso.date();
@@ -177,7 +177,7 @@ export const attendanceSettingsSchema = z
   .object({
     selfPunch: z.enum(SELF_PUNCH_MODES),
     regularizationChain: z
-      .array(z.enum(APPROVAL_STEP_KINDS))
+      .array(z.enum(CHAIN_STEP_KINDS))
       .max(3)
       .refine((steps) => new Set(steps).size === steps.length, 'Each step can appear once'),
     regularizationWindowDays: z.number().int().min(0).max(90),

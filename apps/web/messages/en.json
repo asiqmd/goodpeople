@@ -68,7 +68,8 @@
       "users": "Users",
       "setup": "Go-live checklist",
       "account": "My account",
-      "notificationsLabel": "Notifications ({count} unread)"
+      "notificationsLabel": "Notifications ({count} unread)",
+      "payroll": "Payroll"
     }
   },
   "platform": {
@@ -415,7 +416,9 @@
       "employee": "Employee",
       "hr_officer": "HR officer",
       "attendance_officer": "Attendance officer",
-      "auditor": "Auditor"
+      "auditor": "Auditor",
+      "payroll_officer": "Payroll officer",
+      "finance_officer": "Finance officer"
     }
   },
   "leave": {
@@ -474,7 +477,8 @@
       "approved": "Approved",
       "rejected": "Rejected",
       "skipped": "Skipped (no login)",
-      "cancelled": "Cancelled"
+      "cancelled": "Cancelled",
+      "payroll": "Payroll approval"
     },
     "request": {
       "cancel": "Cancel request",
@@ -1068,7 +1072,19 @@
     "future_punch": "A punch cannot be in the future.",
     "offline_punch_too_old": "This punch was recorded too long ago. Ask for a correction instead.",
     "unsupported_file": "Upload a PDF, JPEG, PNG or WebP file.",
-    "validation_failed": "Some fields need fixing. See the notes below them."
+    "validation_failed": "Some fields need fixing. See the notes below them.",
+    "below_minimum_wage": "This pay is below the minimum wage for the grade.",
+    "wage_grade_required": "Choose the minimum wage grade this person is paid at.",
+    "unknown_wage_grade": "That grade is not in the minimum wage table.",
+    "pay_change_pending": "A pay change for this person is already waiting for approval.",
+    "own_change": "Someone else must approve a change you proposed.",
+    "structure_in_use": "People are paid on this structure, so its lines cannot change. Create a new structure instead.",
+    "component_in_use": "A structure uses this component, so how it is worked out cannot change.",
+    "basic_is_input": "A basic-based structure takes the basic as entered; remove its BASIC line.",
+    "default_required": "Make another pay group the default instead.",
+    "structure_inactive": "This structure is not in use.",
+    "pay_group_inactive": "Choose a pay group that is in use.",
+    "feature_not_in_plan": "Your plan does not include this."
   },
   "platformRoles": {
     "super_admin": "Super admin",
@@ -1131,7 +1147,9 @@
       "hr_officer": "Day-to-day HR: people (with identity numbers), leave, attendance, documents, lifecycle, imports and HR approvals. Not the organisation set-up or notification settings.",
       "attendance_officer": "Attendance only: shifts, rosters, devices, punches and corrections, and reading the employee list (identity numbers hidden).",
       "auditor": "Reads the employee list (identity numbers hidden) and the audit log. Changes nothing.",
-      "employee": "Self-service: their own profile, leave, attendance, documents and their team's approvals."
+      "employee": "Self-service: their own profile, leave, attendance, documents and their team's approvals.",
+      "payroll_officer": "Payroll: sees salaries and proposes pay changes, which someone else approves. Reads the employee list.",
+      "finance_officer": "Approves pay changes made by others, sees salaries and the audit log. Changes nothing else."
     },
     "created": "Login created for {name}.",
     "temporaryPassword": "One-time password, shown only now:",
@@ -1301,5 +1319,151 @@
     },
     "fix": "Fix",
     "outsideApp": "Some go-live steps happen outside the app: a parallel month with your current process, legal review of letters and leave rules, and a tested backup. See docs/ops/go-live.md."
+  },
+  "payroll": {
+    "title": "Payroll setup",
+    "tab": "Pay",
+    "tabs": {
+      "structures": "Salary structures",
+      "components": "Components",
+      "groups": "Pay groups",
+      "wages": "Minimum wages",
+      "settings": "Approvals"
+    },
+    "code": "Code",
+    "name": "Name",
+    "nameBn": "Name in Bangla",
+    "save": "Save",
+    "saved": "Saved.",
+    "remove": "Remove",
+    "active": "In use",
+    "inactive": "Not in use",
+    "choose": "Choose…",
+    "on": "On",
+    "off": "Off",
+    "statuses": {
+      "pending": "Waiting for approval",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "cancelled": "Withdrawn",
+      "superseded": "Replaced"
+    },
+    "structures": {
+      "add": "New structure",
+      "create": "Create structure",
+      "basis": "Entered as",
+      "bases": {
+        "gross": "Gross salary",
+        "basic": "Basic salary"
+      },
+      "basisHint": {
+        "gross": "HR enters the gross; the lines split it (use GROSS).",
+        "basic": "HR enters the basic; the lines build on it (use BASIC)."
+      },
+      "wageBoard": "Minimum wage table",
+      "noWageBoard": "None",
+      "lines": "Lines",
+      "component": "Component",
+      "formula": "Formula",
+      "addLine": "Add a line",
+      "inUse": "{count, plural, one {# person is paid on this structure, so its lines are fixed. Create a new structure to change them.} other {# people are paid on this structure, so its lines are fixed. Create a new structure to change them.}}",
+      "people": "{count, plural, =0 {Nobody on it} one {# person} other {# people}}",
+      "sampleGross": "Try a gross of",
+      "sampleBasic": "Try a basic of",
+      "formulaHelp": "Formulas use component codes, GROSS or BASIC, + − × ÷, and min, max, round, floor, ceil, abs, if. Example: round((GROSS - 2450) / 1.5). For a gross structure, the lines counted in gross must add up to the gross."
+    },
+    "components": {
+      "title": "Pay components",
+      "intro": "The building blocks of pay. Structure components are worked out from the gross or basic; fixed ones are set per person; the rest come with each payroll run.",
+      "add": "New component",
+      "create": "Create component",
+      "codeHint": "Capital letters, digits and _, e.g. NIGHT_ALLOWANCE",
+      "kind": "Kind",
+      "kinds": {
+        "earning": "Earning",
+        "deduction": "Deduction",
+        "employer_cost": "Employer cost",
+        "info": "Information"
+      },
+      "calculation": "Worked out by",
+      "calculations": {
+        "structure": "Structure",
+        "fixed": "Fixed amount",
+        "run": "Each payroll run"
+      },
+      "tax": "Income tax",
+      "taxTreatments": {
+        "taxable": "Taxable",
+        "exempt": "Exempt",
+        "partly_exempt": "Partly exempt"
+      },
+      "inGross": "Counts in gross",
+      "prorate": "Prorated by paid days",
+      "inOvertimeBase": "In the overtime rate"
+    },
+    "groups": {
+      "title": "Pay groups",
+      "intro": "People paid together, on one schedule. Pay periods and payment dates come with payroll runs.",
+      "add": "New pay group",
+      "create": "Create pay group",
+      "frequency": "Paid",
+      "frequencies": {
+        "monthly": "Monthly",
+        "weekly": "Weekly"
+      },
+      "default": "Default",
+      "makeDefault": "Make default",
+      "members": "{count, plural, =0 {nobody yet} one {# person} other {# people}}"
+    },
+    "wages": {
+      "grade": "Grade",
+      "from": "in force from {date}",
+      "status": {
+        "verified": "Checked against the gazette",
+        "needs_review": "To be checked against the gazette"
+      }
+    },
+    "settings": {
+      "makerChecker": "A second person approves pay changes",
+      "makerCheckerHint": "With this on, a pay change waits in the Approvals inbox until someone else with payroll approval decides it. Nobody approves a change they proposed.",
+      "fewApprovers": "{count, plural, =0 {Nobody can approve pay yet.} one {Only one person can approve pay, so their own changes cannot be approved.} other {}} Give a second login the finance officer or HR admin role.",
+      "turnOff": "Turn off (one-person payroll)",
+      "turnOn": "Turn on",
+      "offConfirm": "Turn off the second approval? Pay changes will take effect as soon as they are made. The audit log keeps who made each one."
+    },
+    "pay": {
+      "current": "Current pay",
+      "history": "Pay history",
+      "change": "Change pay",
+      "mine": "My pay",
+      "none": "No pay recorded yet.",
+      "noHistory": "Nothing yet.",
+      "waiting": "A change is waiting for approval. Withdraw it from the history to propose another.",
+      "gross": "Gross",
+      "notInGross": "not in gross",
+      "from": "From {from}",
+      "between": "{from} – {to}",
+      "grade": "grade {grade}",
+      "proposedBy": "proposed by {name}",
+      "decidedBy": "decided by {name}",
+      "meetsMinimum": "Meets the {grade} minimum wage",
+      "belowMinimum": "Below the {grade} minimum wage ({gross})",
+      "effectiveFrom": "From",
+      "structure": "Salary structure",
+      "payGroup": "Pay group",
+      "grossAmount": "Gross salary",
+      "basicAmount": "Basic salary",
+      "wageGrade": "Minimum wage grade",
+      "atLeast": "at least {gross}",
+      "reason": "Reason",
+      "propose": "Propose change",
+      "sentForApproval": "Sent for approval. It takes effect once someone else approves it.",
+      "approvedNow": "Saved. The new pay is in force from its date.",
+      "cancel": "Withdraw",
+      "cancelConfirm": "Withdraw this pay change?",
+      "now": "Now",
+      "proposed": "Proposed",
+      "changeBadge": "Pay change"
+    }
   }
 }

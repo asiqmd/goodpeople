@@ -1,3 +1,4 @@
+import type { ChainStepKind } from './leave.js';
 import type { EmployeeRef } from './attendance-types.js';
 import type { EmploymentType } from './hr.js';
 import type { ApprovalStepView } from './leave-types.js';
@@ -108,6 +109,6 @@ export interface ImportBatchView {
 export interface SeparationApprovalItem {
   subjectType: 'separation';
   stepId: string;
-  kind: 'manager' | 'hr';
+  kind: ChainStepKind;
   separation: SeparationView;
 }

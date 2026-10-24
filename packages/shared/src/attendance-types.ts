@@ -13,6 +13,7 @@ import type { Ref } from './hr-types.js';
 import type { ApprovalStepKind } from './leave.js';
 import type { ApprovalStepView, LeaveBalanceView, LeaveRequestView } from './leave-types.js';
 import type { SeparationApprovalItem } from './lifecycle-types.js';
+import type { CompensationApprovalItem } from './payroll-types.js';
 
 export interface EmployeeRef {
   id: string;
@@ -252,4 +253,8 @@ export interface RegularizationApprovalItem {
 }
 
 /** One approval waiting for the signed-in user. */
-export type ApprovalItem = LeaveApprovalItem | RegularizationApprovalItem | SeparationApprovalItem;
+export type ApprovalItem =
+  | LeaveApprovalItem
+  | RegularizationApprovalItem
+  | SeparationApprovalItem
+  | CompensationApprovalItem;

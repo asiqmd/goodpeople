@@ -28,6 +28,8 @@ enum UserRole implements WireValue {
   hrAdmin('hr_admin'),
   hrOfficer('hr_officer'),
   attendanceOfficer('attendance_officer'),
+  payrollOfficer('payroll_officer'),
+  financeOfficer('finance_officer'),
   auditor('auditor'),
   employee('employee'),
   unknown('unknown');

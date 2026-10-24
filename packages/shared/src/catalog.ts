@@ -63,6 +63,8 @@ export const TENANT_ROLES = [
   'hr_admin',
   'hr_officer',
   'attendance_officer',
+  'payroll_officer',
+  'finance_officer',
   'auditor',
   'employee',
 ] as const;

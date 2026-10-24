@@ -9,7 +9,8 @@ import { eq } from 'drizzle-orm';
 import { scopeToTenant, type Database } from './client.js';
 import { createFieldCipher } from './field-cipher.js';
 import { hashPassword } from './passwords.js';
-import { provisionCountryDefaults } from './provision.js';
+import { provisionCountryDefaults, provisionPayroll } from './provision.js';
+import { seedGroupPayroll } from './seed-payroll.js';
 import { seedGroupHr } from './seed-hr.js';
 import { seedGroupAttendance } from './seed-attendance.js';
 import { seedGroupLeave } from './seed-leave.js';
@@ -185,6 +186,20 @@ export async function seed(db: Database, opts: SeedOptions) {
       }
     });
     created.push(t.slug);
+  }
+
+  // Seeds added after a database was first seeded fill it in; each skips what exists.
+  const [group] = await db.select().from(tenants).where(eq(tenants.slug, 'my-group'));
+  if (group) {
+    await db.transaction(async (tx) => {
+      await scopeToTenant(tx, group.id);
+      await provisionPayroll(tx, group.id);
+      await seedGroupPayroll(tx, {
+        tenantId: group.id,
+        cipher: createFieldCipher(opts.fieldKey),
+        passwordHash,
+      });
+    });
   }
   return { created };
 }

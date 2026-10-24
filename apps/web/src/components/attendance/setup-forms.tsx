@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  APPROVAL_STEP_KINDS,
+  CHAIN_STEP_KINDS,
   SELF_PUNCH_MODES,
   type AttendanceSettingsView,
   type DeviceView,
@@ -110,7 +110,7 @@ export function AttendanceSettingsForm({ settings }: { settings: AttendanceSetti
       <fieldset className="space-y-1">
         <legend className="text-sm font-medium text-slate-800">{t('chain')}</legend>
         <div className="flex gap-4">
-          {APPROVAL_STEP_KINDS.map((k) => (
+          {CHAIN_STEP_KINDS.map((k) => (
             <Check
               key={k}
               name="regularizationChain"

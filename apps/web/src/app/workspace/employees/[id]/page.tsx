@@ -15,6 +15,12 @@ import {
   type EmployeeAttendanceView,
   type LetterTemplateView,
   type SeparationView,
+  type TenantAccessView,
+  type EmployeePayView,
+  type PayComponentView,
+  type PayGroupView,
+  type SalaryStructureView,
+  type WageBoardView,
 } from '@gp/shared';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
@@ -42,17 +48,33 @@ import {
   UploadDocumentForm,
 } from '@/components/lifecycle/lifecycle-forms';
 import { DocumentList, SeparationList } from '@/components/lifecycle/lifecycle-views';
+import { CancelPayChangeButton, PayChangeForm } from '@/components/payroll/payroll-forms';
+import {
+  MinimumWageBadge,
+  PayBreakdown,
+  PayRecordSummary,
+} from '@/components/payroll/payroll-views';
 import { buttonClass, Card } from '@/components/ui';
 import { authedFetch, currentTenantUser, load } from '@/lib/api';
 import { MONTH, monthRange, shiftMonth } from '@/lib/month';
 
-const TABS = ['profile', 'job', 'documents', 'nominees', 'payment', 'leave', 'attendance'] as const;
+const TABS = [
+  'profile',
+  'job',
+  'pay',
+  'documents',
+  'nominees',
+  'payment',
+  'leave',
+  'attendance',
+] as const;
 
 /** What each tab needs: read-only roles (attendance officer, auditor) see the profile only. */
 const TAB_PERMISSION: Record<(typeof TABS)[number] | 'edit', Permission> = {
   profile: 'employees.read',
   edit: 'employees.write',
   job: 'employees.write',
+  pay: 'payroll.view',
   documents: 'documents.manage',
   nominees: 'employees.write',
   payment: 'employees.write',
@@ -67,12 +89,19 @@ export default async function EmployeePage({
   const { id } = await params;
   const sp = await searchParams;
   const role = (await currentTenantUser())?.role;
-  const tabs = TABS.filter((name) => can(role, TAB_PERMISSION[name]));
+  const { access } = await load<TenantAccessView>('tenant', '/tenant/access');
+  const tabs = TABS.filter(
+    (name) =>
+      can(role, TAB_PERMISSION[name]) && (name !== 'pay' || access.features.includes('payroll')),
+  );
   const tabParam = sp.tab;
   const asked = (
     typeof tabParam === 'string' ? tabParam : 'profile'
   ) as keyof typeof TAB_PERMISSION;
-  const tab = TAB_PERMISSION[asked] && can(role, TAB_PERMISSION[asked]) ? asked : 'profile';
+  const tab =
+    (tabs as string[]).includes(asked) || (asked === 'edit' && can(role, 'employees.write'))
+      ? asked
+      : 'profile';
   const result = await authedFetch<EmployeeDetail>('tenant', `/tenant/employees/${id}`);
   if (!result.ok) notFound();
   const employee = result.data;
@@ -80,6 +109,7 @@ export default async function EmployeePage({
   const tl = await getTranslations('leave');
   const ta = await getTranslations('attendance');
   const tlc = await getTranslations('lifecycle');
+  const tp = await getTranslations('payroll');
 
   return (
     <>
@@ -106,13 +136,15 @@ export default async function EmployeePage({
                 : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
-            {name === 'leave'
-              ? tl('employee.tab')
-              : name === 'attendance'
-                ? ta('employee.tab')
-                : name === 'documents'
-                  ? tlc('documents.tab')
-                  : t(`detail.${name}`)}
+            {name === 'pay'
+              ? tp('tab')
+              : name === 'leave'
+                ? tl('employee.tab')
+                : name === 'attendance'
+                  ? ta('employee.tab')
+                  : name === 'documents'
+                    ? tlc('documents.tab')
+                    : t(`detail.${name}`)}
           </Link>
         ))}
       </nav>
@@ -131,6 +163,7 @@ export default async function EmployeePage({
       )}
       {tab === 'edit' && <EmployeeForm mode="edit" employee={employee} />}
       {tab === 'job' && <JobTab employee={employee} />}
+      {tab === 'pay' && <PayTab employee={employee} canEdit={can(role, 'payroll.manage')} />}
       {tab === 'nominees' && (
         <Card title={t('detail.nominees')}>
           <NomineesForm employeeId={id} nominees={employee.nominees} />
@@ -431,6 +464,71 @@ async function AttendanceTab({
           <ManualPunchForm employeeId={employeeId} maxDate={today} />
         </Card>
       </div>
+    </>
+  );
+}
+
+async function PayTab({ employee, canEdit }: { employee: EmployeeDetail; canEdit: boolean }) {
+  const t = await getTranslations('payroll');
+  const pay = await load<EmployeePayView>('tenant', `/tenant/employees/${employee.id}/pay`);
+  const [structures, groups, boards, components] = canEdit
+    ? await Promise.all([
+        load<SalaryStructureView[]>('tenant', '/tenant/payroll/structures'),
+        load<PayGroupView[]>('tenant', '/tenant/payroll/pay-groups'),
+        load<WageBoardView[]>('tenant', '/tenant/payroll/wage-boards'),
+        load<PayComponentView[]>('tenant', '/tenant/payroll/components'),
+      ])
+    : [[], [], [], []];
+  return (
+    <>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card
+          title={t('pay.current')}
+          action={<MinimumWageBadge check={pay.current?.minimumWage ?? null} />}
+        >
+          {pay.current ? (
+            <div className="space-y-4">
+              <PayRecordSummary record={pay.current} />
+              <PayBreakdown lines={pay.current.lines} gross={pay.current.gross} />
+            </div>
+          ) : (
+            <p className="text-sm text-slate-500">{t('pay.none')}</p>
+          )}
+        </Card>
+        <Card title={t('pay.history')}>
+          {pay.history.length === 0 ? (
+            <p className="text-sm text-slate-500">{t('pay.noHistory')}</p>
+          ) : (
+            <ul className="-mx-5 divide-y divide-slate-100">
+              {pay.history.map((record) => (
+                <li key={record.id} className="flex items-start justify-between gap-3 px-5 py-3">
+                  <PayRecordSummary record={record} />
+                  {canEdit && record.status === 'pending' && (
+                    <CancelPayChangeButton id={record.id} />
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+      </div>
+      {canEdit && employee.status === 'active' && (
+        <Card title={t('pay.change')}>
+          {pay.pending.length > 0 ? (
+            <p className="text-sm text-slate-600">{t('pay.waiting')}</p>
+          ) : (
+            <PayChangeForm
+              employeeId={employee.id}
+              current={pay.current}
+              structures={structures}
+              payGroups={groups}
+              wageBoards={boards}
+              fixedComponents={components.filter((c) => c.calculation === 'fixed' && c.isActive)}
+              today={todayIn()}
+            />
+          )}
+        </Card>
+      )}
     </>
   );
 }

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { GENDERS } from './hr.js';
-import { APPROVAL_STEP_KINDS, HALF_DAYS, HOLIDAY_KINDS, LEAVE_ACCRUALS } from './leave.js';
+import { CHAIN_STEP_KINDS, HALF_DAYS, HOLIDAY_KINDS, LEAVE_ACCRUALS } from './leave.js';
 import { withoutDefaults } from './zod-helpers.js';
 
 const isoDate = z.iso.date();
@@ -57,7 +57,7 @@ const leaveTypeFields = {
   countsOffDays: z.boolean().default(false),
   allowHalfDay: z.boolean().default(true),
   approvalChain: z
-    .array(z.enum(APPROVAL_STEP_KINDS))
+    .array(z.enum(CHAIN_STEP_KINDS))
     .max(3)
     .refine((steps) => new Set(steps).size === steps.length, 'Each step can appear once'),
   requiresDocumentAfterDays: z.number().int().min(0).max(366).nullable().optional(),

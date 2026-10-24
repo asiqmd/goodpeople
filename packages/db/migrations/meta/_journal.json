@@ -85,6 +85,20 @@
       "when": 1792860837152,
       "tag": "0011_notifications_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792865378698,
+      "tag": "0012_payroll",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792865385674,
+      "tag": "0013_payroll_rls",
+      "breakpoints": true
     }
   ]
 }

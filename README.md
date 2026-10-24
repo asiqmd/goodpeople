@@ -27,10 +27,13 @@ A multi-tenant HR and payroll platform, built for Bangladesh first and ready to 
     security headers and rate limits, a measured 5,000-employee workspace, a production
     deployment kit, and the go-live checklist. The mobile app gains a team view, push and an
     offline punch queue.
+  - **Phase 2 M1 (pay foundations):** pay components and a safe formula engine, salary
+    structures with a live preview, the 2023 RMG minimum wage table, pay groups, and encrypted
+    employee pay changed through maker-checker in the Approvals inbox.
 - **Next:**
   - Our own organisations go live: [docs/ops/go-live.md](docs/ops/go-live.md).
-  - Then payroll (Phase 2).
-  - The plan is in [docs/phases/phase-1.md](docs/phases/phase-1.md).
+  - Phase 2 M2: payroll runs and payslips. The plan is in
+    [docs/phases/phase-2.md](docs/phases/phase-2.md).
 
 ## Repository layout
 
@@ -89,6 +92,7 @@ pnpm --filter @gp/web dev
 | Internal tenant (2 legal entities)                         | `/login`          | `my-group`      | `admin@my-group.test`      |
 | Employee self-service (Rahima)                             | `/login`          | `my-group`      | `rahima@my-group.test`     |
 | Line supervisor, approves leave and attendance corrections | `/login`          | `my-group`      | `shirin@my-group.test`     |
+| Finance officer, approves pay changes                      | `/login`          | `my-group`      | `finance@my-group.test`    |
 | Complimentary tenant                                       | `/login`          | `sponsored-ngo` | `admin@sponsored-ngo.test` |
 | Paid, payment overdue → read-only                          | `/login`          | `acme-garments` | `admin@acme-garments.test` |
 | Trial on the Starter plan                                  | `/login`          | `trial-co`      | `admin@trial-co.test`      |
@@ -99,6 +103,10 @@ on), so a sign-in code for an employee login with a mobile number shows up there
 The seed tracks attendance from 1 October 2026, with device punches for 1–23 October:
 the Gazipur factory on the day shift, Narayanganj on a day/night roster, the head office
 punching from the web. Device user 1010 is left unmatched on purpose, to try claiming it.
+
+After pulling changes that add country-pack defaults (Phase 2 payroll, for example), bring an
+existing dev database up to date with `pnpm db:migrate && pnpm --filter @gp/db provision`, then
+`pnpm db:seed` to fill in seed data added since (it only adds what is missing).
 
 ## Checks
 

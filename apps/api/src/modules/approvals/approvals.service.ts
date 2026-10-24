@@ -15,6 +15,8 @@ import { userCan } from '../../common/roles.js';
 import { employeeOfUser } from '../employees/employee.queries.js';
 import { LeaveRequestsService } from '../leave/leave-requests.service.js';
 import { SeparationsService } from '../lifecycle/separations.service.js';
+import { EmployeePayService } from '../payroll/employee-pay.service.js';
+import { forbidden } from '../../common/errors.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { noticeDecided, noticeRequested } from './approval-notices.js';
 import { cancelOpenSteps, type ApprovalSubjectHandler } from './approval-steps.js';
@@ -36,11 +38,13 @@ export class ApprovalsService {
     leave: LeaveRequestsService,
     regularizations: RegularizationsService,
     separations: SeparationsService,
+    pay: EmployeePayService,
   ) {
     this.handlers = {
       leave_request: leave,
       regularization: regularizations,
       separation: separations,
+      compensation: pay,
     };
   }
 
@@ -54,12 +58,20 @@ export class ApprovalsService {
       ? and(eq(approvalSteps.kind, 'manager'), eq(approvalSteps.approverEmployeeId, me.id))
       : undefined;
     const hr = userCan(user, 'approvals.hr') ? eq(approvalSteps.kind, 'hr') : undefined;
-    if (!mine && !hr) return null;
+    const payroll = userCan(user, 'payroll.approve')
+      ? eq(approvalSteps.kind, 'payroll')
+      : undefined;
+    if (!mine && !hr && !payroll) return null;
+    // What this login proposed itself waits for someone else (maker-checker).
+    const made = Object.values(this.handlers).flatMap((h) =>
+      h.madeBy ? [h.madeBy(tx, user.id)] : [],
+    );
     return and(
       eq(approvalSteps.status, 'pending'),
       inArray(approvalSteps.subjectType, Object.keys(this.handlers)),
-      or(mine, hr),
+      or(mine, hr, payroll),
       me ? not(or(...Object.values(this.handlers).map((h) => h.ownedBy(tx, me.id)))!) : undefined,
+      made.length ? not(or(...made)!) : undefined,
     )!;
   }
 
@@ -112,10 +124,15 @@ export class ApprovalsService {
       if (me?.id === subject.employeeId) {
         throw new ForbiddenException('You cannot decide your own request');
       }
+      if (subject.madeBy && subject.madeBy === user.id) {
+        throw forbidden('own_change', 'Someone else must approve a change you proposed');
+      }
       const allowed =
         step.kind === 'hr'
           ? userCan(user, 'approvals.hr')
-          : me !== null && me.id === step.approverEmployeeId;
+          : step.kind === 'payroll'
+            ? userCan(user, 'payroll.approve')
+            : me !== null && me.id === step.approverEmployeeId;
       if (!allowed) throw new ForbiddenException('This approval is not yours to decide');
 
       await tx

@@ -24,6 +24,10 @@ export const PERMISSIONS = [
   'approvals.hr',
   /** Notification channels, templates and the delivery log. */
   'notifications.manage',
+  /** Salaries: seeing them, proposing changes, and approving changes (the second person). */
+  'payroll.view',
+  'payroll.manage',
+  'payroll.approve',
   /** Workspace logins, their roles and security. */
   'users.manage',
   'audit.read',
@@ -47,6 +51,8 @@ export const ROLE_PERMISSIONS: Record<TenantRole, readonly Permission[]> = {
     'approvals.hr',
   ],
   attendance_officer: ['employees.read', 'attendance.manage'],
+  payroll_officer: ['employees.read', 'payroll.view', 'payroll.manage'],
+  finance_officer: ['employees.read', 'payroll.view', 'payroll.approve', 'audit.read'],
   auditor: ['employees.read', 'audit.read'],
   employee: [],
 };
@@ -60,4 +66,9 @@ export const isStaffRole = (role: TenantRole | undefined) =>
   !!role && ROLE_PERMISSIONS[role].length > 0;
 
 /** Roles that must use two-step sign-in where the server requires it for admins. */
-export const MFA_REQUIRED_ROLES: readonly TenantRole[] = ['tenant_admin', 'hr_admin'];
+export const MFA_REQUIRED_ROLES: readonly TenantRole[] = [
+  'tenant_admin',
+  'hr_admin',
+  'payroll_officer',
+  'finance_officer',
+];

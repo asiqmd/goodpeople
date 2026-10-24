@@ -5,3 +5,4 @@ export * from './bd/leave.js';
 export * from './bd/attendance.js';
 export * from './bd/lifecycle.js';
 export * from './bd/letters.js';
+export * from './bd/payroll.js';

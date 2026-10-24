@@ -10,7 +10,12 @@ export type StatutoryLeave = (typeof STATUTORY_LEAVES)[number];
 export const LEAVE_ACCRUALS = ['annual_grant', 'earned', 'per_event'] as const;
 export type LeaveAccrual = (typeof LEAVE_ACCRUALS)[number];
 
-export const APPROVAL_STEP_KINDS = ['manager', 'hr'] as const;
+/** Steps a leave type or correction chain may have. */
+export const CHAIN_STEP_KINDS = ['manager', 'hr'] as const;
+export type ChainStepKind = (typeof CHAIN_STEP_KINDS)[number];
+
+/** Every kind of approval step; `payroll` is the second person on a pay change. */
+export const APPROVAL_STEP_KINDS = [...CHAIN_STEP_KINDS, 'payroll'] as const;
 export type ApprovalStepKind = (typeof APPROVAL_STEP_KINDS)[number];
 
 export const APPROVAL_STATUSES = [

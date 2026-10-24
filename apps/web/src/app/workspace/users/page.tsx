@@ -1,4 +1,10 @@
-import { can, type AccountView, type WorkspaceUserView } from '@gp/shared';
+import {
+  can,
+  MFA_REQUIRED_ROLES,
+  TENANT_ROLES,
+  type AccountView,
+  type WorkspaceUserView,
+} from '@gp/shared';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { CreateUserForm, UserActions } from '@/components/account/account-forms';
@@ -15,7 +21,7 @@ export default async function UsersPage() {
     load<WorkspaceUserView[]>('tenant', '/tenant/users'),
     load<AccountView>('tenant', '/account'),
   ]);
-  const admins = users.filter((u) => !u.disabled && ['tenant_admin', 'hr_admin'].includes(u.role));
+  const admins = users.filter((u) => !u.disabled && MFA_REQUIRED_ROLES.includes(u.role));
   const unsecured = admins.filter((u) => !u.mfaEnabled).length;
 
   return (
@@ -79,16 +85,7 @@ export default async function UsersPage() {
       </Card>
       <Card title={t('rolesTitle')}>
         <dl className="grid gap-3 text-sm sm:grid-cols-2">
-          {(
-            [
-              'tenant_admin',
-              'hr_admin',
-              'hr_officer',
-              'attendance_officer',
-              'auditor',
-              'employee',
-            ] as const
-          ).map((r) => (
+          {TENANT_ROLES.map((r) => (
             <div key={r}>
               <dt className="font-medium">{th(`roles.${r}`)}</dt>
               <dd className="text-slate-600">{t(`roleDescriptions.${r}`)}</dd>

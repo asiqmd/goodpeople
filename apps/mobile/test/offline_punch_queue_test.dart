@@ -333,6 +333,15 @@ void main() {
       tester.view.physicalSize = const Size(360, 2400);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
+      // A punch is queued with the real clock, so the day shown must be today
+      // in Dhaka for it to count as one of the day's punches.
+      final dhaka = DateTime.now().toUtc().add(const Duration(hours: 6));
+      final today =
+          '${dhaka.year}-${dhaka.month.toString().padLeft(2, '0')}-'
+          '${dhaka.day.toString().padLeft(2, '0')}';
+      api.attendanceToday = attendanceTodayJson(
+        day: dayJson(date: today, status: 'pending', firstIn: '07:55'),
+      );
       final container = ProviderContainer.test(
         overrides: [
           goodPeopleApiProvider.overrideWithValue(api),

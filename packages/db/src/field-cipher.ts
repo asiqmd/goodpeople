@@ -40,6 +40,8 @@ export const CIPHER_FIELDS = {
   accountNumber: 'employee_payment_accounts.account_number',
   /** An authenticator app's shared secret (tenant and platform logins). */
   mfaSecret: 'users.mfa_secret',
+  /** An employee's pay amounts. */
+  payAmounts: 'employee_pay.amounts',
 } as const;
 export type CipherField = (typeof CIPHER_FIELDS)[keyof typeof CIPHER_FIELDS];
 

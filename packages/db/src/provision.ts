@@ -1,4 +1,10 @@
-import { BD_LETTER_TEMPLATES, bdHolidayTemplate, bdLeaveDefaults } from '@gp/country-packs';
+import {
+  BD_LETTER_TEMPLATES,
+  BD_PAY_COMPONENTS,
+  BD_SALARY_STRUCTURES,
+  bdHolidayTemplate,
+  bdLeaveDefaults,
+} from '@gp/country-packs';
 import { eq } from 'drizzle-orm';
 import type { Tx } from './client.js';
 import {
@@ -7,6 +13,10 @@ import {
   holidays,
   leaveTypes,
   letterTemplates,
+  payComponents,
+  payGroups,
+  payrollSettings,
+  salaryStructures,
   shifts,
 } from './schema/index.js';
 
@@ -52,6 +62,8 @@ export async function provisionCountryDefaults(
       .onConflictDoNothing();
   }
 
+  await provisionPayroll(tx, tenantId);
+
   const [calendar] = await tx
     .select({ id: holidayCalendars.id })
     .from(holidayCalendars)
@@ -77,4 +89,24 @@ export async function provisionCountryDefaults(
       })),
     )
     .onConflictDoNothing();
+}
+
+/**
+ * The country pack's pay components and salary structures, a monthly pay group and payroll
+ * settings. Idempotent: what a workspace already has (by code) is left as it is.
+ */
+export async function provisionPayroll(tx: Tx, tenantId: string): Promise<void> {
+  await tx
+    .insert(payComponents)
+    .values(BD_PAY_COMPONENTS.map((c) => ({ ...c, tenantId, isSystem: true })))
+    .onConflictDoNothing();
+  await tx
+    .insert(salaryStructures)
+    .values(BD_SALARY_STRUCTURES.map((s) => ({ ...s, tenantId, isSystem: true })))
+    .onConflictDoNothing();
+  await tx
+    .insert(payGroups)
+    .values({ tenantId, code: 'MONTHLY', name: 'Monthly', frequency: 'monthly', isDefault: true })
+    .onConflictDoNothing();
+  await tx.insert(payrollSettings).values({ tenantId }).onConflictDoNothing();
 }

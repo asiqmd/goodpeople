@@ -26,7 +26,8 @@
     "seed": "tsx src/scripts/seed.ts",
     "reset": "tsx src/scripts/reset.ts",
     "seed:scale": "tsx src/scripts/seed-scale.ts",
-    "create-super-admin": "tsx src/scripts/create-super-admin.ts"
+    "create-super-admin": "tsx src/scripts/create-super-admin.ts",
+    "provision": "tsx src/scripts/provision.ts"
   },
   "dependencies": {
     "@gp/country-packs": "workspace:*",

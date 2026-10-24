@@ -57,6 +57,9 @@ export default async function WorkspaceLayout({ children }: LayoutProps<'/worksp
           },
         ]
       : []),
+    ...(may('payroll.view') && result.ok && result.data.access.features.includes('payroll')
+      ? [{ href: '/workspace/payroll', label: tw('payroll') }]
+      : []),
     ...(may('users.manage') ? [{ href: '/workspace/users', label: tw('users') }] : []),
     ...(may('org.manage') ? [{ href: '/workspace/setup', label: tw('setup') }] : []),
     { href: '/workspace/profile', label: tn('profile') },

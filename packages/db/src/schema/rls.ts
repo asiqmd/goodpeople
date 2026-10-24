@@ -1,6 +1,6 @@
 /**
  * Every table protected by the tenant_isolation policy (migrations 0001, 0003, 0005, 0007, 0009,
- * 0011).
+ * 0011, 0013).
  * The isolation test fails if a table with tenant data is missing here or in the database.
  */
 export const RLS_TABLES = [
@@ -42,4 +42,9 @@ export const RLS_TABLES = [
   'notification_settings',
   'device_tokens',
   'otp_challenges',
+  'pay_components',
+  'salary_structures',
+  'pay_groups',
+  'payroll_settings',
+  'employee_pay',
 ] as const;

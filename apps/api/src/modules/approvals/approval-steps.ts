@@ -76,10 +76,18 @@ export interface ApprovalSubjectHandler<View = unknown> {
   /** Prefix for audit actions, e.g. `leave` gives `leave.approve`. */
   readonly auditPrefix: string;
   readonly entityType: ApprovalSubject;
-  /** Locks the subject for the decision and says whose request it is. */
-  lockSubject(tx: Tx, subjectId: string): Promise<{ employeeId: string } | null>;
+  /**
+   * Locks the subject for the decision and says whose request it is, and for maker-checker
+   * subjects which login proposed it (who may then not approve it).
+   */
+  lockSubject(
+    tx: Tx,
+    subjectId: string,
+  ): Promise<{ employeeId: string; madeBy?: string | null } | null>;
   /** A condition on approval_steps.subject_id: the subject is this employee's own request. */
   ownedBy(tx: Tx, employeeId: string): SQL;
+  /** Maker-checker subjects: a condition matching the subjects this login proposed. */
+  madeBy?(tx: Tx, userId: string): SQL;
   finalize(
     tx: Tx,
     subjectId: string,

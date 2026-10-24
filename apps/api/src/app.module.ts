@@ -18,6 +18,7 @@ import { EmployeesModule } from './modules/employees/employees.module.js';
 import { HealthModule } from './modules/health/health.controller.js';
 import { LeaveModule } from './modules/leave/leave.module.js';
 import { OrgModule } from './modules/org/org.module.js';
+import { PayrollModule } from './modules/payroll/payroll.module.js';
 import { PlatformAdminModule } from './modules/platform-admin/platform-admin.module.js';
 import { ReferenceModule } from './modules/reference/reference.controller.js';
 import { SetupModule } from './modules/setup/setup.module.js';
@@ -50,6 +51,7 @@ export class AppModule {
         LifecycleModule,
         LettersModule,
         ImportsModule,
+        PayrollModule,
         SetupModule,
       ],
       providers: [
