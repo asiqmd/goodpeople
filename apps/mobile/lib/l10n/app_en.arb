@@ -869,6 +869,46 @@
   },
   "serviceBookBody": "Your service record, kept under section 6 of the Labour Act. It opens as a PDF in the app's language.",
   "serviceBookOpen": "Open PDF",
+  "payslipsTitle": "Payslips",
+  "@payslipsTitle": {
+    "description": "Home card and screen title: the employee's published payslips."
+  },
+  "payslipsSubtitle": "Your pay each month, in English or Bangla",
+  "@payslipsSubtitle": {
+    "description": "Under \"Payslips\" on the home screen."
+  },
+  "payslipsLoadFailed": "We could not load your payslips.",
+  "payslipsEmpty": "No payslips yet. They appear here once payroll publishes them.",
+  "payslipNetPay": "Net pay",
+  "@payslipNetPay": {
+    "description": "Label above the amount paid after deductions."
+  },
+  "payslipPaidOn": "Paid on {date}",
+  "@payslipPaidOn": {
+    "description": "The payslip's payment date.",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "Oct 31, 2026"
+      }
+    }
+  },
+  "payslipAdjustment": "Adjustment",
+  "@payslipAdjustment": {
+    "description": "Mark on a payslip from an adjustment run, which corrects an earlier one."
+  },
+  "payslipOpenEnglish": "Open in English",
+  "@payslipOpenEnglish": {
+    "description": "Opens the payslip as a PDF printed in English."
+  },
+  "payslipOpenBangla": "Open in Bangla",
+  "@payslipOpenBangla": {
+    "description": "Opens the payslip as a PDF printed in Bangla."
+  },
+  "payslipErrorGone": "This payslip is no longer available.",
+  "@payslipErrorGone": {
+    "description": "The payslip was withdrawn since the list loaded (a 404)."
+  },
   "resignationTitle": "Resignation",
   "resignationEntrySubtitle": "Give notice, or follow your resignation",
   "@resignationEntrySubtitle": {

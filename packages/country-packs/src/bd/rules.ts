@@ -52,6 +52,9 @@ export interface BdRules {
   'separation.termination_notice_days': NoticeTable;
   'separation.retrenchment_notice_days': number;
   'separation.retirement_age': number;
+  'pay.payment_deadline_working_days': number;
+  'pay.overtime_hours_per_month': number;
+  'pay.absence_days_divisor': number;
 }
 
 /** Clerical work has a longer probation than other work (s.4). */
@@ -303,5 +306,35 @@ export const BD_RULES: Rulebook<BdRules> = {
   'separation.retirement_age': {
     title: 'Retirement age',
     versions: [{ from: ACT_START, value: 60, reference: BLA('28'), status: 'verified' }],
+  },
+  'pay.payment_deadline_working_days': {
+    title: 'Wages paid before the expiry of this working day after the wage period',
+    versions: [{ from: ACT_START, value: 7, reference: BLA('123'), status: 'verified' }],
+  },
+  'pay.overtime_hours_per_month': {
+    title: 'Hours in a month for the hourly overtime rate (52 ÷ 12 × 48)',
+    versions: [
+      {
+        from: '2015-09-15',
+        value: 208,
+        reference: { act: 'Bangladesh Labour Rules 2015', section: '102' },
+        status: 'needs_review',
+        note:
+          'Monthly basic + dearness allowance + ad hoc pay × 2 × hours ÷ 208. Secondary sources ' +
+          'cite rule 102; confirm the rule and its wording against the gazetted Rules.',
+      },
+    ],
+  },
+  'pay.absence_days_divisor': {
+    title: 'Days a monthly wage is divided by for an absence deduction',
+    versions: [
+      {
+        from: ACT_START,
+        value: 30,
+        reference: BLA('126'),
+        status: 'needs_review',
+        note: 'The Act caps the deduction at the pay for the absent period; dividing by 30 is practice.',
+      },
+    ],
   },
 };

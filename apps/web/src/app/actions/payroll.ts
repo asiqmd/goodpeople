@@ -5,10 +5,12 @@ import type {
   PayGroupView,
   PayPreview,
   PayRecordView,
+  PayrollRunView,
   SalaryStructureView,
   StructurePreview,
 } from '@gp/shared';
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 import { authedFetch } from '@/lib/api';
 import { fail, nest, rows } from '@/lib/form';
 import type { ActionState } from './platform';
@@ -198,4 +200,75 @@ export async function cancelPayChange(id: string): Promise<void> {
   await authedFetch('tenant', `/tenant/pay-changes/${id}/cancel`, { method: 'POST' });
   revalidatePath('/workspace/employees');
   revalidatePath('/workspace', 'layout');
+}
+
+// ── Runs ─────────────────────────────────────────────────────────────────────
+
+const RUNS = '/workspace/payroll/runs';
+
+export async function createRun(
+  _: ActionState<PayrollRunView>,
+  form: FormData,
+): Promise<ActionState<PayrollRunView>> {
+  const data = nest(form);
+  const result = await authedFetch<PayrollRunView>('tenant', '/tenant/payroll/runs', {
+    method: 'POST',
+    body: { payGroupId: data.payGroupId, month: data.month, paymentDate: data.paymentDate },
+  });
+  if (!result.ok) return fail(result);
+  redirect(`${RUNS}/${result.data.id}`);
+}
+
+/** Computes, submits, cancels or publishes a run. */
+export async function runStep(
+  id: string,
+  step: 'compute' | 'submit' | 'cancel' | 'publish',
+): Promise<ActionState> {
+  const result = await authedFetch('tenant', `/tenant/payroll/runs/${id}/${step}`, {
+    method: 'POST',
+  });
+  if (!result.ok) return fail(result);
+  revalidatePath(RUNS, 'layout');
+  return { ok: true };
+}
+
+export async function createAdjustment(parentId: string): Promise<ActionState> {
+  const result = await authedFetch<PayrollRunView>(
+    'tenant',
+    `/tenant/payroll/runs/${parentId}/adjustments`,
+    { method: 'POST', body: {} },
+  );
+  if (!result.ok) return fail(result);
+  redirect(`${RUNS}/${result.data.id}`);
+}
+
+/** An amount entered for one person in a run: an advance to recover, arrears, a bonus. */
+export async function setRunInput(
+  runId: string,
+  employeeId: string,
+  _: ActionState,
+  form: FormData,
+): Promise<ActionState> {
+  const data = nest(form);
+  const result = await authedFetch('tenant', `/tenant/payroll/runs/${runId}/inputs`, {
+    method: 'PUT',
+    body: { employeeId, component: data.component, amount: data.amount, note: data.note },
+  });
+  if (!result.ok) return fail(result);
+  revalidatePath(RUNS, 'layout');
+  return { ok: true };
+}
+
+export async function removeRunInput(
+  runId: string,
+  employeeId: string,
+  component: string,
+): Promise<ActionState> {
+  const result = await authedFetch('tenant', `/tenant/payroll/runs/${runId}/inputs/remove`, {
+    method: 'POST',
+    body: { employeeId, component },
+  });
+  if (!result.ok) return fail(result);
+  revalidatePath(RUNS, 'layout');
+  return { ok: true };
 }

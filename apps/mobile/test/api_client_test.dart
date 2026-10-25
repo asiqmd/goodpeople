@@ -1443,6 +1443,114 @@ void main() {
     });
   });
 
+  group('payroll', () {
+    test('my payslips parse kinds, dates and net pay; unknown kinds are '
+        'kept', () async {
+      final body = [
+        ...myPayslipsJson(),
+        payslipJson(
+          itemId: 'e1000000-0000-4000-8000-000000000099',
+          kind: 'bonus',
+        ),
+      ];
+      final (api, adapter) = client(200, body);
+
+      final payslips = await api.fetchMyPayslips('access-1');
+
+      final request = adapter.requests.single;
+      expect(request.method, 'GET');
+      expect(request.uri.path, '/tenant/me/payslips');
+      expect(request.headers['Authorization'], 'Bearer access-1');
+      expect(payslips.map((p) => p.itemId), [
+        septemberAdjustmentId,
+        septemberPayslipId,
+        augustPayslipId,
+        'e1000000-0000-4000-8000-000000000099',
+      ]);
+      final adjustment = payslips.first;
+      expect(adjustment.runId, 'e2000000-0000-4000-8000-000000000003');
+      expect(adjustment.kind, PayrollRunKind.adjustment);
+      expect(adjustment.isAdjustment, isTrue);
+      expect(adjustment.periodStart, DateTime.utc(2026, 9));
+      expect(adjustment.periodEnd, DateTime.utc(2026, 9, 30));
+      expect(adjustment.paymentDate, DateTime.utc(2026, 10, 20));
+      expect(adjustment.net, '1250.50');
+      expect(adjustment.publishedAt, DateTime.utc(2026, 10, 20, 6));
+      expect(payslips[1].kind, PayrollRunKind.regular);
+      expect(payslips[1].isAdjustment, isFalse);
+      expect(payslips[1].net, '12500.00');
+      expect(payslips.last.kind, PayrollRunKind.unknown);
+    });
+
+    test('a net pay that is not an amount breaks the contract', () async {
+      for (final net in <Object>['12,500.00', '12500.001', '', 12500]) {
+        final (api, _) = client(200, [
+          {...payslipJson(itemId: septemberPayslipId), 'net': net},
+        ]);
+        await expectLater(
+          api.fetchMyPayslips('access-1'),
+          throwsA(
+            isA<ApiException>().having(
+              (e) => e.kind,
+              'kind',
+              ApiErrorKind.badResponse,
+            ),
+          ),
+          reason: '$net',
+        );
+      }
+    });
+
+    test('a workspace without payroll gets a 403 with its code', () async {
+      final (api, _) = client(403, {
+        'statusCode': 403,
+        'error': 'Forbidden',
+        'message': 'Your plan does not include payroll',
+        'code': 'feature_not_in_plan',
+      });
+
+      await expectLater(
+        api.fetchMyPayslips('access-1'),
+        throwsA(
+          isA<ApiException>()
+              .having((e) => e.statusCode, 'statusCode', 403)
+              .having((e) => e.code, 'code', 'feature_not_in_plan'),
+        ),
+      );
+    });
+
+    test('a payslip PDF sends the language and returns the file with its '
+        'name', () async {
+      final (api, adapter) = fileClient(
+        200,
+        pdfBytes,
+        headers: {
+          Headers.contentTypeHeader: ['application/pdf'],
+          'content-disposition': [
+            'attachment; filename="payslip-MG-0005-2026-09-bn.pdf"',
+          ],
+        },
+      );
+
+      final file = await api.fetchMyPayslipPdf(
+        'access-1',
+        septemberPayslipId,
+        language: LetterLanguage.bn,
+      );
+
+      final request = adapter.requests.single;
+      expect(request.method, 'GET');
+      expect(request.uri.path, '/tenant/me/payslips/$septemberPayslipId');
+      expect(request.uri.queryParameters, {'language': 'bn'});
+      expect(request.headers['Authorization'], 'Bearer access-1');
+      expect(request.headers['Accept'], '*/*');
+      expect(request.responseType, ResponseType.bytes);
+      expect(file.bytes, pdfBytes);
+      expect(file.contentType, 'application/pdf');
+      expect(file.fileName, 'payslip-MG-0005-2026-09-bn.pdf');
+    });
+  });
+
   test('a body that breaks the contract is a badResponse error', () async {
     final (api, _) = client(200, {'accessToken': 'only-this'});
 

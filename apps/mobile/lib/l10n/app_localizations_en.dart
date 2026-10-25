@@ -1197,6 +1197,39 @@ class AppLocalizationsEn extends AppLocalizations {
   String get serviceBookOpen => 'Open PDF';
 
   @override
+  String get payslipsTitle => 'Payslips';
+
+  @override
+  String get payslipsSubtitle => 'Your pay each month, in English or Bangla';
+
+  @override
+  String get payslipsLoadFailed => 'We could not load your payslips.';
+
+  @override
+  String get payslipsEmpty =>
+      'No payslips yet. They appear here once payroll publishes them.';
+
+  @override
+  String get payslipNetPay => 'Net pay';
+
+  @override
+  String payslipPaidOn(String date) {
+    return 'Paid on $date';
+  }
+
+  @override
+  String get payslipAdjustment => 'Adjustment';
+
+  @override
+  String get payslipOpenEnglish => 'Open in English';
+
+  @override
+  String get payslipOpenBangla => 'Open in Bangla';
+
+  @override
+  String get payslipErrorGone => 'This payslip is no longer available.';
+
+  @override
   String get resignationTitle => 'Resignation';
 
   @override

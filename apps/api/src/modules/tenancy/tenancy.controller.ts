@@ -2,7 +2,7 @@ import { Controller, Get, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import type { TenantAccessView, TenantWithAccess } from '@gp/shared';
 import { CurrentTenant } from '../../common/auth-user.js';
-import { AccessStateGuard, FeatureGuard, RequireFeature } from '../entitlements/guards.js';
+import { AccessStateGuard, FeatureGuard } from '../entitlements/guards.js';
 
 @ApiTags('tenant')
 @ApiBearerAuth()
@@ -14,12 +14,5 @@ export class TenancyController {
   access(@CurrentTenant() tenant: TenantWithAccess): TenantAccessView {
     const { id, name, slug, billingMode, status, planCode, access } = tenant;
     return { tenant: { id, name, slug, billingMode, status, planCode }, access };
-  }
-
-  /** Placeholder until the Phase 2 payroll module; here it shows the payroll entitlement gate. */
-  @Get('payroll/runs')
-  @RequireFeature('payroll')
-  payrollRuns(): unknown[] {
-    return [];
   }
 }

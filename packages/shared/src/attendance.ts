@@ -57,6 +57,7 @@ export const APPROVAL_SUBJECTS = [
   'regularization',
   'separation',
   'compensation',
+  'payroll_run',
 ] as const;
 export type ApprovalSubject = (typeof APPROVAL_SUBJECTS)[number];
 

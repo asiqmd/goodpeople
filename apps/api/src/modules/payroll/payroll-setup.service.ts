@@ -36,7 +36,7 @@ import { badRequest, conflict } from '../../common/errors.js';
 import { currentTenantId } from '../../common/request-context.js';
 import { TenantDb } from '../../db/db.module.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
-import { balanceProblem, workOutPay, type ComponentInfo, type StructureInfo } from './pay-calc.js';
+import { balanceProblem, workOutPay, type StructureInfo } from './pay-calc.js';
 
 type ComponentRow = typeof payComponents.$inferSelect;
 type StructureRow = typeof salaryStructures.$inferSelect;
@@ -58,6 +58,7 @@ const toComponentView = (c: ComponentRow): PayComponentView => ({
   sortOrder: c.sortOrder,
   isActive: c.isActive,
   isSystem: c.isSystem,
+  runFormula: c.runFormula,
 });
 
 /** A 400 listing each structure line's problem against its field, for the editor. */
@@ -79,7 +80,7 @@ function lineProblems(
 }
 
 /** Components every structure and employee pay record is built from. */
-export async function componentsOf(tx: Tx): Promise<ComponentInfo[]> {
+export async function componentsOf(tx: Tx): Promise<ComponentRow[]> {
   return tx.select().from(payComponents).orderBy(asc(payComponents.sortOrder));
 }
 

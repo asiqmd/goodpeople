@@ -124,7 +124,8 @@ class EmployeeDocument {
   }
 }
 
-/// A file the API answered with: a document or the service book.
+/// A file the API answered with: a document, the service book or a
+/// payslip.
 class FileDownload {
   const FileDownload({
     required this.bytes,
@@ -166,7 +167,7 @@ String? fileNameFromDisposition(String? header) {
   return name == null || name.isEmpty ? null : name;
 }
 
-/// The language a letter or the service book is printed in.
+/// The language a letter, the service book or a payslip is printed in.
 enum LetterLanguage implements WireValue {
   en('en'),
   bn('bn');

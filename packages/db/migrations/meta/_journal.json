@@ -99,6 +99,27 @@
       "when": 1792865385674,
       "tag": "0013_payroll_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792900534672,
+      "tag": "0014_payroll_runs",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1792900546948,
+      "tag": "0015_payroll_runs_rls",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1792900792553,
+      "tag": "0016_payroll_adjustment_scope",
+      "breakpoints": true
     }
   ]
 }

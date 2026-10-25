@@ -8,6 +8,9 @@ import type {
   PayChangeStatus,
   PayComponentKind,
   PayFrequency,
+  RunKind,
+  RunProblemCode,
+  RunStatus,
   TaxTreatment,
 } from './payroll.js';
 
@@ -26,6 +29,8 @@ export interface PayComponentView {
   isActive: boolean;
   /** From the country pack; HR can change but not delete it. */
   isSystem: boolean;
+  /** Run components worked out in each run; null means entered per person. */
+  runFormula: string | null;
 }
 
 export interface StructureLineView {
@@ -155,4 +160,109 @@ export interface CompensationApprovalItem {
   kind: 'payroll';
   change: PayRecordView;
   previous: PayRecordView | null;
+}
+
+// ── Payroll runs ─────────────────────────────────────────────────────────────
+
+export interface RunProblem {
+  code: RunProblemCode;
+  severity: 'error' | 'warning';
+  message: string;
+  /** How many days, for problems about days (missing punches, days not processed). */
+  count?: number;
+}
+
+export interface RunTotals {
+  earnings: Money;
+  deductions: Money;
+  net: Money;
+  employerCost: Money;
+}
+
+export interface PayrollRunView {
+  id: string;
+  kind: RunKind;
+  /** The locked run an adjustment corrects. */
+  parentRunId: string | null;
+  payGroup: { id: string; code: string; name: string };
+  periodStart: string;
+  periodEnd: string;
+  /** The Labour Act's deadline (s.123): before the expiry of the seventh working day after. */
+  paymentDue: string;
+  paymentDate: string;
+  status: RunStatus;
+  headcount: number;
+  totals: RunTotals | null;
+  errors: number;
+  warnings: number;
+  /** People whose net moved by 10% or more since last month, or who are new or gone. */
+  flagged: number;
+  createdBy: string | null;
+  submittedBy: string | null;
+  decidedBy: string | null;
+  computedAt: string | null;
+  lockedAt: string | null;
+  publishedAt: string | null;
+  createdAt: string;
+  steps: ApprovalStepView[];
+}
+
+/** What a run worked out from attendance and leave for one person. */
+export interface RunVariables {
+  periodDays: number;
+  employedDays: number;
+  paidDays: number;
+  workedDays: number;
+  absentDays: number;
+  unpaidLeaveDays: number;
+  otHours: number;
+}
+
+export interface PayrollRunItemView {
+  id: string;
+  employee: EmployeeRef & { designation: string | null; orgUnit: string | null };
+  status: 'ok' | 'error';
+  problems: RunProblem[];
+  lines: PayLineView[];
+  earnings: Money;
+  deductions: Money;
+  net: Money;
+  employerCost: Money;
+  variables: RunVariables;
+  /** Amounts entered for this person in this run, by component. */
+  inputs: Record<string, Money>;
+  previousNet: Money | null;
+  variance: 'new' | 'up' | 'down' | 'same' | null;
+  /** Change in net since last month, in percent, when there was a last month. */
+  variancePercent: number | null;
+  flagged: boolean;
+}
+
+export interface PayrollRunItemPage {
+  items: PayrollRunItemView[];
+  /** People matching the filter, across all pages. */
+  total: number;
+  page: number;
+  size: number;
+}
+
+/** A published payslip, as the employee sees it in their list. */
+export interface PayslipSummary {
+  itemId: string;
+  runId: string;
+  kind: RunKind;
+  periodStart: string;
+  periodEnd: string;
+  paymentDate: string;
+  net: Money;
+  publishedAt: string;
+}
+
+/** A payroll run in the approvals inbox. */
+export interface PayrollRunApprovalItem {
+  subjectType: 'payroll_run';
+  stepId: string;
+  kind: 'payroll';
+  run: PayrollRunView;
+  previousTotals: RunTotals | null;
 }

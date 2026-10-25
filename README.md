@@ -30,9 +30,13 @@ A multi-tenant HR and payroll platform, built for Bangladesh first and ready to 
   - **Phase 2 M1 (pay foundations):** pay components and a safe formula engine, salary
     structures with a live preview, the 2023 RMG minimum wage table, pay groups, and encrypted
     employee pay changed through maker-checker in the Approvals inbox.
+  - **Phase 2 M2 (payroll runs & payslips):** monthly runs from processed attendance and
+    leave (proration, overtime, absence), review against last month, maker-checker locking,
+    adjustment runs, the s.123 payment deadline, and English and Bangla payslips by web,
+    app, email and SMS, measured at 20,000 employees.
 - **Next:**
   - Our own organisations go live: [docs/ops/go-live.md](docs/ops/go-live.md).
-  - Phase 2 M2: payroll runs and payslips. The plan is in
+  - Phase 2 M3: tax, provident fund and bonuses. The plan is in
     [docs/phases/phase-2.md](docs/phases/phase-2.md).
 
 ## Repository layout
@@ -41,11 +45,11 @@ A multi-tenant HR and payroll platform, built for Bangladesh first and ready to 
 apps/
   api/       NestJS 12 (ESM) modular monolith: auth, tenancy, entitlements, platform admin, org,
              employees, leave, attendance, approvals, documents, lifecycle, letters, imports,
-             accounts and users, notifications, setup checklist
+             accounts and users, notifications, setup checklist, payroll
   web/       Next.js 16: Super Admin console (/platform) and workspace app (/workspace), en/bn
   mobile/    Flutter app: sign-in (password or SMS code), profile, documents, leave, attendance
              (location and selfie punching, offline queue), resignation, approvals, team view,
-             notifications and push, en/bn
+             notifications and push, payslips, en/bn
   edge-agent/  On-site service that buffers ZKTeco and Hikvision punches (see its README)
 packages/
   shared/    Contract shared by API and web: billing modes, plans, resolveAccess(), zod schemas
@@ -118,8 +122,11 @@ cd apps/mobile && flutter analyze && flutter test
 `pnpm test` includes the Edge Agent's tests.
 
 **At scale:** `pnpm --filter @gp/db seed:scale` adds a `scale-test` workspace with 5,000
-employees and a month of punches; `SEED_PASSWORD=… node apps/api/scripts/measure-scale.mjs`
-then times the busiest API calls against it.
+employees, a month of punches and approved pay; `SEED_PASSWORD=… node apps/api/scripts/measure-scale.mjs`
+then times the busiest API calls against it. For payroll, seed `SCALE_SLUG=scale-20k
+SCALE_EMPLOYEES=20000` the same way and run
+`SEED_PASSWORD=… node apps/api/scripts/measure-payroll.mjs scale-20k`; it processes the month,
+computes, pages through, locks and publishes a run.
 
 ## Production
 

@@ -86,6 +86,20 @@ export const DEFAULT_TEMPLATES: Record<NotificationEvent, Record<UserLanguage, T
       sms: 'Good People: {{day.date}} তারিখে আপনার একটি মাত্র পাঞ্চ আছে। সংশোধনের আবেদন করুন।',
     },
   },
+  // Email, push and the inbox say a payslip is ready; only the SMS, to the person's own
+  // phone, carries the net amount.
+  'payslip.published': {
+    en: {
+      title: 'Your payslip for {{period.name}} is ready',
+      body: 'Open Payslips in Good People to see it, with every earning and deduction.',
+      sms: 'Good People: your {{period.name}} pay of {{pay.net}} net is ready. Details in the app.',
+    },
+    bn: {
+      title: '{{period.name}}-এর বেতন বিবরণী প্রস্তুত',
+      body: 'প্রতিটি আয় ও কর্তনসহ দেখতে Good People-এ বেতন বিবরণী খুলুন।',
+      sms: 'Good People: {{period.name}}-এর নিট বেতন {{pay.net}} প্রস্তুত। বিস্তারিত অ্যাপে।',
+    },
+  },
   'auth.otp': {
     en: {
       title: 'Your sign-in code',
@@ -108,5 +122,6 @@ export const TEMPLATE_PLACEHOLDERS: Record<NotificationEvent, string[]> = {
   'probation.ending': ['person.name', 'probation.endsOn'],
   'letter.issued': ['letter.title'],
   'attendance.missing_punch': ['day.date'],
+  'payslip.published': ['period.name', 'pay.net'],
   'auth.otp': ['otp.code', 'otp.minutes', 'workspace.name'],
 };

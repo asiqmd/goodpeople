@@ -1,0 +1,1 @@
+ALTER TABLE "payroll_runs" ADD COLUMN "scope_employee_ids" uuid[];

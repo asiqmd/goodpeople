@@ -64,7 +64,8 @@ th,td{border:1px solid #d1d5db;padding:4px 6px;text-align:left;vertical-align:to
 th{background:#f3f4f6;font-weight:700}
 `;
 
-function page(lang: LetterLanguage, css: string, body: string): string {
+/** A complete page with the embedded fonts and base styles; `css` and `body` are the document's own. */
+export function page(lang: LetterLanguage, css: string, body: string): string {
   return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><style>${fonts()}${BASE_CSS}${css}</style></head><body>${body}</body></html>`;
 }
 

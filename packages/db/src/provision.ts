@@ -5,7 +5,7 @@ import {
   bdHolidayTemplate,
   bdLeaveDefaults,
 } from '@gp/country-packs';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import type { Tx } from './client.js';
 import {
   attendanceSettings,
@@ -100,6 +100,20 @@ export async function provisionPayroll(tx: Tx, tenantId: string): Promise<void> 
     .insert(payComponents)
     .values(BD_PAY_COMPONENTS.map((c) => ({ ...c, tenantId, isSystem: true })))
     .onConflictDoNothing();
+  // Run formulas arrived after the first components (Phase 2 M2): fill in the pack's where a
+  // system component has none, leaving anything a workspace set itself.
+  for (const c of BD_PAY_COMPONENTS.filter((p) => p.runFormula)) {
+    await tx
+      .update(payComponents)
+      .set({ runFormula: c.runFormula })
+      .where(
+        and(
+          eq(payComponents.code, c.code),
+          eq(payComponents.isSystem, true),
+          isNull(payComponents.runFormula),
+        ),
+      );
+  }
   await tx
     .insert(salaryStructures)
     .values(BD_SALARY_STRUCTURES.map((s) => ({ ...s, tenantId, isSystem: true })))

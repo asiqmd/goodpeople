@@ -50,6 +50,8 @@ const componentFields = {
   prorate: z.boolean().default(true),
   sortOrder: z.number().int().min(0).max(999).default(100),
   isActive: z.boolean().default(true),
+  /** Run components: a formula over run variables and monthly amounts; empty means entered. */
+  runFormula: formula.nullable().optional(),
 };
 
 export const payComponentSchema = z.object({ code: componentCodeSchema, ...componentFields });
@@ -137,3 +139,44 @@ export const payPreviewSchema = payChangeSchema.omit({ reason: true, effectiveFr
   effectiveFrom: isoDate.optional(),
 });
 export type PayPreviewInput = z.infer<typeof payPreviewSchema>;
+
+// ── Payroll runs ─────────────────────────────────────────────────────────────
+
+export const runCreateSchema = z.object({
+  payGroupId: id,
+  /** The month paid, e.g. 2026-10. */
+  month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Use a month like 2026-10'),
+  /** When wages will be paid; by default the last day the Labour Act allows. */
+  paymentDate: isoDate.optional(),
+});
+export type RunCreateInput = z.infer<typeof runCreateSchema>;
+
+/** An amount entered for one person in one run, for a run component without a formula. */
+export const runInputSchema = z.object({
+  employeeId: id,
+  component: componentCodeSchema,
+  amount: moneySchema,
+  note: z.string().trim().max(200).optional(),
+});
+export type RunInputInput = z.infer<typeof runInputSchema>;
+
+export const runInputRemoveSchema = runInputSchema.pick({ employeeId: true, component: true });
+
+/** People to correct in a locked run; everyone in it when left out. */
+export const adjustmentCreateSchema = z.object({
+  employeeIds: z.array(id).min(1).max(5000).optional(),
+});
+export type AdjustmentCreateInput = z.infer<typeof adjustmentCreateSchema>;
+
+export const payslipLanguageSchema = z.object({ language: z.enum(['en', 'bn']).default('en') });
+
+export const RUN_ITEM_FILTERS = ['all', 'problems', 'errors', 'flagged'] as const;
+
+/** A page of a run's people: everyone, those with problems or errors, or those flagged. */
+export const runItemsQuerySchema = z.object({
+  show: z.enum(RUN_ITEM_FILTERS).default('all'),
+  search: z.string().trim().max(100).optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  size: z.coerce.number().int().min(1).max(500).default(50),
+});
+export type RunItemsQuery = z.infer<typeof runItemsQuerySchema>;

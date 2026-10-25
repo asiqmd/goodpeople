@@ -4,7 +4,10 @@ import {
   PAY_CHANGE_STATUSES,
   PAY_COMPONENT_KINDS,
   PAY_FREQUENCIES,
+  RUN_KINDS,
+  RUN_STATUSES,
   TAX_TREATMENTS,
+  type RunProblem,
 } from '@gp/shared';
 import { sql } from 'drizzle-orm';
 import {
@@ -31,6 +34,8 @@ export const taxTreatment = pgEnum('tax_treatment', TAX_TREATMENTS);
 export const payFrequency = pgEnum('pay_frequency', PAY_FREQUENCIES);
 export const payBasis = pgEnum('pay_basis', PAY_BASES);
 export const payChangeStatus = pgEnum('pay_change_status', PAY_CHANGE_STATUSES);
+export const runKind = pgEnum('payroll_run_kind', RUN_KINDS);
+export const runStatus = pgEnum('payroll_run_status', RUN_STATUSES);
 
 const tenantId = () =>
   uuid('tenant_id')
@@ -59,6 +64,8 @@ export const payComponents = pgTable(
     isActive: boolean('is_active').notNull().default(true),
     /** From the country pack. */
     isSystem: boolean('is_system').notNull().default(false),
+    /** Run components: worked out in each run (overtime, absence); null means entered. */
+    runFormula: text('run_formula'),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -166,6 +173,120 @@ export const employeePay = pgTable(
       name: 'employee_pay_group_fk',
       columns: [t.tenantId, t.payGroupId],
       foreignColumns: [payGroups.tenantId, payGroups.id],
+    }),
+  ],
+);
+
+/**
+ * One pay group's payroll for a period: a regular run, or an adjustment correcting a locked
+ * one. Its results are stored per person; once locked, nothing about it changes.
+ */
+export const payrollRuns = pgTable(
+  'payroll_runs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: tenantId(),
+    payGroupId: uuid('pay_group_id').notNull(),
+    kind: runKind('kind').notNull(),
+    parentRunId: uuid('parent_run_id'),
+    /** An adjustment's people; everyone in its parent run when null. */
+    scopeEmployeeIds: uuid('scope_employee_ids').array(),
+    periodStart: isoDate('period_start').notNull(),
+    periodEnd: isoDate('period_end').notNull(),
+    paymentDue: isoDate('payment_due').notNull(),
+    paymentDate: isoDate('payment_date').notNull(),
+    status: runStatus('status').notNull().default('draft'),
+    headcount: integer('headcount').notNull().default(0),
+    /** { earnings, deductions, net, employerCost } as encrypted JSON. */
+    totalsEnc: text('totals_enc'),
+    errors: integer('errors').notNull().default(0),
+    warnings: integer('warnings').notNull().default(0),
+    flagged: integer('flagged').notNull().default(0),
+    createdBy: uuid('created_by'),
+    computedAt: timestamp('computed_at', { withTimezone: true }),
+    submittedBy: uuid('submitted_by'),
+    decidedBy: uuid('decided_by'),
+    lockedAt: timestamp('locked_at', { withTimezone: true }),
+    publishedAt: timestamp('published_at', { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    unique('payroll_runs_tenant_id_uq').on(t.tenantId, t.id),
+    // One regular run per group and period, unless it was cancelled.
+    uniqueIndex('payroll_runs_regular_uq')
+      .on(t.tenantId, t.payGroupId, t.periodStart)
+      .where(sql`${t.kind} = 'regular' and ${t.status} <> 'cancelled'`),
+    index('payroll_runs_period_idx').on(t.tenantId, t.periodStart),
+    foreignKey({
+      name: 'payroll_runs_group_fk',
+      columns: [t.tenantId, t.payGroupId],
+      foreignColumns: [payGroups.tenantId, payGroups.id],
+    }),
+    foreignKey({
+      name: 'payroll_runs_parent_fk',
+      columns: [t.tenantId, t.parentRunId],
+      foreignColumns: [t.tenantId, t.id],
+    }),
+  ],
+);
+
+/** One person's result in a run: lines and totals encrypted, problems in the clear. */
+export const payrollRunItems = pgTable(
+  'payroll_run_items',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: tenantId(),
+    runId: uuid('run_id').notNull(),
+    employeeId: uuid('employee_id').notNull(),
+    status: text('status').$type<'ok' | 'error'>().notNull(),
+    problems: jsonb('problems').$type<RunProblem[]>().notNull().default([]),
+    /** Lines, totals and variables as encrypted JSON. */
+    resultEnc: text('result_enc').notNull(),
+    flagged: boolean('flagged').notNull().default(false),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    unique('payroll_run_items_tenant_id_uq').on(t.tenantId, t.id),
+    unique('payroll_run_items_run_employee_uq').on(t.runId, t.employeeId),
+    index('payroll_run_items_employee_idx').on(t.tenantId, t.employeeId),
+    foreignKey({
+      name: 'payroll_run_items_run_fk',
+      columns: [t.tenantId, t.runId],
+      foreignColumns: [payrollRuns.tenantId, payrollRuns.id],
+    }).onDelete('cascade'),
+    foreignKey({
+      name: 'payroll_run_items_employee_fk',
+      columns: [t.tenantId, t.employeeId],
+      foreignColumns: [employees.tenantId, employees.id],
+    }),
+  ],
+);
+
+/** An amount HR enters for one person in one run (arrears, an advance to recover, a bonus). */
+export const payrollInputs = pgTable(
+  'payroll_inputs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: tenantId(),
+    runId: uuid('run_id').notNull(),
+    employeeId: uuid('employee_id').notNull(),
+    component: text('component').notNull(),
+    amountEnc: text('amount_enc').notNull(),
+    note: text('note'),
+    createdBy: uuid('created_by'),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    unique('payroll_inputs_uq').on(t.runId, t.employeeId, t.component),
+    foreignKey({
+      name: 'payroll_inputs_run_fk',
+      columns: [t.tenantId, t.runId],
+      foreignColumns: [payrollRuns.tenantId, payrollRuns.id],
+    }).onDelete('cascade'),
+    foreignKey({
+      name: 'payroll_inputs_employee_fk',
+      columns: [t.tenantId, t.employeeId],
+      foreignColumns: [employees.tenantId, employees.id],
     }),
   ],
 );

@@ -6,6 +6,7 @@ import {
   type SeparationView,
 } from '@gp/shared';
 import { getTranslations } from 'next-intl/server';
+import Link from 'next/link';
 import {
   AccountList,
   EmployeeHeader,
@@ -47,7 +48,17 @@ export default async function MyProfilePage() {
       <EmployeeHeader employee={employee} />
       <JobSummary employee={employee} />
       {pay.ok && pay.data.current && (
-        <Card title={tp('pay.mine')}>
+        <Card
+          title={tp('pay.mine')}
+          action={
+            <Link
+              href="/workspace/payslips"
+              className="text-sm font-medium text-brand-700 hover:underline"
+            >
+              {tp('pay.payslipsLink')}
+            </Link>
+          }
+        >
           <div className="grid gap-6 lg:grid-cols-2">
             <PayRecordSummary record={pay.data.current} />
             <PayBreakdown lines={pay.data.current.lines} gross={pay.data.current.gross} />

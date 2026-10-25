@@ -42,15 +42,50 @@ export const COMPONENT_CODE = /^[A-Z][A-Z0-9_]{1,29}$/;
  */
 export const RESERVED_PAY_NAMES = [
   'GROSS',
+  'OT_BASE',
   'PAID_DAYS',
   'PERIOD_DAYS',
+  'EMPLOYED_DAYS',
   'WORKED_DAYS',
   'ABSENT_DAYS',
   'UNPAID_LEAVE_DAYS',
   'OT_HOURS',
   'SERVICE_YEARS',
   'SERVICE_MONTHS',
+  'WORKER',
 ] as const;
+
+/**
+ * What a run formula (overtime, absence) may use besides component codes, each worked out
+ * per person and period. GROSS and OT_BASE are the full monthly amounts; WORKER is 1 for
+ * workers and 0 for staff, from the job at the end of the period.
+ */
+export const RUN_VARIABLES = RESERVED_PAY_NAMES;
+export type RunVariable = (typeof RUN_VARIABLES)[number];
+
+export const RUN_KINDS = ['regular', 'adjustment'] as const;
+export type RunKind = (typeof RUN_KINDS)[number];
+
+/**
+ * draft: created, or inputs changed since it was computed; computed: results to review;
+ * pending: waiting for the second person; locked: final, never changed again.
+ */
+export const RUN_STATUSES = ['draft', 'computed', 'pending', 'locked', 'cancelled'] as const;
+export type RunStatus = (typeof RUN_STATUSES)[number];
+
+/** Why a person's pay in a run needs a look; errors keep the run from being submitted. */
+export const RUN_PROBLEM_CODES = [
+  'no_pay',
+  'negative_net',
+  'missing_punches',
+  'not_processed',
+  'no_attendance',
+  'period_not_over',
+  'absence_over_limit',
+  'pay_starts_late',
+  'formula_failed',
+] as const;
+export type RunProblemCode = (typeof RUN_PROBLEM_CODES)[number];
 
 /** Money as the API sends it: a decimal string with at most two places, e.g. "12500.00". */
 export type Money = string;

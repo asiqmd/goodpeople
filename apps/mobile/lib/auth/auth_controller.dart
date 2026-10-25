@@ -336,6 +336,18 @@ class AuthController extends Notifier<AuthState> {
   Future<Separation> cancelSeparation(String separationId) =>
       _withSession((token) => _api.cancelSeparation(token, separationId));
 
+  // ── Payroll ───────────────────────────────────────────────────────────────
+
+  Future<List<PayslipSummary>> fetchMyPayslips() =>
+      _withSession(_api.fetchMyPayslips);
+
+  Future<FileDownload> fetchMyPayslipPdf(
+    String itemId,
+    LetterLanguage language,
+  ) => _withSession(
+    (token) => _api.fetchMyPayslipPdf(token, itemId, language: language),
+  );
+
   /// Runs [call] with the stored access token.
   ///
   /// On a 401 it calls `/auth/refresh` once and retries with the new access

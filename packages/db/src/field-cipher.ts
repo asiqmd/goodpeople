@@ -42,6 +42,10 @@ export const CIPHER_FIELDS = {
   mfaSecret: 'users.mfa_secret',
   /** An employee's pay amounts. */
   payAmounts: 'employee_pay.amounts',
+  /** A person's results in a payroll run, a run's totals, and amounts entered for a run. */
+  runResults: 'payroll_run_items.result',
+  runTotals: 'payroll_runs.totals',
+  runInputs: 'payroll_inputs.amount',
 } as const;
 export type CipherField = (typeof CIPHER_FIELDS)[keyof typeof CIPHER_FIELDS];
 

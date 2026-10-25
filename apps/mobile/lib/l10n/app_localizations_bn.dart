@@ -1198,6 +1198,39 @@ class AppLocalizationsBn extends AppLocalizations {
   String get serviceBookOpen => 'পিডিএফ খুলুন';
 
   @override
+  String get payslipsTitle => 'বেতন বিবরণী';
+
+  @override
+  String get payslipsSubtitle => 'প্রতি মাসের বেতন, ইংরেজি বা বাংলায়';
+
+  @override
+  String get payslipsLoadFailed => 'আপনার বেতন বিবরণী লোড করা যায়নি।';
+
+  @override
+  String get payslipsEmpty =>
+      'এখনো কোনো বেতন বিবরণী নেই। পে-রোল প্রকাশ করলে এখানে দেখা যাবে।';
+
+  @override
+  String get payslipNetPay => 'নিট বেতন';
+
+  @override
+  String payslipPaidOn(String date) {
+    return 'পরিশোধ: $date';
+  }
+
+  @override
+  String get payslipAdjustment => 'সমন্বয়';
+
+  @override
+  String get payslipOpenEnglish => 'ইংরেজিতে খুলুন';
+
+  @override
+  String get payslipOpenBangla => 'বাংলায় খুলুন';
+
+  @override
+  String get payslipErrorGone => 'এই বেতন বিবরণীটি আর পাওয়া যাচ্ছে না।';
+
+  @override
   String get resignationTitle => 'পদত্যাগ';
 
   @override

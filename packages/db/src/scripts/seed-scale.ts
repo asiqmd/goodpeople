@@ -1,10 +1,14 @@
+import { bdWageBoard } from '@gp/country-packs';
 import { addDays, todayIn, weekdayOf, zonedInstant, type Address } from '@gp/shared';
 import { eq } from 'drizzle-orm';
 import {
   attendancePunches,
   attendanceSettings,
+  CIPHER_FIELDS,
   createDb,
+  createFieldCipher,
   designations,
+  employeePay,
   employees,
   grades,
   hashPassword,
@@ -13,23 +17,29 @@ import {
   loadRootEnv,
   locations,
   orgUnits,
+  payGroups,
   plans,
   platformUsers,
   provisionCountryDefaults,
+  provisionPayroll,
   requireEnv,
+  salaryStructures,
   scopeToTenant,
   seedAdminEmail,
   tenants,
   tenantUsers,
+  type Tx,
 } from '../index.js';
 
 /**
  * A large workspace for measuring performance: `scale-test` with 5,000 employees (one
- * manager per 25), 500 logins and device punches for every working day of this month so far.
- * Run after the normal seed: `pnpm --filter @gp/db seed:scale`. Refuses if it already exists.
+ * manager per 25), 500 logins, device punches for every working day of this month so far and
+ * approved pay for everyone. Run after the normal seed: `pnpm --filter @gp/db seed:scale`.
+ * SCALE_EMPLOYEES and SCALE_SLUG make another size, e.g. 20,000 as `scale-20k`. An existing
+ * workspace is only given pay if it has none.
  */
 
-const SLUG = 'scale-test';
+const SLUG = process.env.SCALE_SLUG ?? 'scale-test';
 const EMPLOYEES = Number(process.env.SCALE_EMPLOYEES ?? 5000);
 const TEAM_SIZE = 25;
 const LOGINS = 500;
@@ -41,13 +51,58 @@ const chunks = <T>(rows: T[], size: number) =>
     rows.slice(i * size, (i + 1) * size),
   );
 
+/** Workers on the RMG wage board's grades in turn, line supervisors on the staff structure. */
+async function seedPay(tx: Tx, tenantId: string, cipher: ReturnType<typeof createFieldCipher>) {
+  if ((await tx.select({ id: employeePay.id }).from(employeePay).limit(1)).length) return 0;
+  const structures = new Map(
+    (await tx.select().from(salaryStructures)).map((s) => [s.code, s.id] as const),
+  );
+  const [group] = await tx.select().from(payGroups).where(eq(payGroups.code, 'MONTHLY'));
+  const people = await tx
+    .select({ id: employees.id, category: jobAssignments.workerCategory })
+    .from(employees)
+    .innerJoin(jobAssignments, eq(jobAssignments.employeeId, employees.id))
+    .orderBy(employees.employeeCode);
+  const board = bdWageBoard('BD_RMG_2023')!.grades.filter((g) => g.grade !== 'APPRENTICE');
+  const rows = people.map((p, i) => {
+    const grade = p.category === 'worker' ? board[i % board.length]! : null;
+    return {
+      tenantId,
+      employeeId: p.id,
+      effectiveFrom: '2024-01-01',
+      status: 'approved' as const,
+      structureId: structures.get(grade ? 'RMG_WORKER' : 'STAFF')!,
+      payGroupId: group!.id,
+      amountsEnc: cipher.encrypt(
+        JSON.stringify({ amount: String(grade?.gross ?? 35_000), fixed: {} }),
+        { tenantId, field: CIPHER_FIELDS.payAmounts },
+      ),
+      wageGrade: grade?.grade ?? null,
+      reason: 'Opening pay',
+      decidedAt: new Date('2024-01-01T00:00:00Z'),
+    };
+  });
+  for (const batch of chunks(rows, BATCH)) await tx.insert(employeePay).values(batch);
+  return rows.length;
+}
+
 loadRootEnv();
 const { db, pool } = createDb(requireEnv('DATABASE_OWNER_URL'), { max: 2 });
 const started = Date.now();
 try {
+  const cipher = createFieldCipher(requireEnv('FIELD_ENCRYPTION_KEY'));
   const [existing] = await db.select().from(tenants).where(eq(tenants.slug, SLUG));
   if (existing) {
-    console.log(`${SLUG} already exists; drop it with \`pnpm db:reset\` to seed it again`);
+    const paid = await db.transaction(async (tx) => {
+      await scopeToTenant(tx, existing.id);
+      await provisionPayroll(tx, existing.id);
+      return seedPay(tx, existing.id, cipher);
+    });
+    console.log(
+      paid
+        ? `${SLUG} already existed; gave ${paid} people pay`
+        : `${SLUG} already exists; drop it with \`pnpm db:reset\` to seed it again`,
+    );
     process.exit(0);
   }
   const [plan] = await db.select().from(plans).where(eq(plans.code, 'enterprise'));
@@ -236,8 +291,9 @@ try {
       }),
     );
     for (const batch of chunks(punches, 5000)) await tx.insert(attendancePunches).values(batch);
+    const paid = await seedPay(tx, tenantId, cipher);
     console.log(
-      `${SLUG}: ${ids.length} employees, ${userIds.size + 1} logins, ${punches.length} punches over ${days.length} days`,
+      `${SLUG}: ${ids.length} employees, ${userIds.size + 1} logins, ${punches.length} punches over ${days.length} days, ${paid} paid`,
     );
   });
   console.log(

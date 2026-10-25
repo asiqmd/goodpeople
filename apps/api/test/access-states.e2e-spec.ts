@@ -1,6 +1,6 @@
 import type { INestApplication } from '@nestjs/common';
-import { createDb, tenants } from '@gp/db';
-import { eq } from 'drizzle-orm';
+import { createDb, entitlementGrants, tenants } from '@gp/db';
+import { and, eq } from 'drizzle-orm';
 import { api, bearer, bootApp, platformToken, tenantLogin, testEnv } from './test-env.js';
 
 describe('access states and entitlements on seeded tenants', () => {
@@ -41,7 +41,16 @@ describe('access states and entitlements on seeded tenants', () => {
       .send({ kind: 'feature', key: 'payroll', reason: 'Payroll preview during the trial' })
       .expect(201);
 
-    await api(app).get('/tenant/payroll/runs').set(bearer(accessToken)).expect(200);
+    try {
+      await api(app).get('/tenant/payroll/runs').set(bearer(accessToken)).expect(200);
+    } finally {
+      // Other files rely on the trial staying without payroll.
+      const { db, pool } = createDb(testEnv().ownerUrl, { max: 1 });
+      await db
+        .delete(entitlementGrants)
+        .where(and(eq(entitlementGrants.tenantId, trial.id), eq(entitlementGrants.key, 'payroll')));
+      await pool.end();
+    }
   });
 
   it("enforces the plan's legal entity limit", async () => {

@@ -11,6 +11,7 @@ import {
 
 /** What a request is, in a line, for the people told about it. */
 export interface ApprovalSummary {
+  /** Whose request it is; empty for a payroll run. */
   employeeId: string;
   personName: string;
   summary: Record<UserLanguage, string>;
@@ -87,10 +88,13 @@ export async function noticeRequested(
     .select()
     .from(approvalSteps)
     .where(and(eq(approvalSteps.subjectId, subject.id), eq(approvalSteps.status, 'pending')));
-  const [requester] = await tx
-    .select({ userId: employees.userId })
-    .from(employees)
-    .where(eq(employees.id, summary.employeeId));
+  // A payroll run is nobody's own request.
+  const [requester] = summary.employeeId
+    ? await tx
+        .select({ userId: employees.userId })
+        .from(employees)
+        .where(eq(employees.id, summary.employeeId))
+    : [];
   for (const step of steps) {
     let recipients: Recipient[];
     if (step.kind === 'manager') {

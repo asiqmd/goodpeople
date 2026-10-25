@@ -96,6 +96,9 @@ enum NotificationEvent implements WireValue {
 
   /// Yesterday has only one punch.
   missingPunch('attendance.missing_punch'),
+
+  /// A payroll run was locked and the user's payslip published.
+  payslipPublished('payslip.published'),
   unknown('unknown');
 
   const NotificationEvent(this.wire);

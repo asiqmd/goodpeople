@@ -8,7 +8,7 @@ import { getFormatter, getLocale, getTranslations } from 'next-intl/server';
 import { StatusBadge } from '@/components/attendance/attendance-views';
 import { DecisionForm } from '@/components/leave/leave-forms';
 import { day, typeName } from '@/components/leave/leave-views';
-import { CompensationItem } from '@/components/payroll/payroll-views';
+import { CompensationItem, RunApprovalItem } from '@/components/payroll/payroll-views';
 import { Badge, Card } from '@/components/ui';
 import { load } from '@/lib/api';
 
@@ -33,6 +33,8 @@ export default async function ApprovalsPage() {
                 <CorrectionItem item={item} />
               ) : item.subjectType === 'compensation' ? (
                 <CompensationItem item={item} />
+              ) : item.subjectType === 'payroll_run' ? (
+                <RunApprovalItem item={item} />
               ) : (
                 <SeparationItem item={item} />
               )}

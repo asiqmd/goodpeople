@@ -20,3 +20,18 @@ export function ageOn(dateOfBirth: IsoDate, on: IsoDate): number {
   const [y, m, d] = on.split('-').map(Number) as [number, number, number];
   return y - by - (m < bm || (m === bm && d < bd) ? 1 : 0);
 }
+
+/** Days from one date to another, counting both: 1 Oct to 31 Oct is 31. */
+export function daysInclusive(from: IsoDate, to: IsoDate): number {
+  return (
+    Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000) + 1
+  );
+}
+
+/** The first and last day of a month given as YYYY-MM. */
+export function monthBounds(month: string): { start: IsoDate; end: IsoDate } {
+  const start = `${month}-01`;
+  const next = new Date(`${start}T00:00:00Z`);
+  next.setUTCMonth(next.getUTCMonth() + 1);
+  return { start, end: addDays(next.toISOString().slice(0, 10), -1) };
+}

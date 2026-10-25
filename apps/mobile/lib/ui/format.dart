@@ -41,6 +41,34 @@ String formatNumber(AppLocalizations l10n, num value) =>
 String formatMonth(AppLocalizations l10n, DateTime date) =>
     DateFormat.yMMMM(l10n.localeName).format(date);
 
+/// A pay period: its month and year when it is one whole calendar month,
+/// for example `October 2026` or `অক্টোবর ২০২৬`, else its dates as in
+/// [formatDateRange], for example `Oct 15 – Oct 31, 2026`.
+String formatPayPeriod(AppLocalizations l10n, DateTime start, DateTime end) {
+  final lastOfMonth = DateTime.utc(start.year, start.month + 1, 0).day;
+  final wholeMonth =
+      start.day == 1 &&
+      end.year == start.year &&
+      end.month == start.month &&
+      end.day == lastOfMonth;
+  return wholeMonth
+      ? formatMonth(l10n, start)
+      : formatDateRange(l10n, start, end);
+}
+
+/// An amount in taka in the UI language's digits, as on the web:
+/// `৳12,500` or `৳১২,৫০০`. Paisa show only when there are any:
+/// `৳12,500.50`. [amount] is the API's decimal string, such as `12500.00`.
+String formatTaka(AppLocalizations l10n, String amount) {
+  final value = num.tryParse(amount);
+  if (value == null) return '৳$amount';
+  final format = NumberFormat.decimalPattern(l10n.localeName)
+    ..minimumFractionDigits = value % 1 == 0 ? 0 : 2
+    ..maximumFractionDigits = 2;
+  final text = format.format(value.abs());
+  return value < 0 ? '-৳$text' : '৳$text';
+}
+
 /// A day with its full weekday and no year, for example
 /// `Saturday, October 24`.
 String formatDayHeading(AppLocalizations l10n, DateTime date) =>

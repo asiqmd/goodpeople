@@ -7,7 +7,6 @@ import {
   type WageBoardView,
 } from '@gp/shared';
 import { getFormatter, getLocale, getTranslations } from 'next-intl/server';
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { day } from '@/components/leave/leave-views';
 import {
@@ -18,11 +17,9 @@ import {
   PayGroupForm,
   StructureEditor,
 } from '@/components/payroll/payroll-forms';
-import { taka } from '@/components/payroll/payroll-views';
+import { isSetupTab, PayrollTabs, taka } from '@/components/payroll/payroll-views';
 import { Badge, Card } from '@/components/ui';
 import { currentTenantUser, load } from '@/lib/api';
-
-const TABS = ['structures', 'components', 'groups', 'wages', 'settings'] as const;
 
 export default async function PayrollSetupPage({ searchParams }: PageProps<'/workspace/payroll'>) {
   const role = (await currentTenantUser())?.role;
@@ -32,30 +29,11 @@ export default async function PayrollSetupPage({ searchParams }: PageProps<'/wor
   const format = await getFormatter();
   const locale = await getLocale();
   const params = await searchParams;
-  const tab = TABS.includes(params.tab as never)
-    ? (params.tab as (typeof TABS)[number])
-    : 'structures';
+  const tab = isSetupTab(params.tab) ? params.tab : 'structures';
   const name = (x: { name: string; nameBn: string | null }) =>
     locale === 'bn' && x.nameBn ? x.nameBn : x.name;
 
-  const nav = (
-    <nav className="flex flex-wrap gap-2 text-sm">
-      {TABS.map((key) => (
-        <Link
-          key={key}
-          href={`/workspace/payroll?tab=${key}`}
-          aria-current={tab === key ? 'page' : undefined}
-          className={`rounded-lg px-3 py-1.5 font-medium ${
-            tab === key
-              ? 'bg-white shadow-sm ring-1 ring-slate-200'
-              : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          {t(`tabs.${key}`)}
-        </Link>
-      ))}
-    </nav>
-  );
+  const nav = <PayrollTabs current={tab} />;
 
   if (tab === 'components') {
     const components = await load<PayComponentView[]>('tenant', '/tenant/payroll/components');

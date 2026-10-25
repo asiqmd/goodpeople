@@ -49,6 +49,8 @@ export interface NotifyInput {
   link?: string;
   /** Each recipient is told once per key (the recipient is added to it). */
   dedupeKey?: string;
+  /** Values for one person, by employee id, on top of `values` (e.g. their own net pay). */
+  perRecipient?: ReadonlyMap<string, Record<string, Localized>>;
   data?: Record<string, string>;
 }
 
@@ -173,59 +175,78 @@ export class NotificationsService {
         : [],
     );
 
-    let told = 0;
-    for (const person of people) {
+    // Built in memory, then written in batches: a payroll run tells thousands of people.
+    const rows = people.map((person) => {
+      const values = {
+        ...input.values,
+        ...(person.employeeId ? input.perRecipient?.get(person.employeeId) : undefined),
+      };
       const text = templates[person.language];
-      const title = fill(text.title, input.values, person.language);
-      const body = fill(text.body, input.values, person.language);
-      const [created] = await tx
+      return {
+        person,
+        values,
+        title: fill(text.title, values, person.language),
+        body: fill(text.body, values, person.language),
+        sms: fill(text.sms, values, person.language),
+      };
+    });
+    let told = 0;
+    for (let i = 0; i < rows.length; i += 500) {
+      const batch = rows.slice(i, i + 500);
+      const created = await tx
         .insert(notifications)
-        .values({
-          tenantId: currentTenantId(),
-          userId: person.userId,
-          employeeId: person.employeeId,
-          event: input.event,
-          title,
-          body,
-          link: input.link ?? null,
-          data: input.data ?? {},
-          dedupeKey: input.dedupeKey
-            ? `${input.dedupeKey}:${person.userId ?? person.employeeId}`
-            : null,
-        })
+        .values(
+          batch.map(({ person, title, body }) => ({
+            tenantId: currentTenantId(),
+            userId: person.userId,
+            employeeId: person.employeeId,
+            event: input.event,
+            title,
+            body,
+            link: input.link ?? null,
+            data: input.data ?? {},
+            dedupeKey: input.dedupeKey
+              ? `${input.dedupeKey}:${person.userId ?? person.employeeId}`
+              : null,
+          })),
+        )
         .onConflictDoNothing()
-        .returning({ id: notifications.id });
-      if (!created) continue;
-      told += 1;
+        .returning({
+          id: notifications.id,
+          userId: notifications.userId,
+          employeeId: notifications.employeeId,
+        });
+      told += created.length;
 
       const deliveries: (typeof notificationDeliveries.$inferInsert)[] = [];
-      const base = { tenantId: currentTenantId(), notificationId: created.id, event: input.event };
-      if (channels.includes('email') && person.email) {
-        const link = input.link ? `\n\n${this.config.WEB_ORIGIN}${input.link}` : '';
-        deliveries.push({
-          ...base,
-          channel: 'email',
-          recipient: person.email,
-          subject: title,
-          body: `${body}${link}`,
-        });
-      }
-      if (channels.includes('sms') && person.phone) {
-        deliveries.push({
-          ...base,
-          channel: 'sms',
-          recipient: person.phone,
-          body: fill(text.sms, input.values, person.language),
-        });
-      }
-      if (channels.includes('push') && person.userId && withTokens.has(person.userId)) {
-        deliveries.push({
-          ...base,
-          channel: 'push',
-          recipient: person.userId,
-          subject: title,
-          body,
-        });
+      for (const n of created) {
+        const row = batch.find(
+          (r) => r.person.userId === n.userId && r.person.employeeId === n.employeeId,
+        )!;
+        const { person, title, body, sms } = row;
+        const base = { tenantId: currentTenantId(), notificationId: n.id, event: input.event };
+        if (channels.includes('email') && person.email) {
+          const link = input.link ? `\n\n${this.config.WEB_ORIGIN}${input.link}` : '';
+          deliveries.push({
+            ...base,
+            channel: 'email',
+            recipient: person.email,
+            subject: title,
+            body: `${body}${link}`,
+          });
+        }
+        if (channels.includes('sms') && person.phone) {
+          deliveries.push({ ...base, channel: 'sms', recipient: person.phone, body: sms });
+        }
+        if (channels.includes('push') && person.userId && withTokens.has(person.userId)) {
+          deliveries.push({
+            ...base,
+            channel: 'push',
+            recipient: person.userId,
+            subject: title,
+            body,
+          });
+        }
       }
       if (deliveries.length) await tx.insert(notificationDeliveries).values(deliveries);
     }

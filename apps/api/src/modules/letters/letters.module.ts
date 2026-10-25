@@ -11,5 +11,6 @@ import { PdfService } from './pdf.service.js';
   imports: [AuditModule, EntitlementsModule, DocumentsModule],
   controllers: [LettersController],
   providers: [LettersService, PdfService, TenantRolesGuard],
+  exports: [PdfService],
 })
 export class LettersModule {}

@@ -1796,6 +1796,66 @@ abstract class AppLocalizations {
   /// **'Open PDF'**
   String get serviceBookOpen;
 
+  /// Home card and screen title: the employee's published payslips.
+  ///
+  /// In en, this message translates to:
+  /// **'Payslips'**
+  String get payslipsTitle;
+
+  /// Under "Payslips" on the home screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Your pay each month, in English or Bangla'**
+  String get payslipsSubtitle;
+
+  /// No description provided for @payslipsLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load your payslips.'**
+  String get payslipsLoadFailed;
+
+  /// No description provided for @payslipsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No payslips yet. They appear here once payroll publishes them.'**
+  String get payslipsEmpty;
+
+  /// Label above the amount paid after deductions.
+  ///
+  /// In en, this message translates to:
+  /// **'Net pay'**
+  String get payslipNetPay;
+
+  /// The payslip's payment date.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid on {date}'**
+  String payslipPaidOn(String date);
+
+  /// Mark on a payslip from an adjustment run, which corrects an earlier one.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjustment'**
+  String get payslipAdjustment;
+
+  /// Opens the payslip as a PDF printed in English.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in English'**
+  String get payslipOpenEnglish;
+
+  /// Opens the payslip as a PDF printed in Bangla.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in Bangla'**
+  String get payslipOpenBangla;
+
+  /// The payslip was withdrawn since the list loaded (a 404).
+  ///
+  /// In en, this message translates to:
+  /// **'This payslip is no longer available.'**
+  String get payslipErrorGone;
+
   /// No description provided for @resignationTitle.
   ///
   /// In en, this message translates to:

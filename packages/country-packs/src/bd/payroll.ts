@@ -15,6 +15,8 @@ export interface PackPayComponent {
   inOvertimeBase: boolean;
   prorate: boolean;
   sortOrder: number;
+  /** For run components: worked out in each run from its variables; null means entered. */
+  runFormula: string | null;
 }
 
 const earning = (
@@ -34,6 +36,7 @@ const earning = (
   inOvertimeBase: false,
   prorate: true,
   sortOrder,
+  runFormula: null,
   ...extra,
 });
 
@@ -55,6 +58,7 @@ const runItem = (
   inOvertimeBase: false,
   prorate: false,
   sortOrder,
+  runFormula: null,
   ...extra,
 });
 
@@ -69,11 +73,22 @@ export const BD_PAY_COMPONENTS: readonly PackPayComponent[] = [
   earning('CONVEYANCE', 'Conveyance', 'যাতায়াত ভাতা', 40),
   earning('FOOD', 'Food allowance', 'খাদ্য ভাতা', 50),
   earning('SPECIAL', 'Special allowance', 'বিশেষ ভাতা', 60, { calculation: 'fixed' }),
-  runItem('OVERTIME', 'Overtime', 'অতিরিক্ত কাজের ভাতা', 'earning', 100),
+  // Labour Rules 2015: (basic + dearness allowance) × 2 × hours ÷ 208. The Act's overtime
+  // (s.108) is for workers; a workspace that pays staff overtime changes the formula.
+  runItem('OVERTIME', 'Overtime', 'অতিরিক্ত কাজের ভাতা', 'earning', 100, {
+    runFormula: 'if(WORKER, round(OT_BASE * 2 * OT_HOURS / 208), 0)',
+  }),
   runItem('ATTENDANCE_BONUS', 'Attendance bonus', 'হাজিরা বোনাস', 'earning', 110),
   runItem('FESTIVAL_BONUS', 'Festival bonus', 'উৎসব বোনাস', 'earning', 120),
   runItem('ARREARS', 'Arrears', 'বকেয়া', 'earning', 130),
-  runItem('ABSENCE', 'Absence deduction', 'অনুপস্থিতি কর্তন', 'deduction', 200),
+  // Within s.126's cap (the pay for the days absent); basic ÷ 30 per day is common practice.
+  runItem('ABSENCE', 'Absence deduction', 'অনুপস্থিতি কর্তন', 'deduction', 200, {
+    runFormula: 'round(BASIC / 30 * ABSENT_DAYS)',
+  }),
+  // Leave without pay: the gross for each day.
+  runItem('UNPAID_LEAVE', 'Leave without pay', 'বিনা বেতনে ছুটি', 'deduction', 205, {
+    runFormula: 'round(GROSS / 30 * UNPAID_LEAVE_DAYS)',
+  }),
   runItem('ADVANCE', 'Advance recovery', 'অগ্রিম কর্তন', 'deduction', 210),
   runItem('PF_EMPLOYEE', 'Provident fund', 'ভবিষ্য তহবিল', 'deduction', 220),
   runItem('TAX', 'Income tax', 'আয়কর', 'deduction', 230),

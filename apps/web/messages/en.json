@@ -69,7 +69,8 @@
       "setup": "Go-live checklist",
       "account": "My account",
       "notificationsLabel": "Notifications ({count} unread)",
-      "payroll": "Payroll"
+      "payroll": "Payroll",
+      "payslips": "Payslips"
     }
   },
   "platform": {
@@ -1084,7 +1085,19 @@
     "default_required": "Make another pay group the default instead.",
     "structure_inactive": "This structure is not in use.",
     "pay_group_inactive": "Choose a pay group that is in use.",
-    "feature_not_in_plan": "Your plan does not include this."
+    "feature_not_in_plan": "Your plan does not include this.",
+    "weekly_runs_later": "Weekly pay groups get their runs in a later release.",
+    "run_exists": "This pay group already has a run for that month.",
+    "run_not_open": "This run can no longer change.",
+    "not_a_run_component": "That component is not entered in runs.",
+    "run_not_computed": "Compute the run before sending it for approval.",
+    "run_has_errors": "Fix the people with problems first.",
+    "run_empty": "Nobody is paid in this run.",
+    "run_closed": "This run is already locked or cancelled.",
+    "run_not_locked": "Only a locked run's payslips are published.",
+    "run_published": "These payslips are already published.",
+    "not_adjustable": "Only a locked regular run can be adjusted.",
+    "adjustment_open": "This run already has an adjustment in progress."
   },
   "platformRoles": {
     "super_admin": "Super admin",
@@ -1190,6 +1203,7 @@
       "probation_ending": "Probation is ending",
       "letter_issued": "A letter was issued",
       "attendance_missing_punch": "A day has one punch only",
+      "payslip_published": "Payslips were published",
       "auth_otp": "Sign-in code"
     },
     "languages": {
@@ -1321,9 +1335,10 @@
     "outsideApp": "Some go-live steps happen outside the app: a parallel month with your current process, legal review of letters and leave rules, and a tested backup. See docs/ops/go-live.md."
   },
   "payroll": {
-    "title": "Payroll setup",
+    "title": "Payroll",
     "tab": "Pay",
     "tabs": {
+      "runs": "Payroll runs",
       "structures": "Salary structures",
       "components": "Components",
       "groups": "Pay groups",
@@ -1463,7 +1478,133 @@
       "cancelConfirm": "Withdraw this pay change?",
       "now": "Now",
       "proposed": "Proposed",
-      "changeBadge": "Pay change"
+      "changeBadge": "Pay change",
+      "payslipsLink": "See your payslips"
+    },
+    "runs": {
+      "title": "Payroll runs",
+      "new": "New run",
+      "none": "No runs yet. Open a month for a pay group to work out everyone's pay.",
+      "group": "Pay group",
+      "month": "Month",
+      "paymentDate": "Payment date",
+      "paymentDateHint": "Left empty, the last day the Labour Act allows (s.123).",
+      "create": "Open the month",
+      "period": "Period",
+      "status": "Status",
+      "headcount": "People",
+      "totals": {
+        "earnings": "Earnings",
+        "deductions": "Deductions",
+        "net": "Net pay",
+        "employerCost": "Employer cost"
+      },
+      "statuses": {
+        "draft": "Draft",
+        "computed": "Computed",
+        "pending": "Waiting for approval",
+        "locked": "Locked",
+        "cancelled": "Cancelled"
+      },
+      "kinds": {
+        "regular": "Regular",
+        "adjustment": "Adjustment"
+      },
+      "published": "Payslips published",
+      "errors": "{count, plural, one {# person to fix} other {# people to fix}}",
+      "warnings": "{count, plural, one {# person with warnings} other {# people with warnings}}",
+      "flagged": "{count, plural, one {# big change since last month} other {# big changes since last month}}",
+      "afterDeadline": "after the legal deadline",
+      "cancelledCount": "{count, plural, one {# cancelled run is not shown.} other {# cancelled runs are not shown.}}",
+      "people": "{count, plural, =0 {Nobody paid} one {# person} other {# people}}",
+      "payOn": "paid on {date}",
+      "submittedBy": "sent by {name}",
+      "lastMonth": "Last month",
+      "thisRun": "This run",
+      "review": "Review the run",
+      "adjustmentHint": "This adjustment pays what changed since the locked run for the same period, person by person and line by line.",
+      "parentLink": "Open the locked run",
+      "pendingHint": "Waiting in the Approvals inbox for someone else with payroll approval. Nothing in it changes until it is decided.",
+      "changedHint": "Something changed since the last computation. Compute again before sending it for approval.",
+      "summary": "Summary",
+      "notComputed": "Not computed yet.",
+      "paymentDue": "Legal deadline",
+      "paymentDueHint": "Wages are paid before the seventh working day after the period ends (Labour Act s.123).",
+      "computedAt": "Computed",
+      "submittedByLabel": "Sent for approval by",
+      "approvedBy": "Approved by",
+      "next": "Next step",
+      "nextHint": {
+        "draft": "Compute to work out everyone's pay from approved pay, attendance and leave.",
+        "computed": "Look at the people with problems or big changes, then send the run for approval.",
+        "pending": "Someone else with payroll approval decides it in the Approvals inbox. Cancel it to change something.",
+        "locked": "A locked run never changes. Publish the payslips, and pay later corrections through an adjustment.",
+        "cancelled": "This run was cancelled.",
+        "published": "Payslips are out. A locked run never changes; pay later corrections through an adjustment."
+      },
+      "compute": "Compute",
+      "recompute": "Compute again",
+      "submit": "Send for approval",
+      "submitConfirm": "Send this run for approval? Its amounts stay fixed while it waits.",
+      "publish": "Publish payslips",
+      "publishConfirm": "Publish payslips to {count, plural, one {# person} other {# people}}? They are told by email, in the app and by SMS where it is on.",
+      "adjust": "Start an adjustment",
+      "adjustConfirm": "Start an adjustment for this period? It pays whatever changed since this run was locked.",
+      "cancel": "Cancel the run",
+      "cancelConfirm": "Cancel this run? You can open the month again afterwards.",
+      "filters": {
+        "all": "Everyone",
+        "problems": "With problems",
+        "errors": "To fix",
+        "flagged": "Big changes"
+      },
+      "search": "Name or code",
+      "find": "Find",
+      "nobody": "Nobody matches.",
+      "pageOf": "{from}–{to} of {total}",
+      "previous": "Previous",
+      "nextPage": "Next",
+      "paidDays": "{days} of {of} days paid",
+      "absentDays": "{days} absent",
+      "otHours": "{hours} h overtime",
+      "variance": {
+        "new": "New this month",
+        "change": "{percent}%"
+      },
+      "problemCount": "{count, plural, one {# problem} other {# problems}}",
+      "warningCount": "{count, plural, one {# warning} other {# warnings}}",
+      "problems": {
+        "no_pay": "No approved pay for this period. Approve a pay record, then compute again.",
+        "negative_net": "Deductions are more than earnings.",
+        "missing_punches": "{count, plural, one {# day has} other {# days have}} one punch only, paid as worked until corrected.",
+        "not_processed": "{count, plural, one {# past day is} other {# past days are}} not processed. Process attendance, then compute again.",
+        "no_attendance": "No attendance recorded in this period.",
+        "period_not_over": "The period has not ended yet.",
+        "absence_over_limit": "The absence deduction is more than the pay for the days absent (Labour Act s.126).",
+        "pay_starts_late": "Pay starts after the period began; {count, plural, one {# day is} other {# days are}} not paid."
+      },
+      "entered": "entered",
+      "daysLine": "{period} days in the period · {employed} employed · {worked} worked · {absent} absent · {unpaid} without pay · {ot} h overtime",
+      "lastNet": "last month {amount}",
+      "component": "Component",
+      "amount": "Amount (৳)",
+      "note": "Note",
+      "enter": "Enter",
+      "inputSaved": "Saved. Compute again to include it.",
+      "removeInput": "Remove",
+      "payslipEn": "Payslip in English",
+      "payslipBn": "Payslip in Bangla"
+    },
+    "payslips": {
+      "title": "Payslips",
+      "none": "No payslips yet. They appear here once payroll publishes them.",
+      "adjustment": "Adjustment",
+      "paidOn": "Paid on {date}",
+      "net": "Net pay",
+      "open": {
+        "en": "English PDF",
+        "bn": "Bangla PDF"
+      }
     }
   }
 }

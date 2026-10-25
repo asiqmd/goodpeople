@@ -24,6 +24,8 @@ export const NOTIFICATION_EVENTS = [
   'letter.issued',
   /** Yesterday has only one punch. */
   'attendance.missing_punch',
+  /** A payroll run was locked and its payslips published. */
+  'payslip.published',
   /** A sign-in code: SMS only, always sent. */
   'auth.otp',
 ] as const;
@@ -43,6 +45,7 @@ export const DEFAULT_EVENT_CHANNELS: Record<NotificationEvent, readonly Delivery
   'probation.ending': ['email'],
   'letter.issued': ['email', 'push'],
   'attendance.missing_punch': ['push'],
+  'payslip.published': ['email', 'push'],
   'auth.otp': ['sms'],
 };
 

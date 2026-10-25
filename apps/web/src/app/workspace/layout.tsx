@@ -21,6 +21,7 @@ export default async function WorkspaceLayout({ children }: LayoutProps<'/worksp
   const may = (permission: Permission) => can(user?.role, permission);
   const hasLeave = result.ok && result.data.access.features.includes('leave');
   const hasAttendance = result.ok && result.data.access.features.includes('attendance');
+  const hasPayroll = result.ok && result.data.access.features.includes('payroll');
   // Resignations need approval in every workspace; leave and corrections where enabled.
   const [approvals, inbox] = result.ok
     ? await Promise.all([
@@ -57,9 +58,16 @@ export default async function WorkspaceLayout({ children }: LayoutProps<'/worksp
           },
         ]
       : []),
-    ...(may('payroll.view') && result.ok && result.data.access.features.includes('payroll')
-      ? [{ href: '/workspace/payroll', label: tw('payroll') }]
+    ...(may('payroll.view') && hasPayroll
+      ? [
+          {
+            href: '/workspace/payroll/runs',
+            label: tw('payroll'),
+            match: ['/workspace/payroll'],
+          },
+        ]
       : []),
+    ...(hasPayroll ? [{ href: '/workspace/payslips', label: tw('payslips') }] : []),
     ...(may('users.manage') ? [{ href: '/workspace/users', label: tw('users') }] : []),
     ...(may('org.manage') ? [{ href: '/workspace/setup', label: tw('setup') }] : []),
     { href: '/workspace/profile', label: tn('profile') },

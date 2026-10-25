@@ -17,10 +17,12 @@ import 'package:good_people/notifications/push_service.dart';
 import 'attendance_fixtures.dart';
 import 'leave_fixtures.dart';
 import 'lifecycle_fixtures.dart';
+import 'payroll_fixtures.dart';
 
 export 'attendance_fixtures.dart';
 export 'leave_fixtures.dart';
 export 'lifecycle_fixtures.dart';
+export 'payroll_fixtures.dart';
 
 /// `POST /auth/login` 200 body, exactly as the API contract shapes it.
 const loginJson = <String, Object?>{
@@ -1010,6 +1012,52 @@ class FakeGoodPeopleApi implements GoodPeopleApi {
     };
     separations = [...separations]..[index] = cancelled;
     return Separation.fromJson(cancelled);
+  }
+
+  // ── Payroll ───────────────────────────────────────────────────────────────
+
+  /// Answered by [fetchMyPayslips]; [fetchMyPayslipPdf] answers for these.
+  List<Json> payslips = myPayslipsJson();
+
+  /// Thrown, one per call, by [fetchMyPayslips] before it answers.
+  final payslipsErrors = <Exception>[];
+  var payslipsCalls = 0;
+
+  /// Thrown, one per call, by [fetchMyPayslipPdf] instead of answering.
+  final payslipPdfErrors = <Exception>[];
+
+  /// Each PDF asked of [fetchMyPayslipPdf].
+  final payslipPdfs = <({String itemId, LetterLanguage language})>[];
+
+  @override
+  Future<List<PayslipSummary>> fetchMyPayslips(String accessToken) async {
+    payslipsCalls++;
+    if (payslipsErrors.isNotEmpty) throw payslipsErrors.removeAt(0);
+    return [for (final json in payslips) PayslipSummary.fromJson(json)];
+  }
+
+  @override
+  Future<FileDownload> fetchMyPayslipPdf(
+    String accessToken,
+    String itemId, {
+    required LetterLanguage language,
+  }) async {
+    payslipPdfs.add((itemId: itemId, language: language));
+    if (payslipPdfErrors.isNotEmpty) throw payslipPdfErrors.removeAt(0);
+    final json = payslips.firstWhere(
+      (json) => json['itemId'] == itemId,
+      orElse: () => throw const ApiException(
+        kind: ApiErrorKind.server,
+        statusCode: 404,
+        message: 'Payslip not found',
+      ),
+    );
+    final month = (json['periodStart']! as String).substring(0, 7);
+    return FileDownload(
+      bytes: pdfBytes,
+      contentType: 'application/pdf',
+      fileName: 'payslip-MG-0005-$month-${language.wire}.pdf',
+    );
   }
 }
 

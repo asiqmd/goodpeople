@@ -273,6 +273,22 @@ abstract interface class GoodPeopleApi {
   /// a pending resignation: a 403 otherwise, or a 409 with code `not_open`
   /// once it is decided.
   Future<Separation> cancelSeparation(String accessToken, String separationId);
+
+  // ── Payroll ───────────────────────────────────────────────────────────────
+  // Needs the workspace's `payroll` feature: a 403 with code
+  // `feature_not_in_plan` without it.
+
+  /// `GET /tenant/me/payslips`: the employee's published payslips, newest
+  /// first. Empty for a login with no employee record.
+  Future<List<PayslipSummary>> fetchMyPayslips(String accessToken);
+
+  /// `GET /tenant/me/payslips/{itemId}?language=`: one payslip as a PDF.
+  /// One that is not the user's, or not published, gets a 404.
+  Future<FileDownload> fetchMyPayslipPdf(
+    String accessToken,
+    String itemId, {
+    required LetterLanguage language,
+  });
 }
 
 /// [GoodPeopleApi] over HTTP with dio.
@@ -753,13 +769,34 @@ class DioGoodPeopleApi implements GoodPeopleApi {
     Separation.fromJson,
   );
 
+  @override
+  Future<List<PayslipSummary>> fetchMyPayslips(String accessToken) => _callList(
+    () =>
+        _dio.get<Object?>('/tenant/me/payslips', options: _bearer(accessToken)),
+    PayslipSummary.fromJson,
+  );
+
+  @override
+  Future<FileDownload> fetchMyPayslipPdf(
+    String accessToken,
+    String itemId, {
+    required LetterLanguage language,
+  }) => _download(
+    () => _dio.get<List<int>>(
+      '/tenant/me/payslips/${Uri.encodeComponent(itemId)}',
+      queryParameters: {'language': language.wire},
+      options: _fileOptions(accessToken),
+    ),
+  );
+
   void close() => _dio.close(force: true);
 
   static Options _bearer(String accessToken) =>
       Options(headers: {'Authorization': 'Bearer $accessToken'});
 
   /// A file download: the body as bytes, whatever its type. The service
-  /// book is rendered on request, so it gets longer than a JSON call.
+  /// book and payslips are rendered on request, so they get longer than a
+  /// JSON call.
   static Options _fileOptions(String accessToken) => Options(
     headers: {'Authorization': 'Bearer $accessToken', 'Accept': '*/*'},
     responseType: ResponseType.bytes,

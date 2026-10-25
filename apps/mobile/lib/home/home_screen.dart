@@ -11,6 +11,7 @@ import '../l10n/app_localizations.dart';
 import '../leave/leave_screen.dart';
 import '../notifications/inbox_screen.dart';
 import '../notifications/notification_providers.dart';
+import '../payslips/payslips_screen.dart';
 import '../profile/profile_screen.dart';
 import '../team/team_providers.dart';
 import '../team/team_screen.dart';
@@ -33,6 +34,7 @@ class HomeScreen extends ConsumerWidget {
   static const leaveKey = ValueKey('home-leave');
   static const attendanceKey = ValueKey('home-attendance');
   static const documentsKey = ValueKey('home-documents');
+  static const payslipsKey = ValueKey('home-payslips');
   static const teamKey = ValueKey('home-team');
   static const accountKey = ValueKey('home-account');
   static const inboxKey = ValueKey('home-inbox');
@@ -210,6 +212,16 @@ class _AccessDetails extends ConsumerWidget {
             onTap: () => Navigator.of(context).push(DocumentsScreen.route()),
           ),
         ],
+        if (view.access.hasFeature('payroll')) ...[
+          const SizedBox(height: 12),
+          _ShortcutCard(
+            key: HomeScreen.payslipsKey,
+            icon: Icons.receipt_long_outlined,
+            title: l10n.payslipsTitle,
+            subtitle: l10n.payslipsSubtitle,
+            onTap: () => Navigator.of(context).push(PayslipsScreen.route()),
+          ),
+        ],
         if (hasTeam) ...[
           const SizedBox(height: 12),
           _ShortcutCard(
@@ -339,7 +351,7 @@ class _ModuleTile extends StatelessWidget {
 }
 
 /// A tappable card on the home screen that opens a section, such as My
-/// profile, Leave, Attendance, My documents, Team or Account.
+/// profile, Leave, Attendance, My documents, Payslips, Team or Account.
 class _ShortcutCard extends StatelessWidget {
   const _ShortcutCard({
     super.key,

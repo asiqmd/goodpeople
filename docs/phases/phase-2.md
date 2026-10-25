@@ -10,7 +10,7 @@ browser.
 | Milestone                                  | Scope                                                                                                                                          | Depends on | Status |
 | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------ |
 | **M1 Pay foundations**                     | Pay components, a safe formula engine, salary structures, minimum wages, pay groups, employee pay with maker-checker                           | Phase 1    | Done   |
-| **M2 Payroll runs & payslips**             | Pay periods, attendance and leave inputs, proration, overtime, the run lifecycle with locking, adjustment runs, EN/BN payslips                 | M1         |        |
+| **M2 Payroll runs & payslips**             | Pay periods, attendance and leave inputs, proration, overtime, the run lifecycle with locking, adjustment runs, EN/BN payslips                 | M1         | Done   |
 | **M3 Tax, provident fund & bonuses**       | Salary income tax (projection, declarations, proofs, certificates), PF, festival and attendance bonuses, loans and advances, annual increments | M2         |        |
 | **M4 Settlement, gratuity & disbursement** | Final settlement per separation type, gratuity, WPPF, bank and MFS payment files, cash sheets, split pay, accounting export                    | M3         |        |
 | **M5 Reports & parallel runs**             | Statutory and management reports, golden tests from real (anonymised) sheets, reconciliation against the current payroll, go-live              | M4         |        |
@@ -158,17 +158,158 @@ and an employee's own pay.
 - **Field-level messages** for formulas are English, like the rest of the API's validation.
 - **The RMG wage figures** stay `needs_review` until checked against the gazette's text.
 
+## M2: Payroll runs & payslips
+
+How runs work and why is in [ADR 009](../adr/009-payroll-runs.md).
+
+### Runs
+
+- **A run is a month for a pay group** (`/workspace/payroll/runs`). Its people are those
+  whose pay on their last employed day of the month is in the group. Anyone without approved
+  pay shows up in the default group's run as a problem.
+- **The lifecycle:** draft → computed → waiting for approval → locked, or cancelled. Entering an
+  amount or anything else that changes the pay sends a computed run back to draft until it is
+  computed again. A cancelled run frees the month.
+- **Maker-checker:** a run is sent for approval and decided in the Approvals inbox by someone
+  else with `payroll.approve`. The inbox shows last month's totals beside it. With
+  maker-checker off, sending locks the run at once.
+- **Locked means locked:** computing, entering amounts and cancelling are refused.
+- **The payment deadline** (s.123) is worked out when the run opens: the seventh working day
+  after the month ends, skipping Fridays and the workspace's holidays. It is the default
+  payment date, and a later one is shown in red.
+
+### What a run computes (`run-engine.ts`)
+
+- **Proration:** the month is split where pay changed (a raise from the 10th) and each part
+  is paid for its calendar days. Joiners and leavers are paid for the days they were
+  employed. Lines are rounded to whole taka, and the remainder goes to the structure's last
+  line so the lines add up to the prorated gross.
+- **Attendance:** from processed days only, never live attendance:
+  - absent days, with a half day counting as 0.5;
+  - worked days;
+  - overtime hours;
+  - leave without pay, from the leave type's `paid` flag.
+- **Run formulas** (editable per component) with the BD defaults:
+  - **Overtime:** `if(WORKER, round(OT_BASE * 2 * OT_HOURS / 208), 0)`. This is twice the
+    hourly basic (and dearness allowance) for workers (s.108; 208 hours a month per the Labour
+    Rules, still to be checked). Staff get none unless the workspace changes the formula.
+  - **Absence:** `round(BASIC / 30 * ABSENT_DAYS)`, flagged when it exceeds the pay for those
+    days (s.126).
+  - **Leave without pay:** `round(GROSS / 30 * UNPAID_LEAVE_DAYS)`.
+- **Run variables** for formulas: `GROSS`, `OT_BASE`, `PERIOD_DAYS`, `EMPLOYED_DAYS`,
+  `PAID_DAYS`, `WORKED_DAYS`, `ABSENT_DAYS`, `UNPAID_LEAVE_DAYS`, `OT_HOURS`,
+  `SERVICE_YEARS`, `SERVICE_MONTHS` and `WORKER`.
+- **Entered amounts:** HR enters per person an advance to recover, arrears, a bonus, or an
+  override of a formula, with a note.
+- **Problems per person:**
+  - Errors stop the run being sent: no pay, negative net, a broken formula, and days not
+    processed once the month is over.
+  - Warnings are for review: days with one punch, days not processed yet, the month not over,
+    pay starting late, no attendance at all.
+- **Review against last month:** each person's net is compared with the group's last locked
+  run. A move of 10% or more, someone new, or someone gone is flagged as a "big change".
+
+### Adjustment runs
+
+A locked run can be adjusted, for everyone or for chosen people. The month is computed again
+from today's data, and the run pays, per person and component, the difference from everything
+already locked for that month: for example a back-dated raise from 1 July paid as 350 basic
+and 175 house rent. People with no difference drop out. A month has one open adjustment at a
+time, and an adjustment goes through the same approval and locking.
+
+### Payslips
+
+- **PDFs in English and Bangla:**
+  - the company, the employee, department and joining date;
+  - the days (in the period, paid, absent, leave without pay, overtime hours);
+  - earnings and deductions, and the net pay in figures and in words (Taka in lakh and crore,
+    or Bangla words ending in "টাকা মাত্র");
+  - Bangla digits throughout the Bangla one.
+- **Publishing** a locked run makes its payslips visible to the employees and notifies them
+  (`payslip.published`) by email, push and the inbox, without amounts. The SMS, to the
+  person's own phone, carries their net pay; a workspace can change that template.
+- **Employees** see their payslips at `/workspace/payslips` and in the app (the Payslips card).
+  The app opens a payslip in the app's language or the other one, and a payslip notification
+  opens the list. HR can preview anyone's payslip from the run before or after publishing.
+
+### What else it does
+
+- **Large runs read a page at a time:** everyone, those with problems, those to fix, or big
+  changes, with search by name or code. Only the 50 shown are decrypted.
+- **Encrypted results:** each person's lines, totals and entered amounts are field-encrypted.
+  The audit log records run events, never amounts.
+- **Fixes found on the way:**
+  - The Phase 0 placeholder `GET /tenant/payroll/runs` was shadowing the real route; it is
+    removed.
+  - An access-states test left a payroll grant on `trial-co`, which other test files saw in
+    some orders; it now removes its grant.
+  - Notifications now go out in bulk (500 at a time) with per-person values, for 20,000
+    payslips.
+- **Seed:** `scale-test` and any `SCALE_SLUG` workspace give everyone approved pay (workers on
+  the RMG grades, line supervisors on the staff structure). An existing scale workspace is
+  given pay if it has none.
+
+### Performance at 20,000 employees
+
+Measured on a MacBook Air (M-series) against `scale-20k`: 20,000 employees, 780,000 punches
+over 20 working days (`apps/api/scripts/measure-payroll.mjs`).
+
+| Step                                                     | Time                    |
+| -------------------------------------------------------- | ----------------------- |
+| Processing the month's attendance first (Phase 1)        | 44.9 s (500,000 days)   |
+| **Computing the run for 20,000 people**                  | **3.4 s** (again 3.1 s) |
+| A page of 50 people / page 200 / with problems / search  | 84 / 190 / 75 / 73 ms   |
+| The run's summary                                        | 3 ms                    |
+| One payslip PDF in Bangla (rendered on request)          | 1.4 s                   |
+| Sending for approval with maker-checker off (locks)      | 7 ms                    |
+| Publishing 20,000 payslips (notifications to the logins) | 2.2 s                   |
+
+The target was under ten minutes. Computing reads everyone's pay records, processed days and
+entered amounts in a few queries and works per person in memory, so it grows linearly. The
+measurement ran in October, before the month ended, so everyone carries the "month not over"
+warning.
+
+### Done when
+
+- **Unit tests:** the engine (a full month, overtime, absence and unpaid leave, a joiner,
+  a mid-month raise, entered amounts, no attendance, workers-only overtime, unprocessed days,
+  warnings and errors, a broken formula, the adjustment difference); amounts in words in
+  English and Bangla.
+- **API end-to-end tests (7):**
+  - a month computed, entered amounts, maker-checker (the maker cannot approve), locking,
+    payslips for HR at once and for the employee only after publishing, someone else's
+    payslip refused, the notification, results encrypted at rest;
+  - a back-dated raise paid through an adjustment;
+  - variance flags, filters, search and paging;
+  - errors that block approval, cancelling, weekly groups refused;
+  - overtime, absence and missing punches from processed attendance;
+  - who may see runs;
+  - one-person workspaces.
+- **Web:** a run opened, computed, an advance entered, recomputed, sent, approved by the
+  finance officer, published, and the payslips read by the employee, in English and Bangla.
+- **Mobile:** the payslips list and PDFs, and the notification opening them.
+
+**Checked:**
+
+- 156 API tests (engine unit tests and end-to-end), also passing in shuffled order eight times.
+- Country-pack tests (30, including amounts in words) and Flutter (192 tests, analyze clean).
+- The browser in English and Bangla: September run for my-group computed, an advance entered
+  and recomputed, approved by the finance officer, published; the PDFs in both languages;
+  Rahima's payslips and notification; October's run with overtime, absence and the
+  missing-punch and unprocessed-day warnings.
+
+**Carried into later milestones from M2:**
+
+- **Weekly pay groups** cannot be run yet; runs are monthly.
+- **The 208 hours a month** behind the hourly overtime rate and the 30-day absence divisor
+  stay `needs_review` with counsel.
+- **Compute runs in the request.** At 20,000 people it fits well inside the HTTP timeout. A
+  background job with progress comes when runs grow past that.
+- **Pay group, structure and company names** show in English in the Bangla view and payslip
+  unless a Bangla name is set.
+
 ## Later milestones (outline; detailed when each starts)
 
-- **M2 Payroll runs & payslips:**
-  - Pay periods per group; inputs from processed attendance (paid days, absence, overtime
-    hours) and approved leave without pay.
-  - Proration, overtime at twice the hourly basic (s.108), absence deductions within the
-    Act's limits.
-  - Runs: draft → computed → reviewed against last month → approved → locked; adjustment
-    runs; wages due within seven working days of the period (s.123).
-  - EN/BN payslip PDFs, sent by email and the app, with an SMS summary.
-  - The engine measured against 20,000 employees.
 - **M3 Tax, provident fund & bonuses:**
   - Salary tax under the Income Tax Act 2023: yearly projection with monthly deduction,
     the salary exemption, investment rebate with declarations and proofs, minimum tax,
