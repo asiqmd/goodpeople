@@ -17,6 +17,7 @@ import {
   PayGroupForm,
   StructureEditor,
 } from '@/components/payroll/payroll-forms';
+import { TaxFundSettingsForm } from '@/components/payroll/benefit-forms';
 import { isSetupTab, PayrollTabs, taka } from '@/components/payroll/payroll-views';
 import { Badge, Card } from '@/components/ui';
 import { currentTenantUser, load } from '@/lib/api';
@@ -194,6 +195,20 @@ export default async function PayrollSetupPage({ searchParams }: PageProps<'/wor
             <MakerCheckerSwitch on={settings.makerChecker} approvers={settings.approvers} />
           ) : (
             <p className="text-sm text-slate-600">{t('settings.makerCheckerHint')}</p>
+          )}
+        </Card>
+        <Card title={t('settings.taxFundTitle')}>
+          {canEdit ? (
+            <TaxFundSettingsForm settings={settings} />
+          ) : (
+            <p className="text-sm text-slate-600">
+              {settings.pfEnabled
+                ? t('pf.rates', {
+                    employee: Number(settings.pfEmployeeRate),
+                    employer: Number(settings.pfEmployerRate),
+                  })
+                : t('pf.off')}
+            </p>
           )}
         </Card>
       </>

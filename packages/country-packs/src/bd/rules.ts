@@ -55,6 +55,12 @@ export interface BdRules {
   'pay.payment_deadline_working_days': number;
   'pay.overtime_hours_per_month': number;
   'pay.absence_days_divisor': number;
+  'pf.required_min_permanent_workers': number | null;
+  'pf.min_service_months': number;
+  'pf.contribution_percent_of_basic': { min: number; max: number };
+  'bonus.festival_per_year': number;
+  'bonus.festival_max_percent_of_basic': number;
+  'bonus.festival_min_service_months': number;
 }
 
 /** Clerical work has a longer probation than other work (s.4). */
@@ -334,6 +340,77 @@ export const BD_RULES: Rulebook<BdRules> = {
         reference: BLA('126'),
         status: 'needs_review',
         note: 'The Act caps the deduction at the pay for the absent period; dividing by 30 is practice.',
+      },
+    ],
+  },
+  'pf.required_min_permanent_workers': {
+    title: 'Permanent workers from which an establishment must have a provident fund',
+    versions: [
+      {
+        from: ACT_START,
+        value: null,
+        reference: BLA('264'),
+        status: 'needs_review',
+        note: 'Before the 2025 amendment a fund was due within six months of a written demand by three quarters of the workers.',
+      },
+      {
+        from: AMENDMENT_2025,
+        value: 100,
+        reference: ORDINANCE_2025('264'),
+        status: 'needs_review',
+        note: 'Joining the government Progoti pension, with the employer contributing, is an alternative.',
+      },
+      {
+        from: '2026-04-10',
+        value: 100,
+        reference: { act: 'Bangladesh Labour (Amendment) Act 2026 (Act No. 43)', section: '264' },
+        status: 'needs_review',
+        note:
+          'Sources differ on the two-thirds rule: a fund on a written demand of two thirds of the ' +
+          'workers, or no fund needed when two thirds join Progoti. The employer pays half.',
+      },
+    ],
+  },
+  'pf.min_service_months': {
+    title: 'Service before a permanent worker joins the provident fund, in months',
+    versions: [{ from: ACT_START, value: 12, reference: BLA('264'), status: 'needs_review' }],
+  },
+  'pf.contribution_percent_of_basic': {
+    title: "A member's contribution, in percent of basic wages; the employer pays the same",
+    versions: [
+      { from: ACT_START, value: { min: 7, max: 8 }, reference: BLA('264'), status: 'needs_review' },
+    ],
+  },
+  'bonus.festival_per_year': {
+    title: 'Festival bonuses a year for workers with a year of service',
+    versions: [
+      {
+        from: '2015-09-15',
+        value: 2,
+        reference: { act: 'Bangladesh Labour Rules 2015', section: '111' },
+        status: 'needs_review',
+      },
+    ],
+  },
+  'bonus.festival_max_percent_of_basic': {
+    title: 'Each festival bonus at most this much of a month’s basic',
+    versions: [
+      {
+        from: '2015-09-15',
+        value: 100,
+        reference: { act: 'Bangladesh Labour Rules 2015', section: '111' },
+        status: 'needs_review',
+      },
+    ],
+  },
+  'bonus.festival_min_service_months': {
+    title: 'Continuous service before festival bonuses are due, in months',
+    versions: [
+      {
+        from: '2015-09-15',
+        value: 12,
+        reference: { act: 'Bangladesh Labour Rules 2015', section: '111' },
+        status: 'needs_review',
       },
     ],
   },

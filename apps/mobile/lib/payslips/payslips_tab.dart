@@ -9,16 +9,16 @@ import '../l10n/app_localizations.dart';
 import '../leave/leave_widgets.dart';
 import '../ui/error_text.dart';
 import '../ui/format.dart';
-import '../ui/language_menu.dart';
 import '../ui/load_error_view.dart';
+import 'pay_widgets.dart';
 import 'payslips_providers.dart';
 
 /// The signed-in employee's published payslips, newest first.
 ///
 /// Each opens as a PDF in the phone's own viewer, in English or Bangla; the
 /// filled button is the app's language.
-class PayslipsScreen extends ConsumerStatefulWidget {
-  const PayslipsScreen({super.key});
+class PayslipsTab extends ConsumerStatefulWidget {
+  const PayslipsTab({super.key});
 
   static ValueKey<String> payslipKey(String itemId) =>
       ValueKey('payslip-$itemId');
@@ -27,14 +27,11 @@ class PayslipsScreen extends ConsumerStatefulWidget {
   static ValueKey<String> openKey(String itemId, LetterLanguage language) =>
       ValueKey('payslip-open-${language.wire}-$itemId');
 
-  static Route<void> route() =>
-      MaterialPageRoute(builder: (context) => const PayslipsScreen());
-
   @override
-  ConsumerState<PayslipsScreen> createState() => _PayslipsScreenState();
+  ConsumerState<PayslipsTab> createState() => _PayslipsTabState();
 }
 
-class _PayslipsScreenState extends ConsumerState<PayslipsScreen> {
+class _PayslipsTabState extends ConsumerState<PayslipsTab> {
   /// Payslips whose PDF is downloading, and in which language.
   final _opening = <String, LetterLanguage>{};
 
@@ -78,56 +75,45 @@ class _PayslipsScreenState extends ConsumerState<PayslipsScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final payslips = ref.watch(myPayslipsProvider);
-    final appLanguage = l10n.localeName.startsWith('bn')
-        ? LetterLanguage.bn
-        : LetterLanguage.en;
+    final appLanguage = appLetterLanguage(l10n);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.payslipsTitle),
-        actions: const [LanguageMenuButton()],
-      ),
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () => awaitRefresh(ref.refresh(myPayslipsProvider.future)),
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
-            children: [
-              switch (payslips) {
-                AsyncData(value: final List<PayslipSummary> list)
-                    when list.isEmpty =>
-                  LeaveEmptyState(
-                    icon: Icons.receipt_long_outlined,
-                    message: l10n.payslipsEmpty,
+    return RefreshIndicator(
+      onRefresh: () => awaitRefresh(ref.refresh(myPayslipsProvider.future)),
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        children: [
+          switch (payslips) {
+            AsyncData(value: final List<PayslipSummary> list)
+                when list.isEmpty =>
+              LeaveEmptyState(
+                icon: Icons.receipt_long_outlined,
+                message: l10n.payslipsEmpty,
+              ),
+            AsyncData(value: final List<PayslipSummary> list) => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: 12,
+              children: [
+                for (final payslip in list)
+                  _PayslipCard(
+                    key: PayslipsTab.payslipKey(payslip.itemId),
+                    payslip: payslip,
+                    primary: appLanguage,
+                    opening: _opening[payslip.itemId],
+                    onOpen: (language) => _open(payslip, language),
                   ),
-                AsyncData(value: final List<PayslipSummary> list) => Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  spacing: 12,
-                  children: [
-                    for (final payslip in list)
-                      _PayslipCard(
-                        key: PayslipsScreen.payslipKey(payslip.itemId),
-                        payslip: payslip,
-                        primary: appLanguage,
-                        opening: _opening[payslip.itemId],
-                        onOpen: (language) => _open(payslip, language),
-                      ),
-                  ],
-                ),
-                AsyncError(:final error)
-                    when !payslips.isLoading &&
-                        error is! SessionExpiredException =>
-                  LoadErrorView(
-                    title: l10n.payslipsLoadFailed,
-                    error: error,
-                    onRetry: () => ref.invalidate(myPayslipsProvider),
-                  ),
-                _ => const LeaveLoading(),
-              },
-            ],
-          ),
-        ),
+              ],
+            ),
+            AsyncError(:final error)
+                when !payslips.isLoading && error is! SessionExpiredException =>
+              LoadErrorView(
+                title: l10n.payslipsLoadFailed,
+                error: error,
+                onRetry: () => ref.invalidate(myPayslipsProvider),
+              ),
+            _ => const LeaveLoading(),
+          },
+        ],
       ),
     );
   }
@@ -135,10 +121,16 @@ class _PayslipsScreenState extends ConsumerState<PayslipsScreen> {
 
 /// User-facing text for a payslip that could not be downloaded or opened.
 String payslipErrorText(AppLocalizations l10n, Object error) => switch (error) {
-  FileOpenFailed(problem: FileOpenProblem.noApp) => l10n.fileNoApp,
-  FileOpenFailed() => l10n.fileOpenFailed,
   ApiException(kind: ApiErrorKind.server, statusCode: 404) =>
     l10n.payslipErrorGone,
+  _ => payFileErrorText(l10n, error),
+};
+
+/// User-facing text for a pay PDF, such as a payslip or the tax
+/// certificate, that could not be downloaded or opened.
+String payFileErrorText(AppLocalizations l10n, Object error) => switch (error) {
+  FileOpenFailed(problem: FileOpenProblem.noApp) => l10n.fileNoApp,
+  FileOpenFailed() => l10n.fileOpenFailed,
   _ => describeError(l10n, error),
 };
 
@@ -167,22 +159,6 @@ class _PayslipCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final other = primary == LetterLanguage.bn
-        ? LetterLanguage.en
-        : LetterLanguage.bn;
-
-    String label(LetterLanguage language) => switch (language) {
-      LetterLanguage.en => l10n.payslipOpenEnglish,
-      LetterLanguage.bn => l10n.payslipOpenBangla,
-    };
-    Widget icon(LetterLanguage language, IconData idle) => opening == language
-        ? const SizedBox.square(
-            dimension: 18,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          )
-        : Icon(idle);
-    VoidCallback? onPressed(LetterLanguage language) =>
-        opening == null ? () => onOpen(language) : null;
 
     return Card.outlined(
       margin: EdgeInsets.zero,
@@ -209,7 +185,7 @@ class _PayslipCard extends StatelessWidget {
                 if (payslip.isAdjustment) ...[
                   const SizedBox(width: 8),
                   LeavePill(
-                    key: PayslipsScreen.adjustmentKey(payslip.itemId),
+                    key: PayslipsTab.adjustmentKey(payslip.itemId),
                     label: l10n.payslipAdjustment,
                     background: scheme.tertiaryContainer,
                     foreground: scheme.onTertiaryContainer,
@@ -238,28 +214,16 @@ class _PayslipCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            // Side by side when they fit; on a narrow phone the filled
-            // button goes on top.
-            OverflowBar(
-              alignment: MainAxisAlignment.end,
-              spacing: 8,
-              overflowAlignment: OverflowBarAlignment.end,
-              overflowSpacing: 8,
-              overflowDirection: VerticalDirection.up,
-              children: [
-                OutlinedButton.icon(
-                  key: PayslipsScreen.openKey(payslip.itemId, other),
-                  onPressed: onPressed(other),
-                  icon: icon(other, Icons.translate),
-                  label: Text(label(other)),
-                ),
-                FilledButton.icon(
-                  key: PayslipsScreen.openKey(payslip.itemId, primary),
-                  onPressed: onPressed(primary),
-                  icon: icon(primary, Icons.picture_as_pdf_outlined),
-                  label: Text(label(primary)),
-                ),
-              ],
+            PdfLanguageButtons(
+              primary: primary,
+              opening: opening,
+              onOpen: onOpen,
+              label: (language) => switch (language) {
+                LetterLanguage.en => l10n.payslipOpenEnglish,
+                LetterLanguage.bn => l10n.payslipOpenBangla,
+              },
+              buttonKey: (language) =>
+                  PayslipsTab.openKey(payslip.itemId, language),
             ),
           ],
         ),

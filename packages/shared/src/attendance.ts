@@ -58,6 +58,8 @@ export const APPROVAL_SUBJECTS = [
   'separation',
   'compensation',
   'payroll_run',
+  'loan',
+  'pay_batch',
 ] as const;
 export type ApprovalSubject = (typeof APPROVAL_SUBJECTS)[number];
 

@@ -120,6 +120,20 @@
       "when": 1792900792553,
       "tag": "0016_payroll_adjustment_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1792910929666,
+      "tag": "0017_payroll_benefits",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1792910930016,
+      "tag": "0018_payroll_benefits_rls",
+      "breakpoints": true
     }
   ]
 }

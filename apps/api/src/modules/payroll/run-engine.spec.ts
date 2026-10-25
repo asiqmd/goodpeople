@@ -1,11 +1,18 @@
-import { BD_PAY_COMPONENTS, BD_SALARY_STRUCTURES } from '@gp/country-packs';
+import {
+  BD_PAY_COMPONENTS,
+  BD_SALARY_STRUCTURES,
+  bdTaxYear,
+  type Taxpayer,
+} from '@gp/country-packs';
 import type { AttendanceStatus } from '@gp/shared';
 import {
+  computeBonus,
   computePay,
   difference,
   type EngineComponent,
   type EngineDay,
   type EngineInput,
+  type EngineTax,
 } from './run-engine.js';
 
 const components: EngineComponent[] = BD_PAY_COMPONENTS.map((c) => ({ ...c, isActive: true }));
@@ -22,6 +29,7 @@ function october(exceptions: Record<string, Partial<EngineDay>> = {}): EngineDay
       overtimeMinutes: 0,
       leaveDays: 0,
       unpaidLeave: false,
+      late: false,
       ...exceptions[date],
     };
   });
@@ -223,5 +231,153 @@ describe('the pay engine', () => {
       HOUSE_RENT: '175.00',
       ARREARS: '500.00',
     });
+  });
+
+  // ── Phase 2 M3: tax, the provident fund, loans and bonuses ──────────────────
+
+  const taxpayer: Taxpayer = {
+    female: false,
+    senior: false,
+    disabled: false,
+    thirdGender: false,
+    freedomFighter: false,
+    disabledDependants: 0,
+    area: 'dhaka_chattogram_city',
+  };
+  const tax = (overrides: Partial<EngineTax> = {}): EngineTax => ({
+    year: bdTaxYear('2026-27')!,
+    taxpayer,
+    ytdSalary: '300000.00',
+    ytdTax: '11250.00',
+    ytdPf: '0.00',
+    monthsAfter: 8,
+    investment: '0.00',
+    pfRecognised: true,
+    hasTin: true,
+    ...overrides,
+  });
+  const staffPay = [{ effectiveFrom: '2026-01-01', structure: staff, amount: '100000', fixed: {} }];
+
+  it('deducts the year’s salary tax, projected and spread over the months left', () => {
+    const result = computePay(base({ records: staffPay, tax: tax() }));
+    // 300,000 so far + 100,000 now + 8 × 100,000 = 1,200,000 → Tk 45,000 for the year;
+    // 33,750 still due over this month and eight more.
+    expect(result.tax).toMatchObject({ salary: 1_200_000, tax: 45_000, thisMonth: '3750.00' });
+    expect(result.lines.find((l) => l.code === 'TAX')?.amount).toBe('3750.00');
+    expect(result.taxable).toBe('100000.00');
+    expect(result.net).toBe('96250.00');
+    // Entered tax stands; a missing TIN is pointed out.
+    expect(
+      computePay(base({ records: staffPay, tax: tax(), inputs: { TAX: '1000' } })).tax,
+    ).toBeNull();
+    expect(
+      computePay(base({ records: staffPay, tax: tax({ hasTin: false }) })).problems.map(
+        (p) => p.code,
+      ),
+    ).toContain('tin_missing');
+    // Below the threshold, no tax at all.
+    expect(
+      computePay(base({ tax: tax({ ytdSalary: '0', ytdTax: '0' }) })).lines.some(
+        (l) => l.code === 'TAX',
+      ),
+    ).toBe(false);
+  });
+
+  it('counts absence against taxable salary but not tax or loans', () => {
+    const result = computePay(
+      base({
+        attendance: october({ '2026-10-05': { status: 'absent' } }),
+        inputs: { ADVANCE: '1000' },
+      }),
+    );
+    // 12,500 earned less 223 absence; the advance does not reduce income.
+    expect(result.taxable).toBe('12277.00');
+  });
+
+  it('takes provident fund contributions on the basic paid, both shares', () => {
+    const result = computePay(base({ pf: { employeeRate: '7', employerRate: '8' } }));
+    const line = (code: string) => result.lines.find((l) => l.code === code)?.amount;
+    expect(line('PF_EMPLOYEE')).toBe('469.00');
+    expect(line('PF_EMPLOYER')).toBe('536.00');
+    expect(result.net).toBe('12031.00');
+    expect(result.employerCost).toBe('536.00');
+    // Recognised contributions count as investment for the rebate.
+    const rebate = computePay(
+      base({ records: staffPay, pf: { employeeRate: '7', employerRate: '7' }, tax: tax() }),
+    ).tax!;
+    expect(rebate.investment).toBe(Math.round(2 * 4200 * 9));
+  });
+
+  it('recovers loans on their schedule without taking net pay below zero', () => {
+    const result = computePay(
+      base({
+        loans: [
+          { loanId: 'a', component: 'ADVANCE', installment: '2000', outstanding: '1500.00' },
+          { loanId: 'b', component: 'LOAN', installment: '3000', outstanding: '30000.00' },
+        ],
+      }),
+    );
+    expect(result.loans).toEqual([
+      { loanId: 'a', amount: '1500.00' },
+      { loanId: 'b', amount: '3000.00' },
+    ]);
+    expect(result.net).toBe('8000.00');
+    const short = computePay(
+      base({
+        loans: [{ loanId: 'c', component: 'LOAN', installment: '20000', outstanding: '50000' }],
+      }),
+    );
+    expect(short).toMatchObject({ net: '0.00', loans: [{ loanId: 'c', amount: '12500.00' }] });
+    expect(short.problems.map((p) => p.code)).toContain('loan_not_recovered');
+    // An entered amount is what is recovered, shared oldest first.
+    const entered = computePay(
+      base({
+        inputs: { LOAN: '4000' },
+        loans: [
+          { loanId: 'd', component: 'LOAN', installment: '1000', outstanding: '2500' },
+          { loanId: 'e', component: 'LOAN', installment: '1000', outstanding: '9000' },
+        ],
+      }),
+    );
+    expect(entered.loans).toEqual([
+      { loanId: 'd', amount: '2500.00' },
+      { loanId: 'e', amount: '1500.00' },
+    ]);
+  });
+
+  it('gives late and leave days to formulas, for an attendance bonus', () => {
+    const bonus = components.map((c) =>
+      c.code === 'ATTENDANCE_BONUS'
+        ? { ...c, runFormula: 'if(LATE_DAYS == 0 && ABSENT_DAYS == 0 && LEAVE_DAYS == 0, 500, 0)' }
+        : c,
+    );
+    expect(
+      computePay(base({ components: bonus })).lines.find((l) => l.code === 'ATTENDANCE_BONUS')
+        ?.amount,
+    ).toBe('500.00');
+    const late = computePay(
+      base({ components: bonus, attendance: october({ '2026-10-07': { late: true } }) }),
+    );
+    expect(late.lines.some((l) => l.code === 'ATTENDANCE_BONUS')).toBe(false);
+  });
+
+  it('pays a festival bonus on the basic for a year’s service, and nothing before', () => {
+    const record = { effectiveFrom: '2026-01-01', structure: rmg, amount: '12500', fixed: {} };
+    const rule = {
+      record,
+      cutOff: '2027-03-19',
+      percentOfBasic: 100,
+      minServiceMonths: 12,
+      components,
+    };
+    expect(computeBonus({ ...rule, joinedOn: '2024-01-01' })).toMatchObject({
+      net: '6700.00',
+      taxable: '6700.00',
+      lines: [{ code: 'FESTIVAL_BONUS', amount: '6700.00' }],
+    });
+    expect(computeBonus({ ...rule, joinedOn: '2026-04-01' })).toBeNull();
+    expect(computeBonus({ ...rule, joinedOn: '2024-01-01', percentOfBasic: 50 })!.net).toBe(
+      '3350.00',
+    );
   });
 });

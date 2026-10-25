@@ -46,6 +46,13 @@ export const CIPHER_FIELDS = {
   runResults: 'payroll_run_items.result',
   runTotals: 'payroll_runs.totals',
   runInputs: 'payroll_inputs.amount',
+  /** Investments declared for the tax rebate, and tax deposited for a run. */
+  taxDeclarations: 'tax_declarations.items',
+  taxDeposits: 'tax_deposits.amount',
+  taxOpenings: 'tax_openings.amounts',
+  pfEntries: 'pf_entries.amount',
+  loanAmounts: 'employee_loans.amounts',
+  loanRepayments: 'loan_repayments.amount',
 } as const;
 export type CipherField = (typeof CIPHER_FIELDS)[keyof typeof CIPHER_FIELDS];
 

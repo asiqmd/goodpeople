@@ -7,7 +7,10 @@ import {
   RUN_KINDS,
   RUN_STATUSES,
   TAX_TREATMENTS,
+  type BonusRule,
+  type PfVestingStep,
   type RunProblem,
+  type TaxArea,
 } from '@gp/shared';
 import { sql } from 'drizzle-orm';
 import {
@@ -17,6 +20,7 @@ import {
   index,
   integer,
   jsonb,
+  numeric,
   pgEnum,
   pgTable,
   text,
@@ -125,6 +129,24 @@ export const payrollSettings = pgTable('payroll_settings', {
   tenantId: tenantId().primaryKey(),
   /** A second person with payroll.approve decides pay changes. */
   makerChecker: boolean('maker_checker').notNull().default(true),
+  /** Runs work out each month's salary tax (TAX) unless an amount is entered. */
+  autoTax: boolean('auto_tax').notNull().default(true),
+  /** Where people live for minimum tax, unless their tax profile says otherwise. */
+  taxArea: text('tax_area').$type<TaxArea>().notNull().default('dhaka_chattogram_city'),
+  /** The provident fund: contributions in runs for members, as percent of basic. */
+  pfEnabled: boolean('pf_enabled').notNull().default(false),
+  pfEmployeeRate: numeric('pf_employee_rate', { precision: 5, scale: 2 }).notNull().default('7'),
+  pfEmployerRate: numeric('pf_employer_rate', { precision: 5, scale: 2 }).notNull().default('7'),
+  /** Recognised by the tax authority: contributions count for the investment rebate. */
+  pfRecognised: boolean('pf_recognised').notNull().default(true),
+  /** How much of the employer's contributions a leaver keeps, by completed years. */
+  pfVesting: jsonb('pf_vesting')
+    .$type<PfVestingStep[]>()
+    .notNull()
+    .default([
+      { afterYears: 0, percent: 0 },
+      { afterYears: 3, percent: 100 },
+    ]),
   updatedAt: updatedAt(),
 });
 
@@ -141,6 +163,8 @@ export const employeePay = pgTable(
     employeeId: uuid('employee_id').notNull(),
     effectiveFrom: isoDate('effective_from').notNull(),
     status: payChangeStatus('status').notNull(),
+    /** Set when the change is one of a batch decided together (the annual increment). */
+    batchId: uuid('batch_id'),
     structureId: uuid('structure_id').notNull(),
     payGroupId: uuid('pay_group_id').notNull(),
     /** { amount, fixed } as encrypted JSON. */
@@ -196,6 +220,8 @@ export const payrollRuns = pgTable(
     paymentDue: isoDate('payment_due').notNull(),
     paymentDate: isoDate('payment_date').notNull(),
     status: runStatus('status').notNull().default('draft'),
+    /** A bonus run's festival and rules; null for other runs. */
+    bonus: jsonb('bonus').$type<BonusRule>(),
     headcount: integer('headcount').notNull().default(0),
     /** { earnings, deductions, net, employerCost } as encrypted JSON. */
     totalsEnc: text('totals_enc'),

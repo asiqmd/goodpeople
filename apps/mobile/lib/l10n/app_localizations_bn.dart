@@ -1201,9 +1201,6 @@ class AppLocalizationsBn extends AppLocalizations {
   String get payslipsTitle => 'বেতন বিবরণী';
 
   @override
-  String get payslipsSubtitle => 'প্রতি মাসের বেতন, ইংরেজি বা বাংলায়';
-
-  @override
   String get payslipsLoadFailed => 'আপনার বেতন বিবরণী লোড করা যায়নি।';
 
   @override
@@ -1229,6 +1226,330 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get payslipErrorGone => 'এই বেতন বিবরণীটি আর পাওয়া যাচ্ছে না।';
+
+  @override
+  String get myPayTitle => 'আমার বেতন';
+
+  @override
+  String get myPaySubtitle => 'বেতন বিবরণী, কর, ভবিষ্য তহবিল ও ঋণ';
+
+  @override
+  String get myPayTabTax => 'কর';
+
+  @override
+  String get myPayTabProvidentFund => 'ভবিষ্য তহবিল';
+
+  @override
+  String get myPayTabLoans => 'ঋণ';
+
+  @override
+  String get payrollRunKindBonus => 'বোনাস';
+
+  @override
+  String get taxLoadFailed => 'আপনার করের তথ্য লোড করা যায়নি।';
+
+  @override
+  String get taxNoEmployeeBody =>
+      'বেতনের কর কর্মী রেকর্ডের সাথে যুক্ত থাকে, কিন্তু আপনার লগইনের সাথে কোনো কর্মী রেকর্ড যুক্ত নেই। আপনার থাকার কথা মনে হলে আপনার এইচআর টিমকে জানান।';
+
+  @override
+  String get taxYearSoFar => 'এ বছর এ পর্যন্ত';
+
+  @override
+  String get taxSalaryPaid => 'পরিশোধিত বেতন';
+
+  @override
+  String get taxDeducted => 'কর্তিত কর';
+
+  @override
+  String taxIncludesOpening(String salary, String tax) {
+    return 'এতে বছরের আগের অংশের (যেমন আগের নিয়োগকর্তার) $salary বেতন ও $tax কর ধরা আছে।';
+  }
+
+  @override
+  String get taxForYear => 'বছরের মোট কর (আনুমানিক)';
+
+  @override
+  String get taxThisMonth => 'এই মাসে';
+
+  @override
+  String get taxRebate => 'কর রেয়াত';
+
+  @override
+  String get taxThreshold => 'করমুক্ত আয়সীমা';
+
+  @override
+  String get taxMonthsLeft => 'বাকি মাস';
+
+  @override
+  String get taxNotWorkedOut =>
+      'পে-রোল আপনার বেতন থেকে হিসাব করলে বছরের কর এখানে দেখা যাবে।';
+
+  @override
+  String get taxMonthsTitle => 'মাসভিত্তিক হিসাব';
+
+  @override
+  String get taxNoMonths => 'এ বছরে এখনো কোনো বেতন পরিশোধ হয়নি।';
+
+  @override
+  String taxMonthLine(String salary, String tax) {
+    return 'বেতন $salary · কর $tax';
+  }
+
+  @override
+  String taxChallan(String number) {
+    return 'চালান নং $number';
+  }
+
+  @override
+  String taxChallanOn(String number, String date) {
+    return 'চালান নং $number, জমা: $date';
+  }
+
+  @override
+  String get taxCertificateTitle => 'বেতন ও কর কর্তনের সনদ';
+
+  @override
+  String get taxCertificateBody =>
+      'আয়কর রিটার্নের জন্য: এ বছরের বেতন ও তা থেকে কর্তিত কর। এটি পিডিএফ হিসেবে খুলবে।';
+
+  @override
+  String get taxCertificateEnglish => 'সনদ (ইংরেজি)';
+
+  @override
+  String get taxCertificateBangla => 'সনদ (বাংলা)';
+
+  @override
+  String get declarationTitle => 'বিনিয়োগ ঘোষণা';
+
+  @override
+  String get declarationHint =>
+      'ঘোষিত বিনিয়োগে প্রতি মাসে কম কর কাটা হয়; পে-রোল আপনার প্রমাণপত্র যাচাই করার পর গৃহীত অঙ্কগুলোই হিসাবে ধরা হয়।';
+
+  @override
+  String declarationStatusName(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'draft': 'খসড়া',
+      'submitted': 'জমা দেওয়া হয়েছে',
+      'verified': 'যাচাইকৃত',
+      'other': 'অজানা',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String declarationSubmittedOn(String date) {
+    return 'জমা: $date';
+  }
+
+  @override
+  String declarationVerifiedOn(String date) {
+    return 'যাচাই: $date';
+  }
+
+  @override
+  String investmentKindName(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'savings_certificate': 'সঞ্চয়পত্র',
+      'dps': 'ডিপিএস',
+      'life_insurance': 'জীবন বিমার প্রিমিয়াম',
+      'provident_fund_other': 'অন্যান্য ভবিষ্য তহবিল',
+      'superannuation': 'অনুমোদিত সুপারঅ্যানুয়েশন বা কল্যাণ তহবিল',
+      'universal_pension': 'সর্বজনীন পেনশন',
+      'listed_shares': 'তালিকাভুক্ত শেয়ার',
+      'mutual_fund': 'মিউচুয়াল ফান্ড',
+      'zakat': 'যাকাত',
+      'donation': 'অনুমোদিত দান',
+      'other': 'অন্যান্য',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get declarationKind => 'বিনিয়োগের ধরন';
+
+  @override
+  String get declarationKindRequired => 'কোথায় বিনিয়োগ করেছেন তা বেছে নিন';
+
+  @override
+  String get declarationAmount => 'অঙ্ক (টাকা)';
+
+  @override
+  String get declarationAmountInvalid =>
+      '১২৫০০ বা ১২৫০০.৫০-এর মতো একটি অঙ্ক লিখুন';
+
+  @override
+  String get declarationNote => 'নোট (ঐচ্ছিক)';
+
+  @override
+  String get declarationAddRow => 'আরেকটি বিনিয়োগ যোগ করুন';
+
+  @override
+  String get declarationRemoveRow => 'সরান';
+
+  @override
+  String get declarationSaveDraft => 'খসড়া সংরক্ষণ';
+
+  @override
+  String get declarationSubmit => 'পে-রোলে জমা দিন';
+
+  @override
+  String get declarationSaved => 'খসড়া সংরক্ষিত হয়েছে।';
+
+  @override
+  String get declarationSent => 'পে-রোলে পাঠানো হয়েছে।';
+
+  @override
+  String get declarationErrorVerified =>
+      'পে-রোল এই ঘোষণা যাচাই করে ফেলেছে, তাই এটি আর বদলানো যাবে না।';
+
+  @override
+  String get declarationErrorInvalid => 'অঙ্কগুলো দেখে আবার চেষ্টা করুন।';
+
+  @override
+  String get declarationTotal => 'মোট ঘোষিত';
+
+  @override
+  String get declarationDeclared => 'ঘোষিত';
+
+  @override
+  String get declarationAccepted => 'গৃহীত';
+
+  @override
+  String get declarationEmpty => 'কোনো বিনিয়োগ ঘোষণা করা হয়নি।';
+
+  @override
+  String get pfLoadFailed => 'আপনার ভবিষ্য তহবিলের তথ্য লোড করা যায়নি।';
+
+  @override
+  String get pfNotMember => 'আপনি ভবিষ্য তহবিলের সদস্য নন।';
+
+  @override
+  String get pfTotal => 'মোট স্থিতি';
+
+  @override
+  String get pfOwn => 'আপনার চাঁদা';
+
+  @override
+  String get pfEmployer => 'নিয়োগকর্তার চাঁদা';
+
+  @override
+  String get pfPayable => 'আজ চাকরি ছাড়লে প্রাপ্য';
+
+  @override
+  String pfVested(String percent) {
+    return 'আপনার চাঁদা ও নিয়োগকর্তার অংশের $percent%';
+  }
+
+  @override
+  String pfMemberSince(String date) {
+    return 'সদস্য: $date থেকে';
+  }
+
+  @override
+  String pfLeftOn(String date) {
+    return 'তহবিল ছেড়েছেন: $date';
+  }
+
+  @override
+  String get pfEntriesTitle => 'হিসাব বিবরণী';
+
+  @override
+  String get pfNoEntries => 'এখনো কোনো লেনদেন নেই।';
+
+  @override
+  String pfEntryKindName(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'opening': 'প্রারম্ভিক স্থিতি',
+      'contribution': 'চাঁদা',
+      'interest': 'মুনাফা',
+      'loan_out': 'ঋণ গ্রহণ',
+      'loan_repaid': 'ঋণ পরিশোধ',
+      'withdrawal': 'উত্তোলন',
+      'forfeited': 'বাজেয়াপ্ত',
+      'other': 'লেনদেন',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String pfAccountName(String account) {
+    String _temp0 = intl.Intl.selectLogic(account, {
+      'own': 'নিজের হিসাব',
+      'employer': 'নিয়োগকর্তার হিসাব',
+      'other': 'হিসাব',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get loansLoadFailed => 'আপনার অগ্রিম ও ঋণের তথ্য লোড করা যায়নি।';
+
+  @override
+  String get loansEmpty => 'কোনো অগ্রিম বা ঋণ নেই।';
+
+  @override
+  String loanKindName(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'advance': 'বেতন অগ্রিম',
+      'loan': 'ঋণ',
+      'pf_loan': 'ভবিষ্য তহবিল ঋণ',
+      'other': 'ঋণ',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String loanStatusName(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'pending': 'অপেক্ষমাণ',
+      'active': 'চলমান',
+      'closed': 'পরিশোধিত',
+      'rejected': 'প্রত্যাখ্যাত',
+      'cancelled': 'বাতিল',
+      'other': 'অজানা',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get loanPrincipal => 'মূল অঙ্ক';
+
+  @override
+  String get loanInstallment => 'মাসিক কিস্তি';
+
+  @override
+  String get loanOutstanding => 'বাকি';
+
+  @override
+  String get loanRepaid => 'পরিশোধিত';
+
+  @override
+  String get loanStartMonth => 'প্রথম কর্তন';
+
+  @override
+  String loanRepayments(num count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'পরিশোধ ($countString)',
+      zero: 'পরিশোধ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get loanNoRepayments => 'এখনো কিছু পরিশোধ হয়নি।';
+
+  @override
+  String get loanFromSalary => 'বেতন থেকে কর্তন';
+
+  @override
+  String get loanPaidIn => 'সরাসরি জমা';
 
   @override
   String get resignationTitle => 'পদত্যাগ';

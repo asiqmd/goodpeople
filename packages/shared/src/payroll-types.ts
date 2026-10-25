@@ -1,9 +1,18 @@
 import type { ApprovalStepView } from './leave-types.js';
 import type { EmployeeRef } from './attendance-types.js';
 import type { LineProblem } from './formula.js';
+import type { Religion } from './hr.js';
 import type {
+  DeclarationStatus,
+  IncrementBasis,
+  InvestmentKind,
+  LoanKind,
+  LoanStatus,
   Money,
   PayBasis,
+  PayBatchStatus,
+  PfAccount,
+  PfEntryKind,
   PayCalculation,
   PayChangeStatus,
   PayComponentKind,
@@ -11,8 +20,31 @@ import type {
   RunKind,
   RunProblemCode,
   RunStatus,
+  TaxArea,
   TaxTreatment,
 } from './payroll.js';
+
+/** After `afterYears` completed years a leaver keeps `percent` of the employer's contributions. */
+export interface PfVestingStep {
+  afterYears: number;
+  percent: number;
+}
+
+/** Who a festival bonus run pays and how much. */
+export interface BonusRule {
+  /** e.g. "Eid-ul-Fitr 2027". */
+  festival: string;
+  festivalBn: string | null;
+  /** People of these religions; people with no religion recorded follow `unrecorded`. */
+  religions: Religion[];
+  unrecorded: boolean;
+  /** Employed on this day (usually the festival's eve) to be paid. */
+  cutOff: string;
+  /** Of one month's basic on the cut-off day. */
+  percentOfBasic: number;
+  /** Months of continuous service by the cut-off; less gets nothing. */
+  minServiceMonths: number;
+}
 
 export interface PayComponentView {
   id: string;
@@ -74,6 +106,15 @@ export interface PayrollSettingsView {
   makerChecker: boolean;
   /** People who may approve pay; with one or none, maker-checker cannot work. */
   approvers: number;
+  autoTax: boolean;
+  taxArea: TaxArea;
+  pfEnabled: boolean;
+  pfEmployeeRate: string;
+  pfEmployerRate: string;
+  pfRecognised: boolean;
+  pfVesting: PfVestingStep[];
+  /** The workspace has enough permanent workers that the law requires a fund. */
+  pfRequired: { required: boolean; permanentWorkers: number; threshold: number | null };
 }
 
 /** A minimum wage table from the country pack, e.g. the 2023 RMG wage board. */
@@ -184,6 +225,8 @@ export interface PayrollRunView {
   kind: RunKind;
   /** The locked run an adjustment corrects. */
   parentRunId: string | null;
+  /** A festival bonus run's festival and rules. */
+  bonus: BonusRule | null;
   payGroup: { id: string; code: string; name: string };
   periodStart: string;
   periodEnd: string;
@@ -218,6 +261,26 @@ export interface RunVariables {
   otHours: number;
 }
 
+/** How a month's salary tax was worked out: the year projected, then spread over what is left. */
+export interface RunTaxWorking {
+  /** The year's salary income, projected: paid so far, this month, and the months to come. */
+  salary: number;
+  exemption: number;
+  taxableIncome: number;
+  threshold: number;
+  grossTax: number;
+  investment: number;
+  rebate: number;
+  minimumTax: number;
+  /** The year's tax. */
+  tax: number;
+  /** Deducted earlier in the year. */
+  deductedBefore: Money;
+  /** This month and the months after it in the year. */
+  monthsLeft: number;
+  thisMonth: Money;
+}
+
 export interface PayrollRunItemView {
   id: string;
   employee: EmployeeRef & { designation: string | null; orgUnit: string | null };
@@ -231,6 +294,9 @@ export interface PayrollRunItemView {
   variables: RunVariables;
   /** Amounts entered for this person in this run, by component. */
   inputs: Record<string, Money>;
+  /** Salary income this period, for tax. */
+  taxable: Money;
+  tax: RunTaxWorking | null;
   previousNet: Money | null;
   variance: 'new' | 'up' | 'down' | 'same' | null;
   /** Change in net since last month, in percent, when there was a last month. */
@@ -251,6 +317,9 @@ export interface PayslipSummary {
   itemId: string;
   runId: string;
   kind: RunKind;
+  /** A bonus payslip's festival; null for other runs. */
+  festival: string | null;
+  festivalBn: string | null;
   periodStart: string;
   periodEnd: string;
   paymentDate: string;
@@ -265,4 +334,177 @@ export interface PayrollRunApprovalItem {
   kind: 'payroll';
   run: PayrollRunView;
   previousTotals: RunTotals | null;
+}
+
+// ── Loans and advances (M3) ──────────────────────────────────────────────────
+
+export interface LoanRepaymentView {
+  date: string;
+  amount: Money;
+  /** The run it was recovered in; null when paid in directly. */
+  runId: string | null;
+  note: string | null;
+}
+
+export interface LoanView {
+  id: string;
+  employee: EmployeeRef;
+  kind: LoanKind;
+  status: LoanStatus;
+  principal: Money;
+  installment: Money;
+  repaid: Money;
+  outstanding: Money;
+  /** The first month recovered, e.g. "2026-11". */
+  startMonth: string;
+  reason: string;
+  requestedBy: string | null;
+  decidedBy: string | null;
+  createdAt: string;
+  decidedAt: string | null;
+  closedAt: string | null;
+  repayments: LoanRepaymentView[];
+  steps: ApprovalStepView[];
+}
+
+export interface LoanApprovalItem {
+  subjectType: 'loan';
+  stepId: string;
+  kind: 'payroll';
+  loan: LoanView;
+}
+
+// ── Pay batches: the annual increment (M3) ───────────────────────────────────
+
+/** One person in an increment: their pay before and after. */
+export interface PayBatchLine {
+  employee: EmployeeRef;
+  structure: string;
+  wageGrade: string | null;
+  basicBefore: Money;
+  basicAfter: Money;
+  grossBefore: Money;
+  grossAfter: Money;
+}
+
+export interface PayBatchPreview {
+  lines: PayBatchLine[];
+  /** People left out and why: a change already waiting, pay from after the date, no pay. */
+  skipped: {
+    employee: EmployeeRef;
+    reason: 'pending_change' | 'later_pay' | 'no_pay' | 'not_eligible';
+  }[];
+  grossBefore: Money;
+  grossAfter: Money;
+}
+
+export interface PayBatchView {
+  id: string;
+  effectiveFrom: string;
+  basis: IncrementBasis;
+  percent: string;
+  status: PayBatchStatus;
+  people: number;
+  reason: string;
+  requestedBy: string | null;
+  decidedBy: string | null;
+  createdAt: string;
+  decidedAt: string | null;
+  steps: ApprovalStepView[];
+}
+
+export interface PayBatchApprovalItem {
+  subjectType: 'pay_batch';
+  stepId: string;
+  kind: 'payroll';
+  batch: PayBatchView;
+  /** The first people in it, before and after, and the totals. */
+  preview: PayBatchPreview;
+}
+
+// ── Provident fund (M3) ──────────────────────────────────────────────────────
+
+export interface PfEntryView {
+  id: string;
+  date: string;
+  kind: PfEntryKind;
+  account: PfAccount;
+  amount: Money;
+  runId: string | null;
+  note: string | null;
+}
+
+export interface PfBalance {
+  own: Money;
+  employer: Money;
+  total: Money;
+  /** What a leaver would take today: their own account and the vested share of the employer's. */
+  vestedPercent: number;
+  payable: Money;
+}
+
+export interface PfMemberView {
+  employee: EmployeeRef;
+  joinedOn: string;
+  leftOn: string | null;
+  balance: PfBalance;
+}
+
+export interface PfStatement extends PfMemberView {
+  entries: PfEntryView[];
+}
+
+// ── Salary tax (M3) ──────────────────────────────────────────────────────────
+
+export interface TaxProfileView {
+  disabled: boolean;
+  freedomFighter: boolean;
+  disabledDependants: number;
+  area: TaxArea | null;
+}
+
+export interface DeclarationItemView {
+  kind: InvestmentKind;
+  declared: Money;
+  verified: Money | null;
+  note: string | null;
+  documentId: string | null;
+}
+
+export interface TaxDeclarationView {
+  id: string | null;
+  employee: EmployeeRef;
+  fiscalYear: string;
+  status: DeclarationStatus | null;
+  items: DeclarationItemView[];
+  declared: Money;
+  verified: Money | null;
+  submittedAt: string | null;
+  verifiedBy: string | null;
+  verifiedAt: string | null;
+}
+
+/** A year's salary, tax and investments for one person, month by month: the certificate's data. */
+export interface TaxYearView {
+  fiscalYear: string;
+  employee: EmployeeRef & { tin: string | null };
+  profile: TaxProfileView;
+  /** Each locked run of the year that paid them: a month, an adjustment or a bonus. */
+  months: {
+    /** The run's first day. */
+    month: string;
+    periodEnd: string;
+    runId: string;
+    kind: RunKind;
+    salary: Money;
+    tax: Money;
+    challanNo: string | null;
+    depositedOn: string | null;
+  }[];
+  opening: { salary: Money; tax: Money; pf: Money } | null;
+  salary: Money;
+  tax: Money;
+  /** The year projected from the latest run, if one worked tax out. */
+  latest: RunTaxWorking | null;
+  declaration: TaxDeclarationView;
 }

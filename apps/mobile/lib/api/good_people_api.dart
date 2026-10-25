@@ -289,6 +289,37 @@ abstract interface class GoodPeopleApi {
     String itemId, {
     required LetterLanguage language,
   });
+
+  /// `GET /tenant/me/tax?fiscalYear=`: the employee's salary and tax for an
+  /// income year such as `2026-27`; the current one when [fiscalYear] is
+  /// `null`. A login with no employee record gets a 404.
+  Future<TaxYearView> fetchMyTaxYear(String accessToken, {String? fiscalYear});
+
+  /// `PUT /tenant/me/tax/declaration?fiscalYear=`: the whole investment
+  /// declaration, kept as a draft or sent to payroll. Once payroll has
+  /// verified it, a 409 with code `declaration_verified`; an amount that is
+  /// not like `12500` or `12500.50`, a 400 with the problems in `issues`.
+  Future<TaxDeclaration> saveMyTaxDeclaration(
+    String accessToken,
+    TaxDeclarationDraft draft, {
+    required String fiscalYear,
+  });
+
+  /// `GET /tenant/me/tax/certificate?fiscalYear=&language=`: the year's
+  /// salary and tax deduction certificate as a PDF.
+  Future<FileDownload> fetchMyTaxCertificate(
+    String accessToken, {
+    required String fiscalYear,
+    required LetterLanguage language,
+  });
+
+  /// `GET /tenant/me/pf`: the employee's provident fund statement, or
+  /// `null` when they are not a member (or have no employee record).
+  Future<PfStatement?> fetchMyProvidentFund(String accessToken);
+
+  /// `GET /tenant/me/loans`: the employee's salary advances and loans.
+  /// Empty for a login with no employee record.
+  Future<List<LoanView>> fetchMyLoans(String accessToken);
 }
 
 /// [GoodPeopleApi] over HTTP with dio.
@@ -789,14 +820,74 @@ class DioGoodPeopleApi implements GoodPeopleApi {
     ),
   );
 
+  @override
+  Future<TaxYearView> fetchMyTaxYear(
+    String accessToken, {
+    String? fiscalYear,
+  }) => _call(
+    () => _dio.get<Object?>(
+      '/tenant/me/tax',
+      queryParameters: {'fiscalYear': ?fiscalYear},
+      options: _bearer(accessToken),
+    ),
+    TaxYearView.fromJson,
+  );
+
+  @override
+  Future<TaxDeclaration> saveMyTaxDeclaration(
+    String accessToken,
+    TaxDeclarationDraft draft, {
+    required String fiscalYear,
+  }) => _call(
+    () => _dio.put<Object?>(
+      '/tenant/me/tax/declaration',
+      queryParameters: {'fiscalYear': fiscalYear},
+      data: draft.toJson(),
+      options: _bearer(accessToken),
+    ),
+    TaxDeclaration.fromJson,
+  );
+
+  @override
+  Future<FileDownload> fetchMyTaxCertificate(
+    String accessToken, {
+    required String fiscalYear,
+    required LetterLanguage language,
+  }) => _download(
+    () => _dio.get<List<int>>(
+      '/tenant/me/tax/certificate',
+      queryParameters: {'fiscalYear': fiscalYear, 'language': language.wire},
+      options: _fileOptions(accessToken),
+    ),
+  );
+
+  @override
+  Future<PfStatement?> fetchMyProvidentFund(String accessToken) => _send(
+    () => _dio.get<Object?>('/tenant/me/pf', options: _bearer(accessToken)),
+    (data) => switch (data) {
+      // A JSON `null`, or the empty body the API sends for one.
+      null => null,
+      final String text when text.trim().isEmpty || text.trim() == 'null' =>
+        null,
+      final Json json => PfStatement.fromJson(json),
+      _ => throw const FormatException('Expected a JSON object or null'),
+    },
+  );
+
+  @override
+  Future<List<LoanView>> fetchMyLoans(String accessToken) => _callList(
+    () => _dio.get<Object?>('/tenant/me/loans', options: _bearer(accessToken)),
+    LoanView.fromJson,
+  );
+
   void close() => _dio.close(force: true);
 
   static Options _bearer(String accessToken) =>
       Options(headers: {'Authorization': 'Bearer $accessToken'});
 
   /// A file download: the body as bytes, whatever its type. The service
-  /// book and payslips are rendered on request, so they get longer than a
-  /// JSON call.
+  /// book, payslips and tax certificates are rendered on request, so they
+  /// get longer than a JSON call.
   static Options _fileOptions(String accessToken) => Options(
     headers: {'Authorization': 'Bearer $accessToken', 'Accept': '*/*'},
     responseType: ResponseType.bytes,

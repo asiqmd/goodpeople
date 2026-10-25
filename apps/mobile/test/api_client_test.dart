@@ -1450,7 +1450,7 @@ void main() {
         ...myPayslipsJson(),
         payslipJson(
           itemId: 'e1000000-0000-4000-8000-000000000099',
-          kind: 'bonus',
+          kind: 'arrears',
         ),
       ];
       final (api, adapter) = client(200, body);
@@ -1548,6 +1548,370 @@ void main() {
       expect(file.bytes, pdfBytes);
       expect(file.contentType, 'application/pdf');
       expect(file.fileName, 'payslip-MG-0005-2026-09-bn.pdf');
+    });
+
+    test('my tax year sends the income year and parses the totals, the '
+        "year's working, each month and the declaration", () async {
+      final (api, adapter) = client(200, taxYearJson());
+
+      final year = await api.fetchMyTaxYear('access-1', fiscalYear: '2026-27');
+
+      final request = adapter.requests.single;
+      expect(request.method, 'GET');
+      expect(request.uri.path, '/tenant/me/tax');
+      expect(request.uri.queryParameters, {'fiscalYear': '2026-27'});
+      expect(request.headers['Authorization'], 'Bearer access-1');
+      expect(year.fiscalYear, '2026-27');
+      expect(year.employee.employeeCode, 'MG-0005');
+      expect(year.tin, '123456789012');
+      expect(year.profile.disabled, isFalse);
+      expect(year.profile.area, isNull);
+      expect(year.salary, '88750.50');
+      expect(year.tax, '1750.00');
+      expect(year.opening, isNull);
+
+      expect(year.months.map((m) => m.runId), [
+        julyRunId,
+        augustRunId,
+        eidBonusRunId,
+        septemberRunId,
+        septemberAdjustmentRunId,
+      ]);
+      final july = year.months.first;
+      expect(july.month, DateTime.utc(2026, 7));
+      expect(july.periodEnd, DateTime.utc(2026, 7, 31));
+      expect(july.kind, PayrollRunKind.regular);
+      expect(july.salary, '25000.00');
+      expect(july.tax, '500.00');
+      expect(july.challanNo, 'CH-2026-0701');
+      expect(july.depositedOn, DateTime.utc(2026, 8, 12));
+      expect(year.months[1].depositedOn, isNull);
+      expect(year.months[2].kind, PayrollRunKind.bonus);
+      expect(year.months.last.kind, PayrollRunKind.adjustment);
+
+      final latest = year.latest!;
+      expect(latest.salary, 600000);
+      expect(latest.exemption, 200000);
+      expect(latest.taxableIncome, 400000);
+      expect(latest.threshold, 350000);
+      expect(latest.grossTax, 12000);
+      expect(latest.investment, 100000);
+      expect(latest.rebate, 3000);
+      expect(latest.minimumTax, 5000);
+      expect(latest.tax, 9000);
+      expect(latest.deductedBefore, '1750.00');
+      expect(latest.monthsLeft, 9);
+      expect(latest.thisMonth, '805.56');
+
+      final declaration = year.declaration;
+      expect(declaration.id, declarationId);
+      expect(declaration.status, DeclarationStatus.draft);
+      expect(declaration.isVerified, isFalse);
+      expect(declaration.declared, '100000.00');
+      expect(declaration.verified, isNull);
+      expect(declaration.submittedAt, isNull);
+      final item = declaration.items.single;
+      expect(item.kind, InvestmentKind.savingsCertificate);
+      expect(item.declared, '100000.00');
+      expect(item.verified, isNull);
+      expect(item.note, 'Sanchaypatra from Sonali Bank');
+    });
+
+    test('a year no run worked out yet has no working; an opening balance '
+        'and a verified declaration parse', () async {
+      final (api, adapter) = client(200, previousTaxYearJson());
+
+      final year = await api.fetchMyTaxYear('access-1');
+
+      // The server picks the current year when none is sent.
+      expect(adapter.requests.single.uri.queryParameters, isEmpty);
+      expect(year.latest, isNull);
+      expect(year.tin, isNull);
+      expect(year.profile.area, 'city_corporation');
+      expect(year.opening?.salary, '264000.00');
+      expect(year.opening?.tax, '0.00');
+      expect(year.opening?.pf, '0.00');
+      final declaration = year.declaration;
+      expect(declaration.status, DeclarationStatus.verified);
+      expect(declaration.isVerified, isTrue);
+      expect(declaration.verified, '60000.00');
+      expect(declaration.submittedAt, DateTime.utc(2026, 5, 10, 4));
+      expect(declaration.verifiedAt, DateTime.utc(2026, 5, 20, 4));
+      expect(declaration.items.map((i) => (i.kind, i.verified)), [
+        (InvestmentKind.savingsCertificate, '40000.00'),
+        (InvestmentKind.lifeInsurance, '20000.00'),
+      ]);
+    });
+
+    test('a year with nothing declared yet, and kinds and statuses this app '
+        'does not know', () async {
+      final (api, _) = client(
+        200,
+        taxYearJson(
+          declaration: declarationJson(
+            id: null,
+            status: null,
+            items: [],
+            declared: '0.00',
+          ),
+        ),
+      );
+      final empty = (await api.fetchMyTaxYear('access-1')).declaration;
+      expect(empty.id, isNull);
+      expect(empty.status, isNull);
+      expect(empty.items, isEmpty);
+
+      final (newer, _) = client(
+        200,
+        taxYearJson(
+          declaration: declarationJson(
+            status: 'archived',
+            items: [declarationItemJson(kind: 'crypto')],
+          ),
+        ),
+      );
+      final unknown = (await newer.fetchMyTaxYear('access-1')).declaration;
+      expect(unknown.status, DeclarationStatus.unknown);
+      expect(unknown.items.single.kind, InvestmentKind.unknown);
+      expect(InvestmentKind.declarable, hasLength(11));
+      expect(
+        InvestmentKind.declarable,
+        isNot(contains(InvestmentKind.unknown)),
+      );
+    });
+
+    test('a tax amount that is not money breaks the contract', () async {
+      final (api, _) = client(200, {...taxYearJson(), 'tax': 1750});
+      await expectLater(
+        api.fetchMyTaxYear('access-1'),
+        throwsA(
+          isA<ApiException>().having(
+            (e) => e.kind,
+            'kind',
+            ApiErrorKind.badResponse,
+          ),
+        ),
+      );
+    });
+
+    test('saving the declaration puts every item for the year', () async {
+      final (api, adapter) = client(
+        200,
+        declarationJson(status: 'submitted', declared: '124000.00'),
+      );
+
+      final saved = await api.saveMyTaxDeclaration(
+        'access-1',
+        const TaxDeclarationDraft(
+          items: [
+            DeclarationDraftItem(
+              kind: InvestmentKind.savingsCertificate,
+              declared: '100000',
+              note: 'Sanchaypatra',
+            ),
+            DeclarationDraftItem(
+              kind: InvestmentKind.providentFundOther,
+              declared: '24000.50',
+            ),
+          ],
+          submit: true,
+        ),
+        fiscalYear: '2026-27',
+      );
+
+      final request = adapter.requests.single;
+      expect(request.method, 'PUT');
+      expect(request.uri.path, '/tenant/me/tax/declaration');
+      expect(request.uri.queryParameters, {'fiscalYear': '2026-27'});
+      expect(request.headers['Authorization'], 'Bearer access-1');
+      expect(request.data, {
+        'items': [
+          {
+            'kind': 'savings_certificate',
+            'declared': '100000',
+            'note': 'Sanchaypatra',
+          },
+          {'kind': 'provident_fund_other', 'declared': '24000.50'},
+        ],
+        'submit': true,
+      });
+      expect(saved.status, DeclarationStatus.submitted);
+      expect(saved.declared, '124000.00');
+    });
+
+    test('a verified declaration is refused with its code', () async {
+      final (api, _) = client(409, {
+        'statusCode': 409,
+        'error': 'Conflict',
+        'message': 'Payroll has verified this declaration already',
+        'code': 'declaration_verified',
+      });
+
+      await expectLater(
+        api.saveMyTaxDeclaration(
+          'access-1',
+          const TaxDeclarationDraft(items: [], submit: false),
+          fiscalYear: '2026-27',
+        ),
+        throwsA(
+          isA<ApiException>()
+              .having((e) => e.statusCode, 'statusCode', 409)
+              .having((e) => e.code, 'code', 'declaration_verified'),
+        ),
+      );
+    });
+
+    test('the tax certificate sends the year and language and returns the '
+        'PDF', () async {
+      final (api, adapter) = fileClient(
+        200,
+        pdfBytes,
+        headers: {
+          Headers.contentTypeHeader: ['application/pdf'],
+          'content-disposition': [
+            'attachment; filename="tax-certificate-MG-0005-2026-27-bn.pdf"',
+          ],
+        },
+      );
+
+      final file = await api.fetchMyTaxCertificate(
+        'access-1',
+        fiscalYear: '2026-27',
+        language: LetterLanguage.bn,
+      );
+
+      final request = adapter.requests.single;
+      expect(request.method, 'GET');
+      expect(request.uri.path, '/tenant/me/tax/certificate');
+      expect(request.uri.queryParameters, {
+        'fiscalYear': '2026-27',
+        'language': 'bn',
+      });
+      expect(request.headers['Accept'], '*/*');
+      expect(request.responseType, ResponseType.bytes);
+      expect(file.bytes, pdfBytes);
+      expect(file.fileName, 'tax-certificate-MG-0005-2026-27-bn.pdf');
+    });
+
+    test('income years run July to June', () {
+      expect(fiscalYearOf(DateTime.utc(2026, 10, 24)), '2026-27');
+      expect(fiscalYearOf(DateTime.utc(2026, 7)), '2026-27');
+      expect(fiscalYearOf(DateTime.utc(2026, 6, 30)), '2025-26');
+      expect(fiscalYearOf(DateTime.utc(2099, 12, 31)), '2099-00');
+      expect(previousFiscalYear('2026-27'), '2025-26');
+      expect(previousFiscalYear('2100-01'), '2099-00');
+    });
+
+    test('the provident fund statement parses balances and signed '
+        'entries', () async {
+      final (api, adapter) = client(200, pfStatementJson());
+
+      final statement = (await api.fetchMyProvidentFund('access-1'))!;
+
+      final request = adapter.requests.single;
+      expect(request.method, 'GET');
+      expect(request.uri.path, '/tenant/me/pf');
+      expect(request.headers['Authorization'], 'Bearer access-1');
+      expect(statement.employee.employeeCode, 'MG-0005');
+      expect(statement.joinedOn, DateTime.utc(2021, 3));
+      expect(statement.leftOn, isNull);
+      expect(statement.balance.own, '42000.00');
+      expect(statement.balance.employer, '40000.00');
+      expect(statement.balance.total, '82000.00');
+      expect(statement.balance.vestedPercent, 50);
+      expect(statement.balance.payable, '62000.00');
+      expect(statement.entries.map((e) => (e.kind, e.account, e.isOut)), [
+        (PfEntryKind.opening, PfAccount.own, false),
+        (PfEntryKind.contribution, PfAccount.employer, false),
+        (PfEntryKind.interest, PfAccount.own, false),
+        (PfEntryKind.withdrawal, PfAccount.own, true),
+      ]);
+      expect(statement.entries.first.note, 'Balance from the old fund');
+      expect(statement.entries[1].runId, septemberRunId);
+      expect(statement.entries.last.amount, '-500.50');
+      expect(statement.entries.last.date, DateTime.utc(2026, 10, 5));
+    });
+
+    test('a non-member gets null, as JSON or as an empty body', () async {
+      final (json, _) = client(200, null);
+      expect(await json.fetchMyProvidentFund('access-1'), isNull);
+
+      final (empty, _) = fileClient(200, const []);
+      expect(await empty.fetchMyProvidentFund('access-1'), isNull);
+
+      final (list, _) = client(200, <Object?>[]);
+      await expectLater(
+        list.fetchMyProvidentFund('access-1'),
+        throwsA(
+          isA<ApiException>().having(
+            (e) => e.kind,
+            'kind',
+            ApiErrorKind.badResponse,
+          ),
+        ),
+      );
+    });
+
+    test('my loans parse kinds, statuses, the first month and '
+        'repayments', () async {
+      final (api, adapter) = client(200, [
+        ...myLoansJson(),
+        loanJson(
+          id: 'f3000000-0000-4000-8000-000000000099',
+          kind: 'car_loan',
+          status: 'written_off',
+        ),
+      ]);
+
+      final loans = await api.fetchMyLoans('access-1');
+
+      final request = adapter.requests.single;
+      expect(request.method, 'GET');
+      expect(request.uri.path, '/tenant/me/loans');
+      expect(request.headers['Authorization'], 'Bearer access-1');
+      final advance = loans.first;
+      expect(advance.id, advanceId);
+      expect(advance.kind, LoanKind.advance);
+      expect(advance.status, LoanStatus.active);
+      expect(advance.principal, '10000.00');
+      expect(advance.installment, '2500.00');
+      expect(advance.repaid, '2500.00');
+      expect(advance.outstanding, '7500.00');
+      expect(advance.startMonth, DateTime.utc(2026, 9));
+      expect(advance.reason, 'Eid shopping');
+      expect(advance.createdAt, DateTime.utc(2026, 8, 20, 4));
+      expect(advance.closedAt, isNull);
+      expect(advance.repayments.single.fromSalary, isTrue);
+      final closed = loans[1];
+      expect(closed.kind, LoanKind.pfLoan);
+      expect(closed.status, LoanStatus.closed);
+      expect(closed.closedAt, DateTime.utc(2026, 6, 30, 4));
+      expect(closed.repayments.map((r) => (r.date, r.amount, r.fromSalary)), [
+        (DateTime.utc(2026, 5, 31), '15000.00', true),
+        (DateTime.utc(2026, 6, 10), '5000.00', false),
+      ]);
+      expect(closed.repayments.last.note, 'Paid at the office');
+      expect(loans.last.kind, LoanKind.unknown);
+      expect(loans.last.status, LoanStatus.unknown);
+    });
+
+    test('a start month that is not YYYY-MM breaks the contract', () async {
+      for (final month in ['2026-13', '2026-9', '2026-09-01']) {
+        final (api, _) = client(200, [
+          loanJson(id: advanceId, startMonth: month),
+        ]);
+        await expectLater(
+          api.fetchMyLoans('access-1'),
+          throwsA(
+            isA<ApiException>().having(
+              (e) => e.kind,
+              'kind',
+              ApiErrorKind.badResponse,
+            ),
+          ),
+          reason: month,
+        );
+      }
     });
   });
 

@@ -7,4 +7,5 @@ export * from './attendance.js';
 export * from './lifecycle.js';
 export * from './notifications.js';
 export * from './payroll.js';
+export * from './benefits.js';
 export * from './rls.js';

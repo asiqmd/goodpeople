@@ -3,6 +3,8 @@
 // Usage: SEED_PASSWORD=… node apps/api/scripts/measure-payroll.mjs [slug] [API_URL]
 // Processes this month's attendance, opens (or reopens) this month's run, computes it twice,
 // reads pages of it, then locks it with maker-checker briefly off and publishes the payslips.
+// With FISCAL_YEAR=1 it first locks every earlier month of the fiscal year, so the salary tax
+// projection reads a full year so far.
 
 const SLUG = process.argv[2] ?? 'scale-test';
 const API = process.argv[3] ?? process.env.API_URL ?? 'http://localhost:4000';
@@ -40,17 +42,45 @@ const token = (
 ).json.accessToken;
 
 const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Dhaka' }).format(new Date());
-const month = today.slice(0, 7);
+// MONTH=2027-06 measures the year's last month, the most the tax projection reads.
+const month = process.env.MONTH ?? today.slice(0, 7);
 
-const processed = await call('/tenant/attendance/process', {
-  token,
-  method: 'POST',
-  body: { from: `${month}-01`, to: today },
-});
-line(`Process ${month} attendance`, processed.ms, `${processed.json.days} days`);
+// A month still to come has no attendance to process.
+if (`${month}-01` <= today) {
+  const processed = await call('/tenant/attendance/process', {
+    token,
+    method: 'POST',
+    body: { from: `${month}-01`, to: today },
+  });
+  line(`Process ${month} attendance`, processed.ms, `${processed.json.days} days`);
+}
 
 const groups = (await call('/tenant/payroll/pay-groups', { token })).json;
 const group = groups.find((g) => g.isDefault);
+const settings = (await call('/tenant/payroll/settings', { token })).json;
+const makerChecker = (on) =>
+  call('/tenant/payroll/settings', { token, method: 'PATCH', body: { makerChecker: on } });
+
+if (process.env.FISCAL_YEAR) {
+  // July (the fiscal year's first month) up to last month, each opened, computed and locked.
+  const existing = (await call('/tenant/payroll/runs', { token })).json;
+  const [y, m] = month.split('-').map(Number);
+  const first = m >= 7 ? y * 12 + 6 : (y - 1) * 12 + 6;
+  await makerChecker(false);
+  try {
+    for (let i = first; i < y * 12 + m - 1; i++) {
+      const earlier = `${Math.floor(i / 12)}-${String((i % 12) + 1).padStart(2, '0')}`;
+      if (existing.some((r) => r.payGroup.id === group.id && r.periodStart === `${earlier}-01` && r.status === 'locked'))
+        continue;
+      const r = (await call('/tenant/payroll/runs', { token, method: 'POST', body: { payGroupId: group.id, month: earlier } })).json;
+      const c = await call(`/tenant/payroll/runs/${r.id}/compute`, { token, method: 'POST' });
+      const l = await call(`/tenant/payroll/runs/${r.id}/submit`, { token, method: 'POST' });
+      line(`Earlier month ${earlier}: compute, lock`, c.ms + l.ms);
+    }
+  } finally {
+    await makerChecker(settings.makerChecker);
+  }
+}
 for (const run of (await call('/tenant/payroll/runs', { token })).json) {
   if (run.payGroup.id === group.id && run.periodStart === `${month}-01`) {
     if (run.status === 'locked') throw new Error(`${month} is already locked in ${SLUG}`);
@@ -81,15 +111,10 @@ line(
   (await call(`${items}/${itemId}/payslip?language=bn`, { token })).ms,
 );
 
-const settings = (await call('/tenant/payroll/settings', { token })).json;
-await call('/tenant/payroll/settings', { token, method: 'PATCH', body: { makerChecker: false } });
+await makerChecker(false);
 try {
   line('Submit and lock', (await call(`/tenant/payroll/runs/${run.id}/submit`, { token, method: 'POST' })).ms);
 } finally {
-  await call('/tenant/payroll/settings', {
-    token,
-    method: 'PATCH',
-    body: { makerChecker: settings.makerChecker },
-  });
+  await makerChecker(settings.makerChecker);
 }
 line('Publish payslips', (await call(`/tenant/payroll/runs/${run.id}/publish`, { token, method: 'POST' })).ms);

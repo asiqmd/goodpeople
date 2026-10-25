@@ -82,15 +82,23 @@ export const BD_PAY_COMPONENTS: readonly PackPayComponent[] = [
   runItem('FESTIVAL_BONUS', 'Festival bonus', 'উৎসব বোনাস', 'earning', 120),
   runItem('ARREARS', 'Arrears', 'বকেয়া', 'earning', 130),
   // Within s.126's cap (the pay for the days absent); basic ÷ 30 per day is common practice.
+  // Deductions marked taxable reduce salary income for tax: pay not earned is not income.
   runItem('ABSENCE', 'Absence deduction', 'অনুপস্থিতি কর্তন', 'deduction', 200, {
     runFormula: 'round(BASIC / 30 * ABSENT_DAYS)',
+    taxTreatment: 'taxable',
   }),
   // Leave without pay: the gross for each day.
   runItem('UNPAID_LEAVE', 'Leave without pay', 'বিনা বেতনে ছুটি', 'deduction', 205, {
     runFormula: 'round(GROSS / 30 * UNPAID_LEAVE_DAYS)',
+    taxTreatment: 'taxable',
   }),
+  // Advances and loans are recovered from their schedules; an entered amount replaces it.
   runItem('ADVANCE', 'Advance recovery', 'অগ্রিম কর্তন', 'deduction', 210),
+  runItem('LOAN', 'Loan repayment', 'ঋণ পরিশোধ', 'deduction', 212),
+  // The provident fund's rates are in payroll settings; contributions apply to members.
   runItem('PF_EMPLOYEE', 'Provident fund', 'ভবিষ্য তহবিল', 'deduction', 220),
+  runItem('PF_LOAN', 'Provident fund loan repayment', 'ভবিষ্য তহবিল ঋণ পরিশোধ', 'deduction', 225),
+  // Worked out by each run from the year's projected salary (Income Tax Act 2023, s.86).
   runItem('TAX', 'Income tax', 'আয়কর', 'deduction', 230),
   runItem(
     'PF_EMPLOYER',

@@ -8,8 +8,11 @@ import {
   type AttendanceStatus,
   type PayLineView,
   type RunProblem,
+  type RunTaxWorking,
   type RunVariables,
+  type TaxTreatment,
 } from '@gp/shared';
+import { bdSalaryTax, type BdSalaryTaxYear, type Taxpayer } from '@gp/country-packs';
 import { workOutPay, type ComponentInfo, type StructureInfo } from './pay-calc.js';
 
 // One person's pay for one period, worked out from their pay records, attendance and the
@@ -20,6 +23,7 @@ export interface EngineComponent extends ComponentInfo {
   prorate: boolean;
   inOvertimeBase: boolean;
   runFormula: string | null;
+  taxTreatment: TaxTreatment;
 }
 
 export interface EnginePayRecord {
@@ -36,6 +40,34 @@ export interface EngineDay {
   leaveDays: number;
   /** The day's leave is leave without pay. */
   unpaidLeave: boolean;
+  /** Arrived after the shift's grace time. */
+  late: boolean;
+}
+
+/** An advance or loan being repaid, and what is left of it before this run. */
+export interface EngineLoan {
+  loanId: string;
+  /** ADVANCE, LOAN or PF_LOAN. */
+  component: string;
+  installment: string;
+  outstanding: string;
+}
+
+/** What salary tax needs beyond this month: the year so far and the rest of it. */
+export interface EngineTax {
+  year: BdSalaryTaxYear;
+  taxpayer: Taxpayer;
+  /** From runs locked earlier in the fiscal year: salary income, tax deducted, recognised PF. */
+  ytdSalary: string;
+  ytdTax: string;
+  ytdPf: string;
+  /** Months of the fiscal year after this one in which the person will still be paid. */
+  monthsAfter: number;
+  /** Investments declared (or verified) for the rebate. */
+  investment: string;
+  /** Contributions to a recognised fund count as investment. */
+  pfRecognised: boolean;
+  hasTin: boolean;
 }
 
 export interface EngineInput {
@@ -56,6 +88,12 @@ export interface EngineInput {
   /** Amounts entered for run components, by code. */
   inputs: Record<string, string>;
   components: EngineComponent[];
+  /** Provident fund rates (percent of basic) when the person is a member this period. */
+  pf?: { employeeRate: string; employerRate: string } | null;
+  /** Advances and loans to recover, oldest first. */
+  loans?: EngineLoan[];
+  /** Salary tax to deduct; null or absent where the run does not work it out. */
+  tax?: EngineTax | null;
 }
 
 export interface EngineResult {
@@ -67,9 +105,16 @@ export interface EngineResult {
   net: string;
   employerCost: string;
   variables: RunVariables;
+  /** Salary income this period for tax: taxable earnings less the deductions that reduce it. */
+  taxable: string;
+  /** How this month's TAX was worked out, when the run worked it out. */
+  tax: RunTaxWorking | null;
+  /** What each advance or loan got back. */
+  loans: { loanId: string; amount: string }[];
 }
 
 const ZERO = new Decimal(0);
+const whole = (d: Decimal) => d.toDecimalPlaces(0, Decimal.ROUND_HALF_UP);
 
 /** The days someone was employed in the period, or null when they were not at all. */
 export function employment(
@@ -81,7 +126,8 @@ export function employment(
   return from <= to ? { from, to } : null;
 }
 
-const completedMonths = (from: string, to: string) => {
+/** Whole months from one date to another (a month is complete on the same day of the month). */
+export const completedMonths = (from: string, to: string) => {
   const [fy, fm, fd] = from.split('-').map(Number) as [number, number, number];
   const [ty, tm, td] = to.split('-').map(Number) as [number, number, number];
   return (ty - fy) * 12 + (tm - fm) - (td < fd ? 1 : 0);
@@ -110,7 +156,21 @@ export function computePay(input: EngineInput): EngineResult {
       unpaidLeaveDays: 0,
       otHours: 0,
     },
+    taxable: '0.00',
+    tax: null,
+    loans: [],
   });
+  /** Taxable earnings less taxable deductions (absence, leave without pay). */
+  const taxableOf = (entries: Iterable<[string, Decimal]>) => {
+    let sum = ZERO;
+    for (const [code, v] of entries) {
+      const c = byCode.get(code);
+      if (!c || c.taxTreatment === 'exempt') continue;
+      if (c.kind === 'earning') sum = sum.plus(v);
+      else if (c.kind === 'deduction') sum = sum.minus(v);
+    }
+    return sum;
+  };
 
   // ── Pay in force, split where it changed ───────────────────────────────────
   const segments = input.records.flatMap((record, i) => {
@@ -186,6 +246,8 @@ export function computePay(input: EngineInput): EngineResult {
   // ── Attendance and leave ───────────────────────────────────────────────────
   let absentDays = 0;
   let unpaidLeaveDays = 0;
+  let leaveDays = 0;
+  let lateDays = 0;
   let workedDays = employedDays;
   let otMinutes = 0;
   if (input.attendance) {
@@ -220,6 +282,8 @@ export function computePay(input: EngineInput): EngineResult {
       else if (day.status === 'missing_punch') missing += 1;
       else if (day.status === 'pending' && day.date < input.today) unprocessed += 1;
       if (day.unpaidLeave) unpaidLeaveDays += day.leaveDays;
+      leaveDays += day.leaveDays;
+      if (day.late) lateDays += 1;
       otMinutes += day.overtimeMinutes;
     }
     if (missing) {
@@ -273,6 +337,8 @@ export function computePay(input: EngineInput): EngineResult {
     SERVICE_YEARS: Math.floor(completedMonths(input.joinedOn, span.to) / 12),
     SERVICE_MONTHS: completedMonths(input.joinedOn, span.to),
     WORKER: input.worker ? 1 : 0,
+    LATE_DAYS: lateDays,
+    LEAVE_DAYS: leaveDays,
   })) {
     variables.set(name, new Decimal(value));
   }
@@ -300,6 +366,102 @@ export function computePay(input: EngineInput): EngineResult {
       ]);
     }
     amounts.set(c.code, value);
+  }
+
+  // ── Provident fund: a percentage of the basic paid this period ─────────────
+  if (input.pf) {
+    const basic = amounts.get('BASIC') ?? ZERO;
+    for (const [code, rate] of [
+      ['PF_EMPLOYEE', input.pf.employeeRate],
+      ['PF_EMPLOYER', input.pf.employerRate],
+    ] as const) {
+      if (input.inputs[code] !== undefined || !byCode.get(code)?.isActive) continue;
+      const value = whole(basic.times(rate).dividedBy(100));
+      if (!value.isZero()) amounts.set(code, value);
+    }
+  }
+
+  // ── Salary tax: the year's tax, projected, less what was deducted, spread ──
+  const taxableNow = taxableOf(amounts);
+  let taxWorking: RunTaxWorking | null = null;
+  if (input.tax && input.inputs.TAX === undefined && byCode.get('TAX')?.isActive) {
+    const t = input.tax;
+    // What recurs each month: the structure's and fixed lines at their full monthly amounts.
+    const recurring = taxableOf(full);
+    const projected = new Decimal(t.ytdSalary)
+      .plus(taxableNow)
+      .plus(recurring.times(t.monthsAfter));
+    const pfNow = (amounts.get('PF_EMPLOYEE') ?? ZERO).plus(amounts.get('PF_EMPLOYER') ?? ZERO);
+    const pfYear = t.pfRecognised
+      ? new Decimal(t.ytdPf).plus(pfNow.times(t.monthsAfter + 1))
+      : ZERO;
+    const breakdown = bdSalaryTax(t.year, {
+      salary: projected.toNumber(),
+      investment: new Decimal(t.investment).plus(pfYear).toNumber(),
+      taxpayer: t.taxpayer,
+    });
+    const left = Decimal.max(ZERO, new Decimal(breakdown.tax).minus(t.ytdTax));
+    const due = whole(left.dividedBy(t.monthsAfter + 1));
+    if (!due.isZero()) amounts.set('TAX', due);
+    taxWorking = {
+      ...breakdown,
+      deductedBefore: money(t.ytdTax),
+      monthsLeft: t.monthsAfter + 1,
+      thisMonth: money(due),
+    };
+    if (!due.isZero() && !t.hasTin) {
+      problems.push({
+        code: 'tin_missing',
+        severity: 'warning',
+        message: 'Tax is deducted but the employee has no TIN on record',
+      });
+    }
+  }
+
+  // ── Advances and loans, never taking net pay below zero ────────────────────
+  const recovered: { loanId: string; amount: string }[] = [];
+  if (input.loans?.length) {
+    const loanCodes = new Set(input.loans.map((l) => l.component));
+    let available = ZERO;
+    for (const [code, v] of amounts) {
+      if (loanCodes.has(code)) continue;
+      const kind = byCode.get(code)?.kind;
+      if (kind === 'earning') available = available.plus(v);
+      else if (kind === 'deduction') available = available.minus(v);
+    }
+    const byComponent = new Map<string, Decimal>();
+    let short = 0;
+    for (const code of loanCodes) {
+      // An amount entered for the component is what is recovered, shared oldest first.
+      const entered = input.inputs[code] === undefined ? null : new Decimal(input.inputs[code]);
+      let pool = entered;
+      for (const loan of input.loans.filter((l) => l.component === code)) {
+        const outstanding = new Decimal(loan.outstanding);
+        let take = Decimal.min(outstanding, pool ?? new Decimal(loan.installment));
+        if (pool) pool = pool.minus(take);
+        else if (take.greaterThan(available)) {
+          take = Decimal.max(ZERO, available);
+          short += 1;
+        }
+        available = available.minus(take);
+        if (take.isZero()) continue;
+        recovered.push({ loanId: loan.loanId, amount: money(take) });
+        byComponent.set(code, (byComponent.get(code) ?? ZERO).plus(take));
+      }
+      if (entered) byComponent.set(code, entered);
+    }
+    for (const [code, v] of byComponent) {
+      if (v.isZero()) amounts.delete(code);
+      else amounts.set(code, v);
+    }
+    if (short) {
+      problems.push({
+        code: 'loan_not_recovered',
+        severity: 'warning',
+        message: 'Not enough pay left to recover the full installment',
+        count: short,
+      });
+    }
   }
 
   // s.126: an absence deduction may not exceed the pay for the days absent.
@@ -356,6 +518,68 @@ export function computePay(input: EngineInput): EngineResult {
       unpaidLeaveDays,
       otHours,
     },
+    taxable: money(taxableNow),
+    tax: taxWorking,
+    loans: recovered,
+  };
+}
+
+/**
+ * A festival bonus: a share of one month's basic in force on the cut-off day, for people with
+ * enough continuous service by then (Labour Rules 2015, rule 111). null when they do not
+ * qualify.
+ */
+export function computeBonus(input: {
+  record: EnginePayRecord;
+  joinedOn: string;
+  cutOff: string;
+  percentOfBasic: number;
+  minServiceMonths: number;
+  components: EngineComponent[];
+}): EngineResult | null {
+  if (completedMonths(input.joinedOn, input.cutOff) < input.minServiceMonths) return null;
+  const pay = workOutPay(
+    input.record.structure,
+    input.components,
+    input.record.amount,
+    input.record.fixed,
+  );
+  const basic = new Decimal(pay.lines.find((l) => l.code === 'BASIC')?.amount ?? 0);
+  const amount = whole(basic.times(input.percentOfBasic).dividedBy(100));
+  const c = input.components.find((x) => x.code === 'FESTIVAL_BONUS');
+  const lines: PayLineView[] = amount.isZero()
+    ? []
+    : [
+        {
+          code: 'FESTIVAL_BONUS',
+          name: c?.name ?? 'Festival bonus',
+          nameBn: c?.nameBn ?? null,
+          kind: 'earning',
+          inGross: false,
+          amount: money(amount),
+        },
+      ];
+  const taxable = c && c.taxTreatment !== 'exempt' ? amount : ZERO;
+  return {
+    status: 'ok',
+    problems: [],
+    lines,
+    earnings: money(amount),
+    deductions: '0.00',
+    net: money(amount),
+    employerCost: '0.00',
+    variables: {
+      periodDays: 0,
+      employedDays: 0,
+      paidDays: 0,
+      workedDays: 0,
+      absentDays: 0,
+      unpaidLeaveDays: 0,
+      otHours: 0,
+    },
+    taxable: money(taxable),
+    tax: null,
+    loans: [],
   };
 }
 

@@ -34,9 +34,13 @@ A multi-tenant HR and payroll platform, built for Bangladesh first and ready to 
     leave (proration, overtime, absence), review against last month, maker-checker locking,
     adjustment runs, the s.123 payment deadline, and English and Bangla payslips by web,
     app, email and SMS, measured at 20,000 employees.
+  - **Phase 2 M3 (tax, provident fund & bonuses):** salary tax projected each month under the
+    2025-26 and 2026-27 rules with investment declarations, certificates and challans; a
+    provident fund ledger with interest, fund loans and vesting; advances and loans through
+    maker-checker; festival bonus runs by religion; and annual increments in one approval.
 - **Next:**
   - Our own organisations go live: [docs/ops/go-live.md](docs/ops/go-live.md).
-  - Phase 2 M3: tax, provident fund and bonuses. The plan is in
+  - Phase 2 M4: settlement, gratuity and disbursement. The plan is in
     [docs/phases/phase-2.md](docs/phases/phase-2.md).
 
 ## Repository layout
@@ -49,7 +53,7 @@ apps/
   web/       Next.js 16: Super Admin console (/platform) and workspace app (/workspace), en/bn
   mobile/    Flutter app: sign-in (password or SMS code), profile, documents, leave, attendance
              (location and selfie punching, offline queue), resignation, approvals, team view,
-             notifications and push, payslips, en/bn
+             notifications and push, my pay (payslips, tax, provident fund, loans), en/bn
   edge-agent/  On-site service that buffers ZKTeco and Hikvision punches (see its README)
 packages/
   shared/    Contract shared by API and web: billing modes, plans, resolveAccess(), zod schemas
@@ -126,7 +130,8 @@ employees, a month of punches and approved pay; `SEED_PASSWORD=… node apps/api
 then times the busiest API calls against it. For payroll, seed `SCALE_SLUG=scale-20k
 SCALE_EMPLOYEES=20000` the same way and run
 `SEED_PASSWORD=… node apps/api/scripts/measure-payroll.mjs scale-20k`; it processes the month,
-computes, pages through, locks and publishes a run.
+computes, pages through, locks and publishes a run (with `FISCAL_YEAR=1` it first locks the
+year's earlier months, so tax reads a full year so far).
 
 ## Production
 

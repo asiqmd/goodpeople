@@ -56,6 +56,19 @@ String formatPayPeriod(AppLocalizations l10n, DateTime start, DateTime end) {
       : formatDateRange(l10n, start, end);
 }
 
+/// An income year such as the API's `2026-27` in the UI language's digits:
+/// `2026-27` or `২০২৬-২৭`.
+String formatFiscalYear(AppLocalizations l10n, String fiscalYear) {
+  final match = RegExp(r'^(\d{4})-(\d{2})$').firstMatch(fiscalYear);
+  if (match == null) return fiscalYear;
+  final start = NumberFormat(
+    '0000',
+    l10n.localeName,
+  ).format(int.parse(match[1]!));
+  final end = NumberFormat('00', l10n.localeName).format(int.parse(match[2]!));
+  return '$start-$end';
+}
+
 /// An amount in taka in the UI language's digits, as on the web:
 /// `৳12,500` or `৳১২,৫০০`. Paisa show only when there are any:
 /// `৳12,500.50`. [amount] is the API's decimal string, such as `12500.00`.

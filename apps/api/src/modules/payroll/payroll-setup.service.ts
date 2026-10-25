@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { BD_WAGE_BOARDS } from '@gp/country-packs';
+import { BD_RULES, BD_WAGE_BOARDS, ruleOn } from '@gp/country-packs';
 import {
   employeePay,
   payComponents,
@@ -13,6 +13,7 @@ import {
   money,
   ROLE_PERMISSIONS,
   TENANT_ROLES,
+  todayIn,
   type ApiError,
   type LineProblem,
   type PayComponentInput,
@@ -30,7 +31,7 @@ import {
   type StructurePreviewInput,
   type WageBoardView,
 } from '@gp/shared';
-import { and, asc, count, countDistinct, eq, inArray, isNull, ne } from 'drizzle-orm';
+import { and, asc, count, countDistinct, eq, inArray, isNull, ne, sql } from 'drizzle-orm';
 import type { AuthUser } from '../../common/auth-user.js';
 import { badRequest, conflict } from '../../common/errors.js';
 import { currentTenantId } from '../../common/request-context.js';
@@ -84,10 +85,49 @@ export async function componentsOf(tx: Tx): Promise<ComponentRow[]> {
   return tx.select().from(payComponents).orderBy(asc(payComponents.sortOrder));
 }
 
+type SettingsRow = Omit<typeof payrollSettings.$inferSelect, 'tenantId' | 'updatedAt'>;
+
+/** What a workspace without a settings row gets: the table's defaults. */
+const DEFAULT_SETTINGS: SettingsRow = {
+  makerChecker: true,
+  autoTax: true,
+  taxArea: 'dhaka_chattogram_city',
+  pfEnabled: false,
+  pfEmployeeRate: '7.00',
+  pfEmployerRate: '7.00',
+  pfRecognised: true,
+  pfVesting: [
+    { afterYears: 0, percent: 0 },
+    { afterYears: 3, percent: 100 },
+  ],
+};
+
+/**
+ * Permanent workers today against the law's threshold for a provident fund (the 2025
+ * amendment), so the settings page can say when a fund is required.
+ */
+async function pfRequired(tx: Tx) {
+  const today = todayIn();
+  const threshold = ruleOn(BD_RULES, 'pf.required_min_permanent_workers', today).value;
+  const { rows } = await tx.execute<{ n: number }>(sql`
+    select count(*)::int as n from employees e
+    where e.status = 'active' and (
+      select j.employment_type from job_assignments j
+      where j.employee_id = e.id and j.effective_from <= ${today}
+      order by j.effective_from desc limit 1
+    ) = 'permanent'`);
+  const permanentWorkers = Number(rows[0]?.n ?? 0);
+  return {
+    required: threshold !== null && permanentWorkers >= threshold,
+    permanentWorkers,
+    threshold,
+  };
+}
+
 /** The workspace's payroll settings (defaults when it has none yet). */
-export async function payrollSettingsOf(tx: Tx) {
+export async function payrollSettingsOf(tx: Tx): Promise<SettingsRow> {
   const [row] = await tx.select().from(payrollSettings);
-  return row ?? { makerChecker: true };
+  return row ?? DEFAULT_SETTINGS;
 }
 
 /**
@@ -405,7 +445,18 @@ export class PayrollSetupService {
         .select({ n: count() })
         .from(tenantUsers)
         .where(and(inArray(tenantUsers.role, roles), isNull(tenantUsers.disabledAt)));
-      return { makerChecker: settings.makerChecker, approvers: approvers?.n ?? 0 };
+      return {
+        makerChecker: settings.makerChecker,
+        approvers: approvers?.n ?? 0,
+        autoTax: settings.autoTax,
+        taxArea: settings.taxArea,
+        pfEnabled: settings.pfEnabled,
+        pfEmployeeRate: settings.pfEmployeeRate,
+        pfEmployerRate: settings.pfEmployerRate,
+        pfRecognised: settings.pfRecognised,
+        pfVesting: settings.pfVesting,
+        pfRequired: await pfRequired(tx),
+      };
     });
   }
 
@@ -414,10 +465,7 @@ export class PayrollSetupService {
       const before = await payrollSettingsOf(tx);
       await tx
         .insert(payrollSettings)
-        .values({
-          tenantId: currentTenantId(),
-          makerChecker: input.makerChecker ?? before.makerChecker,
-        })
+        .values({ tenantId: currentTenantId(), ...before, ...input })
         .onConflictDoUpdate({
           target: payrollSettings.tenantId,
           set: { ...input, updatedAt: new Date() },
@@ -427,7 +475,9 @@ export class PayrollSetupService {
         action: 'payroll.settings',
         entityType: 'payroll_settings',
         entityId: null,
-        before: { makerChecker: before.makerChecker },
+        before: Object.fromEntries(
+          Object.keys(input).map((k) => [k, before[k as keyof SettingsRow]]),
+        ),
         after: input,
       });
     });

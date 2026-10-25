@@ -50,4 +50,13 @@ export const RLS_TABLES = [
   'payroll_runs',
   'payroll_run_items',
   'payroll_inputs',
+  'tax_profiles',
+  'tax_declarations',
+  'tax_deposits',
+  'tax_openings',
+  'pf_members',
+  'pf_entries',
+  'employee_loans',
+  'loan_repayments',
+  'pay_batches',
 ] as const;

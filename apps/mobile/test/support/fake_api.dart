@@ -1059,6 +1059,126 @@ class FakeGoodPeopleApi implements GoodPeopleApi {
       fileName: 'payslip-MG-0005-$month-${language.wire}.pdf',
     );
   }
+
+  // ── Salary tax, provident fund and loans ──────────────────────────────────
+
+  /// Answered by [fetchMyTaxYear], by income year; a year missing here gets
+  /// a 404, as for a login with no employee record. Saving a declaration
+  /// changes it.
+  Map<String, Json> taxYears = {
+    '2026-27': taxYearJson(),
+    '2025-26': previousTaxYearJson(),
+  };
+
+  /// Thrown, one per call, by [fetchMyTaxYear] before it answers.
+  final taxYearErrors = <Exception>[];
+
+  /// The income year of each [fetchMyTaxYear] call; `null` for the current.
+  final taxYearQueries = <String?>[];
+
+  /// Thrown, one per call, by [saveMyTaxDeclaration] instead of saving.
+  final declarationErrors = <Exception>[];
+
+  /// Each body sent to [saveMyTaxDeclaration], refused ones included.
+  final declarationSaves = <({String fiscalYear, Json body})>[];
+
+  /// Each certificate asked of [fetchMyTaxCertificate].
+  final taxCertificates = <({String fiscalYear, LetterLanguage language})>[];
+
+  /// Answered by [fetchMyProvidentFund]: `null` for a non-member.
+  Json? providentFund = pfStatementJson();
+
+  /// Thrown, one per call, by [fetchMyProvidentFund] before it answers.
+  final providentFundErrors = <Exception>[];
+  var providentFundCalls = 0;
+
+  /// Answered by [fetchMyLoans].
+  List<Json> loans = myLoansJson();
+  var loansCalls = 0;
+
+  @override
+  Future<TaxYearView> fetchMyTaxYear(
+    String accessToken, {
+    String? fiscalYear,
+  }) async {
+    taxYearQueries.add(fiscalYear);
+    if (taxYearErrors.isNotEmpty) throw taxYearErrors.removeAt(0);
+    final json = taxYears[fiscalYear ?? fiscalYearOf(leaveToday)];
+    if (json == null) throw noEmployeeRecord;
+    return TaxYearView.fromJson(json);
+  }
+
+  @override
+  Future<TaxDeclaration> saveMyTaxDeclaration(
+    String accessToken,
+    TaxDeclarationDraft draft, {
+    required String fiscalYear,
+  }) async {
+    final body = draft.toJson();
+    declarationSaves.add((fiscalYear: fiscalYear, body: body));
+    if (declarationErrors.isNotEmpty) throw declarationErrors.removeAt(0);
+    final year = taxYears[fiscalYear]!;
+    final existing = year['declaration']! as Json;
+    final items = [
+      for (final item in (body['items']! as List<Object?>).cast<Json>())
+        declarationItemJson(
+          kind: item['kind']! as String,
+          declared: double.parse(item['declared']! as String)
+              .toStringAsFixed(2),
+          note: item['note'] as String?,
+        ),
+    ];
+    final total = items.fold<double>(
+      0,
+      (sum, item) => sum + double.parse(item['declared']! as String),
+    );
+    final submit = body['submit']! as bool;
+    final saved = declarationJson(
+      id: (existing['id'] as String?) ?? declarationId,
+      fiscalYear: fiscalYear,
+      status: submit ? 'submitted' : (existing['status'] as String?) ?? 'draft',
+      items: items,
+      declared: total.toStringAsFixed(2),
+      submittedAt: submit
+          ? '2026-10-24T09:00:00.000Z'
+          : existing['submittedAt'] as String?,
+    );
+    taxYears = {
+      ...taxYears,
+      fiscalYear: {...year, 'declaration': saved},
+    };
+    return TaxDeclaration.fromJson(saved);
+  }
+
+  @override
+  Future<FileDownload> fetchMyTaxCertificate(
+    String accessToken, {
+    required String fiscalYear,
+    required LetterLanguage language,
+  }) async {
+    taxCertificates.add((fiscalYear: fiscalYear, language: language));
+    return FileDownload(
+      bytes: pdfBytes,
+      contentType: 'application/pdf',
+      fileName: 'tax-certificate-MG-0005-$fiscalYear-${language.wire}.pdf',
+    );
+  }
+
+  @override
+  Future<PfStatement?> fetchMyProvidentFund(String accessToken) async {
+    providentFundCalls++;
+    if (providentFundErrors.isNotEmpty) throw providentFundErrors.removeAt(0);
+    return switch (providentFund) {
+      final Json json => PfStatement.fromJson(json),
+      null => null,
+    };
+  }
+
+  @override
+  Future<List<LoanView>> fetchMyLoans(String accessToken) async {
+    loansCalls++;
+    return [for (final json in loans) LoanView.fromJson(json)];
+  }
 }
 
 /// A [CameraService] with no camera: answers [result] and records calls.

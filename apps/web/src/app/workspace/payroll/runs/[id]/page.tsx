@@ -1,6 +1,7 @@
 import {
   can,
   RUN_ITEM_FILTERS,
+  todayIn,
   type PayComponentView,
   type PayLineView,
   type PayrollRunItemPage,
@@ -14,9 +15,11 @@ import { day } from '@/components/leave/leave-views';
 import {
   RunStatusBadge,
   RunTotalsTable,
-  runPeriod,
+  runTitle,
   taka,
+  TaxWorking,
 } from '@/components/payroll/payroll-views';
+import { TaxDepositForm } from '@/components/payroll/benefit-forms';
 import { RemoveInputButton, RunActions, RunInputForm } from '@/components/payroll/run-forms';
 import { Badge, Banner, buttonClass, Card, inputClass } from '@/components/ui';
 import { currentTenantUser, load } from '@/lib/api';
@@ -39,6 +42,7 @@ export default async function PayrollRunPage({
   const page = Math.max(1, Number(query.page) || 1);
   const t = await getTranslations('payroll.runs');
   const format = await getFormatter();
+  const locale = await getLocale();
 
   const run = await load<PayrollRunView>('tenant', `/tenant/payroll/runs/${id}`);
   const list = new URLSearchParams({ show, page: String(page), size: String(SIZE) });
@@ -64,9 +68,9 @@ export default async function PayrollRunPage({
           ← {t('title')}
         </Link>
         <h1 className="flex flex-wrap items-center gap-3 text-2xl font-semibold">
-          {run.payGroup.name} · {runPeriod(format, run.periodStart, run.periodEnd)}
+          {run.payGroup.name} · {runTitle(format, locale, run)}
           <RunStatusBadge status={run.status} />
-          {run.kind === 'adjustment' && <Badge tone="violet">{t('kinds.adjustment')}</Badge>}
+          {run.kind !== 'regular' && <Badge tone="violet">{t(`kinds.${run.kind}`)}</Badge>}
           {run.publishedAt && <Badge tone="green">{t('published')}</Badge>}
         </h1>
       </div>
@@ -148,6 +152,10 @@ export default async function PayrollRunPage({
           </Card>
         )}
       </div>
+
+      {run.status === 'locked' && run.kind !== 'bonus' && (
+        <TaxDeposit runId={run.id} canManage={canManage} />
+      )}
 
       <Card title={t('people', { count: run.headcount })}>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -375,6 +383,16 @@ async function ItemRow({
         {editable && entered.length > 0 && (
           <RunInputForm runId={runId} employeeId={item.employee.id} components={entered} />
         )}
+        {item.tax && (
+          <details>
+            <summary className="cursor-pointer text-sm font-medium text-slate-700">
+              {t('taxHow', { amount: taka(format, item.tax.thisMonth) })}
+            </summary>
+            <div className="mt-2">
+              <TaxWorking working={item.tax} />
+            </div>
+          </details>
+        )}
         {item.status === 'ok' && (
           <p className="flex gap-4 text-sm">
             <a
@@ -393,5 +411,45 @@ async function ItemRow({
         )}
       </div>
     </details>
+  );
+}
+
+/** The tax a locked run deducted, and the challan that deposited it. */
+async function TaxDeposit({ runId, canManage }: { runId: string; canManage: boolean }) {
+  const tt = await getTranslations('payroll.tax.deposit');
+  const format = await getFormatter();
+  const tax = await load<{
+    tax: string;
+    people: number;
+    deposit: { challanNo: string; depositedOn: string; amount: string } | null;
+  }>('tenant', `/tenant/payroll/runs/${runId}/tax`);
+  if (tax.people === 0 && !tax.deposit) return null;
+  return (
+    <Card
+      title={tt('title')}
+      action={
+        <span className="text-sm text-slate-600">
+          {tt('deducted', { amount: taka(format, tax.tax), count: tax.people })}
+        </span>
+      }
+    >
+      {tax.deposit && (
+        <p className="mb-3 text-sm text-slate-700">
+          {tt('deposited', {
+            challan: tax.deposit.challanNo,
+            date: day(format, tax.deposit.depositedOn),
+            amount: taka(format, tax.deposit.amount),
+          })}
+        </p>
+      )}
+      {canManage ? (
+        <>
+          <p className="mb-3 text-xs text-slate-500">{tt('hint')}</p>
+          <TaxDepositForm runId={runId} amount={tax.deposit?.amount ?? tax.tax} today={todayIn()} />
+        </>
+      ) : (
+        !tax.deposit && <p className="text-sm text-slate-500">{tt('notYet')}</p>
+      )}
+    </Card>
   );
 }

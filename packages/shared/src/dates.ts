@@ -14,6 +14,16 @@ export function addDays(date: IsoDate, days: number): IsoDate {
   return d.toISOString().slice(0, 10);
 }
 
+/** The same day `months` later, or the month's last day when it is shorter (31 Jan + 1 → 28 Feb). */
+export function addMonths(date: IsoDate, months: number): IsoDate {
+  const [y, m, d] = date.split('-').map(Number) as [number, number, number];
+  const index = y * 12 + (m - 1) + months;
+  const year = Math.floor(index / 12);
+  const month = (index % 12) + 1;
+  const last = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  return `${year}-${String(month).padStart(2, '0')}-${String(Math.min(d, last)).padStart(2, '0')}`;
+}
+
 /** Completed years between a birth date and another date. */
 export function ageOn(dateOfBirth: IsoDate, on: IsoDate): number {
   const [by, bm, bd] = dateOfBirth.split('-').map(Number) as [number, number, number];

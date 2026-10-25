@@ -1,5 +1,6 @@
 import {
   can,
+  fiscalYearOf,
   todayIn,
   type Permission,
   type EmployeeDetail,
@@ -20,6 +21,7 @@ import {
   type PayComponentView,
   type PayGroupView,
   type SalaryStructureView,
+  type TaxYearView,
   type WageBoardView,
 } from '@gp/shared';
 import { getFormatter, getTranslations } from 'next-intl/server';
@@ -48,13 +50,21 @@ import {
   UploadDocumentForm,
 } from '@/components/lifecycle/lifecycle-forms';
 import { DocumentList, SeparationList } from '@/components/lifecycle/lifecycle-views';
+import {
+  DeclarationForm,
+  TaxOpeningForm,
+  TaxProfileForm,
+  VerifyDeclarationForm,
+} from '@/components/payroll/benefit-forms';
 import { CancelPayChangeButton, PayChangeForm } from '@/components/payroll/payroll-forms';
 import {
   MinimumWageBadge,
   PayBreakdown,
   PayRecordSummary,
+  taka,
+  TaxYear,
 } from '@/components/payroll/payroll-views';
-import { buttonClass, Card } from '@/components/ui';
+import { Badge, buttonClass, Card } from '@/components/ui';
 import { authedFetch, currentTenantUser, load } from '@/lib/api';
 import { MONTH, monthRange, shiftMonth } from '@/lib/month';
 
@@ -512,6 +522,7 @@ async function PayTab({ employee, canEdit }: { employee: EmployeeDetail; canEdit
           )}
         </Card>
       </div>
+      <TaxSection employee={employee} canEdit={canEdit} />
       {canEdit && employee.status === 'active' && (
         <Card title={t('pay.change')}>
           {pay.pending.length > 0 ? (
@@ -529,6 +540,80 @@ async function PayTab({ employee, canEdit }: { employee: EmployeeDetail; canEdit
           )}
         </Card>
       )}
+    </>
+  );
+}
+
+/** The employee's salary tax this fiscal year, their profile, openings and declaration. */
+async function TaxSection({ employee, canEdit }: { employee: EmployeeDetail; canEdit: boolean }) {
+  const tt = await getTranslations('payroll.tax');
+  const format = await getFormatter();
+  const fiscalYear = fiscalYearOf(todayIn());
+  const year = await load<TaxYearView>(
+    'tenant',
+    `/tenant/employees/${employee.id}/tax?fiscalYear=${fiscalYear}`,
+  );
+  const declaration = year.declaration;
+  return (
+    <>
+      <Card title={tt('yearTitle', { year: fiscalYear })}>
+        <TaxYear year={year} certificate={`/workspace/files/tax-certificate/${employee.id}`} />
+      </Card>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card
+          title={tt('declaration.title')}
+          action={
+            declaration.status && (
+              <Badge tone={declaration.status === 'verified' ? 'green' : 'amber'}>
+                {tt(`statuses.${declaration.status}`)}
+              </Badge>
+            )
+          }
+        >
+          {declaration.status === 'submitted' && canEdit ? (
+            <VerifyDeclarationForm
+              employeeId={employee.id}
+              fiscalYear={fiscalYear}
+              items={declaration.items}
+            />
+          ) : declaration.status === 'verified' || !canEdit ? (
+            declaration.items.length === 0 ? (
+              <p className="text-sm text-slate-500">{tt('declaration.none')}</p>
+            ) : (
+              <ul className="space-y-1 text-sm">
+                {declaration.items.map((i, n) => (
+                  <li key={n} className="flex justify-between gap-3">
+                    <span>{tt(`kinds.${i.kind}`)}</span>
+                    <span className="tabular-nums">
+                      {taka(format, i.declared)}
+                      {i.verified !== null && ` → ${taka(format, i.verified)}`}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )
+          ) : (
+            <DeclarationForm
+              employeeId={employee.id}
+              fiscalYear={fiscalYear}
+              items={declaration.items}
+              locked={false}
+            />
+          )}
+        </Card>
+        {canEdit && (
+          <Card title={tt('profile.title')}>
+            <TaxProfileForm employeeId={employee.id} profile={year.profile} />
+            <details className="mt-5 border-t border-slate-100 pt-4">
+              <summary className="cursor-pointer text-sm font-medium text-slate-800">
+                {tt('opening.title')}
+              </summary>
+              <p className="my-2 text-sm text-slate-600">{tt('opening.hint')}</p>
+              <TaxOpeningForm employeeId={employee.id} fiscalYear={fiscalYear} />
+            </details>
+          </Card>
+        )}
+      </div>
     </>
   );
 }

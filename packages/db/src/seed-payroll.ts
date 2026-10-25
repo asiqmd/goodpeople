@@ -1,12 +1,18 @@
-import { inArray } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import type { Tx } from './client.js';
 import { CIPHER_FIELDS, type FieldCipher } from './field-cipher.js';
 import {
   approvalSteps,
+  employeeLoans,
   employeePay,
   employees,
   payGroups,
+  payrollSettings,
+  pfEntries,
+  pfMembers,
   salaryStructures,
+  taxDeclarations,
+  taxOpenings,
   tenantUsers,
 } from './schema/index.js';
 
@@ -112,6 +118,138 @@ export async function seedGroupPayroll(
     tenantId,
     subjectType: 'compensation',
     subjectId: pending!.id,
+    stepNo: 1,
+    kind: 'payroll',
+    status: 'pending',
+  });
+}
+
+/** One investment in a seeded declaration. */
+const item = (kind: string, declared: string, verified: string | null) => ({
+  kind,
+  declared,
+  verified,
+  note: null,
+  documentId: null,
+});
+
+/**
+ * Phase 2 M3 for "My Group": a provident fund for the permanent workers (7% each way, with
+ * opening balances from the old fund), tax figures from July to September for the staff who
+ * pay tax (the workspace went live in October), one verified and one waiting investment
+ * declaration, and an advance waiting for the finance officer. Does nothing a second time.
+ */
+export async function seedGroupBenefits(tx: Tx, ctx: { tenantId: string; cipher: FieldCipher }) {
+  const { tenantId, cipher } = ctx;
+  if ((await tx.select({ id: pfMembers.employeeId }).from(pfMembers).limit(1)).length) return;
+  const seal = (field: (typeof CIPHER_FIELDS)[keyof typeof CIPHER_FIELDS], value: unknown) =>
+    cipher.encrypt(JSON.stringify(value), { tenantId, field });
+  const people = new Map(
+    (await tx.select().from(employees)).map((e) => [e.employeeCode, e] as const),
+  );
+  const id = (code: string) => people.get(code)!.id;
+  const [admin] = await tx
+    .select({ id: tenantUsers.id })
+    .from(tenantUsers)
+    .where(eq(tenantUsers.role, 'tenant_admin'));
+
+  await tx
+    .update(payrollSettings)
+    .set({ pfEnabled: true, pfEmployeeRate: '7', pfEmployerRate: '7' })
+    .where(eq(payrollSettings.tenantId, tenantId));
+  const workers = ['MG-0004', 'MG-0005', 'MG-0006', 'MG-0007', 'MG-0008'];
+  await tx
+    .insert(pfMembers)
+    .values(workers.map((code) => ({ tenantId, employeeId: id(code), joinedOn: '2026-01-01' })));
+  // Brought from the old fund: January to September at 7% of each one's basic.
+  const basic: Record<string, number> = {
+    'MG-0004': 9_367,
+    'MG-0005': 8_500,
+    'MG-0006': 7_567,
+    'MG-0007': 6_700,
+    'MG-0008': 7_700,
+  };
+  await tx.insert(pfEntries).values(
+    workers.flatMap((code) =>
+      (['own', 'employer'] as const).map((account) => ({
+        tenantId,
+        employeeId: id(code),
+        date: '2026-09-30',
+        kind: 'opening' as const,
+        account,
+        amountEnc: seal(CIPHER_FIELDS.pfEntries, String(Math.round(basic[code]! * 0.07) * 9)),
+        note: 'Balance from the previous fund',
+      })),
+    ),
+  );
+
+  // July to September from the old payroll, for the year's tax.
+  await tx.insert(taxOpenings).values([
+    {
+      tenantId,
+      employeeId: id('MG-0001'),
+      fiscalYear: '2026-27',
+      amountsEnc: seal(CIPHER_FIELDS.taxOpenings, {
+        salary: '285000.00',
+        tax: '9750.00',
+        pf: '0.00',
+      }),
+    },
+    {
+      tenantId,
+      employeeId: id('MG-0003'),
+      fiscalYear: '2026-27',
+      amountsEnc: seal(CIPHER_FIELDS.taxOpenings, {
+        salary: '375000.00',
+        tax: '18750.00',
+        pf: '0.00',
+      }),
+    },
+  ]);
+  await tx.insert(taxDeclarations).values([
+    {
+      tenantId,
+      employeeId: id('MG-0001'),
+      fiscalYear: '2026-27',
+      status: 'verified',
+      itemsEnc: seal(CIPHER_FIELDS.taxDeclarations, [
+        item('dps', '120000.00', '120000.00'),
+        item('life_insurance', '60000.00', '50000.00'),
+      ]),
+      submittedAt: new Date('2026-08-10T04:00:00Z'),
+      verifiedBy: admin?.id ?? null,
+      verifiedAt: new Date('2026-08-20T04:00:00Z'),
+    },
+    {
+      tenantId,
+      employeeId: id('MG-0003'),
+      fiscalYear: '2026-27',
+      status: 'submitted',
+      itemsEnc: seal(CIPHER_FIELDS.taxDeclarations, [
+        item('savings_certificate', '300000.00', null),
+        item('zakat', '25000.00', null),
+      ]),
+      submittedAt: new Date('2026-10-12T04:00:00Z'),
+    },
+  ]);
+
+  // An Eid advance for Rahima, waiting for the finance officer.
+  const [advance] = await tx
+    .insert(employeeLoans)
+    .values({
+      tenantId,
+      employeeId: id('MG-0005'),
+      kind: 'advance',
+      amountsEnc: seal(CIPHER_FIELDS.loanAmounts, { principal: '6000.00', installment: '2000.00' }),
+      startMonth: '2026-11',
+      reason: 'Advance for a family wedding',
+      requestedBy: admin?.id ?? null,
+    })
+    .returning({ id: employeeLoans.id });
+  await tx.insert(approvalSteps).values({
+    tenantId,
+    subjectType: 'loan',
+    subjectId: advance!.id,
     stepNo: 1,
     kind: 'payroll',
     status: 'pending',

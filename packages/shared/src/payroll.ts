@@ -12,7 +12,11 @@ export type PayComponentKind = (typeof PAY_COMPONENT_KINDS)[number];
 export const PAY_CALCULATIONS = ['structure', 'fixed', 'run'] as const;
 export type PayCalculation = (typeof PAY_CALCULATIONS)[number];
 
-/** How salary tax treats a component (Income Tax Act 2023); used from Phase 2 M3. */
+/**
+ * How salary tax treats a component (Income Tax Act 2023). An earning that is taxable counts
+ * in salary income; a deduction that is taxable reduces it (absence, leave without pay),
+ * while other deductions (tax, provident fund, loan repayments) do not.
+ */
 export const TAX_TREATMENTS = ['taxable', 'exempt', 'partly_exempt'] as const;
 export type TaxTreatment = (typeof TAX_TREATMENTS)[number];
 
@@ -53,6 +57,8 @@ export const RESERVED_PAY_NAMES = [
   'SERVICE_YEARS',
   'SERVICE_MONTHS',
   'WORKER',
+  'LATE_DAYS',
+  'LEAVE_DAYS',
 ] as const;
 
 /**
@@ -63,7 +69,8 @@ export const RESERVED_PAY_NAMES = [
 export const RUN_VARIABLES = RESERVED_PAY_NAMES;
 export type RunVariable = (typeof RUN_VARIABLES)[number];
 
-export const RUN_KINDS = ['regular', 'adjustment'] as const;
+/** regular: a month's pay; adjustment: corrects a locked month; bonus: a festival bonus. */
+export const RUN_KINDS = ['regular', 'adjustment', 'bonus'] as const;
 export type RunKind = (typeof RUN_KINDS)[number];
 
 /**
@@ -84,8 +91,90 @@ export const RUN_PROBLEM_CODES = [
   'absence_over_limit',
   'pay_starts_late',
   'formula_failed',
+  'tin_missing',
+  'loan_not_recovered',
+  'tax_rules_missing',
 ] as const;
 export type RunProblemCode = (typeof RUN_PROBLEM_CODES)[number];
+
+// ── Salary tax (Phase 2 M3) ──────────────────────────────────────────────────
+
+/** Minimum tax differs by where the taxpayer lives (Income Tax Act 2023). */
+export const TAX_AREAS = ['dhaka_chattogram_city', 'other_city', 'elsewhere'] as const;
+export type TaxArea = (typeof TAX_AREAS)[number];
+
+/** What an employee declares for the investment rebate. */
+export const INVESTMENT_KINDS = [
+  'savings_certificate',
+  'dps',
+  'life_insurance',
+  'provident_fund_other',
+  'superannuation',
+  'universal_pension',
+  'listed_shares',
+  'mutual_fund',
+  'zakat',
+  'donation',
+  'other',
+] as const;
+export type InvestmentKind = (typeof INVESTMENT_KINDS)[number];
+
+/** draft: being filled in; submitted: with payroll; verified: payroll checked the proofs. */
+export const DECLARATION_STATUSES = ['draft', 'submitted', 'verified'] as const;
+export type DeclarationStatus = (typeof DECLARATION_STATUSES)[number];
+
+/** The Bangladesh fiscal year a date falls in, e.g. 2026-10-25 → "2026-27" (July to June). */
+export function fiscalYearOf(date: string): string {
+  const year = Number(date.slice(0, 4));
+  const start = Number(date.slice(5, 7)) >= 7 ? year : year - 1;
+  return `${start}-${String((start + 1) % 100).padStart(2, '0')}`;
+}
+
+/** First and last day of a fiscal year such as "2026-27". */
+export function fiscalYearBounds(fiscalYear: string): { start: string; end: string } {
+  const start = Number(fiscalYear.slice(0, 4));
+  return { start: `${start}-07-01`, end: `${start + 1}-06-30` };
+}
+
+// ── Provident fund, loans and increments (Phase 2 M3) ─────────────────────────
+
+/**
+ * A provident fund member's ledger: contributions from runs, interest, loans out and back,
+ * and what is paid out or forfeited on leaving. Each entry is in the member's own account
+ * or the employer's.
+ */
+export const PF_ENTRY_KINDS = [
+  'opening',
+  'contribution',
+  'interest',
+  'loan_out',
+  'loan_repaid',
+  'withdrawal',
+  'forfeited',
+] as const;
+export type PfEntryKind = (typeof PF_ENTRY_KINDS)[number];
+export const PF_ACCOUNTS = ['own', 'employer'] as const;
+export type PfAccount = (typeof PF_ACCOUNTS)[number];
+
+/** advance: recovered as ADVANCE; loan: a company loan (LOAN); pf_loan: from the fund (PF_LOAN). */
+export const LOAN_KINDS = ['advance', 'loan', 'pf_loan'] as const;
+export type LoanKind = (typeof LOAN_KINDS)[number];
+export const LOAN_COMPONENT: Record<LoanKind, string> = {
+  advance: 'ADVANCE',
+  loan: 'LOAN',
+  pf_loan: 'PF_LOAN',
+};
+
+export const LOAN_STATUSES = ['pending', 'active', 'closed', 'rejected', 'cancelled'] as const;
+export type LoanStatus = (typeof LOAN_STATUSES)[number];
+
+/** A batch of pay changes decided together, such as the annual increment. */
+export const PAY_BATCH_STATUSES = ['pending', 'approved', 'rejected', 'cancelled'] as const;
+export type PayBatchStatus = (typeof PAY_BATCH_STATUSES)[number];
+
+/** An increment as a percentage of basic (the RMG wage board's way) or of gross. */
+export const INCREMENT_BASES = ['basic', 'gross'] as const;
+export type IncrementBasis = (typeof INCREMENT_BASES)[number];
 
 /** Money as the API sends it: a decimal string with at most two places, e.g. "12500.00". */
 export type Money = string;

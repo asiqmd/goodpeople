@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:good_people/l10n/app_localizations.dart';
+import 'package:good_people/payslips/pay_widgets.dart';
 import 'package:good_people/ui/format.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
@@ -55,6 +56,26 @@ void main() {
     // Bangla groups by lakh, as the web does.
     expect(formatTaka(bn, '125000.00'), '৳১,২৫,০০০');
     expect(formatTaka(bn, '1250.50'), '৳১,২৫০.৫০');
+  });
+
+  test('an income year keeps its spelling in the UI language\'s digits', () {
+    expect(formatFiscalYear(en, '2026-27'), '2026-27');
+    expect(formatFiscalYear(bn, '2026-27'), '২০২৬-২৭');
+    expect(formatFiscalYear(bn, '2099-00'), '২০৯৯-০০');
+    // Anything else is shown as it came.
+    expect(formatFiscalYear(bn, '2026'), '2026');
+  });
+
+  test('typed amounts lose grouping and take Bangla digits', () {
+    expect(normalizeAmount(' 1,20,000 '), '120000');
+    expect(normalizeAmount('১,২৫,০০০.৫০'), '125000.50');
+    expect(normalizeAmount('12 500'), '12500');
+    for (final ok in ['100000', '12500.5', '১২৫০০.৫০', '1,00,000']) {
+      expect(isValidAmount(ok), isTrue, reason: ok);
+    }
+    for (final bad in ['', 'abc', '12500.505', '-500', '1e5', '12345678901']) {
+      expect(isValidAmount(bad), isFalse, reason: bad);
+    }
   });
 
   test('a pay period is its month when whole, else its dates', () {

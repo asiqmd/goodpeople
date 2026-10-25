@@ -11,7 +11,7 @@ browser.
 | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------ |
 | **M1 Pay foundations**                     | Pay components, a safe formula engine, salary structures, minimum wages, pay groups, employee pay with maker-checker                           | Phase 1    | Done   |
 | **M2 Payroll runs & payslips**             | Pay periods, attendance and leave inputs, proration, overtime, the run lifecycle with locking, adjustment runs, EN/BN payslips                 | M1         | Done   |
-| **M3 Tax, provident fund & bonuses**       | Salary income tax (projection, declarations, proofs, certificates), PF, festival and attendance bonuses, loans and advances, annual increments | M2         |        |
+| **M3 Tax, provident fund & bonuses**       | Salary income tax (projection, declarations, proofs, certificates), PF, festival and attendance bonuses, loans and advances, annual increments | M2         | Done   |
 | **M4 Settlement, gratuity & disbursement** | Final settlement per separation type, gratuity, WPPF, bank and MFS payment files, cash sheets, split pay, accounting export                    | M3         |        |
 | **M5 Reports & parallel runs**             | Statutory and management reports, golden tests from real (anonymised) sheets, reconciliation against the current payroll, go-live              | M4         |        |
 
@@ -308,16 +308,176 @@ warning.
 - **Pay group, structure and company names** show in English in the Bangla view and payslip
   unless a Bangla name is set.
 
+## M3: Tax, provident fund & bonuses
+
+How these fit into runs and why is in [ADR 010](../adr/010-tax-fund-and-loans.md).
+
+### What the law says, as encoded
+
+Researched on 25 Oct 2026 from the gazettes on nbr.gov.bd (the Finance Ordinance 2025 and the
+Finance Act 2026) and the NBR's English text of the Income Tax Act 2023. Every value is a
+country-pack rule with its reference and `needs_review` until the tax consultant and counsel
+sign it off.
+
+| Rule                                                                                            | Income year 2025-26                                                                                                                        | Income year 2026-27                                   |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |
+| Threshold: general / women and 65+ / disability and third gender / war-wounded freedom fighters | Tk 400k / 450k / 525k / 550k (raised by the Finance Act 2026 after the year; deductions during it used 375k)                               | same                                                  |
+| Disabled dependant                                                                              | +Tk 50k each (one parent claims)                                                                                                           | same                                                  |
+| Bands above the threshold                                                                       | 300k at 10%, 400k at 15%, 500k at 20%, 2,000k at 25%, then 30% (the 5% band is gone)                                                       | same                                                  |
+| Salary exemption                                                                                | a third of salary, at most Tk 5 lakh                                                                                                       | same                                                  |
+| Investment rebate                                                                               | least of 3% of income, 15% of investment, Tk 10 lakh                                                                                       | least of 3%, 10%, Tk 7.5 lakh (start date to confirm) |
+| Minimum tax                                                                                     | Tk 5,000 everywhere, if above the threshold (Tk 1,000 for new taxpayers)                                                                   | same                                                  |
+| Investment caps                                                                                 | DPS Tk 1.2 lakh, savings certificates and mutual funds Tk 5 lakh a year                                                                    | same                                                  |
+| Provident fund                                                                                  | Required with 100+ permanent workers from 17 Nov 2025 (Progoti pension as the alternative); 7–8% of basic each way; after a year's service | same; Act 43 of 2026 from 10 Apr 2026                 |
+| Festival bonus                                                                                  | Two a year, each at most a month's basic, after a year's service (Labour Rules r.111, to confirm)                                          | same                                                  |
+
+Overtime and festival bonuses are taxable salary (s.32). The employer's recognised-fund
+contribution is not salary but counts for the rebate. Deposits are due within two weeks of
+the month's end, and the withholding return is quarterly (s.146, s.177).
+
+### Salary tax
+
+- **Each run works it out:** the year's salary projected (earlier locked runs and openings,
+  this month, and the recurring pay for the months left), the year's tax, less what was
+  deducted, spread over the months left (s.86). Entered TAX overrides it. The working is
+  stored and shown per person: projected salary, exemption, threshold, tax, rebate, minimum,
+  deducted before, this month.
+- **Taxpayer profile:** disability, war-wounded freedom fighter, disabled dependants. Gender
+  and age come from the employee record.
+- **Investment declarations:** employees declare per income year (savings certificates, DPS,
+  life insurance, other funds, universal pension, shares, Zakat and others). Declared amounts
+  count until payroll verifies them against proofs; then only what was accepted counts.
+  Verified declarations are closed.
+- **Openings:** salary, tax and provident fund paid before go-live in the year.
+- **Challans:** the deposit for each locked run, which the certificate lists.
+- **Salary certificate** in English or Bangla for HR and the employee: each run of the year
+  with salary, tax and challan, and the totals.
+- **Register:** everyone's salary and tax for the year as CSV for the withholding return.
+- **Warnings:** a TIN missing where tax is deducted; an error where the pack has no rules for
+  the year.
+
+### Provident fund
+
+- **Settings:** on or off, both rates, recognised for tax, and the vesting scale (by default
+  nothing before 3 years, everything after). The settings page says when the law requires a
+  fund (permanent workers against the threshold).
+- **Members:** added by code or "every permanent employee once they have a year's service"
+  (their membership starts on the anniversary). Contributions are on the basic paid in each
+  run.
+- **Ledger:** contributions posted when a run locks, opening balances from the old fund,
+  yearly interest at the trustees' rate (once per date), loans out and back, and pay-outs.
+- **Leaving:** the employer's unvested share is forfeited back to the fund; the statement says
+  what the member is paid. The pay-out itself comes with final settlement (M4).
+
+### Loans and advances
+
+- Salary advances, company loans and loans from the provident fund (at most the member's own
+  balance), each with an installment and a first month.
+- **Maker-checker:** approved in the inbox by someone other than the maker.
+- **Recovery:** runs recover the installment from the first month, never taking net pay below
+  zero (a warning says when an installment was not recovered in full). An entered amount
+  replaces the schedule, shared oldest first.
+- **Repayments** are posted when the run locks; money paid in directly is recorded by hand.
+  Fully repaid loans close.
+
+### Bonuses and increments
+
+- **Festival bonus runs:** a festival, the religions it is for (and whether people with none
+  recorded count), a cut-off day, the share of basic (at most 100%) and the months of service
+  (12 by default). Approved, locked and published like a month; the payslip and notification
+  carry the festival's name.
+- **Attendance bonus:** runs give formulas `LATE_DAYS` and `LEAVE_DAYS`, so a workspace sets
+  its own rule, for example `if(WORKER && ABSENT_DAYS == 0 && LATE_DAYS == 0 && LEAVE_DAYS ==
+0, 500, 0)`. The pack sets no amount, since none is statutory.
+- **Annual increments:**
+  - A percentage of basic (the RMG wage board's way) or of gross, from a date.
+  - It can be limited to pay groups and structures, and to people with enough service.
+  - The new gross is found by searching for the smallest amount that gives the target basic
+    under the person's own structure.
+  - Previewed with who is left out and why, then approved as one batch: every new pay record
+    is approved together. Nobody approves a batch that raises their own pay.
+
+### What else it does
+
+- **My pay** for employees on the web: payslips, tax (the year so far, the latest working,
+  certificates, and the declaration form), the provident fund statement, and their loans. The
+  app gets the same.
+- **Seed:** my-group runs a provident fund for its permanent workers with opening balances, has
+  July–September tax openings for the staff who pay tax, one verified and one waiting
+  declaration, and an advance waiting for the finance officer.
+- **Fixes found on the way:** the approvals inbox used a `NOT IN` over a list that could hold
+  NULLs (pay batches' own-pay check), which hid every manager's items; the list now leaves
+  them out.
+
+### Performance at 20,000 employees
+
+Measured on a MacBook Air (M-series) against `scale-20k`: 20,000 employees, 800 supervisors
+paid enough to pay tax, and July 2026 to May 2027 computed and locked first, so June 2027 reads
+eleven months of the year for everyone (`FISCAL_YEAR=1 MONTH=2027-06
+apps/api/scripts/measure-payroll.mjs`).
+
+| Step                                                       | Time                                    |
+| ---------------------------------------------------------- | --------------------------------------- |
+| A month computed and locked, July 2026 → May 2027          | 3.8 s → 7.4 s, as the year so far grows |
+| **June 2027 for 20,000 people, eleven months of tax read** | **6.3 s** (again 5.8 s)                 |
+| A page of 50 / page 200 / with problems / search           | 114 / 168 / 84 / 73 ms                  |
+| One payslip PDF in Bangla                                  | 0.8 s                                   |
+| Locking (posting provident fund and loan entries)          | 0.2 s                                   |
+| Publishing 20,000 payslips                                 | 2.1 s                                   |
+
+M2 computed a month in 3.4 s; reading the year so far for tax roughly doubles it at the year's
+end, still far inside the ten-minute target. One month
+(September) took 22 s in that sequence, with other work running on the machine; the months
+either side took 4–5 s.
+
+### Done when
+
+- **Unit tests:** the tax year (every band, rebate, minimum tax, thresholds and dependants,
+  both years); the engine's tax projection, taxable salary, provident fund, loan recovery,
+  late and leave variables, and festival bonus; fiscal years and adding months.
+- **API end-to-end tests (6):**
+  - tax with openings, a declaration declared then verified, a disability, locking, a
+    challan, the next month's projection, the year view, certificates and the register;
+  - the provident fund: contributions, a fund loan and its repayment, interest, leaving with
+    forfeiture;
+  - an advance through maker-checker, recovered and then repaid directly;
+  - an increment of basic in one approval, with people left out and changes blocked meanwhile;
+  - a festival bonus by religion and service, published with its payslip;
+  - who sees what, and when the law requires a fund.
+- **Web and mobile:** the pages above in English and Bangla, and the app's My pay.
+
+**Checked:**
+
+- 168 API tests in 17 files, also passing shuffled five times; country-pack tests (36,
+  including both tax years) and shared tests (93).
+- The browser in English and Bangla:
+  - October's run with Farhan Rahman's tax worked out: ৳2,874, which is ৳35,613 for the year
+    less ৳9,750 deducted, over nine months.
+  - The provident fund and tax pages, and Kamal Hossain's declaration verified.
+  - A 5% increment of basic for three RMG workers previewed, then approved by the finance
+    officer together with Rahima's advance.
+  - Rahima's My pay (her fund, her advance, her tax in Bangla) and her Bangla salary
+    certificate.
+- Flutter: 220 tests (192 before) and analyze clean for My pay's tax, declaration, fund and
+  loans tabs. Checked against a fake API only, not on a device; the real API's answer for a
+  non-member of the fund (an empty body) was checked by hand and the app reads it.
+
+**Carried into later milestones from M3:**
+
+- **Proofs:** declaration items can link a document, but uploading proofs from the
+  declaration form comes later; payroll verifies from the documents it has.
+- **PSR check (s.264):** paying management and supervisory staff needs proof of their tax
+  return; recording and checking it comes with M5's reports.
+- **Rebate start date** for the 10% and Tk 7.5 lakh, the Act 43/2026 two-thirds rule, the
+  fund's statutory vesting and r.111 stay `needs_review`.
+- **Minimum tax for new taxpayers** (Tk 1,000) needs a profile flag.
+- **The RMG increment after 2025** (9% or 5%) is not settled; the increment tool takes any
+  percentage.
+- **The app's approvals list** shows loans, increments and runs as generic items; payroll
+  approvals are decided on the web.
+
 ## Later milestones (outline; detailed when each starts)
 
-- **M3 Tax, provident fund & bonuses:**
-  - Salary tax under the Income Tax Act 2023: yearly projection with monthly deduction,
-    the salary exemption, investment rebate with declarations and proofs, minimum tax,
-    salary certificates and data for the employer's returns.
-  - Provident fund: membership, contributions, ledger, loans, and the 2025/26 amendment's
-    duty for larger employers.
-  - Two festival bonuses by religion, attendance bonus, loans and advances, annual
-    increments.
 - **M4 Settlement, gratuity & disbursement:**
   - Final settlement for each separation type: notice pay, unused earned leave, gratuity,
     the resignation benefit.
@@ -338,3 +498,10 @@ warning.
 - RMG 9% increment, December 2024: [Dhaka Tribune, gazette](https://www.dhakatribune.com/business/370206/govt-issues-gazette-on-annual-wage-increment-hike),
   [The Financial Express, dispute over continuation](https://thefinancialexpress.com.bd/trade/row-brews-over-continuation-of-rmg-workers-wage-hike)
 - Overtime at twice basic and dearness allowance (s.108): [BIPO Times, Sep 2022](https://www.biposervice.com/wp-content/uploads/2022/10/BIPO-Times-Sep-2022-en.pdf)
+- Income tax 2025-26 and 2026-27: [Finance Act 2026 (gazette, 30 Jun 2026)](https://nbr.gov.bd/uploads/acts/Finance_Act_2026.pdf),
+  [Finance Ordinance 2025 (gazette, 2 Jun 2025)](https://nbr.gov.bd/uploads/acts/5722-Ordinance-28-Law-02_June.pdf),
+  [Income Tax Act 2023, NBR English text](https://nbr.gov.bd/uploads/acts/Income_tax_act_2023.pdf),
+  [KPMG / Rahman Rahman Huq, Bangladesh Tax 2026-27](https://assets.kpmg.com/content/dam/kpmg/bd/pdf/Tax/Bangladesh_Tax_2026.pdf),
+  [PwC tax summary](https://taxsummaries.pwc.com/bangladesh/individual/taxes-on-personal-income)
+- Provident fund for 100+ permanent workers: [WTW, Mar 2026](https://www.wtwco.com/en-us/insights/2026/03/bangladesh-new-mandate-for-provident-funds-for-large-employers),
+  [Prothom Alo on Act 43 of 2026](https://en.prothomalo.com/bangladesh/7z52cjg8f2)

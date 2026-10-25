@@ -1200,9 +1200,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get payslipsTitle => 'Payslips';
 
   @override
-  String get payslipsSubtitle => 'Your pay each month, in English or Bangla';
-
-  @override
   String get payslipsLoadFailed => 'We could not load your payslips.';
 
   @override
@@ -1228,6 +1225,330 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get payslipErrorGone => 'This payslip is no longer available.';
+
+  @override
+  String get myPayTitle => 'My pay';
+
+  @override
+  String get myPaySubtitle => 'Payslips, tax, provident fund and loans';
+
+  @override
+  String get myPayTabTax => 'Tax';
+
+  @override
+  String get myPayTabProvidentFund => 'Provident fund';
+
+  @override
+  String get myPayTabLoans => 'Loans';
+
+  @override
+  String get payrollRunKindBonus => 'Bonus';
+
+  @override
+  String get taxLoadFailed => 'We could not load your tax.';
+
+  @override
+  String get taxNoEmployeeBody =>
+      'Salary tax belongs to an employee record, and your login is not linked to one. If you think it should be, ask your HR team.';
+
+  @override
+  String get taxYearSoFar => 'Year so far';
+
+  @override
+  String get taxSalaryPaid => 'Salary paid';
+
+  @override
+  String get taxDeducted => 'Tax deducted';
+
+  @override
+  String taxIncludesOpening(String salary, String tax) {
+    return 'Includes $salary salary and $tax tax from earlier in the year, such as from a previous employer.';
+  }
+
+  @override
+  String get taxForYear => 'Tax for the year (estimated)';
+
+  @override
+  String get taxThisMonth => 'This month';
+
+  @override
+  String get taxRebate => 'Rebate';
+
+  @override
+  String get taxThreshold => 'Tax-free threshold';
+
+  @override
+  String get taxMonthsLeft => 'Months left';
+
+  @override
+  String get taxNotWorkedOut =>
+      'The year\'s tax shows here once payroll works it out from your salary.';
+
+  @override
+  String get taxMonthsTitle => 'Month by month';
+
+  @override
+  String get taxNoMonths => 'No salary paid in this year yet.';
+
+  @override
+  String taxMonthLine(String salary, String tax) {
+    return 'Salary $salary · Tax $tax';
+  }
+
+  @override
+  String taxChallan(String number) {
+    return 'Challan $number';
+  }
+
+  @override
+  String taxChallanOn(String number, String date) {
+    return 'Challan $number, deposited $date';
+  }
+
+  @override
+  String get taxCertificateTitle => 'Salary and tax certificate';
+
+  @override
+  String get taxCertificateBody =>
+      'For your income tax return: your salary this year and the tax deducted from it. It opens as a PDF.';
+
+  @override
+  String get taxCertificateEnglish => 'Certificate (English)';
+
+  @override
+  String get taxCertificateBangla => 'Certificate (Bangla)';
+
+  @override
+  String get declarationTitle => 'Investment declaration';
+
+  @override
+  String get declarationHint =>
+      'Declared investments lower the tax deducted each month; payroll checks your proofs and the accepted amounts then count instead.';
+
+  @override
+  String declarationStatusName(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'draft': 'Draft',
+      'submitted': 'Submitted',
+      'verified': 'Verified',
+      'other': 'Unknown',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String declarationSubmittedOn(String date) {
+    return 'Submitted on $date';
+  }
+
+  @override
+  String declarationVerifiedOn(String date) {
+    return 'Verified on $date';
+  }
+
+  @override
+  String investmentKindName(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'savings_certificate': 'Savings certificates',
+      'dps': 'DPS',
+      'life_insurance': 'Life insurance premium',
+      'provident_fund_other': 'Other provident fund',
+      'superannuation': 'Superannuation or benevolent fund',
+      'universal_pension': 'Universal pension',
+      'listed_shares': 'Listed shares',
+      'mutual_fund': 'Mutual funds',
+      'zakat': 'Zakat',
+      'donation': 'Approved donations',
+      'other': 'Other',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get declarationKind => 'Investment';
+
+  @override
+  String get declarationKindRequired => 'Choose what you invested in';
+
+  @override
+  String get declarationAmount => 'Amount (taka)';
+
+  @override
+  String get declarationAmountInvalid =>
+      'Enter an amount like 12500 or 12500.50';
+
+  @override
+  String get declarationNote => 'Note (optional)';
+
+  @override
+  String get declarationAddRow => 'Add investment';
+
+  @override
+  String get declarationRemoveRow => 'Remove';
+
+  @override
+  String get declarationSaveDraft => 'Save draft';
+
+  @override
+  String get declarationSubmit => 'Submit to payroll';
+
+  @override
+  String get declarationSaved => 'Draft saved.';
+
+  @override
+  String get declarationSent => 'Sent to payroll.';
+
+  @override
+  String get declarationErrorVerified =>
+      'Payroll has verified this declaration, so it can no longer be changed.';
+
+  @override
+  String get declarationErrorInvalid => 'Check the amounts and try again.';
+
+  @override
+  String get declarationTotal => 'Declared in all';
+
+  @override
+  String get declarationDeclared => 'Declared';
+
+  @override
+  String get declarationAccepted => 'Accepted';
+
+  @override
+  String get declarationEmpty => 'No investments declared.';
+
+  @override
+  String get pfLoadFailed => 'We could not load your provident fund.';
+
+  @override
+  String get pfNotMember => 'You are not a member of the provident fund.';
+
+  @override
+  String get pfTotal => 'Total balance';
+
+  @override
+  String get pfOwn => 'Your contributions';
+
+  @override
+  String get pfEmployer => 'Employer\'s contributions';
+
+  @override
+  String get pfPayable => 'Payable if you left today';
+
+  @override
+  String pfVested(String percent) {
+    return 'Your contributions and $percent% of the employer\'s share';
+  }
+
+  @override
+  String pfMemberSince(String date) {
+    return 'Member since $date';
+  }
+
+  @override
+  String pfLeftOn(String date) {
+    return 'Left the fund on $date';
+  }
+
+  @override
+  String get pfEntriesTitle => 'Statement';
+
+  @override
+  String get pfNoEntries => 'No entries yet.';
+
+  @override
+  String pfEntryKindName(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'opening': 'Opening balance',
+      'contribution': 'Contribution',
+      'interest': 'Interest',
+      'loan_out': 'Loan taken',
+      'loan_repaid': 'Loan repaid',
+      'withdrawal': 'Withdrawal',
+      'forfeited': 'Forfeited',
+      'other': 'Entry',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String pfAccountName(String account) {
+    String _temp0 = intl.Intl.selectLogic(account, {
+      'own': 'Your account',
+      'employer': 'Employer\'s account',
+      'other': 'Account',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get loansLoadFailed => 'We could not load your advances and loans.';
+
+  @override
+  String get loansEmpty => 'No advances or loans.';
+
+  @override
+  String loanKindName(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'advance': 'Salary advance',
+      'loan': 'Loan',
+      'pf_loan': 'Provident fund loan',
+      'other': 'Loan',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String loanStatusName(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'pending': 'Pending',
+      'active': 'Active',
+      'closed': 'Closed',
+      'rejected': 'Rejected',
+      'cancelled': 'Cancelled',
+      'other': 'Unknown',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get loanPrincipal => 'Principal';
+
+  @override
+  String get loanInstallment => 'Per month';
+
+  @override
+  String get loanOutstanding => 'Outstanding';
+
+  @override
+  String get loanRepaid => 'Repaid';
+
+  @override
+  String get loanStartMonth => 'First deduction';
+
+  @override
+  String loanRepayments(num count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Repayments ($countString)',
+      zero: 'Repayments',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get loanNoRepayments => 'No repayments yet.';
+
+  @override
+  String get loanFromSalary => 'Deducted from salary';
+
+  @override
+  String get loanPaidIn => 'Paid in';
 
   @override
   String get resignationTitle => 'Resignation';

@@ -1,9 +1,10 @@
 import { can, todayIn, type PayGroupView, type PayrollRunView } from '@gp/shared';
-import { getFormatter, getTranslations } from 'next-intl/server';
+import { getFormatter, getLocale, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { day } from '@/components/leave/leave-views';
-import { PayrollTabs, RunStatusBadge, runPeriod, taka } from '@/components/payroll/payroll-views';
+import { BonusRunForm } from '@/components/payroll/benefit-forms';
+import { PayrollTabs, RunStatusBadge, runTitle, taka } from '@/components/payroll/payroll-views';
 import { NewRunForm } from '@/components/payroll/run-forms';
 import { Badge, Card } from '@/components/ui';
 import { currentTenantUser, load } from '@/lib/api';
@@ -14,6 +15,7 @@ export default async function PayrollRunsPage() {
   const t = await getTranslations('payroll');
   const tr = await getTranslations('payroll.runs');
   const format = await getFormatter();
+  const locale = await getLocale();
   const [runs, groups] = await Promise.all([
     load<PayrollRunView[]>('tenant', '/tenant/payroll/runs'),
     load<PayGroupView[]>('tenant', '/tenant/payroll/pay-groups'),
@@ -37,6 +39,13 @@ export default async function PayrollRunsPage() {
       {can(role, 'payroll.manage') && (
         <Card title={tr('new')}>
           <NewRunForm groups={groups} month={month} />
+          <details className="mt-5 border-t border-slate-100 pt-4">
+            <summary className="cursor-pointer text-sm font-medium text-slate-800">
+              {tr('newBonus')}
+            </summary>
+            <p className="my-3 text-sm text-slate-600">{tr('bonusIntro')}</p>
+            <BonusRunForm groups={groups.filter((g) => g.isActive)} defaultDate={today} />
+          </details>
         </Card>
       )}
       <Card title={tr('title')}>
@@ -63,11 +72,11 @@ export default async function PayrollRunsPage() {
                         href={`/workspace/payroll/runs/${r.id}`}
                         className="font-medium text-brand-700 hover:underline"
                       >
-                        {runPeriod(format, r.periodStart, r.periodEnd)}
+                        {runTitle(format, locale, r)}
                       </Link>
-                      {r.kind === 'adjustment' && (
+                      {r.kind !== 'regular' && (
                         <span className="ml-2">
-                          <Badge tone="violet">{tr('kinds.adjustment')}</Badge>
+                          <Badge tone="violet">{tr(`kinds.${r.kind}`)}</Badge>
                         </span>
                       )}
                     </td>

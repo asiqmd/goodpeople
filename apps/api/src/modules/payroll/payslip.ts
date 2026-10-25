@@ -5,6 +5,8 @@ import { escapeHtml, page, type Letterhead } from '../letters/render.js';
 export interface PayslipData {
   language: 'en' | 'bn';
   kind: RunKind;
+  /** A bonus run's festival, in the payslip's language. */
+  festival?: string | null;
   company: Letterhead;
   periodStart: string;
   periodEnd: string;
@@ -27,6 +29,7 @@ const LABELS = {
   en: {
     payslip: 'Payslip',
     adjustment: 'Pay adjustment',
+    bonus: 'Festival bonus',
     employee: 'Employee',
     code: 'Employee code',
     designation: 'Designation',
@@ -52,6 +55,7 @@ const LABELS = {
   bn: {
     payslip: 'বেতন বিবরণী',
     adjustment: 'বেতন সমন্বয়',
+    bonus: 'উৎসব বোনাস',
     employee: 'কর্মী',
     code: 'কর্মী কোড',
     designation: 'পদবি',
@@ -149,7 +153,7 @@ tfoot td{font-weight:700;background:#f9fafb}
     css,
     `<div class="head"><div><div class="company">${escapeHtml(data.company.name)}</div>
 <div class="details">${escapeHtml(data.company.details)}</div></div>
-<div class="title">${data.kind === 'adjustment' ? l.adjustment : l.payslip}<br>${escapeHtml(periodName(data.language, data.periodStart, data.periodEnd))}</div></div>
+<div class="title">${data.kind === 'bonus' ? l.bonus : data.kind === 'adjustment' ? l.adjustment : l.payslip}<br>${escapeHtml(data.festival ?? periodName(data.language, data.periodStart, data.periodEnd))}</div></div>
 <div class="grid">
 <div><span>${l.employee}:</span> ${escapeHtml(data.employee.name)}</div>
 <div><span>${l.code}:</span> ${escapeHtml(data.employee.code)}</div>
@@ -158,8 +162,12 @@ tfoot td{font-weight:700;background:#f9fafb}
 <div><span>${l.joined}:</span> ${date(data.language, data.employee.joinedOn)}</div>
 <div><span>${l.paid}:</span> ${date(data.language, data.paymentDate)}</div>
 </div>
-<table class="days"><thead><tr><th>${l.periodDays}</th><th>${l.paidDays}</th><th>${l.absent}</th><th>${l.unpaidLeave}</th><th>${l.ot}</th></tr></thead>
-<tbody><tr><td>${number(data.language, v.periodDays)}</td><td>${number(data.language, v.paidDays)}</td><td>${number(data.language, v.absentDays)}</td><td>${number(data.language, v.unpaidLeaveDays)}</td><td>${number(data.language, v.otHours)}</td></tr></tbody></table>
+${
+  data.kind === 'bonus'
+    ? ''
+    : `<table class="days"><thead><tr><th>${l.periodDays}</th><th>${l.paidDays}</th><th>${l.absent}</th><th>${l.unpaidLeave}</th><th>${l.ot}</th></tr></thead>
+<tbody><tr><td>${number(data.language, v.periodDays)}</td><td>${number(data.language, v.paidDays)}</td><td>${number(data.language, v.absentDays)}</td><td>${number(data.language, v.unpaidLeaveDays)}</td><td>${number(data.language, v.otHours)}</td></tr></tbody></table>`
+}
 <div class="cols">
 <table><thead><tr><th>${l.earnings}</th><th class="num">${l.amount}</th></tr></thead><tbody>${rows('earning')}</tbody>
 <tfoot><tr><td>${l.totalEarnings}</td><td class="num">${amountText(data.language, data.earnings)}</td></tr></tfoot></table>

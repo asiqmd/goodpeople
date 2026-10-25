@@ -14,12 +14,14 @@ import {
 import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
 import {
   adjustmentCreateSchema,
+  bonusRunSchema,
   payslipLanguageSchema,
   runCreateSchema,
   runInputRemoveSchema,
   runInputSchema,
   runItemsQuerySchema,
   type AdjustmentCreateInput,
+  type BonusRunInput,
   type PayrollRunItemPage,
   type PayrollRunView,
   type PayslipSummary,
@@ -60,6 +62,17 @@ export class PayrollRunsController {
     @Body(zod(runCreateSchema)) body: RunCreateInput,
   ): Promise<PayrollRunView> {
     return this.runs.create(user, body);
+  }
+
+  /** A festival bonus run for a pay group. */
+  @Post('payroll/runs/bonus')
+  @Permits('payroll.manage')
+  @ApiBody(openApiBody(bonusRunSchema))
+  createBonus(
+    @CurrentUser() user: AuthUser,
+    @Body(zod(bonusRunSchema)) body: BonusRunInput,
+  ): Promise<PayrollRunView> {
+    return this.runs.createBonus(user, body);
   }
 
   @Get('payroll/runs/:id')

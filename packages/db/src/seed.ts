@@ -10,7 +10,7 @@ import { scopeToTenant, type Database } from './client.js';
 import { createFieldCipher } from './field-cipher.js';
 import { hashPassword } from './passwords.js';
 import { provisionCountryDefaults, provisionPayroll } from './provision.js';
-import { seedGroupPayroll } from './seed-payroll.js';
+import { seedGroupBenefits, seedGroupPayroll } from './seed-payroll.js';
 import { seedGroupHr } from './seed-hr.js';
 import { seedGroupAttendance } from './seed-attendance.js';
 import { seedGroupLeave } from './seed-leave.js';
@@ -199,6 +199,7 @@ export async function seed(db: Database, opts: SeedOptions) {
         cipher: createFieldCipher(opts.fieldKey),
         passwordHash,
       });
+      await seedGroupBenefits(tx, { tenantId: group.id, cipher: createFieldCipher(opts.fieldKey) });
     });
   }
   return { created };

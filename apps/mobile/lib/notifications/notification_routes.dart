@@ -5,7 +5,7 @@ import '../approvals/approvals_screen.dart';
 import '../attendance/attendance_screen.dart';
 import '../documents/documents_screen.dart';
 import '../leave/leave_screen.dart';
-import '../payslips/payslips_screen.dart';
+import '../payslips/my_pay_screen.dart';
 import '../profile/profile_screen.dart';
 
 /// The screen a notification is about, or `null` when the app has none for
@@ -29,7 +29,9 @@ Route<void>? notificationRoute(NotificationEvent event, String? link) =>
       NotificationEvent.documentExpiring ||
       NotificationEvent.letterIssued => DocumentsScreen.route(),
       NotificationEvent.missingPunch => AttendanceScreen.route(),
-      NotificationEvent.payslipPublished => PayslipsScreen.route(),
+      NotificationEvent.payslipPublished => MyPayScreen.route(
+        initialTab: MyPayTab.payslips,
+      ),
       NotificationEvent.probationEnding || NotificationEvent.unknown => null,
     };
 

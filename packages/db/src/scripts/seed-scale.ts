@@ -51,7 +51,7 @@ const chunks = <T>(rows: T[], size: number) =>
     rows.slice(i * size, (i + 1) * size),
   );
 
-/** Workers on the RMG wage board's grades in turn, line supervisors on the staff structure. */
+/** Workers on the RMG wage board's grades in turn; line supervisors on the staff structure, paid enough to pay tax. */
 async function seedPay(tx: Tx, tenantId: string, cipher: ReturnType<typeof createFieldCipher>) {
   if ((await tx.select({ id: employeePay.id }).from(employeePay).limit(1)).length) return 0;
   const structures = new Map(
@@ -74,7 +74,7 @@ async function seedPay(tx: Tx, tenantId: string, cipher: ReturnType<typeof creat
       structureId: structures.get(grade ? 'RMG_WORKER' : 'STAFF')!,
       payGroupId: group!.id,
       amountsEnc: cipher.encrypt(
-        JSON.stringify({ amount: String(grade?.gross ?? 35_000), fixed: {} }),
+        JSON.stringify({ amount: String(grade?.gross ?? 80_000), fixed: {} }),
         { tenantId, field: CIPHER_FIELDS.payAmounts },
       ),
       wageGrade: grade?.grade ?? null,

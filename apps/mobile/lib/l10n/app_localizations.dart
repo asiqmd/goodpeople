@@ -1796,17 +1796,11 @@ abstract class AppLocalizations {
   /// **'Open PDF'**
   String get serviceBookOpen;
 
-  /// Home card and screen title: the employee's published payslips.
+  /// Tab in My pay: the employee's published payslips.
   ///
   /// In en, this message translates to:
   /// **'Payslips'**
   String get payslipsTitle;
-
-  /// Under "Payslips" on the home screen.
-  ///
-  /// In en, this message translates to:
-  /// **'Your pay each month, in English or Bangla'**
-  String get payslipsSubtitle;
 
   /// No description provided for @payslipsLoadFailed.
   ///
@@ -1855,6 +1849,462 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This payslip is no longer available.'**
   String get payslipErrorGone;
+
+  /// Home card and screen title: the employee's payslips, salary tax, provident fund and loans.
+  ///
+  /// In en, this message translates to:
+  /// **'My pay'**
+  String get myPayTitle;
+
+  /// Under "My pay" on the home screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Payslips, tax, provident fund and loans'**
+  String get myPaySubtitle;
+
+  /// Tab in My pay: the employee's salary tax for the income year.
+  ///
+  /// In en, this message translates to:
+  /// **'Tax'**
+  String get myPayTabTax;
+
+  /// Tab in My pay: the employee's provident fund statement.
+  ///
+  /// In en, this message translates to:
+  /// **'Provident fund'**
+  String get myPayTabProvidentFund;
+
+  /// Tab in My pay: the employee's salary advances and loans.
+  ///
+  /// In en, this message translates to:
+  /// **'Loans'**
+  String get myPayTabLoans;
+
+  /// Mark on a month from a festival bonus run.
+  ///
+  /// In en, this message translates to:
+  /// **'Bonus'**
+  String get payrollRunKindBonus;
+
+  /// No description provided for @taxLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load your tax.'**
+  String get taxLoadFailed;
+
+  /// No description provided for @taxNoEmployeeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Salary tax belongs to an employee record, and your login is not linked to one. If you think it should be, ask your HR team.'**
+  String get taxNoEmployeeBody;
+
+  /// Heading of the card with salary paid and tax deducted in the income year so far.
+  ///
+  /// In en, this message translates to:
+  /// **'Year so far'**
+  String get taxYearSoFar;
+
+  /// No description provided for @taxSalaryPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Salary paid'**
+  String get taxSalaryPaid;
+
+  /// Tax deducted at source from the salary.
+  ///
+  /// In en, this message translates to:
+  /// **'Tax deducted'**
+  String get taxDeducted;
+
+  /// No description provided for @taxIncludesOpening.
+  ///
+  /// In en, this message translates to:
+  /// **'Includes {salary} salary and {tax} tax from earlier in the year, such as from a previous employer.'**
+  String taxIncludesOpening(String salary, String tax);
+
+  /// The year's tax as the latest payroll run worked it out.
+  ///
+  /// In en, this message translates to:
+  /// **'Tax for the year (estimated)'**
+  String get taxForYear;
+
+  /// Tax deducted from this month's salary.
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get taxThisMonth;
+
+  /// Tax rebate earned by declared investments.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebate'**
+  String get taxRebate;
+
+  /// Income up to which no tax is due for this employee.
+  ///
+  /// In en, this message translates to:
+  /// **'Tax-free threshold'**
+  String get taxThreshold;
+
+  /// This month and the months after it in the income year.
+  ///
+  /// In en, this message translates to:
+  /// **'Months left'**
+  String get taxMonthsLeft;
+
+  /// No description provided for @taxNotWorkedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'The year\'s tax shows here once payroll works it out from your salary.'**
+  String get taxNotWorkedOut;
+
+  /// No description provided for @taxMonthsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Month by month'**
+  String get taxMonthsTitle;
+
+  /// No description provided for @taxNoMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'No salary paid in this year yet.'**
+  String get taxNoMonths;
+
+  /// One payroll run of the year: the salary paid and the tax deducted.
+  ///
+  /// In en, this message translates to:
+  /// **'Salary {salary} · Tax {tax}'**
+  String taxMonthLine(String salary, String tax);
+
+  /// The treasury challan the month's tax was deposited with.
+  ///
+  /// In en, this message translates to:
+  /// **'Challan {number}'**
+  String taxChallan(String number);
+
+  /// The treasury challan the month's tax was deposited with, and when.
+  ///
+  /// In en, this message translates to:
+  /// **'Challan {number}, deposited {date}'**
+  String taxChallanOn(String number, String date);
+
+  /// No description provided for @taxCertificateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Salary and tax certificate'**
+  String get taxCertificateTitle;
+
+  /// No description provided for @taxCertificateBody.
+  ///
+  /// In en, this message translates to:
+  /// **'For your income tax return: your salary this year and the tax deducted from it. It opens as a PDF.'**
+  String get taxCertificateBody;
+
+  /// Opens the salary and tax certificate as a PDF printed in English.
+  ///
+  /// In en, this message translates to:
+  /// **'Certificate (English)'**
+  String get taxCertificateEnglish;
+
+  /// Opens the salary and tax certificate as a PDF printed in Bangla.
+  ///
+  /// In en, this message translates to:
+  /// **'Certificate (Bangla)'**
+  String get taxCertificateBangla;
+
+  /// The employee's investments and donations for the income year, which earn a tax rebate.
+  ///
+  /// In en, this message translates to:
+  /// **'Investment declaration'**
+  String get declarationTitle;
+
+  /// No description provided for @declarationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Declared investments lower the tax deducted each month; payroll checks your proofs and the accepted amounts then count instead.'**
+  String get declarationHint;
+
+  /// Where an investment declaration stands.
+  ///
+  /// In en, this message translates to:
+  /// **'{status, select, draft{Draft} submitted{Submitted} verified{Verified} other{Unknown}}'**
+  String declarationStatusName(String status);
+
+  /// No description provided for @declarationSubmittedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitted on {date}'**
+  String declarationSubmittedOn(String date);
+
+  /// No description provided for @declarationVerifiedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified on {date}'**
+  String declarationVerifiedOn(String date);
+
+  /// A kind of investment or donation that earns a tax rebate.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind, select, savings_certificate{Savings certificates} dps{DPS} life_insurance{Life insurance premium} provident_fund_other{Other provident fund} superannuation{Superannuation or benevolent fund} universal_pension{Universal pension} listed_shares{Listed shares} mutual_fund{Mutual funds} zakat{Zakat} donation{Approved donations} other{Other}}'**
+  String investmentKindName(String kind);
+
+  /// No description provided for @declarationKind.
+  ///
+  /// In en, this message translates to:
+  /// **'Investment'**
+  String get declarationKind;
+
+  /// No description provided for @declarationKindRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose what you invested in'**
+  String get declarationKindRequired;
+
+  /// No description provided for @declarationAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount (taka)'**
+  String get declarationAmount;
+
+  /// No description provided for @declarationAmountInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an amount like 12500 or 12500.50'**
+  String get declarationAmountInvalid;
+
+  /// No description provided for @declarationNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note (optional)'**
+  String get declarationNote;
+
+  /// No description provided for @declarationAddRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Add investment'**
+  String get declarationAddRow;
+
+  /// No description provided for @declarationRemoveRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get declarationRemoveRow;
+
+  /// No description provided for @declarationSaveDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Save draft'**
+  String get declarationSaveDraft;
+
+  /// No description provided for @declarationSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit to payroll'**
+  String get declarationSubmit;
+
+  /// No description provided for @declarationSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft saved.'**
+  String get declarationSaved;
+
+  /// No description provided for @declarationSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent to payroll.'**
+  String get declarationSent;
+
+  /// No description provided for @declarationErrorVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Payroll has verified this declaration, so it can no longer be changed.'**
+  String get declarationErrorVerified;
+
+  /// The API refused the declaration; its problems are listed below.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the amounts and try again.'**
+  String get declarationErrorInvalid;
+
+  /// No description provided for @declarationTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Declared in all'**
+  String get declarationTotal;
+
+  /// No description provided for @declarationDeclared.
+  ///
+  /// In en, this message translates to:
+  /// **'Declared'**
+  String get declarationDeclared;
+
+  /// What payroll accepted of a declared investment after checking the proofs.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepted'**
+  String get declarationAccepted;
+
+  /// No description provided for @declarationEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No investments declared.'**
+  String get declarationEmpty;
+
+  /// No description provided for @pfLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load your provident fund.'**
+  String get pfLoadFailed;
+
+  /// No description provided for @pfNotMember.
+  ///
+  /// In en, this message translates to:
+  /// **'You are not a member of the provident fund.'**
+  String get pfNotMember;
+
+  /// No description provided for @pfTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total balance'**
+  String get pfTotal;
+
+  /// No description provided for @pfOwn.
+  ///
+  /// In en, this message translates to:
+  /// **'Your contributions'**
+  String get pfOwn;
+
+  /// No description provided for @pfEmployer.
+  ///
+  /// In en, this message translates to:
+  /// **'Employer\'s contributions'**
+  String get pfEmployer;
+
+  /// No description provided for @pfPayable.
+  ///
+  /// In en, this message translates to:
+  /// **'Payable if you left today'**
+  String get pfPayable;
+
+  /// How the amount payable on leaving is made up.
+  ///
+  /// In en, this message translates to:
+  /// **'Your contributions and {percent}% of the employer\'s share'**
+  String pfVested(String percent);
+
+  /// No description provided for @pfMemberSince.
+  ///
+  /// In en, this message translates to:
+  /// **'Member since {date}'**
+  String pfMemberSince(String date);
+
+  /// No description provided for @pfLeftOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Left the fund on {date}'**
+  String pfLeftOn(String date);
+
+  /// Heading of the list of provident fund entries.
+  ///
+  /// In en, this message translates to:
+  /// **'Statement'**
+  String get pfEntriesTitle;
+
+  /// No description provided for @pfNoEntries.
+  ///
+  /// In en, this message translates to:
+  /// **'No entries yet.'**
+  String get pfNoEntries;
+
+  /// What moved money in or out of a provident fund account.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind, select, opening{Opening balance} contribution{Contribution} interest{Interest} loan_out{Loan taken} loan_repaid{Loan repaid} withdrawal{Withdrawal} forfeited{Forfeited} other{Entry}}'**
+  String pfEntryKindName(String kind);
+
+  /// A provident fund account: the member's own contributions, or the employer's.
+  ///
+  /// In en, this message translates to:
+  /// **'{account, select, own{Your account} employer{Employer\'s account} other{Account}}'**
+  String pfAccountName(String account);
+
+  /// No description provided for @loansLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load your advances and loans.'**
+  String get loansLoadFailed;
+
+  /// No description provided for @loansEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No advances or loans.'**
+  String get loansEmpty;
+
+  /// No description provided for @loanKindName.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind, select, advance{Salary advance} loan{Loan} pf_loan{Provident fund loan} other{Loan}}'**
+  String loanKindName(String kind);
+
+  /// Where a salary advance or loan stands. Closed means paid back in full.
+  ///
+  /// In en, this message translates to:
+  /// **'{status, select, pending{Pending} active{Active} closed{Closed} rejected{Rejected} cancelled{Cancelled} other{Unknown}}'**
+  String loanStatusName(String status);
+
+  /// The amount advanced or lent.
+  ///
+  /// In en, this message translates to:
+  /// **'Principal'**
+  String get loanPrincipal;
+
+  /// The instalment deducted from each month's salary.
+  ///
+  /// In en, this message translates to:
+  /// **'Per month'**
+  String get loanInstallment;
+
+  /// What is still to be paid back.
+  ///
+  /// In en, this message translates to:
+  /// **'Outstanding'**
+  String get loanOutstanding;
+
+  /// No description provided for @loanRepaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Repaid'**
+  String get loanRepaid;
+
+  /// The month the first instalment is deducted from salary.
+  ///
+  /// In en, this message translates to:
+  /// **'First deduction'**
+  String get loanStartMonth;
+
+  /// Expands to the list of a loan's repayments.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Repayments} other{Repayments ({count})}}'**
+  String loanRepayments(num count);
+
+  /// No description provided for @loanNoRepayments.
+  ///
+  /// In en, this message translates to:
+  /// **'No repayments yet.'**
+  String get loanNoRepayments;
+
+  /// No description provided for @loanFromSalary.
+  ///
+  /// In en, this message translates to:
+  /// **'Deducted from salary'**
+  String get loanFromSalary;
+
+  /// A repayment made directly, not deducted from salary.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid in'**
+  String get loanPaidIn;
 
   /// No description provided for @resignationTitle.
   ///

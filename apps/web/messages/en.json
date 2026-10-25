@@ -70,7 +70,7 @@
       "account": "My account",
       "notificationsLabel": "Notifications ({count} unread)",
       "payroll": "Payroll",
-      "payslips": "Payslips"
+      "payslips": "My pay"
     }
   },
   "platform": {
@@ -1097,7 +1097,19 @@
     "run_not_locked": "Only a locked run's payslips are published.",
     "run_published": "These payslips are already published.",
     "not_adjustable": "Only a locked regular run can be adjusted.",
-    "adjustment_open": "This run already has an adjustment in progress."
+    "adjustment_open": "This run already has an adjustment in progress.",
+    "loan_not_active": "This loan is not being repaid.",
+    "more_than_owed": "That is more than is still owed.",
+    "not_pf_member": "Only provident fund members can borrow from the fund.",
+    "more_than_balance": "That is more than the account holds.",
+    "batch_pending": "Another increment is waiting for approval.",
+    "batch_empty": "Nobody would get this increment.",
+    "declaration_verified": "Payroll has verified this declaration already.",
+    "declaration_not_submitted": "Nothing has been sent to payroll for this year.",
+    "verify_every_item": "Give an accepted amount for every item.",
+    "more_than_declared": "Accept at most what was declared.",
+    "pf_left": "This member has left the fund.",
+    "interest_posted": "Interest is already credited for that date."
   },
   "platformRoles": {
     "super_admin": "Super admin",
@@ -1343,7 +1355,11 @@
       "components": "Components",
       "groups": "Pay groups",
       "wages": "Minimum wages",
-      "settings": "Approvals"
+      "settings": "Settings",
+      "loans": "Loans",
+      "pf": "Provident fund",
+      "tax": "Tax",
+      "increments": "Increments"
     },
     "code": "Code",
     "name": "Name",
@@ -1444,7 +1460,25 @@
       "fewApprovers": "{count, plural, =0 {Nobody can approve pay yet.} one {Only one person can approve pay, so their own changes cannot be approved.} other {}} Give a second login the finance officer or HR admin role.",
       "turnOff": "Turn off (one-person payroll)",
       "turnOn": "Turn on",
-      "offConfirm": "Turn off the second approval? Pay changes will take effect as soon as they are made. The audit log keeps who made each one."
+      "offConfirm": "Turn off the second approval? Pay changes will take effect as soon as they are made. The audit log keeps who made each one.",
+      "saved": "Saved.",
+      "taxFundTitle": "Salary tax and provident fund",
+      "taxTitle": "Salary tax",
+      "autoTax": "Work out each month's income tax in payroll runs (Income Tax Act 2023, s.86)",
+      "pfTitle": "Provident fund",
+      "pfRequired": "{count, plural, one {# permanent worker} other {# permanent workers}}: the Labour Act asks establishments with {threshold} or more to run a provident fund (or join the Progoti pension).",
+      "pfEnabled": "Run a provident fund: members contribute in each run",
+      "pfEmployeeRate": "Member's contribution (% of basic)",
+      "pfEmployerRate": "Employer's contribution (% of basic)",
+      "pfRatesHint": "The Labour Act asks 7–8% of basic from the member and the same from the employer.",
+      "pfRecognised": "Recognised by the tax authority: contributions count as investment for the tax rebate",
+      "vesting": "What a leaver keeps of the employer's contributions",
+      "vestingHint": "By completed years of service. The fund's rules decide this; check them with the trustees.",
+      "afterYears": "After years",
+      "yearsKeep": "years or more: keeps",
+      "percentKept": "Percent kept",
+      "addStep": "Add a step",
+      "saveTaxFund": "Save"
     },
     "pay": {
       "current": "Current pay",
@@ -1479,7 +1513,7 @@
       "now": "Now",
       "proposed": "Proposed",
       "changeBadge": "Pay change",
-      "payslipsLink": "See your payslips"
+      "payslipsLink": "See your pay"
     },
     "runs": {
       "title": "Payroll runs",
@@ -1508,7 +1542,8 @@
       },
       "kinds": {
         "regular": "Regular",
-        "adjustment": "Adjustment"
+        "adjustment": "Adjustment",
+        "bonus": "Festival bonus"
       },
       "published": "Payslips published",
       "errors": "{count, plural, one {# person to fix} other {# people to fix}}",
@@ -1581,7 +1616,10 @@
         "no_attendance": "No attendance recorded in this period.",
         "period_not_over": "The period has not ended yet.",
         "absence_over_limit": "The absence deduction is more than the pay for the days absent (Labour Act s.126).",
-        "pay_starts_late": "Pay starts after the period began; {count, plural, one {# day is} other {# days are}} not paid."
+        "pay_starts_late": "Pay starts after the period began; {count, plural, one {# day is} other {# days are}} not paid.",
+        "tin_missing": "Tax is deducted but there is no TIN on record.",
+        "loan_not_recovered": "Not enough pay left to recover the full installment.",
+        "tax_rules_missing": "The country pack has no salary tax rules for this fiscal year yet."
       },
       "entered": "entered",
       "daysLine": "{period} days in the period · {employed} employed · {worked} worked · {absent} absent · {unpaid} without pay · {ot} h overtime",
@@ -1593,7 +1631,10 @@
       "inputSaved": "Saved. Compute again to include it.",
       "removeInput": "Remove",
       "payslipEn": "Payslip in English",
-      "payslipBn": "Payslip in Bangla"
+      "payslipBn": "Payslip in Bangla",
+      "newBonus": "Festival bonus run",
+      "bonusIntro": "Pays a share of one month's basic to people of the festival's religion who have worked long enough by the cut-off day (Labour Rules 2015, rule 111). It is approved, locked and published like a month.",
+      "taxHow": "How the tax of {amount} was worked out"
     },
     "payslips": {
       "title": "Payslips",
@@ -1604,7 +1645,302 @@
       "open": {
         "en": "English PDF",
         "bn": "Bangla PDF"
+      },
+      "kinds": {
+        "adjustment": "Adjustment",
+        "bonus": "Festival bonus"
       }
+    },
+    "myPay": {
+      "title": "My pay",
+      "tabs": {
+        "payslips": "Payslips",
+        "tax": "Tax",
+        "pf": "Provident fund",
+        "loans": "Loans"
+      }
+    },
+    "loans": {
+      "new": "New advance or loan",
+      "intro": "Approved by a second person, then recovered in monthly installments by payroll runs. A fund loan comes out of the member's own contributions.",
+      "kinds": {
+        "advance": "Salary advance",
+        "loan": "Loan",
+        "pf_loan": "Provident fund loan"
+      },
+      "statuses": {
+        "pending": "Waiting for approval",
+        "active": "Being repaid",
+        "closed": "Repaid",
+        "rejected": "Rejected",
+        "cancelled": "Withdrawn"
+      },
+      "employeeCode": "Employee code",
+      "kind": "Kind",
+      "startMonth": "First installment",
+      "principal": "Amount (৳)",
+      "installment": "Each month (৳)",
+      "reason": "Reason",
+      "create": "Propose",
+      "sentForApproval": "Sent for approval.",
+      "approvedNow": "Approved; it is recovered from the first installment month.",
+      "cancel": "Withdraw",
+      "cancelConfirm": "Withdraw this request?",
+      "repayAmount": "Paid back (৳)",
+      "repayDate": "On",
+      "note": "Note",
+      "repay": "Record a repayment",
+      "perMonth": "{amount} a month",
+      "from": "from {month}",
+      "left": "{amount} left",
+      "requestedBy": "proposed by {name}",
+      "decidedBy": "decided by {name}",
+      "fromRun": "in a payroll run",
+      "paidIn": "paid in",
+      "open": "Open advances and loans",
+      "all": "All advances and loans",
+      "showAll": "Show all",
+      "showOpen": "Show open only",
+      "none": "No advances or loans.",
+      "noneMine": "You have no advances or loans."
+    },
+    "pf": {
+      "title": "Provident fund",
+      "off": "The provident fund is off for this workspace.",
+      "toSettings": "Payroll settings",
+      "rates": "Members contribute {employee}% of basic and the employer {employer}%.",
+      "joinTitle": "Add members",
+      "who": {
+        "codes": "These people",
+        "everyone": "Every permanent employee, once they have a year's service"
+      },
+      "codes": "Employee codes",
+      "codesHint": "Separated by spaces or commas.",
+      "joinedOn": "Members from",
+      "join": "Add to the fund",
+      "joined": "{count, plural, =0 {Nobody new was added.} one {# person was added.} other {# people were added.}}",
+      "interestTitle": "Yearly interest",
+      "interestHint": "The rate the trustees declare, credited on each member's balance on the date. Once per date.",
+      "interestDate": "On",
+      "interestRate": "Rate (%)",
+      "postInterest": "Credit interest",
+      "interestConfirm": "Credit interest to every member?",
+      "interestPosted": "{count, plural, one {Credited to # member.} other {Credited to # members.}}",
+      "members": "{count, plural, =0 {No members} one {# member} other {# members}}",
+      "search": "Name or code",
+      "find": "Find",
+      "none": "No members yet.",
+      "member": "Member",
+      "memberSince": "Since",
+      "payable": "Payable on leaving",
+      "total": "Total",
+      "accounts": {
+        "own": "Own contributions",
+        "employer": "Employer's contributions"
+      },
+      "kinds": {
+        "opening": "Opening balance",
+        "contribution": "Contribution",
+        "interest": "Interest",
+        "loan_out": "Loan taken",
+        "loan_repaid": "Loan repaid",
+        "withdrawal": "Paid out",
+        "forfeited": "Not vested, back to the fund"
+      },
+      "since": "Member since {date}",
+      "left": "left on {date}",
+      "vested": "Includes {percent}% of the employer's share",
+      "entries": "Statement",
+      "noEntries": "Nothing in the fund yet.",
+      "entryTitle": "Opening balance or pay-out",
+      "entryHint": "Bring balances from the old fund, or record money paid out.",
+      "entryKind": "What",
+      "account": "Account",
+      "amount": "Amount (৳)",
+      "date": "Date",
+      "addEntry": "Record",
+      "entrySaved": "Recorded.",
+      "leaveTitle": "Leaving the fund",
+      "leaveHint": "The employer's contributions not yet vested by years of service go back to the fund.",
+      "leftOn": "Left on",
+      "leave": "End membership",
+      "leaveConfirm": "End this membership? Unvested employer contributions are forfeited.",
+      "note": "Note",
+      "notMember": "You are not a member of the provident fund."
+    },
+    "tax": {
+      "saved": "Saved.",
+      "year": "{year}",
+      "yearTitle": "Salary tax {year}",
+      "register": "Download the salary tax register (CSV)",
+      "intro": "Payroll works out each month's tax from the year's projected salary, the investments declared and what was already deducted. Verify declarations once you have seen the proofs.",
+      "waiting": "{count, plural, =0 {Declarations to verify} one {# declaration to verify} other {# declarations to verify}}",
+      "noneWaiting": "Nothing to verify.",
+      "declared": "declared {amount}",
+      "verifiedTitle": "{count, plural, one {# verified} other {# verified}}",
+      "acceptedOf": "{accepted} of {declared}",
+      "statuses": {
+        "draft": "Draft",
+        "submitted": "Waiting for payroll",
+        "verified": "Verified"
+      },
+      "noEmployee": "Your login is not linked to an employee record.",
+      "salarySoFar": "Salary this year",
+      "taxSoFar": "Tax deducted",
+      "tin": "TIN",
+      "latest": "How this month's tax was worked out",
+      "salary": "Salary",
+      "taxColumn": "Tax",
+      "challan": "Challan",
+      "openingRow": "Before this system",
+      "certificate": {
+        "en": "Salary certificate (English)",
+        "bn": "Salary certificate (Bangla)"
+      },
+      "kinds": {
+        "savings_certificate": "Savings certificates",
+        "dps": "DPS",
+        "life_insurance": "Life insurance premium",
+        "provident_fund_other": "Other provident fund",
+        "superannuation": "Superannuation or benevolent fund",
+        "universal_pension": "Universal pension",
+        "listed_shares": "Listed shares",
+        "mutual_fund": "Mutual funds",
+        "zakat": "Zakat",
+        "donation": "Approved donations",
+        "other": "Other"
+      },
+      "profile": {
+        "title": "Tax profile",
+        "disabled": "Has a disability",
+        "freedomFighter": "Gazetted war-wounded freedom fighter or July fighter",
+        "disabledDependants": "Dependants with a disability",
+        "disabledDependantsHint": "Each adds Tk 50,000 to the threshold; only one parent claims.",
+        "areaDefault": "Workspace default"
+      },
+      "saveProfile": "Save profile",
+      "opening": {
+        "title": "Before this system, this year",
+        "hint": "Salary, tax and provident fund paid this fiscal year before the first run here, so the year's tax is right.",
+        "salary": "Salary (৳)",
+        "tax": "Tax deducted (৳)",
+        "pf": "Provident fund (৳)",
+        "save": "Save"
+      },
+      "declaration": {
+        "title": "Investments for the rebate",
+        "intro": "Declared investments lower the tax deducted each month; payroll checks your proofs and the accepted amounts then count instead.",
+        "none": "Nothing declared.",
+        "kind": "Investment",
+        "choose": "Choose…",
+        "amount": "Amount for the year (৳)",
+        "note": "Note",
+        "addRow": "Add another",
+        "hint": "DPS counts up to Tk 1.2 lakh and savings certificates up to Tk 5 lakh a year.",
+        "submit": "Send to payroll",
+        "saveDraft": "Save as draft",
+        "submitted": "Sent to payroll.",
+        "draftSaved": "Saved as a draft.",
+        "verifiedLocked": "Payroll has verified this declaration.",
+        "accepted": "Accepted (৳)",
+        "verify": "Verify",
+        "verifiedNow": "Verified.",
+        "acceptedOf": "{accepted} of {declared}"
+      },
+      "deposit": {
+        "title": "Tax deposited",
+        "deducted": "{amount} from {count, plural, one {# person} other {# people}}",
+        "deposited": "Challan {challan}, {date}: {amount}",
+        "hint": "Record the challan once the run's tax is paid to the government (within two weeks of the month's end).",
+        "notYet": "Not deposited yet.",
+        "challanNo": "Challan number",
+        "depositedOn": "Deposited on",
+        "amount": "Amount (৳)",
+        "save": "Save"
+      },
+      "working": {
+        "salary": "Salary for the year (projected)",
+        "exemption": "Exempt: a third, at most Tk 5 lakh",
+        "taxableIncome": "Taxable income",
+        "threshold": "Tax-free threshold",
+        "grossTax": "Tax on the rest",
+        "rebate": "Investment rebate",
+        "tax": "Tax for the year",
+        "deductedBefore": "Deducted earlier",
+        "thisMonth": "This month ({months, plural, one {the last month} other {1 of # months}})",
+        "minimum": "The minimum tax of {amount} applies.",
+        "investment": "Investments counted: {amount}"
+      }
+    },
+    "increments": {
+      "title": "Increment",
+      "new": "Annual increment",
+      "intro": "A percentage of basic (the RMG wage board's way) or of gross, for many people at once. Preview it, then send it for approval as one batch.",
+      "summary": {
+        "basic": "{percent}% of basic",
+        "gross": "{percent}% of gross"
+      },
+      "people": "{count, plural, one {# person} other {# people}}",
+      "from": "from {date}",
+      "requestedBy": "proposed by {name}",
+      "decidedBy": "decided by {name}",
+      "person": "Person",
+      "basicBefore": "Basic now",
+      "basicAfter": "Basic after",
+      "grossBefore": "Gross now",
+      "grossAfter": "Gross after",
+      "everyone": "Everyone in it",
+      "sentForApproval": "Sent for approval as one batch.",
+      "approvedNow": "Approved; the new pay applies from the date.",
+      "effectiveFrom": "From",
+      "percent": "Percent",
+      "basis": "Of",
+      "bases": {
+        "basic": "Basic",
+        "gross": "Gross"
+      },
+      "group": "Pay group",
+      "allGroups": "All pay groups",
+      "structure": "Structure",
+      "allStructures": "All structures",
+      "minService": "Months of service",
+      "minServiceHint": "By the date; 12 for an annual increment.",
+      "reason": "Reason",
+      "defaultReason": "Annual increment",
+      "preview": "Preview",
+      "create": "Send for approval",
+      "previewTotals": "Gross pay of everyone in it: {before} now, {after} after.",
+      "skipped": "{count, plural, one {# person left out:} other {# people left out:}}",
+      "skipReasons": {
+        "pending_change": "a change is waiting",
+        "later_pay": "pay from a later date",
+        "no_pay": "no pay",
+        "not_eligible": "not long enough"
+      },
+      "cancel": "Withdraw",
+      "cancelConfirm": "Withdraw this batch?",
+      "batches": "Batches",
+      "none": "No increments yet.",
+      "statuses": {
+        "pending": "Waiting for approval",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "cancelled": "Withdrawn"
+      }
+    },
+    "bonus": {
+      "festival": "Festival",
+      "festivalExample": "Eid-ul-Fitr 2027",
+      "festivalBn": "Festival in Bangla",
+      "group": "Pay group",
+      "cutOff": "Cut-off day",
+      "cutOffHint": "Employed on this day; usually the eve of the festival.",
+      "percent": "Percent of basic",
+      "percentHint": "At most one month's basic.",
+      "minService": "Months of service",
+      "religions": "For",
+      "unrecorded": "People with no religion recorded",
+      "create": "Open the bonus run"
     }
   }
 }

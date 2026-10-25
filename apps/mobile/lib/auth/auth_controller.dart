@@ -348,6 +348,33 @@ class AuthController extends Notifier<AuthState> {
     (token) => _api.fetchMyPayslipPdf(token, itemId, language: language),
   );
 
+  Future<TaxYearView> fetchMyTaxYear(String fiscalYear) => _withSession(
+    (token) => _api.fetchMyTaxYear(token, fiscalYear: fiscalYear),
+  );
+
+  Future<TaxDeclaration> saveMyTaxDeclaration(
+    String fiscalYear,
+    TaxDeclarationDraft draft,
+  ) => _withSession(
+    (token) => _api.saveMyTaxDeclaration(token, draft, fiscalYear: fiscalYear),
+  );
+
+  Future<FileDownload> fetchMyTaxCertificate(
+    String fiscalYear,
+    LetterLanguage language,
+  ) => _withSession(
+    (token) => _api.fetchMyTaxCertificate(
+      token,
+      fiscalYear: fiscalYear,
+      language: language,
+    ),
+  );
+
+  Future<PfStatement?> fetchMyProvidentFund() =>
+      _withSession(_api.fetchMyProvidentFund);
+
+  Future<List<LoanView>> fetchMyLoans() => _withSession(_api.fetchMyLoans);
+
   /// Runs [call] with the stored access token.
   ///
   /// On a 401 it calls `/auth/refresh` once and retries with the new access

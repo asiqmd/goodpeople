@@ -871,11 +871,7 @@
   "serviceBookOpen": "Open PDF",
   "payslipsTitle": "Payslips",
   "@payslipsTitle": {
-    "description": "Home card and screen title: the employee's published payslips."
-  },
-  "payslipsSubtitle": "Your pay each month, in English or Bangla",
-  "@payslipsSubtitle": {
-    "description": "Under \"Payslips\" on the home screen."
+    "description": "Tab in My pay: the employee's published payslips."
   },
   "payslipsLoadFailed": "We could not load your payslips.",
   "payslipsEmpty": "No payslips yet. They appear here once payroll publishes them.",
@@ -908,6 +904,299 @@
   "payslipErrorGone": "This payslip is no longer available.",
   "@payslipErrorGone": {
     "description": "The payslip was withdrawn since the list loaded (a 404)."
+  },
+  "myPayTitle": "My pay",
+  "@myPayTitle": {
+    "description": "Home card and screen title: the employee's payslips, salary tax, provident fund and loans."
+  },
+  "myPaySubtitle": "Payslips, tax, provident fund and loans",
+  "@myPaySubtitle": {
+    "description": "Under \"My pay\" on the home screen."
+  },
+  "myPayTabTax": "Tax",
+  "@myPayTabTax": {
+    "description": "Tab in My pay: the employee's salary tax for the income year."
+  },
+  "myPayTabProvidentFund": "Provident fund",
+  "@myPayTabProvidentFund": {
+    "description": "Tab in My pay: the employee's provident fund statement."
+  },
+  "myPayTabLoans": "Loans",
+  "@myPayTabLoans": {
+    "description": "Tab in My pay: the employee's salary advances and loans."
+  },
+  "payrollRunKindBonus": "Bonus",
+  "@payrollRunKindBonus": {
+    "description": "Mark on a month from a festival bonus run."
+  },
+  "taxLoadFailed": "We could not load your tax.",
+  "taxNoEmployeeBody": "Salary tax belongs to an employee record, and your login is not linked to one. If you think it should be, ask your HR team.",
+  "taxYearSoFar": "Year so far",
+  "@taxYearSoFar": {
+    "description": "Heading of the card with salary paid and tax deducted in the income year so far."
+  },
+  "taxSalaryPaid": "Salary paid",
+  "taxDeducted": "Tax deducted",
+  "@taxDeducted": {
+    "description": "Tax deducted at source from the salary."
+  },
+  "taxIncludesOpening": "Includes {salary} salary and {tax} tax from earlier in the year, such as from a previous employer.",
+  "@taxIncludesOpening": {
+    "placeholders": {
+      "salary": {
+        "type": "String",
+        "example": "৳120,000"
+      },
+      "tax": {
+        "type": "String",
+        "example": "৳2,500"
+      }
+    }
+  },
+  "taxForYear": "Tax for the year (estimated)",
+  "@taxForYear": {
+    "description": "The year's tax as the latest payroll run worked it out."
+  },
+  "taxThisMonth": "This month",
+  "@taxThisMonth": {
+    "description": "Tax deducted from this month's salary."
+  },
+  "taxRebate": "Rebate",
+  "@taxRebate": {
+    "description": "Tax rebate earned by declared investments."
+  },
+  "taxThreshold": "Tax-free threshold",
+  "@taxThreshold": {
+    "description": "Income up to which no tax is due for this employee."
+  },
+  "taxMonthsLeft": "Months left",
+  "@taxMonthsLeft": {
+    "description": "This month and the months after it in the income year."
+  },
+  "taxNotWorkedOut": "The year's tax shows here once payroll works it out from your salary.",
+  "taxMonthsTitle": "Month by month",
+  "taxNoMonths": "No salary paid in this year yet.",
+  "taxMonthLine": "Salary {salary} · Tax {tax}",
+  "@taxMonthLine": {
+    "description": "One payroll run of the year: the salary paid and the tax deducted.",
+    "placeholders": {
+      "salary": {
+        "type": "String",
+        "example": "৳25,000"
+      },
+      "tax": {
+        "type": "String",
+        "example": "৳500"
+      }
+    }
+  },
+  "taxChallan": "Challan {number}",
+  "@taxChallan": {
+    "description": "The treasury challan the month's tax was deposited with.",
+    "placeholders": {
+      "number": {
+        "type": "String",
+        "example": "CH-2026-0042"
+      }
+    }
+  },
+  "taxChallanOn": "Challan {number}, deposited {date}",
+  "@taxChallanOn": {
+    "description": "The treasury challan the month's tax was deposited with, and when.",
+    "placeholders": {
+      "number": {
+        "type": "String",
+        "example": "CH-2026-0042"
+      },
+      "date": {
+        "type": "String",
+        "example": "Oct 12, 2026"
+      }
+    }
+  },
+  "taxCertificateTitle": "Salary and tax certificate",
+  "taxCertificateBody": "For your income tax return: your salary this year and the tax deducted from it. It opens as a PDF.",
+  "taxCertificateEnglish": "Certificate (English)",
+  "@taxCertificateEnglish": {
+    "description": "Opens the salary and tax certificate as a PDF printed in English."
+  },
+  "taxCertificateBangla": "Certificate (Bangla)",
+  "@taxCertificateBangla": {
+    "description": "Opens the salary and tax certificate as a PDF printed in Bangla."
+  },
+  "declarationTitle": "Investment declaration",
+  "@declarationTitle": {
+    "description": "The employee's investments and donations for the income year, which earn a tax rebate."
+  },
+  "declarationHint": "Declared investments lower the tax deducted each month; payroll checks your proofs and the accepted amounts then count instead.",
+  "declarationStatusName": "{status, select, draft{Draft} submitted{Submitted} verified{Verified} other{Unknown}}",
+  "@declarationStatusName": {
+    "description": "Where an investment declaration stands.",
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "declarationSubmittedOn": "Submitted on {date}",
+  "@declarationSubmittedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "Oct 12, 2026"
+      }
+    }
+  },
+  "declarationVerifiedOn": "Verified on {date}",
+  "@declarationVerifiedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "Oct 20, 2026"
+      }
+    }
+  },
+  "investmentKindName": "{kind, select, savings_certificate{Savings certificates} dps{DPS} life_insurance{Life insurance premium} provident_fund_other{Other provident fund} superannuation{Superannuation or benevolent fund} universal_pension{Universal pension} listed_shares{Listed shares} mutual_fund{Mutual funds} zakat{Zakat} donation{Approved donations} other{Other}}",
+  "@investmentKindName": {
+    "description": "A kind of investment or donation that earns a tax rebate.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "declarationKind": "Investment",
+  "declarationKindRequired": "Choose what you invested in",
+  "declarationAmount": "Amount (taka)",
+  "declarationAmountInvalid": "Enter an amount like 12500 or 12500.50",
+  "declarationNote": "Note (optional)",
+  "declarationAddRow": "Add investment",
+  "declarationRemoveRow": "Remove",
+  "declarationSaveDraft": "Save draft",
+  "declarationSubmit": "Submit to payroll",
+  "declarationSaved": "Draft saved.",
+  "declarationSent": "Sent to payroll.",
+  "declarationErrorVerified": "Payroll has verified this declaration, so it can no longer be changed.",
+  "declarationErrorInvalid": "Check the amounts and try again.",
+  "@declarationErrorInvalid": {
+    "description": "The API refused the declaration; its problems are listed below."
+  },
+  "declarationTotal": "Declared in all",
+  "declarationDeclared": "Declared",
+  "declarationAccepted": "Accepted",
+  "@declarationAccepted": {
+    "description": "What payroll accepted of a declared investment after checking the proofs."
+  },
+  "declarationEmpty": "No investments declared.",
+  "pfLoadFailed": "We could not load your provident fund.",
+  "pfNotMember": "You are not a member of the provident fund.",
+  "pfTotal": "Total balance",
+  "pfOwn": "Your contributions",
+  "pfEmployer": "Employer's contributions",
+  "pfPayable": "Payable if you left today",
+  "pfVested": "Your contributions and {percent}% of the employer's share",
+  "@pfVested": {
+    "description": "How the amount payable on leaving is made up.",
+    "placeholders": {
+      "percent": {
+        "type": "String",
+        "example": "50"
+      }
+    }
+  },
+  "pfMemberSince": "Member since {date}",
+  "@pfMemberSince": {
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "March 1, 2021"
+      }
+    }
+  },
+  "pfLeftOn": "Left the fund on {date}",
+  "@pfLeftOn": {
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "June 30, 2026"
+      }
+    }
+  },
+  "pfEntriesTitle": "Statement",
+  "@pfEntriesTitle": {
+    "description": "Heading of the list of provident fund entries."
+  },
+  "pfNoEntries": "No entries yet.",
+  "pfEntryKindName": "{kind, select, opening{Opening balance} contribution{Contribution} interest{Interest} loan_out{Loan taken} loan_repaid{Loan repaid} withdrawal{Withdrawal} forfeited{Forfeited} other{Entry}}",
+  "@pfEntryKindName": {
+    "description": "What moved money in or out of a provident fund account.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "pfAccountName": "{account, select, own{Your account} employer{Employer's account} other{Account}}",
+  "@pfAccountName": {
+    "description": "A provident fund account: the member's own contributions, or the employer's.",
+    "placeholders": {
+      "account": {
+        "type": "String"
+      }
+    }
+  },
+  "loansLoadFailed": "We could not load your advances and loans.",
+  "loansEmpty": "No advances or loans.",
+  "loanKindName": "{kind, select, advance{Salary advance} loan{Loan} pf_loan{Provident fund loan} other{Loan}}",
+  "@loanKindName": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "loanStatusName": "{status, select, pending{Pending} active{Active} closed{Closed} rejected{Rejected} cancelled{Cancelled} other{Unknown}}",
+  "@loanStatusName": {
+    "description": "Where a salary advance or loan stands. Closed means paid back in full.",
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "loanPrincipal": "Principal",
+  "@loanPrincipal": {
+    "description": "The amount advanced or lent."
+  },
+  "loanInstallment": "Per month",
+  "@loanInstallment": {
+    "description": "The instalment deducted from each month's salary."
+  },
+  "loanOutstanding": "Outstanding",
+  "@loanOutstanding": {
+    "description": "What is still to be paid back."
+  },
+  "loanRepaid": "Repaid",
+  "loanStartMonth": "First deduction",
+  "@loanStartMonth": {
+    "description": "The month the first instalment is deducted from salary."
+  },
+  "loanRepayments": "{count, plural, =0{Repayments} other{Repayments ({count})}}",
+  "@loanRepayments": {
+    "description": "Expands to the list of a loan's repayments.",
+    "placeholders": {
+      "count": {
+        "type": "num",
+        "format": "decimalPattern",
+        "example": "3"
+      }
+    }
+  },
+  "loanNoRepayments": "No repayments yet.",
+  "loanFromSalary": "Deducted from salary",
+  "loanPaidIn": "Paid in",
+  "@loanPaidIn": {
+    "description": "A repayment made directly, not deducted from salary."
   },
   "resignationTitle": "Resignation",
   "resignationEntrySubtitle": "Give notice, or follow your resignation",

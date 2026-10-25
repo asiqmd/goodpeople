@@ -13,6 +13,7 @@ part 'approval_models.dart';
 part 'attendance_models.dart';
 part 'leave_models.dart';
 part 'lifecycle_models.dart';
+part 'payroll_benefit_models.dart';
 part 'payroll_models.dart';
 
 typedef Json = Map<String, Object?>;

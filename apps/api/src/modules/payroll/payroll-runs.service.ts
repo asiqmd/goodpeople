@@ -25,6 +25,7 @@ import {
   addDays,
   DEFAULT_WEEKLY_OFF_DAYS,
   Decimal,
+  fiscalYearOf,
   formatAddress,
   groupBy,
   monthBounds,
@@ -33,6 +34,8 @@ import {
   weekdayOf,
   type AdjustmentCreateInput,
   type ApprovalItem,
+  type BonusRule,
+  type BonusRunInput,
   type PayLineView,
   type PayrollRunItemPage,
   type PayrollRunItemView,
@@ -41,6 +44,8 @@ import {
   type RunCreateInput,
   type RunInputInput,
   type RunItemsQuery,
+  type RunProblemCode,
+  type RunTaxWorking,
   type RunTotals,
   type RunVariables,
   type TenantWithAccess,
@@ -80,6 +85,7 @@ import { PdfService } from '../letters/pdf.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { componentsOf, payrollSettingsOf } from './payroll-setup.service.js';
 import {
+  computeBonus,
   computePay,
   difference,
   employment,
@@ -87,10 +93,11 @@ import {
   type EngineResult,
 } from './run-engine.js';
 import { amountText, payslipHtml, periodName } from './payslip.js';
+import { loansFor, pfRatesFor, postLockedRun, taxContextsFor } from './run-context.js';
 
 type RunRow = typeof payrollRuns.$inferSelect;
 
-/** What a run item keeps, encrypted. */
+/** What a run item keeps, encrypted. Items from before M3 have no taxable, tax or loans. */
 interface ItemResult {
   lines: PayLineView[];
   earnings: string;
@@ -98,6 +105,9 @@ interface ItemResult {
   net: string;
   employerCost: string;
   variables: RunVariables;
+  taxable?: string;
+  tax?: RunTaxWorking | null;
+  loans?: { loanId: string; amount: string }[];
 }
 
 /** A person's net moving this much since last month is flagged for review. */
@@ -110,6 +120,32 @@ const decider = alias(tenantUsers, 'decider');
 
 const sumLines = (lines: PayLineView[], kind: PayLineView['kind']) =>
   lines.filter((l) => l.kind === kind).reduce((s, l) => s.plus(l.amount), new Decimal(0));
+
+/** Kept at what was paid when an adjustment works a period out again. */
+const CARRIED = new Set(['TAX', 'ADVANCE', 'LOAN', 'PF_LOAN']);
+
+/** A person the run cannot pay until something is fixed. */
+const failed = (code: RunProblemCode, message: string): EngineResult => ({
+  status: 'error',
+  problems: [{ code, severity: 'error', message }],
+  lines: [],
+  earnings: '0.00',
+  deductions: '0.00',
+  net: '0.00',
+  employerCost: '0.00',
+  variables: {
+    periodDays: 0,
+    employedDays: 0,
+    paidDays: 0,
+    workedDays: 0,
+    absentDays: 0,
+    unpaidLeaveDays: 0,
+    otHours: 0,
+  },
+  taxable: '0.00',
+  tax: null,
+  loans: [],
+});
 
 /**
  * Payroll runs. A run is created for a pay group and month, computed (and recomputed) from
@@ -207,6 +243,8 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
           status: item.status,
           problems: item.problems,
           ...result,
+          taxable: result.taxable ?? '0.00',
+          tax: result.tax ?? null,
           inputs: Object.fromEntries(
             (inputs.get(employee.id) ?? []).map((i) => [i.component, money(i.amount)]),
           ),
@@ -291,7 +329,9 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
       const results =
         run.kind === 'regular'
           ? await this.computeRegular(tx, run, tenant)
-          : await this.computeAdjustment(tx, run, tenant);
+          : run.kind === 'bonus'
+            ? await this.computeBonusRun(tx, run)
+            : await this.computeAdjustment(tx, run, tenant);
       await this.store(tx, run, results);
       await this.audit.record(tx, {
         actorUserId: actor.id,
@@ -312,6 +352,9 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
         id: employees.id,
         joinedOn: employees.joinedOn,
         separatedOn: employees.separatedOn,
+        gender: employees.gender,
+        dateOfBirth: employees.dateOfBirth,
+        hasTin: sql<boolean>`${employees.tinEnc} is not null`,
       })
       .from(employees)
       .where(
@@ -337,8 +380,22 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
     const inputs = await this.inputsOf(tx, run.id);
     const components = await componentsOf(tx);
     const previous = await this.previousNets(tx, run);
+    const settings = await payrollSettingsOf(tx);
+    const pf = await pfRatesFor(tx, settings, ids, { start: run.periodStart, end: run.periodEnd });
+    const loans = await loansFor(tx, this.cipher, ids, run.periodStart.slice(0, 7));
+    const tax = await taxContextsFor(tx, this.cipher, settings, run, members, components);
 
     return members.map((m) => {
+      if (tax === 'missing') {
+        return {
+          employeeId: m.id,
+          result: failed(
+            'tax_rules_missing',
+            `No salary tax rules for ${fiscalYearOf(run.periodEnd)} yet`,
+          ),
+          flagged: false,
+        };
+      }
       const result = computePay({
         periodStart: run.periodStart,
         periodEnd: run.periodEnd,
@@ -351,6 +408,9 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
         trackingFrom: attendance?.trackingFrom,
         inputs: Object.fromEntries((inputs.get(m.id) ?? []).map((i) => [i.component, i.amount])),
         components,
+        pf: pf.get(m.id) ?? null,
+        loans: loans.get(m.id) ?? [],
+        tax: tax?.get(m.id) ?? null,
       });
       const prev = previous.nets.get(m.id);
       const flagged =
@@ -414,6 +474,11 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
         });
       }
     }
+    const settings = await payrollSettingsOf(tx);
+    const pf = await pfRatesFor(tx, settings, scope, {
+      start: run.periodStart,
+      end: run.periodEnd,
+    });
     const paidLines = new Map<string, PayLineView[]>();
     for (const item of paidItems) {
       const result = this.decrypt<ItemResult>(item.resultEnc, CIPHER_FIELDS.runResults);
@@ -429,6 +494,13 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
     }
 
     return people.flatMap((p) => {
+      // Tax and loan recoveries stay as paid: the next month's tax picks up the arrears, and
+      // loans are repaid on their own schedule.
+      const carried = Object.fromEntries(
+        (paidLines.get(p.id) ?? [])
+          .filter((l) => CARRIED.has(l.code))
+          .map((l) => [l.code, l.amount]),
+      );
       const now = computePay({
         periodStart: run.periodStart,
         periodEnd: run.periodEnd,
@@ -439,8 +511,9 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
         records: (pay.get(p.id) ?? []).map((r) => r.engine),
         attendance: attendance ? (attendance.days.get(p.id) ?? []) : null,
         trackingFrom: attendance?.trackingFrom,
-        inputs: entered.get(p.id) ?? {},
+        inputs: { ...carried, ...entered.get(p.id) },
         components,
+        pf: pf.get(p.id) ?? null,
       });
       if (now.status === 'error') return [{ employeeId: p.id, result: now, flagged: false }];
       const lines = difference(paidLines.get(p.id) ?? [], now.lines);
@@ -483,6 +556,9 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
               net: result.net,
               employerCost: result.employerCost,
               variables: result.variables,
+              taxable: result.taxable,
+              tax: result.tax,
+              loans: result.loans,
             } satisfies ItemResult,
             CIPHER_FIELDS.runResults,
           ),
@@ -677,10 +753,12 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
         event: 'payslip.published',
         recipients: items.map((i) => ({ employeeId: i.employeeId })),
         values: {
-          'period.name': {
-            en: periodName('en', run.periodStart, run.periodEnd),
-            bn: periodName('bn', run.periodStart, run.periodEnd),
-          },
+          'period.name': run.bonus
+            ? { en: run.bonus.festival, bn: run.bonus.festivalBn ?? run.bonus.festival }
+            : {
+                en: periodName('en', run.periodStart, run.periodEnd),
+                bn: periodName('bn', run.periodStart, run.periodEnd),
+              },
         },
         perRecipient: nets,
         link: '/workspace/payslips',
@@ -696,6 +774,81 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
       });
     });
     return this.view(id);
+  }
+
+  /**
+   * A festival bonus run for a pay group: people of the festival's religions employed on the
+   * cut-off day with enough service, each paid a share of their basic. Approved, locked and
+   * published like a month.
+   */
+  async createBonus(actor: AuthUser, input: BonusRunInput): Promise<PayrollRunView> {
+    const id = await this.tenantDb.run(async (tx) => {
+      const [group] = await tx.select().from(payGroups).where(eq(payGroups.id, input.payGroupId));
+      if (!group?.isActive)
+        throw badRequest('pay_group_inactive', 'Choose a pay group that is in use');
+      const rule: BonusRule = {
+        festival: input.festival,
+        festivalBn: input.festivalBn ?? null,
+        religions: input.religions,
+        unrecorded: input.unrecorded,
+        cutOff: input.cutOff,
+        percentOfBasic: input.percentOfBasic,
+        minServiceMonths: input.minServiceMonths,
+      };
+      const [row] = await tx
+        .insert(payrollRuns)
+        .values({
+          tenantId: currentTenantId(),
+          payGroupId: group.id,
+          kind: 'bonus',
+          bonus: rule,
+          periodStart: input.cutOff,
+          periodEnd: input.cutOff,
+          // Paid before the festival, so the cut-off is also the latest day to pay.
+          paymentDue: input.cutOff,
+          paymentDate: input.paymentDate ?? input.cutOff,
+          createdBy: actor.id,
+        })
+        .returning();
+      await this.audit.record(tx, {
+        actorUserId: actor.id,
+        action: 'payroll.run.bonus',
+        entityType: 'payroll_run',
+        entityId: row!.id,
+        after: { payGroup: group.code, ...rule },
+      });
+      return row!.id;
+    });
+    return this.view(id);
+  }
+
+  private async computeBonusRun(tx: Tx, run: RunRow) {
+    const rule = run.bonus!;
+    const people = await tx
+      .select()
+      .from(employees)
+      .where(
+        and(
+          lte(employees.joinedOn, rule.cutOff),
+          or(isNull(employees.separatedOn), sql`${employees.separatedOn} >= ${rule.cutOff}`),
+        ),
+      );
+    const pay = await this.approvedPay(tx, rule.cutOff);
+    const components = await componentsOf(tx);
+    return people.flatMap((p) => {
+      const religionOk = p.religion ? rule.religions.includes(p.religion) : rule.unrecorded;
+      const record = pay.get(p.id)?.at(-1);
+      if (!religionOk || !record || record.payGroupId !== run.payGroupId) return [];
+      const result = computeBonus({
+        record: record.engine,
+        joinedOn: p.joinedOn,
+        cutOff: rule.cutOff,
+        percentOfBasic: rule.percentOfBasic,
+        minServiceMonths: rule.minServiceMonths,
+        components,
+      });
+      return result && result.lines.length ? [{ employeeId: p.id, result, flagged: false }] : [];
+    });
   }
 
   /** Starts a correction of a locked run, for some people or everyone in it. */
@@ -769,6 +922,8 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
         itemId: item.id,
         runId: run.id,
         kind: run.kind,
+        festival: run.bonus?.festival ?? null,
+        festivalBn: run.bonus?.festivalBn ?? null,
         periodStart: run.periodStart,
         periodEnd: run.periodEnd,
         paymentDate: run.paymentDate,
@@ -808,6 +963,11 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
       return payslipHtml({
         language,
         kind: row.run.kind,
+        festival: row.run.bonus
+          ? language === 'bn'
+            ? (row.run.bonus.festivalBn ?? row.run.bonus.festival)
+            : row.run.bonus.festival
+          : null,
         company: {
           name: job?.entity?.legalName ?? job?.entity?.name ?? '',
           details: [
@@ -872,6 +1032,8 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
             { status: 'computed', decidedBy: actorUserId },
       )
       .where(eq(payrollRuns.id, subjectId));
+    // Locked: contributions reach the provident fund and repayments the loans.
+    if (outcome === 'approved') await postLockedRun(tx, this.cipher, subjectId, actorUserId);
   }
 
   async inboxItems(tx: Tx, steps: ApprovalStepRow[]) {
@@ -957,6 +1119,7 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
       id: run.id,
       kind: run.kind,
       parentRunId: run.parentRunId,
+      bonus: run.bonus,
       payGroup: group,
       periodStart: run.periodStart,
       periodEnd: run.periodEnd,
@@ -1078,6 +1241,7 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
           date: attendanceDays.date,
           status: attendanceDays.status,
           overtimeMinutes: attendanceDays.overtimeMinutes,
+          lateMinutes: attendanceDays.lateMinutes,
           leaveDays: attendanceDays.leaveDays,
           paid: leaveTypes.paid,
         })
@@ -1099,6 +1263,7 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
             overtimeMinutes: d.overtimeMinutes,
             leaveDays: d.leaveDays,
             unpaidLeave: d.paid === false,
+            late: d.lateMinutes > 0,
           })),
         );
       }

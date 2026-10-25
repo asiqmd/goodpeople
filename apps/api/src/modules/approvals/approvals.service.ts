@@ -16,6 +16,8 @@ import { employeeOfUser } from '../employees/employee.queries.js';
 import { LeaveRequestsService } from '../leave/leave-requests.service.js';
 import { SeparationsService } from '../lifecycle/separations.service.js';
 import { EmployeePayService } from '../payroll/employee-pay.service.js';
+import { LoansService } from '../payroll/loans.service.js';
+import { PayBatchesService } from '../payroll/pay-batches.service.js';
 import { PayrollRunsService } from '../payroll/payroll-runs.service.js';
 import { forbidden } from '../../common/errors.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
@@ -41,6 +43,8 @@ export class ApprovalsService {
     separations: SeparationsService,
     pay: EmployeePayService,
     runs: PayrollRunsService,
+    loans: LoansService,
+    batches: PayBatchesService,
   ) {
     this.handlers = {
       leave_request: leave,
@@ -48,6 +52,8 @@ export class ApprovalsService {
       separation: separations,
       compensation: pay,
       payroll_run: runs,
+      loan: loans,
+      pay_batch: batches,
     };
   }
 

@@ -7,3 +7,4 @@ export * from './bd/lifecycle.js';
 export * from './bd/letters.js';
 export * from './bd/payroll.js';
 export * from './bd/words.js';
+export * from './bd/tax.js';

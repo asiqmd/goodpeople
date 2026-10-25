@@ -12,7 +12,8 @@ import 'package:good_people/home/home_screen.dart';
 import 'package:good_people/leave/leave_providers.dart';
 import 'package:good_people/notifications/inbox_screen.dart';
 import 'package:good_people/notifications/push_service.dart';
-import 'package:good_people/payslips/payslips_screen.dart';
+import 'package:good_people/payslips/my_pay_screen.dart';
+import 'package:good_people/payslips/payslips_tab.dart';
 import 'package:good_people/settings/locale_controller.dart';
 
 import 'support/fake_api.dart';
@@ -24,7 +25,7 @@ void main() {
 
   /// Signs in through the fake API with "today" fixed at [leaveToday] and
   /// [opener] as the phone's viewer, shows the app in [locale] and, if
-  /// [open], opens Payslips from the home screen. The screen is
+  /// [open], opens My pay (on Payslips) from the home screen. The screen is
   /// phone-width, so overflow fails the test.
   Future<ProviderContainer> pumpPayslips(
     WidgetTester tester,
@@ -62,9 +63,9 @@ void main() {
     );
     await tester.pumpAndSettle();
     if (open) {
-      await tester.ensureVisible(find.byKey(HomeScreen.payslipsKey));
+      await tester.ensureVisible(find.byKey(HomeScreen.myPayKey));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(HomeScreen.payslipsKey));
+      await tester.tap(find.byKey(HomeScreen.myPayKey));
       await tester.pumpAndSettle();
     }
     return container;
@@ -76,7 +77,7 @@ void main() {
   void expectIn(String id, List<String> texts) {
     for (final text in texts) {
       expect(
-        within(PayslipsScreen.payslipKey(id), find.text(text)),
+        within(PayslipsTab.payslipKey(id), find.text(text)),
         findsOneWidget,
         reason: '$id: $text',
       );
@@ -88,41 +89,39 @@ void main() {
     String id,
     LetterLanguage language,
   ) async {
-    final finder = find.byKey(PayslipsScreen.openKey(id, language));
+    final finder = find.byKey(PayslipsTab.openKey(id, language));
     await tester.ensureVisible(finder);
     await tester.pumpAndSettle();
     await tester.tap(finder);
     await tester.pumpAndSettle();
   }
 
-  testWidgets('a Payslips card on home opens the payslips', (tester) async {
+  testWidgets('a My pay card on home opens the payslips', (tester) async {
     final api = FakeGoodPeopleApi();
     await pumpPayslips(tester, api, open: false);
 
-    expect(
-      within(HomeScreen.payslipsKey, find.text('Payslips')),
-      findsOneWidget,
-    );
+    expect(within(HomeScreen.myPayKey, find.text('My pay')), findsOneWidget);
     expect(
       within(
-        HomeScreen.payslipsKey,
-        find.text('Your pay each month, in English or Bangla'),
+        HomeScreen.myPayKey,
+        find.text('Payslips, tax, provident fund and loans'),
       ),
       findsOneWidget,
     );
     expect(api.payslipsCalls, 0);
 
-    await tester.ensureVisible(find.byKey(HomeScreen.payslipsKey));
+    await tester.ensureVisible(find.byKey(HomeScreen.myPayKey));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(HomeScreen.payslipsKey));
+    await tester.tap(find.byKey(HomeScreen.myPayKey));
     await tester.pumpAndSettle();
 
-    expect(find.byType(PayslipsScreen), findsOneWidget);
-    expect(find.widgetWithText(AppBar, 'Payslips'), findsOneWidget);
+    expect(find.byType(MyPayScreen), findsOneWidget);
+    expect(find.widgetWithText(AppBar, 'My pay'), findsOneWidget);
+    expect(find.byType(PayslipsTab), findsOneWidget);
     expect(api.payslipsCalls, 1);
   });
 
-  testWidgets('without the payroll feature there is no Payslips card', (
+  testWidgets('without the payroll feature there is no My pay card', (
     tester,
   ) async {
     final api = FakeGoodPeopleApi()
@@ -132,8 +131,8 @@ void main() {
     await pumpPayslips(tester, api, open: false);
 
     expect(find.byKey(HomeScreen.documentsKey), findsOneWidget);
-    expect(find.byKey(HomeScreen.payslipsKey), findsNothing);
-    expect(find.text('Payslips'), findsNothing);
+    expect(find.byKey(HomeScreen.myPayKey), findsNothing);
+    expect(find.text('My pay'), findsNothing);
     expect(api.payslipsCalls, 0);
   });
 
@@ -155,9 +154,9 @@ void main() {
         .map((widget) => widget.key)
         .toList();
     expect(cards, [
-      PayslipsScreen.payslipKey(septemberAdjustmentId),
-      PayslipsScreen.payslipKey(septemberPayslipId),
-      PayslipsScreen.payslipKey(augustPayslipId),
+      PayslipsTab.payslipKey(septemberAdjustmentId),
+      PayslipsTab.payslipKey(septemberPayslipId),
+      PayslipsTab.payslipKey(augustPayslipId),
     ]);
 
     expectIn(septemberPayslipId, [
@@ -169,7 +168,7 @@ void main() {
       'Open in Bangla',
     ]);
     expect(
-      find.byKey(PayslipsScreen.adjustmentKey(septemberPayslipId)),
+      find.byKey(PayslipsTab.adjustmentKey(septemberPayslipId)),
       findsNothing,
     );
 
@@ -180,7 +179,7 @@ void main() {
     ]);
     expect(
       within(
-        PayslipsScreen.adjustmentKey(septemberAdjustmentId),
+        PayslipsTab.adjustmentKey(septemberAdjustmentId),
         find.text('Adjustment'),
       ),
       findsOneWidget,
@@ -202,9 +201,7 @@ void main() {
     // In English, English is the filled button.
     expect(
       tester.widget(
-        find.byKey(
-          PayslipsScreen.openKey(septemberPayslipId, LetterLanguage.en),
-        ),
+        find.byKey(PayslipsTab.openKey(septemberPayslipId, LetterLanguage.en)),
       ),
       isA<FilledButton>(),
     );
@@ -232,7 +229,14 @@ void main() {
     final api = FakeGoodPeopleApi();
     await pumpPayslips(tester, api, locale: const Locale('bn'));
 
-    expect(find.widgetWithText(AppBar, 'বেতন বিবরণী'), findsOneWidget);
+    expect(find.widgetWithText(AppBar, 'আমার বেতন'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(MyPayScreen.tabKey(MyPayTab.payslips)),
+        matching: find.text('বেতন বিবরণী'),
+      ),
+      findsOneWidget,
+    );
     expectIn(septemberPayslipId, [
       'সেপ্টেম্বর ২০২৬',
       'নিট বেতন',
@@ -244,9 +248,7 @@ void main() {
     expectIn(septemberAdjustmentId, ['৳১,২৫০.৫০', 'সমন্বয়']);
     expect(
       tester.widget(
-        find.byKey(
-          PayslipsScreen.openKey(septemberPayslipId, LetterLanguage.bn),
-        ),
+        find.byKey(PayslipsTab.openKey(septemberPayslipId, LetterLanguage.bn)),
       ),
       isA<FilledButton>(),
     );
@@ -294,7 +296,7 @@ void main() {
 
     expect(api.payslipsCalls, 2);
     expect(
-      find.byKey(PayslipsScreen.payslipKey(septemberPayslipId)),
+      find.byKey(PayslipsTab.payslipKey(septemberPayslipId)),
       findsOneWidget,
     );
   });
@@ -331,13 +333,15 @@ void main() {
     expect(find.text('This payslip is no longer available.'), findsOneWidget);
     expect(api.payslipsCalls, 2);
     expect(
-      find.byKey(PayslipsScreen.payslipKey(septemberAdjustmentId)),
+      find.byKey(PayslipsTab.payslipKey(septemberAdjustmentId)),
       findsNothing,
     );
     expect(opener.opened, isEmpty);
   });
 
-  testWidgets('a payslip notification opens the payslips', (tester) async {
+  testWidgets('a payslip notification opens My pay on the payslips', (
+    tester,
+  ) async {
     const notificationId = 'f0000000-0000-4000-8000-000000000010';
     final api = FakeGoodPeopleApi()
       ..inbox = inboxJson([
@@ -359,14 +363,19 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(InboxScreen.itemKey(notificationId)));
     await tester.pumpAndSettle();
-    expect(find.byType(PayslipsScreen), findsOneWidget);
+    expect(find.byType(MyPayScreen), findsOneWidget);
+    expect(find.byType(PayslipsTab), findsOneWidget);
+    expect(
+      find.byKey(PayslipsTab.payslipKey(septemberPayslipId)),
+      findsOneWidget,
+    );
     expect(api.readNotificationIds, [notificationId]);
 
     await tester.pageBack();
     await tester.pumpAndSettle();
     await tester.pageBack();
     await tester.pumpAndSettle();
-    expect(find.byType(PayslipsScreen), findsNothing);
+    expect(find.byType(MyPayScreen), findsNothing);
 
     // From a tapped push.
     push.opened.add(
@@ -377,6 +386,7 @@ void main() {
       }),
     );
     await tester.pumpAndSettle();
-    expect(find.byType(PayslipsScreen), findsOneWidget);
+    expect(find.byType(MyPayScreen), findsOneWidget);
+    expect(find.byType(PayslipsTab), findsOneWidget);
   });
 }

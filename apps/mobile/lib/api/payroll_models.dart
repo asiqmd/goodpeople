@@ -6,10 +6,12 @@ part of 'api_models.dart';
 // with code `feature_not_in_plan`. Calendar dates are UTC midnight, as
 // everywhere else.
 
-/// A payroll run for a month, or an adjustment run that corrects one.
+/// A payroll run for a month, an adjustment run that corrects one, or a
+/// festival bonus run.
 enum PayrollRunKind implements WireValue {
   regular('regular'),
   adjustment('adjustment'),
+  bonus('bonus'),
   unknown('unknown');
 
   const PayrollRunKind(this.wire);
