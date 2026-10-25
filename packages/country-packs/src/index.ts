@@ -9,3 +9,4 @@ export * from './bd/payroll.js';
 export * from './bd/words.js';
 export * from './bd/tax.js';
 export * from './bd/settlement.js';
+export * from './bd/vat.js';

@@ -30,6 +30,8 @@ export const PERMISSIONS = [
   'payroll.approve',
   /** Workspace logins, their roles and security. */
   'users.manage',
+  /** The workspace's plan, invoices and payments to Good People. */
+  'billing.manage',
   'audit.read',
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
@@ -38,7 +40,7 @@ const ALL = [...PERMISSIONS];
 
 export const ROLE_PERMISSIONS: Record<TenantRole, readonly Permission[]> = {
   tenant_admin: ALL,
-  hr_admin: ALL.filter((p) => p !== 'users.manage'),
+  hr_admin: ALL.filter((p) => p !== 'users.manage' && p !== 'billing.manage'),
   hr_officer: [
     'employees.read',
     'employees.write',
@@ -52,7 +54,13 @@ export const ROLE_PERMISSIONS: Record<TenantRole, readonly Permission[]> = {
   ],
   attendance_officer: ['employees.read', 'attendance.manage'],
   payroll_officer: ['employees.read', 'payroll.view', 'payroll.manage'],
-  finance_officer: ['employees.read', 'payroll.view', 'payroll.approve', 'audit.read'],
+  finance_officer: [
+    'employees.read',
+    'payroll.view',
+    'payroll.approve',
+    'audit.read',
+    'billing.manage',
+  ],
   auditor: ['employees.read', 'audit.read'],
   employee: [],
 };

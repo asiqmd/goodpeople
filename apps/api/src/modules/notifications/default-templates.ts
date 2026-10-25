@@ -100,6 +100,54 @@ export const DEFAULT_TEMPLATES: Record<NotificationEvent, Record<UserLanguage, T
       sms: 'Good People: {{period.name}}-এর নিট বেতন {{pay.net}} প্রস্তুত। বিস্তারিত অ্যাপে।',
     },
   },
+  'billing.invoice_issued': {
+    en: {
+      title: 'Invoice {{invoice.number}} for {{invoice.period}}',
+      body: 'Good People invoice {{invoice.number}} for {{invoice.total}} is due by {{invoice.due}}. Open Billing to download it or pay.',
+      sms: 'Good People: invoice {{invoice.number}} for {{invoice.total}} is due by {{invoice.due}}.',
+    },
+    bn: {
+      title: '{{invoice.period}}-এর চালান {{invoice.number}}',
+      body: 'Good People-এর চালান {{invoice.number}}, মোট {{invoice.total}}, {{invoice.due}}-এর মধ্যে পরিশোধযোগ্য। ডাউনলোড বা পরিশোধ করতে বিলিং খুলুন।',
+      sms: 'Good People: চালান {{invoice.number}}, মোট {{invoice.total}}, {{invoice.due}}-এর মধ্যে পরিশোধযোগ্য।',
+    },
+  },
+  'billing.payment_received': {
+    en: {
+      title: 'Payment received for {{invoice.number}}',
+      body: 'We received {{payment.amount}} by {{payment.method}} for invoice {{invoice.number}}. Thank you.',
+      sms: 'Good People: {{payment.amount}} received for invoice {{invoice.number}}. Thank you.',
+    },
+    bn: {
+      title: '{{invoice.number}}-এর পরিশোধ পাওয়া গেছে',
+      body: 'চালান {{invoice.number}}-এর জন্য {{payment.method}}-এ {{payment.amount}} পাওয়া গেছে। ধন্যবাদ।',
+      sms: 'Good People: চালান {{invoice.number}}-এর {{payment.amount}} পাওয়া গেছে। ধন্যবাদ।',
+    },
+  },
+  'billing.payment_due': {
+    en: {
+      title: '{{due.headline}}',
+      body: 'Invoice {{invoice.number}} has {{invoice.balance}} still to pay. {{due.detail}} Open Billing to pay by card, bKash or bank transfer.',
+      sms: 'Good People: invoice {{invoice.number}}, {{invoice.balance}} to pay. {{due.detail}}',
+    },
+    bn: {
+      title: '{{due.headline}}',
+      body: 'চালান {{invoice.number}}-এ আরও {{invoice.balance}} পরিশোধ বাকি। {{due.detail}} কার্ড, বিকাশ বা ব্যাংক ট্রান্সফারে পরিশোধ করতে বিলিং খুলুন।',
+      sms: 'Good People: চালান {{invoice.number}}, বাকি {{invoice.balance}}। {{due.detail}}',
+    },
+  },
+  'trial.ending': {
+    en: {
+      title: '{{trial.headline}}',
+      body: 'Your free trial of Good People {{trial.when}}. Choose a plan in Billing to keep working; nothing you entered is lost either way.',
+      sms: 'Good People: your free trial {{trial.when}}. Choose a plan in Billing to keep working.',
+    },
+    bn: {
+      title: '{{trial.headline}}',
+      body: 'Good People-এর বিনামূল্যে ট্রায়াল {{trial.when}}। কাজ চালিয়ে যেতে বিলিং-এ প্ল্যান বেছে নিন; যেভাবেই হোক আপনার তথ্য হারাবে না।',
+      sms: 'Good People: আপনার ট্রায়াল {{trial.when}}। কাজ চালিয়ে যেতে বিলিং-এ প্ল্যান বেছে নিন।',
+    },
+  },
   'auth.otp': {
     en: {
       title: 'Your sign-in code',
@@ -123,5 +171,9 @@ export const TEMPLATE_PLACEHOLDERS: Record<NotificationEvent, string[]> = {
   'letter.issued': ['letter.title'],
   'attendance.missing_punch': ['day.date'],
   'payslip.published': ['period.name', 'pay.net'],
+  'billing.invoice_issued': ['invoice.number', 'invoice.period', 'invoice.total', 'invoice.due'],
+  'billing.payment_received': ['invoice.number', 'payment.amount', 'payment.method'],
+  'billing.payment_due': ['invoice.number', 'invoice.balance', 'due.headline', 'due.detail'],
+  'trial.ending': ['trial.headline', 'trial.when'],
   'auth.otp': ['otp.code', 'otp.minutes', 'workspace.name'],
 };

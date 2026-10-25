@@ -9,7 +9,18 @@ import {
   type FeatureKey,
   type Limits,
 } from '@gp/shared';
-import { index, integer, jsonb, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import {
+  date,
+  index,
+  integer,
+  jsonb,
+  numeric,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from 'drizzle-orm/pg-core';
 
 // Platform tables hold no tenant data and have no row-level security.
 // Only the platform-admin, auth and entitlements modules read them.
@@ -49,6 +60,18 @@ export const platformUsers = pgTable('platform_users', {
   createdAt: createdAt(),
 });
 
+/** A reseller who brings and looks after workspaces, billed for them in one invoice a month. */
+export const partners = pgTable('partners', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  email: text('email').notNull(),
+  address: text('address').notNull(),
+  bin: text('bin'),
+  /** Off our price for their workspaces. */
+  discountPercent: numeric('discount_percent', { precision: 5, scale: 2 }).notNull().default('0'),
+  createdAt: createdAt(),
+});
+
 export const tenants = pgTable('tenants', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
@@ -65,6 +88,8 @@ export const tenants = pgTable('tenants', {
   /** Admin-set limits that replace the plan's, e.g. an employee cap on a sponsored tenant. */
   limitOverrides: jsonb('limit_overrides').$type<Partial<Limits>>().notNull().default({}),
   bypassReason: text('bypass_reason'),
+  /** For `partner` workspaces: who is billed for them. */
+  partnerId: uuid('partner_id').references(() => partners.id),
   grantedBy: uuid('granted_by').references(() => platformUsers.id),
   createdAt: createdAt(),
   updatedAt: timestamptz('updated_at').notNull().defaultNow(),
@@ -83,6 +108,12 @@ export const subscriptions = pgTable('subscriptions', {
   currentPeriodEnd: timestamptz('current_period_end').notNull(),
   graceDays: integer('grace_days').notNull().default(7),
   seats: integer('seats'),
+  /** When our own billing began: the first month is charged from here. */
+  startedOn: date('started_on', { mode: 'string' }),
+  /** Cancelled at a month's end: the last invoice is for that month. */
+  cancelAt: date('cancel_at', { mode: 'string' }),
+  /** Who the invoices are addressed to: { name, address, bin }. */
+  buyer: jsonb('buyer').$type<{ name: string; address: string; bin: string | null }>(),
   createdAt: createdAt(),
   updatedAt: timestamptz('updated_at').notNull().defaultNow(),
 });

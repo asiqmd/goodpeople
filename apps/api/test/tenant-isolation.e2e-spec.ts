@@ -6,7 +6,9 @@ import { api, bearer, bootApp, tenantLogin, testEnv } from './test-env.js';
 /** Platform tables that reference a tenant but hold no tenant data, so they have no RLS. */
 const PLATFORM_TABLES_WITH_TENANT_ID = [
   'auth_sessions',
+  'coupon_redemptions',
   'entitlement_grants',
+  'invoices',
   'platform_audit_log',
   'signups',
   'subscriptions',

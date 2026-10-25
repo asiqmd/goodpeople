@@ -43,6 +43,26 @@ const configSchema = z
       .enum(['on', 'off'])
       .default('off')
       .transform((v) => v === 'on'),
+    /** The API's own public address, where payment gateways send customers back and notify. */
+    API_ORIGIN: z.string().default('http://localhost:4000'),
+    /** Card payments for invoices through SSLCommerz; off when the store is not set. */
+    SSLCOMMERZ_STORE_ID: z.string().optional(),
+    SSLCOMMERZ_STORE_PASSWORD: z.string().optional(),
+    SSLCOMMERZ_SANDBOX: z
+      .enum(['on', 'off'])
+      .default('on')
+      .transform((v) => v === 'on'),
+    /** bKash tokenized checkout; the merchant's onboarding gives the base URL and version. */
+    BKASH_APP_KEY: z.string().optional(),
+    BKASH_APP_SECRET: z.string().optional(),
+    BKASH_USERNAME: z.string().optional(),
+    BKASH_PASSWORD: z.string().optional(),
+    BKASH_BASE_URL: z.url().default('https://tokenized.sandbox.bka.sh/v1.2.0-beta'),
+    /** A pretend gateway that always succeeds: development and tests only, never production. */
+    BILLING_FAKE_GATEWAY: z
+      .enum(['on', 'off'])
+      .default('off')
+      .transform((v) => v === 'on'),
     /** Self-serve sign-up for 30-day trials; off for our own and self-hosted installations. */
     SIGNUP_ENABLED: z
       .enum(['on', 'off'])

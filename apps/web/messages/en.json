@@ -111,11 +111,13 @@
       "account": "My account",
       "notificationsLabel": "Notifications ({count} unread)",
       "payroll": "Payroll",
-      "payslips": "My pay"
+      "payslips": "My pay",
+      "billing": "Billing"
     },
     "trial": "Free trial: {days, plural, one {# day} other {# days}} left.",
     "gettingStarted": "Getting started",
-    "plans": "Plans"
+    "plans": "Plans",
+    "payToRestore": "Open Billing to pay."
   },
   "platform": {
     "tenants": "Tenants",
@@ -175,7 +177,143 @@
         "workspace_created": "Workspace created",
         "expired": "Code expired"
       }
-    }
+    },
+    "billing": {
+      "tabs": {
+        "invoices": "Invoices",
+        "prices": "Prices",
+        "coupons": "Coupons",
+        "partners": "Partners",
+        "settings": "Settings"
+      },
+      "summary": {
+        "outstanding": "Outstanding",
+        "open": "Open invoices",
+        "overdue": "Overdue",
+        "lastMonth": "Invoiced last month",
+        "paid": "Paying workspaces",
+        "trials": "On trial"
+      },
+      "invoices": {
+        "title": "Invoices and credit notes",
+        "issueTitle": "Issue invoices",
+        "issueHint": "Invoices are issued automatically once a month ends. Issue a month here to catch up; ones already issued are kept.",
+        "month": "Month",
+        "issue": "Issue",
+        "issued": "{count, plural, =0 {No new invoices} one {# invoice issued} other {# invoices issued}}",
+        "statementTitle": "Match a bank statement",
+        "filter": {
+          "all": "All",
+          "open": "Open",
+          "paid": "Paid"
+        },
+        "none": "No invoices yet.",
+        "to": "Billed to",
+        "partner": "Partner",
+        "dueOn": "due {date}",
+        "pendingDeductions": "{count, plural, one {# certificate to check} other {# certificates to check}}",
+        "manage": "Payments and credit",
+        "recordPayment": "Record a bank transfer or cheque",
+        "creditNote": "Issue a credit note (value before VAT)"
+      },
+      "statement": {
+        "file": "Statement (xlsx or csv)",
+        "hint": "Credits whose narration names an invoice number are recorded as paid, once.",
+        "upload": "Match",
+        "summary": "{rows, number} rows: {recorded, number} recorded, {unmatched, number} credits not matched.",
+        "unmatched": "Credits not matched"
+      },
+      "payment": {
+        "saved": "Payment recorded.",
+        "method": "Method",
+        "bank_transfer": "Bank transfer",
+        "cheque": "Cheque",
+        "amount": "Amount",
+        "reference": "Reference",
+        "receivedOn": "Received on",
+        "record": "Record payment"
+      },
+      "credit": {
+        "saved": "Credit note issued.",
+        "amount": "Amount before VAT",
+        "reason": "Reason",
+        "issue": "Issue credit note"
+      },
+      "review": {
+        "reason": "Note",
+        "accept": "Accept",
+        "reject": "Reject"
+      },
+      "prices": {
+        "title": "Prices",
+        "hint": "Each price applies from its date; invoices use the price in force at the start of the month. Prices exclude VAT.",
+        "plan": "Plan",
+        "staffSeat": "Staff seat",
+        "workerSeat": "Worker seat",
+        "minimum": "Monthly minimum",
+        "from": "From",
+        "saved": "Price saved.",
+        "add": "Add price"
+      },
+      "coupons": {
+        "title": "Coupons",
+        "code": "Code",
+        "off": "Off",
+        "months": "Months",
+        "used": "Used",
+        "validUntil": "Valid until",
+        "everyMonth": "Every month",
+        "offKind": "Discount",
+        "percent": "Percent",
+        "amount": "Taka",
+        "monthsHint": "Empty: every month.",
+        "maxRedemptions": "Uses",
+        "saved": "Coupon added.",
+        "add": "Add coupon"
+      },
+      "partners": {
+        "title": "Partners",
+        "hint": "Resellers who bring and look after workspaces. Their workspaces are billed to them on one invoice a month, at their discount.",
+        "name": "Name",
+        "discount": "Discount",
+        "workspaces": "Workspaces",
+        "email": "Billing email",
+        "address": "Address",
+        "bin": "BIN",
+        "saved": "Partner added.",
+        "add": "Add partner",
+        "assignTitle": "Bill a workspace to a partner",
+        "assignHint": "The workspace moves to partner billing; choose no partner to take it back.",
+        "workspace": "Workspace",
+        "partner": "Partner",
+        "noPartner": "No partner",
+        "reason": "Reason",
+        "assign": "Save",
+        "assigned": "Saved."
+      },
+      "settings": {
+        "title": "Billing settings",
+        "notSet": "Billing is not set up: no invoice can be issued until these are saved.",
+        "saved": "Settings saved.",
+        "supplierName": "Supplier name (on invoices)",
+        "bin": "BIN",
+        "supplierAddress": "Address",
+        "tin": "TIN",
+        "serviceCode": "VAT service code",
+        "serviceCodeHint": "NBR has not ruled whether a subscription is IT-enabled (5%) or another service (15%). Change it only with the tax consultant's advice.",
+        "codes": {
+          "S099_10": "S099.10 IT-enabled services: 5%",
+          "S099_20": "S099.20 Other services: 15%"
+        },
+        "startupExempt": "Registered startup (SRO 147-Ain/2026): no VAT and no VAT withheld",
+        "dueDays": "Days to pay",
+        "graceDays": "Grace days",
+        "graceHint": "After the due date, before the workspace becomes read-only.",
+        "bankDetails": "Bank details for transfers",
+        "save": "Save settings"
+      }
+    },
+    "billingNav": "Billing"
   },
   "billingModes": {
     "paid": "Paid",
@@ -1193,7 +1331,23 @@
     "code_expired": "The code has expired. Start again for a new one.",
     "trial_used": "This email already has a trial workspace. Sign in instead.",
     "slug_taken": "That workspace address is taken or not allowed.",
-    "signup_disabled": "Sign-up is not open on this server."
+    "signup_disabled": "Sign-up is not open on this server.",
+    "billing_bypassed": "Good People does not bill this workspace directly.",
+    "no_price": "This plan has no price yet. Contact us.",
+    "coupon_invalid": "This coupon is not valid.",
+    "coupon_used_up": "This coupon has been used up.",
+    "coupon_already": "This workspace already has a coupon.",
+    "coupon_exists": "A coupon with this code exists.",
+    "nothing_owed": "Nothing is owed on this invoice.",
+    "method_unavailable": "This payment method is not available.",
+    "gateway_failed": "The payment gateway did not start the payment. Try again, or pay by bank transfer.",
+    "deduction_too_large": "That is more than can be withheld from this invoice.",
+    "credit_too_large": "That is more than is left to credit on this invoice.",
+    "already_reviewed": "This was already reviewed.",
+    "month_not_over": "A month is invoiced once it has ended.",
+    "billing_not_set_up": "Billing is not set up yet.",
+    "no_subscription": "There is no plan to cancel.",
+    "statement_columns": "The statement needs a narration and a credit column."
   },
   "platformRoles": {
     "super_admin": "Super admin",
@@ -1300,7 +1454,11 @@
       "letter_issued": "A letter was issued",
       "attendance_missing_punch": "A day has one punch only",
       "payslip_published": "Payslips were published",
-      "auth_otp": "Sign-in code"
+      "auth_otp": "Sign-in code",
+      "billing_invoice_issued": "Good People issued an invoice",
+      "billing_payment_received": "A payment to Good People was received",
+      "billing_payment_due": "An invoice is due or overdue",
+      "trial_ending": "The free trial is ending"
     },
     "languages": {
       "en": "English",
@@ -2328,7 +2486,10 @@
     },
     "price": "Per employee per month, quoted on request",
     "trialPlan": "What the trial includes",
-    "vatNote": "Prices exclude VAT. Invoices are VAT invoices (Mushak 6.3)."
+    "vatNote": "Prices exclude VAT. Invoices are VAT invoices (Mushak 6.3).",
+    "perStaff": "per staff member a month",
+    "perWorker": "{price} per factory worker",
+    "minimum": "At least {price} a month"
   },
   "signup": {
     "title": "Start your free trial",
@@ -2385,5 +2546,113 @@
     "open": "Open",
     "checklist": "When these are done, the go-live checklist shows what is left before people rely on it.",
     "checklistLink": "Go-live checklist"
+  },
+  "billing": {
+    "notAllowed": "Only the workspace's owners and finance officers can see billing.",
+    "paid": "Thank you: the payment for {number} was received.",
+    "failed": "The payment for {number} did not go through. Nothing was taken; try again or pay by bank transfer.",
+    "pending": "We are still waiting for the payment gateway to confirm. This page will show it once it does.",
+    "title": "Billing",
+    "mode": "Billing mode",
+    "plan": "Plan",
+    "trialEnds": "Trial ends",
+    "status": "Subscription",
+    "statuses": {
+      "active": "Active",
+      "past_due": "Payment overdue",
+      "canceled": "Cancelled"
+    },
+    "endsOn": "Ends on",
+    "paidThrough": "Paid through",
+    "couponApplied": "Coupon",
+    "seats": "This month so far: {staff, plural, one {# staff member} other {# staff}} and {workers, plural, one {# worker} other {# workers}}.",
+    "notBilled": "Good People does not bill this workspace directly, so there is nothing to choose or pay here.",
+    "chooseTitle": "Choose a plan",
+    "changeTitle": "Change plan",
+    "planChosen": "Your plan is chosen. Your first invoice comes after this month ends.",
+    "planChanged": "Saved. The new plan applies from this month's invoice.",
+    "staffSeat": "{price} per staff member a month",
+    "workerSeat": "{price} per worker a month",
+    "minimum": "At least {price} a month",
+    "estimate": "This month's people: about {amount} with VAT",
+    "noPrice": "Contact us for a price",
+    "buyerName": "Invoice to (company name)",
+    "buyerBin": "Company BIN",
+    "buyerBinHint": "Needed on invoices above Tk 25,000.",
+    "buyerAddress": "Company address",
+    "coupon": "Coupon code",
+    "couponHint": "Optional.",
+    "arrearsNote": "You are invoiced after each month, for everyone employed in it: staff at the staff price and factory workers at the lower worker price. A first month counts from today.",
+    "choose": "Choose plan",
+    "changePlan": "Save plan",
+    "cancel": "Cancel plan",
+    "cancelConfirm": "Cancel the plan at the end of this month? This month is still invoiced, and the workspace then becomes read-only. Nothing is deleted.",
+    "invoices": "Invoices",
+    "number": "Invoice",
+    "period": "Month",
+    "due": "Due by",
+    "total": "Total",
+    "balance": "To pay",
+    "statusHead": "Status",
+    "download": "Mushak PDF",
+    "invoiceStatuses": {
+      "open": "Due",
+      "overdue": "Overdue",
+      "paid": "Paid",
+      "void": "Void"
+    },
+    "pdfEn": "English",
+    "pdfBn": "বাংলা",
+    "payTitle": "{number}: {amount} to pay",
+    "methods": {
+      "sslcommerz": "Pay by card or internet banking",
+      "bkash": "Pay with bKash",
+      "fake": "Test payment (no money moves)"
+    },
+    "methodNames": {
+      "sslcommerz": "Card",
+      "bkash": "bKash",
+      "bank_transfer": "Bank transfer",
+      "cheque": "Cheque",
+      "fake": "Test payment"
+    },
+    "bankRule": "Above Tk 1,00,000, pay through a bank or bKash so your company keeps its VAT input credit.",
+    "noGateways": "Online payment is not available yet: pay by bank transfer using the details below.",
+    "deductionKinds": {
+      "vds": "VAT withheld (VDS)",
+      "tds": "Tax withheld (TDS)"
+    },
+    "deductionStatuses": {
+      "pending": "being checked",
+      "succeeded": "accepted",
+      "failed": "failed",
+      "rejected": "rejected"
+    },
+    "withheld": "Record VAT or tax your company withheld",
+    "deduction": {
+      "saved": "Recorded. It counts against the invoice now, and we check the certificate.",
+      "kind": "Withheld",
+      "vds": "VAT at source (VDS, Mushak-6.6)",
+      "tds": "Income tax at source (TDS)",
+      "amount": "Amount (Tk)",
+      "limits": "At most {vds} VDS and {tds} TDS",
+      "certificateNo": "Certificate number",
+      "certificateDate": "Certificate date",
+      "record": "Record"
+    },
+    "creditNotes": "Credit notes",
+    "credits": "against {number}",
+    "bankTitle": "Pay by bank transfer",
+    "bankNote": "Write the invoice number in the payment reference, so we can match it.",
+    "vatTitle": "VAT",
+    "vat": "Invoices carry VAT at {rate}% (service code {code}).",
+    "vatExempt": "Good People is a registered startup: invoices carry no VAT, and no VAT is withheld.",
+    "vds": "If your company withholds VAT at source ({rate}%), give us the Mushak-6.6 certificate by recording it against the invoice.",
+    "paymentStatuses": {
+      "pending": "started",
+      "succeeded": "received",
+      "failed": "failed",
+      "rejected": "rejected"
+    }
   }
 }

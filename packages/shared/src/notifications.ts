@@ -26,6 +26,14 @@ export const NOTIFICATION_EVENTS = [
   'attendance.missing_punch',
   /** A payroll run was locked and its payslips published. */
   'payslip.published',
+  /** Good People issued the workspace's monthly invoice (to those who manage billing). */
+  'billing.invoice_issued',
+  /** A payment of an invoice was received. */
+  'billing.payment_received',
+  /** An invoice is due soon, overdue, or the workspace went read-only for it. */
+  'billing.payment_due',
+  /** The free trial ends in a week, tomorrow, or has ended. */
+  'trial.ending',
   /** A sign-in code: SMS only, always sent. */
   'auth.otp',
 ] as const;
@@ -46,6 +54,10 @@ export const DEFAULT_EVENT_CHANNELS: Record<NotificationEvent, readonly Delivery
   'letter.issued': ['email', 'push'],
   'attendance.missing_punch': ['push'],
   'payslip.published': ['email', 'push'],
+  'billing.invoice_issued': ['email'],
+  'billing.payment_received': ['email'],
+  'billing.payment_due': ['email'],
+  'trial.ending': ['email'],
   'auth.otp': ['sms'],
 };
 

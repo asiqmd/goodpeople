@@ -17,9 +17,20 @@ const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
  * Tenant routes: loads the tenant's resolved access onto the request, blocks suspended
  * tenants entirely and read-only tenants from writing. Never looks at billing directly.
  */
+const WRITABLE_WHEN_READ_ONLY = 'gp:writable-when-read-only';
+
+/**
+ * Lets a route write while the workspace is read-only: paying an invoice is how a workspace
+ * that stopped paying gets its access back.
+ */
+export const WritableWhenReadOnly = () => SetMetadata(WRITABLE_WHEN_READ_ONLY, true);
+
 @Injectable()
 export class AccessStateGuard implements CanActivate {
-  constructor(private readonly entitlements: EntitlementsService) {}
+  constructor(
+    private readonly entitlements: EntitlementsService,
+    private readonly reflector: Reflector,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<AuthedRequest>();
@@ -34,7 +45,11 @@ export class AccessStateGuard implements CanActivate {
     if (accessState === 'suspended') {
       throw forbidden('tenant_suspended', 'This workspace is suspended');
     }
-    if (accessState === 'read_only' && !SAFE_METHODS.has(req.method)) {
+    const writable = this.reflector.getAllAndOverride<boolean>(WRITABLE_WHEN_READ_ONLY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (accessState === 'read_only' && !SAFE_METHODS.has(req.method) && !writable) {
       throw forbidden('tenant_read_only', `This workspace is read-only (${reason})`);
     }
     return true;

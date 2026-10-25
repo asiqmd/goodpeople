@@ -10,3 +10,4 @@ export { SEED_MANAGER_EMAIL } from './seed-leave.js';
 export { SEED_FINANCE_EMAIL } from './seed-payroll.js';
 export * from './provision.js';
 export * from './templates.js';
+export { SEED_PRICES, SEED_PRICES_FROM } from './seed-billing.js';

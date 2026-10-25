@@ -85,17 +85,21 @@ export async function currentTenantUser(): Promise<{ id: string; role: TenantRol
   }
 }
 
-/** Sends a form with files (multipart) as the signed-in workspace user. */
-export async function authedUpload<T>(path: string, form: FormData): Promise<ApiResult<T>> {
-  const token = (await cookies()).get(cookieNames('tenant').access)?.value;
-  if (!token) redirect(`${LOGIN.tenant}?expired=1`);
+/** Sends a form with files (multipart) as the signed-in user. */
+export async function authedUpload<T>(
+  path: string,
+  form: FormData,
+  kind: SessionKind = 'tenant',
+): Promise<ApiResult<T>> {
+  const token = (await cookies()).get(cookieNames(kind).access)?.value;
+  if (!token) redirect(`${LOGIN[kind]}?expired=1`);
   const res = await fetch(`${API_URL}${path}`, {
     method: 'POST',
     headers: { authorization: `Bearer ${token}` },
     body: form,
     cache: 'no-store',
   });
-  if (res.status === 401) redirect(`${LOGIN.tenant}?expired=1`);
+  if (res.status === 401) redirect(`${LOGIN[kind]}?expired=1`);
   return toResult<T>(res);
 }
 
@@ -106,8 +110,9 @@ export async function authedUpload<T>(path: string, form: FormData): Promise<Api
 export async function proxyFile(
   path: string,
   init: { method?: string; body?: unknown } = {},
+  kind: SessionKind = 'tenant',
 ): Promise<Response> {
-  const token = (await cookies()).get(cookieNames('tenant').access)?.value;
+  const token = (await cookies()).get(cookieNames(kind).access)?.value;
   if (!token) return new Response('Sign in again', { status: 401 });
   const res = await fetch(`${API_URL}${path}`, {
     method: init.method ?? 'GET',

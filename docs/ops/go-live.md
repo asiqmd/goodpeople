@@ -152,6 +152,26 @@ Each month, the current payroll still pays people. Good People runs alongside:
       journal. Deposit the tax and record the challan.
 - [ ] The old payroll is kept read-only for at least a year for reference.
 
+## 6. Taking payments (Phase 3)
+
+Before the first workspace is invoiced for real money (Finance, IT, the tax consultant):
+
+- [ ] The tax consultant confirms the VAT service code (S099.10 at 5% or S099.20 at 15%)
+      and the values marked for review in the Bangladesh pack's VAT rules. If Good People
+      is registered with NBR as a startup, tick the exemption in the settings.
+- [ ] **Platform console → Billing → Settings:** our legal name, address, BIN and TIN as
+      registered, the bank account for transfers, the days to pay and the grace days. The
+      development seed's sample values must not survive.
+- [ ] **Prices:** each plan's staff seat, worker seat and minimum, from the day they apply.
+- [ ] **Gateways (IT):** `API_ORIGIN` set to the public API address; the SSLCommerz store id
+      and password, and the bKash app key, secret, username and password, in the secrets
+      store. `SSLCOMMERZ_SANDBOX=off` and the live `BKASH_BASE_URL` only after a sandbox
+      payment, a failed payment and a cancelled one have been tried end to end.
+- [ ] `BILLING_FAKE_GATEWAY` is unset. With it on, anyone can mark an invoice paid.
+- [ ] The SSLCommerz merchant panel's IPN address is `<API_ORIGIN>/billing/notify/sslcommerz`.
+- [ ] One test workspace chooses a plan, is invoiced, and pays a small amount by card and by
+      bKash. The Mushak-6.3 PDF is checked against a printed form, in both languages.
+
 ## If it goes wrong
 
 The old register stays readable and can be reopened for new entries. Going back is a

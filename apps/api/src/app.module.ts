@@ -9,6 +9,7 @@ import { AccountModule } from './modules/account/account.module.js';
 import { ApprovalsModule } from './modules/approvals/approvals.module.js';
 import { AttendanceModule } from './modules/attendance/attendance.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
+import { BillingModule } from './modules/billing/billing.module.js';
 import { DocumentsModule } from './modules/documents/documents.module.js';
 import { ImportsModule } from './modules/imports/imports.module.js';
 import { LettersModule } from './modules/letters/letters.module.js';
@@ -55,6 +56,7 @@ export class AppModule {
         PayrollModule,
         SetupModule,
         SignupModule,
+        BillingModule,
       ],
       providers: [
         { provide: APP_CONFIG, useValue: config },

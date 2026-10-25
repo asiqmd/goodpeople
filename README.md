@@ -53,12 +53,20 @@ A multi-tenant HR and payroll platform, built for Bangladesh first and ready to 
     Bangla; self-serve sign-up with an emailed code that creates a 30-day trial workspace;
     starting organisations for RMG, corporate, NGO and group companies; a first-steps guide
     and trial banner; and the sign-up funnel in the platform console.
+  - **Phase 3 M2 (billing & invoicing):** prices per staff and worker seat; plans chosen in
+    the workspace with coupons; monthly invoices in arrears as Mushak-6.3 VAT invoices and
+    6.7 credit notes in English and Bangla; payment by SSLCommerz, bKash, bank transfer or
+    cheque (matched from a statement); VAT and income tax withheld by customers with their
+    certificates; reminders, then read-only until paid; trial reminders; and partner
+    billing.
 - **Next:**
   - Our own organisations go live: [docs/ops/go-live.md](docs/ops/go-live.md).
   - Payroll goes live after three parallel months with a design partner:
     [docs/ops/go-live.md](docs/ops/go-live.md#5-payroll-go-live-phase-2).
-  - Phase 3 M2: billing and invoicing. The plan is in
-    [docs/phases/phase-3.md](docs/phases/phase-3.md).
+  - Before the first real invoice: the tax consultant's sign-off on the VAT service code,
+    and SSLCommerz and bKash tried in their sandboxes
+    ([docs/phases/phase-3.md](docs/phases/phase-3.md#m2-billing--invoicing)).
+  - Phase 3 M3: the RMG pack. The plan is in [docs/phases/phase-3.md](docs/phases/phase-3.md).
 
 ## Repository layout
 
@@ -66,7 +74,7 @@ A multi-tenant HR and payroll platform, built for Bangladesh first and ready to 
 apps/
   api/       NestJS 12 (ESM) modular monolith: auth, tenancy, entitlements, platform admin, org,
              employees, leave, attendance, approvals, documents, lifecycle, letters, imports,
-             accounts and users, notifications, setup checklist, payroll
+             accounts and users, notifications, setup checklist, payroll, sign-up, billing
   web/       Next.js 16: Super Admin console (/platform) and workspace app (/workspace), en/bn
   mobile/    Flutter app: sign-in (password or SMS code), profile, documents, leave, attendance
              (location and selfie punching, offline queue), resignation, approvals, team view,

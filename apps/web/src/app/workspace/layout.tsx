@@ -7,6 +7,14 @@ import { NavLinks } from '@/components/nav-links';
 import { Banner, buttonClass, Logo } from '@/components/ui';
 import { authedFetch, currentTenantUser } from '@/lib/api';
 
+/** Read-only reasons that choosing a plan or paying an invoice ends. */
+const PAYING_RESTORES = new Set<string>([
+  'trial_ended',
+  'payment_overdue',
+  'subscription_ended',
+  'no_subscription',
+]);
+
 /** Whole days until a trial ends, counting today's remainder as a day. */
 const daysLeft = (expiresAt: string) =>
   Math.max(0, Math.ceil((Date.parse(expiresAt) - Date.now()) / 86_400_000));
@@ -73,6 +81,7 @@ export default async function WorkspaceLayout({ children }: LayoutProps<'/worksp
       : []),
     ...(hasPayroll ? [{ href: '/workspace/payslips', label: tw('payslips') }] : []),
     ...(may('users.manage') ? [{ href: '/workspace/users', label: tw('users') }] : []),
+    ...(may('billing.manage') ? [{ href: '/workspace/billing', label: tw('billing') }] : []),
     ...(may('org.manage') ? [{ href: '/workspace/setup', label: tw('setup') }] : []),
     { href: '/workspace/profile', label: tn('profile') },
     { href: '/workspace/account', label: tw('account') },
@@ -144,6 +153,14 @@ export default async function WorkspaceLayout({ children }: LayoutProps<'/worksp
             {result.data.access.accessState === 'read_only' && (
               <Banner tone="amber">
                 {t('readOnly')} ({tr(result.data.access.reason)})
+                {may('billing.manage') && PAYING_RESTORES.has(result.data.access.reason) && (
+                  <>
+                    {' '}
+                    <Link href="/workspace/billing" className="font-medium underline">
+                      {t('payToRestore')}
+                    </Link>
+                  </>
+                )}
               </Banner>
             )}
             {result.data.tenant.billingMode === 'trial' &&
@@ -155,7 +172,10 @@ export default async function WorkspaceLayout({ children }: LayoutProps<'/worksp
                     {t('gettingStarted')}
                   </Link>{' '}
                   ·{' '}
-                  <Link href="/pricing" className="font-medium underline">
+                  <Link
+                    href={may('billing.manage') ? '/workspace/billing' : '/pricing'}
+                    className="font-medium underline"
+                  >
                     {t('plans')}
                   </Link>
                 </Banner>

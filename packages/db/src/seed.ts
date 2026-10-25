@@ -10,6 +10,7 @@ import { scopeToTenant, type Database } from './client.js';
 import { createFieldCipher } from './field-cipher.js';
 import { hashPassword } from './passwords.js';
 import { provisionCountryDefaults, provisionPayroll } from './provision.js';
+import { seedBilling } from './seed-billing.js';
 import { seedGroupBenefits, seedGroupPayroll } from './seed-payroll.js';
 import { seedGroupHr } from './seed-hr.js';
 import { seedGroupAttendance } from './seed-attendance.js';
@@ -189,6 +190,7 @@ export async function seed(db: Database, opts: SeedOptions) {
   }
 
   // Seeds added after a database was first seeded fill it in; each skips what exists.
+  await seedBilling(db, superAdmin!.id);
   const [group] = await db.select().from(tenants).where(eq(tenants.slug, 'my-group'));
   if (group) {
     await db.transaction(async (tx) => {

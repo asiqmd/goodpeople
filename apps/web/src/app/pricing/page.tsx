@@ -1,8 +1,9 @@
-import { PLAN_CATALOG, TRIAL_DAYS } from '@gp/shared';
+import { PLAN_CATALOG, TRIAL_DAYS, type PlanPriceView } from '@gp/shared';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { LanguageToggle } from '@/components/forms';
 import { buttonClass, Logo } from '@/components/ui';
+import { apiFetch } from '@/lib/api';
 
 export default async function Pricing() {
   const t = await getTranslations('pricing');
@@ -10,6 +11,9 @@ export default async function Pricing() {
   const tl = await getTranslations('limits');
   const tc = await getTranslations('common');
   const format = await getFormatter();
+  const result = await apiFetch<PlanPriceView[]>('/billing/prices');
+  const prices = new Map(result.ok ? result.data.map((p) => [p.planCode, p]) : []);
+  const tk = (v: string) => `৳${format.number(Number(v), { maximumFractionDigits: 2 })}`;
   return (
     <main className="mx-auto flex min-h-screen max-w-5xl flex-col px-6 py-8">
       <header className="flex items-center justify-between">
@@ -36,7 +40,26 @@ export default async function Pricing() {
             }`}
           >
             <h2 className="font-semibold">{t(`plans.${plan.code}`)}</h2>
-            <p className="mt-1 text-sm text-slate-600">{t('price')}</p>
+            {prices.get(plan.code) ? (
+              <div className="mt-2 text-sm">
+                <p>
+                  <span className="text-2xl font-bold tabular-nums">
+                    {tk(prices.get(plan.code)!.staffSeat)}
+                  </span>{' '}
+                  <span className="text-slate-600">{t('perStaff')}</span>
+                </p>
+                <p className="text-slate-600">
+                  {t('perWorker', { price: tk(prices.get(plan.code)!.workerSeat) })}
+                </p>
+                {Number(prices.get(plan.code)!.minimum) > 0 && (
+                  <p className="text-xs text-slate-500">
+                    {t('minimum', { price: tk(prices.get(plan.code)!.minimum) })}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p className="mt-1 text-sm text-slate-600">{t('price')}</p>
+            )}
             {plan.code === 'business' && (
               <p className="mt-1 text-xs font-medium text-brand-700">{t('trialPlan')}</p>
             )}
