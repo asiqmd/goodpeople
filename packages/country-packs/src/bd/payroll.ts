@@ -79,6 +79,22 @@ export const BD_PAY_COMPONENTS: readonly PackPayComponent[] = [
     runFormula: 'if(WORKER, round(OT_BASE * 2 * OT_HOURS / 208), 0)',
   }),
   runItem('ATTENDANCE_BONUS', 'Attendance bonus', 'হাজিরা বোনাস', 'earning', 110),
+  // Production (the RMG pack): a piece-rated worker earns the larger of the time wage and
+  // the pieces at their rates, so the grade's minimum wage is always met; time-rated
+  // workers earn an incentive for pieces above each day's target.
+  runItem(
+    'PIECE_PAY',
+    'Piece-rate earnings above wages',
+    'মজুরির অতিরিক্ত পিস রেট আয়',
+    'earning',
+    112,
+    {
+      runFormula: 'max(0, PIECE_EARNINGS - round(GROSS * PAID_DAYS / PERIOD_DAYS))',
+    },
+  ),
+  runItem('PROD_INCENTIVE', 'Production incentive', 'উৎপাদন প্রণোদনা', 'earning', 114, {
+    runFormula: 'round(PRODUCTION_INCENTIVE)',
+  }),
   runItem('FESTIVAL_BONUS', 'Festival bonus', 'উৎসব বোনাস', 'earning', 120),
   runItem('ARREARS', 'Arrears', 'বকেয়া', 'earning', 130),
   // Final settlement (s.19–30) and the workers' participation fund (Chapter XV).
@@ -107,6 +123,10 @@ export const BD_PAY_COMPONENTS: readonly PackPayComponent[] = [
     taxTreatment: 'taxable',
   }),
   runItem('ADVANCE', 'Advance recovery', 'অগ্রিম কর্তন', 'deduction', 210),
+  // A union subscription, deducted only with the member's written consent (s.204).
+  runItem('UNION_SUB', 'Union subscription', 'ট্রেড ইউনিয়নের চাঁদা', 'deduction', 215, {
+    runFormula: 'UNION_DUES',
+  }),
   runItem('LOAN', 'Loan repayment', 'ঋণ পরিশোধ', 'deduction', 212),
   // The provident fund's rates are in payroll settings; contributions apply to members.
   runItem('PF_EMPLOYEE', 'Provident fund', 'ভবিষ্য তহবিল', 'deduction', 220),

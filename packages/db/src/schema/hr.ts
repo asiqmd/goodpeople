@@ -221,6 +221,11 @@ export const employees = pgTable(
     separatedOn: isoDate('separated_on'),
     /** The number the employee is enrolled under on attendance devices. */
     attendancePin: text('attendance_pin'),
+    /** A woman's written consent to work between 10 pm and 6 am (Labour Act s.109). */
+    nightWorkConsentFrom: isoDate('night_work_consent_from'),
+    /** The PIN for signing in at a kiosk with the ID card (hashed), set by an SMS code. */
+    kioskPinHash: text('kiosk_pin_hash'),
+    kioskPinSetAt: timestamp('kiosk_pin_set_at', { withTimezone: true }),
     createdAt: createdAt(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },

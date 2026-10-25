@@ -148,6 +148,42 @@ export const DEFAULT_TEMPLATES: Record<NotificationEvent, Record<UserLanguage, T
       sms: 'Good People: আপনার ট্রায়াল {{trial.when}}। কাজ চালিয়ে যেতে বিলিং-এ প্ল্যান বেছে নিন।',
     },
   },
+  'compliance.alert': {
+    en: {
+      title: '{{alert.headline}}',
+      body: '{{alert.detail}} Open Compliance to see it and record what was done.',
+      sms: 'Good People: {{alert.headline}}. {{alert.detail}}',
+    },
+    bn: {
+      title: '{{alert.headline}}',
+      body: '{{alert.detail}} বিস্তারিত দেখতে ও কী করা হয়েছে লিখতে কমপ্লায়েন্স খুলুন।',
+      sms: 'Good People: {{alert.headline}}। {{alert.detail}}',
+    },
+  },
+  'grievance.received': {
+    en: {
+      title: 'New grievance {{grievance.reference}}',
+      body: 'A worker raised a grievance about {{grievance.category}} ({{grievance.reference}}). Open Grievances to read and answer it.',
+      sms: 'Good People: new grievance {{grievance.reference}} about {{grievance.category}}.',
+    },
+    bn: {
+      title: 'নতুন অভিযোগ {{grievance.reference}}',
+      body: 'একজন কর্মী {{grievance.category}} বিষয়ে অভিযোগ করেছেন ({{grievance.reference}})। পড়তে ও উত্তর দিতে অভিযোগ খুলুন।',
+      sms: 'Good People: নতুন অভিযোগ {{grievance.reference}}, বিষয় {{grievance.category}}।',
+    },
+  },
+  'maternity.payment_due': {
+    en: {
+      title: 'Maternity benefit due for {{person.name}}',
+      body: "Part {{maternity.part}} of {{person.name}}'s maternity benefit, {{maternity.amount}}, is due by {{maternity.due}} (Labour Act s.47).",
+      sms: 'Good People: maternity benefit for {{person.name}}, {{maternity.amount}}, due by {{maternity.due}}.',
+    },
+    bn: {
+      title: '{{person.name}}-এর প্রসূতি কল্যাণ সুবিধা পরিশোধযোগ্য',
+      body: '{{person.name}}-এর প্রসূতি কল্যাণ সুবিধার {{maternity.part}} কিস্তি, {{maternity.amount}}, {{maternity.due}}-এর মধ্যে পরিশোধযোগ্য (শ্রম আইন ধারা ৪৭)।',
+      sms: 'Good People: {{person.name}}-এর প্রসূতি সুবিধা {{maternity.amount}}, {{maternity.due}}-এর মধ্যে দিতে হবে।',
+    },
+  },
   'auth.otp': {
     en: {
       title: 'Your sign-in code',
@@ -175,5 +211,8 @@ export const TEMPLATE_PLACEHOLDERS: Record<NotificationEvent, string[]> = {
   'billing.payment_received': ['invoice.number', 'payment.amount', 'payment.method'],
   'billing.payment_due': ['invoice.number', 'invoice.balance', 'due.headline', 'due.detail'],
   'trial.ending': ['trial.headline', 'trial.when'],
+  'compliance.alert': ['alert.headline', 'alert.detail'],
+  'grievance.received': ['grievance.reference', 'grievance.category'],
+  'maternity.payment_due': ['person.name', 'maternity.part', 'maternity.amount', 'maternity.due'],
   'auth.otp': ['otp.code', 'otp.minutes', 'workspace.name'],
 };

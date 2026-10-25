@@ -28,6 +28,10 @@ export const FEATURE_KEYS = [
   'attendance',
   'payroll',
   'bd_tax',
+  /** Piece rates and production incentives (garment and other factories). */
+  'production',
+  /** Shared tablets where workers sign in with their ID card. */
+  'kiosk',
   'recruitment',
   'performance',
   'lms',
@@ -87,8 +91,15 @@ export interface PlanDefinition {
 }
 
 const STARTER: FeatureKey[] = ['core_hr', 'leave', 'attendance'];
-const GROWTH: FeatureKey[] = [...STARTER, 'payroll', 'bd_tax'];
-const BUSINESS: FeatureKey[] = [...GROWTH, 'recruitment', 'performance', 'lms', 'multi_entity'];
+const GROWTH: FeatureKey[] = [...STARTER, 'payroll', 'bd_tax', 'production'];
+const BUSINESS: FeatureKey[] = [
+  ...GROWTH,
+  'kiosk',
+  'recruitment',
+  'performance',
+  'lms',
+  'multi_entity',
+];
 
 /** The plan catalogue. Prices are set after the design-partner pilots, so none are listed here. */
 export const PLAN_CATALOG: readonly PlanDefinition[] = [

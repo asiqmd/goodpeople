@@ -11,7 +11,7 @@ its tests pass and it has been walked through in the browser.
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------- | ------ |
 | **M1 Sign-up & onboarding**       | Public site in English and Bangla, self-serve sign-up with a verified email, 30-day trials, industry templates (RMG, corporate, NGO, group), a first-steps guide, the sign-up funnel for us            | Phase 2    | Done   |
 | **M2 Billing & invoicing**        | Prices per employee with a worker seat, monthly metering, VAT invoices (Mushak 6.3) with VDS and TDS, coupons, card and bKash payments, bank and cheque reconciliation, dunning to read-only, partners | M1         | Done   |
-| **M3 RMG pack**                   | Piece rate and production incentives, overtime caps and alerts, adolescent workers, maternity benefit, participation committee and union records, anonymous grievances, buyer-audit reports, kiosk     | M1         |        |
+| **M3 RMG pack**                   | Piece rate and production incentives, overtime caps and alerts, adolescent workers, maternity benefit, participation committee and union records, anonymous grievances, buyer-audit reports, kiosk     | M1         | Done   |
 | **M4 NGO & group packs**          | Projects and grants, salary split across projects, timesheets, donor reports, field staff offline; group dashboards, group policy with company overrides, shared-service HR roles                      | M1         |        |
 | **M5 Support & launch hardening** | Help centre in English and Bangla, support tickets, status page, penetration-test fixes, a disaster-recovery drill, verified backups, the launch runbook                                               | M2–M4      |        |
 
@@ -331,17 +331,181 @@ How billing fits the access rules and why is in
   is a small follow-up.
 - **Billing in other currencies** (USD and AED through a merchant of record) is Phase 5.
 
+## M3: RMG pack
+
+Everything here works for any factory; it is called the RMG pack because garment factories
+need all of it at once. Piece rates come with the Growth plan and up, kiosks with Business;
+the rest is the law and comes with the modules it builds on.
+
+### Production and piece rates
+
+- **Operations** (collar attach, side seam…) with a rate per piece for piece-rated workers,
+  or a daily target and an incentive per piece above it for time-rated lines, in English
+  and Bangla.
+- **Daily entry by line:** pick a line, a date and an operation, then type down the column
+  of that line's workers; only changed rows are saved. A spreadsheet import (English or
+  Bangla headings) saves the good rows and lists each bad one with its reason, from a CSV
+  template.
+- **Payroll** reads the month's pieces, piece earnings and incentive. A piece-rated worker
+  stays on the wage-board structure and is paid the pieces' earnings above the time wage
+  (`PIECE_PAY`), so the grade's minimum wage is always met; incentives are `PROD_INCENTIVE`.
+  Entries keep the rate they were made at; changing production sends a computed run back to
+  draft, is refused while the run awaits approval, and closes once it is locked.
+- **Month summary** by worker, line and day, with CSV files.
+
+### Working time
+
+- **Alerts** from the attendance that pays people, checked hourly and on demand: adults over
+  10 hours a day (s.100) or 60 a week (s.102), seven days without a day off (s.103); the
+  company's overtime caps per day, week and month (at most the law's room, often a buyer's
+  code); adolescents over 5 hours a day or 36 a week in a factory, or working between 7 pm and
+  7 am (s.41); women working between 10 pm and 6 am without consent (s.109).
+- One alert per person, rule and period; it follows corrected hours and resolves itself, and
+  HR acknowledges it with what was done. Alerts never block work or change pay. HR and the
+  worker's line manager are told once.
+- **Hours board** for the week so far, against the caps and the law; **adolescents** with
+  their certificates of fitness (s.34, s.37: a new document category, valid 12 months) and
+  this week's hours; **women at night** with their consent.
+
+### Maternity benefit
+
+- A case per expected birth: eligibility (six months' service; no benefit with two or more
+  surviving children, though leave stays, s.46), 120 days from the 2025 amendment (60 + 60),
+  the average daily wage over the three months before the notice from locked payroll (s.48),
+  and the parts of the payment option she chose with their due dates (s.47(4)): three
+  working days after the certificate or proof of birth, or eight weeks after proof for the
+  second part. Proof later than three months loses the parts that depend on it.
+- Her linked maternity leave is unpaid in payroll: the benefit pays it. Payments are recorded
+  with method and reference; a statement in English and Bangla shows the working; HR is
+  reminded of parts falling due and of proof still missing. The case shows the s.50 window
+  in which a dismissal does not take the benefit away.
+
+### Committees and trade unions
+
+- Participation, safety and complaint committees per establishment (each company, or a site
+  with its own), with members (from outside too, with their gender), meetings, minutes and
+  decisions. Each establishment shows what its workforce requires and whether the committee
+  meets it: size, sides, the complaint committee's woman chair and majority, meetings every
+  two (participation) or three (safety) months, minutes to the Director of Labour within 7
+  days, and the two-year term. Gaps become alerts.
+- Trade unions with registration, the CBA, members and their consent to deduction; the
+  registration threshold from the 2025 table; union dues deducted in payroll only with
+  consent (`UNION_SUB`), and a check-off report with the 15-day deposit date (s.204).
+
+### Grievances
+
+- **Speak up**, a public page per workspace in Bangla and English that a worker opens on a
+  phone or a kiosk, or from the QR code on a printed poster. Anonymous unless they give their
+  name; nothing that could identify them is stored. They keep a reference and a PIN to read
+  answers and reply.
+- Staff answer and close cases, with the 30 days to decide (s.33) shown on each. Harassment
+  goes only to the complaint committee's members, whatever their role; without a committee,
+  those who handle grievances see it with a warning that one is required.
+
+### Kiosks
+
+- A shared tablet registered by HR with a revocable token. A worker scans the QR code now on
+  the ID card (or types the code), enters a PIN set with an SMS code to their mobile, and sees
+  today, this month, leave balances and payslips, applies for leave and can speak up. Signed
+  out after a minute untouched; Bangla first.
+
+### Buyer audit report
+
+- For a period and a company or site: workforce and adolescents, weekly hours and the
+  longest weeks, overtime worked and paid, wages against the wage board and paid on time,
+  leave and festival holidays, maternity payments, committees and unions, grievances (counts
+  only) and the alerts, as a page, a PDF in English and Bangla, and the weekly hours as CSV.
+  It is read from the same records; there is no separate version for audits.
+
+How these fit together and why is in [ADR 015](../adr/015-rmg-pack.md).
+
+### Research (25 Oct 2026; for the labour lawyer to sign off)
+
+| Rule           | What the law says                                                                                                                                                                                                                                                                           | Source                                                                                |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Adolescents    | 14 to 18; certificate of fitness valid 12 months; 5 hours a day and 30 a week in factories (36 with overtime), 7 and 42 elsewhere (48); no work 7 pm–7 am; shifts at most 7½ hours                                                                                                          | Labour Act 2006 s.34, s.37, s.41; Labour Rules 2015 rules 34–35                       |
+| Women at night | Only with her consent between 10 pm and 6 am                                                                                                                                                                                                                                                | Labour Act s.109                                                                      |
+| Adults' hours  | 8 a day and 48 a week; with overtime 10 and 60, 56 on average over a year; a day off a week; overtime at twice basic and dearness allowance, with consent asked two hours before                                                                                                            | Labour Act s.100–s.103, s.108; Labour Rules rule 99, rule 102                         |
+| Piece rates    | Overtime at a time rate fixed near average earnings                                                                                                                                                                                                                                         | Labour Act s.108(2)                                                                   |
+| Maternity      | 8 + 8 weeks, 60 + 60 days from the 2025 amendment; six months' service; none with two surviving children; average wage over the three months before the notice; three ways to pay within three working days; proof within three months; dismissal in the protected window keeps the benefit | Labour Act s.45–s.50; Ordinance 2025 s.46                                             |
+| Committees     | Participation from 50 workers, 6–30 members by size, meets every two months, minutes within 7 days, two-year term; safety from 50 workers, 6–12 members, every three months; complaint committee of five with a woman chair and majority from the 2025 amendment                            | Labour Act s.90A, s.205–s.208, s.332A; Labour Rules rules 81–85, 183–197, Schedule IV |
+| Trade unions   | Members to register by workforce from the 2025 table; at most three per establishment; dues deducted with consent, deposited within 15 days                                                                                                                                                 | Labour Act s.179, s.204 (as amended)                                                  |
+| Grievances     | A written complaint within 30 days; the employer decides within 30 days                                                                                                                                                                                                                     | Labour Act s.33                                                                       |
+
+### Done when
+
+- **Unit tests:** the working-time checker (adults, adolescents by workplace, women with and
+  without consent, weekly holidays, caps, periods across rule dates) and certificate
+  validity; alert texts in English and Bangla; production sheet parsing and the save plan;
+  maternity eligibility, the average wage, parts, deadlines and lost parts; committee checks
+  (thresholds, sizes, balance, composition, meetings, minutes, terms); grievance references
+  and PINs; kiosk tokens, PINs and lockouts; the ID card's QR code; the new labour rules.
+- **API end-to-end tests:** production (operations, a line's day, imports, summaries, piece
+  pay and incentives in a payroll month, locked and pending runs); compliance (each alert
+  raised once, resolved, acknowledged, caps, adolescents' night work and certificates,
+  consent, recipients); maternity (eligibility, average wage from locked runs, the three
+  options, late proof, payments, PDFs, reminders, unpaid linked leave in payroll); relations
+  (missing, overdue and ended committees, a site as its own establishment, unions and the
+  CBA, dues deducted only with consent, the check-off report); grievances (anonymity, PIN
+  lockout, answers both ways, harassment for the committee including a worker on it,
+  notifications without the text, unknown and suspended workspaces); kiosks (tokens, the
+  feature, PINs by SMS, sign-in and lockout, the worker's screen, leave, payslips, sessions,
+  other workspaces); the buyer audit report (figures, scope, PDFs, CSV, permission).
+- **Web:** Production, Compliance (overview, alerts, hours, adolescents, women at night,
+  settings, committees, unions, buyer audit), Maternity, Grievances with the poster, Speak
+  up, the kiosk and kiosk set-up, in English and Bangla. The app needed nothing new: workers
+  without smartphones use kiosks and SMS.
+
+**Checked:**
+
+- 368 API tests in 44 files (125 new: production 16, compliance 32, maternity 23, relations
+  17, grievances 14, kiosks 19, the audit report 4), also passing shuffled three times; shared
+  (95), country-pack (52) and the Edge Agent's (64). Flutter: 221 tests and analyze clean.
+  Each area's tests also ran on their own database (`TEST_DB_SUFFIX`) while the areas were
+  built side by side.
+- The browser, in English and Bangla, on the seeded My Group with October's attendance:
+  - Compliance found three days over 10 hours (Shirin Akter twice, Rahima Khatun once) and
+    Sumon Barua, 17, without a certificate of fitness, each with its section.
+  - Production: two operations; Line 1's day typed down the column (320, 280 and 300
+    pieces at Tk 1.25) and saved.
+  - A kiosk registered for the Gazipur factory; Rahima Khatun scanned (typed) her card, set a
+    PIN with the code texted to her number, signed in and saw this month's 17 days present,
+    2 absent and 2 hours of overtime, her leave balances and "Speak up".
+  - Speak up from the kiosk: an anonymous grievance about overtime pay in Bangla, reference
+    GR-KE3RZQ; HR saw it as from a kiosk and awaiting an answer, with the warning that a
+    complaint committee is required.
+  - Committees: the complaint committee required and missing; participation and safety not
+    required for this workforce.
+  - A maternity case for Mitu Begum came out without benefit: 110 days' service before the
+    expected delivery, short of 180 (s.46).
+  - The buyer audit report for 1–24 October as a page and a Bangla PDF.
+  - Fixed on the way: the kiosk showed a phone ending and times in Latin digits in Bangla;
+    alerts that began before a report's period were left out of it; production changed after
+    a run was computed did not send it back to draft; harassment cases could not reach
+    committee members whose role did not handle grievances; tests that assumed My Group's
+    exact companies, sites or headcount failed when other tests ran first.
+
+**Carried into later milestones from M3:**
+
+- **Counsel's review** of the rules marked for review, above all the 2025–26 amendments
+  (maternity days, union thresholds, the complaint committee).
+- **Kiosk payslips on Android tablets:** Chrome downloads PDFs instead of showing them, so a
+  kiosk browser with a PDF viewer, or an HTML payslip view, comes before factories use the
+  payslip tile. Camera scanning of ID cards needs a real tablet to try.
+- **Shared state:** grievance and kiosk PIN lockouts live in one API process's memory, like
+  the rate limits; several API instances need Redis.
+- **Withdrawn consent:** night-work consent has a start date only; withdrawing it from a date
+  needs an end date.
+- **Certificates of fitness** clear their alert at the next hourly check, not on upload.
+- **Maternity on death** (s.49) is recorded through the nominee but not paid by the system.
+- **Grievances recorded by staff** (a worker who tells HR in person) have no form yet.
+- **Production incentives by line** (a bonus when the whole line meets its target) are not
+  modelled; incentives are per worker and operation.
+- **Overtime for piece-rated workers** at a time rate near their average earnings (s.108(2))
+  is set by the workspace's formula; no rate is worked out from their earnings.
+
 ## Later milestones (outline; detailed when each starts)
 
-- **M3 RMG pack:**
-  - Piece rate and production incentives.
-  - Overtime caps with alerts.
-  - Adolescent workers' hours and age checks.
-  - Maternity benefit tracking and payment.
-  - Participation committee and union records.
-  - An anonymous grievance channel.
-  - Buyer-audit reports: wages against grade minimums, hours, overtime, leave.
-  - Kiosk mode with ID-card login, and SMS.
 - **M4 NGO & group packs:**
   - Projects and grants, with salary split across them in the journal.
   - Project timesheets, donor-format reports, and field staff working offline.
@@ -379,3 +543,15 @@ Added as each milestone's research is done.
   https://www.vatupdate.com/2026/08/28/bangladesh-e-invoicing-e-reporting-country-booklet/
 - SSLCommerz API v4: https://developer.sslcommerz.com/doc/v4/
 - bKash tokenized checkout: https://developer.bka.sh
+
+**M3 RMG pack:**
+
+- Bangladesh Labour Act 2006, authentic English text (as amended to 2018):
+  http://bdlaws.minlaw.gov.bd/upload/act/2022-01-31-10-23-59-49.The-Bangladesh-Labour-Act,-2006.pdf
+- Bangladesh Labour Rules 2015, English (unofficial):
+  https://cdn2.ogrlegal.com/files/labour/rules/Bangladesh-Labour-Rules-2015-English_Unofficial.pdf
+- The 2025–26 amendments: https://mihcm.com/blog/the-bangladesh-labour-amendment-act-2026-what-changed-and-what-hr-must-do-now
+  and https://www.legal500.com/intelligence/bangladesh/employment-and-hr/the-rules-have-changed-bangladeshs-2025-2026-labour-law-reforms-and-what-it-means-for-businesses
+- RMG minimum wage and the 2026 wage board:
+  https://www.tbsnews.net/economy/rmg/rmg-workers-minimum-wage-set-tk12500-746694 and
+  https://textiletoday.com.bd/government-begins-new-wage-board-process-ahead-of-2026-wage-review

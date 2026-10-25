@@ -22,11 +22,10 @@ describe('holiday calendars', () => {
 
   it('provisions a default calendar used by every location without its own', () => {
     expect(calendar.name).toBe('Bangladesh public holidays');
-    expect(calendar.locations.map((l) => l.name).toSorted()).toEqual([
-      'Gazipur Factory',
-      'Head Office, Gulshan',
-      'Narayanganj Plant',
-    ]);
+    // The seeded sites; sites other tests add use the default calendar too.
+    expect(calendar.locations.map((l) => l.name)).toEqual(
+      expect.arrayContaining(['Gazipur Factory', 'Head Office, Gulshan', 'Narayanganj Plant']),
+    );
   });
 
   it('checks the year against the Labour Act festival-holiday rule', async () => {

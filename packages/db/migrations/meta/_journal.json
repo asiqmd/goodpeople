@@ -176,6 +176,20 @@
       "when": 1792930061920,
       "tag": "0024_billing",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1792939318915,
+      "tag": "0025_rmg_pack",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1792939319365,
+      "tag": "0026_rmg_pack_rls",
+      "breakpoints": true
     }
   ]
 }

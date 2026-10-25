@@ -29,6 +29,6 @@ import { ShiftsService } from './shifts.service.js';
     EdgeAgentGuard,
     TenantRolesGuard,
   ],
-  exports: [AttendanceProcessor, RegularizationsService],
+  exports: [AttendanceProcessor, AttendanceService, RegularizationsService],
 })
 export class AttendanceModule {}

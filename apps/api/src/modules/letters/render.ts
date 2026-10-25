@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import type { LetterLanguage } from '@gp/shared';
+import QRCode from 'qrcode';
 
 const require = createRequire(import.meta.url);
 
@@ -177,6 +178,8 @@ export function idCardsHtml(input: {
 .photo{width:21mm;height:26mm;border-radius:1.5mm;object-fit:cover;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-size:14pt;font-weight:700;color:#6b7280}
 .name{font-size:9.5pt;font-weight:700;margin-bottom:1mm}
 .k{color:#6b7280}
+.details{flex:1;min-width:0;overflow-wrap:anywhere}
+.qr{width:15mm;height:15mm;flex:none;align-self:flex-end}
 .back{padding:2.5mm 3mm}
 .back p{margin:0 0 1.4mm}
 .small{font-size:6pt;color:#6b7280}
@@ -186,12 +189,12 @@ export function idCardsHtml(input: {
       const photo = c.photo
         ? `<img class="photo" src="data:${c.photo.contentType};base64,${c.photo.bytes.toString('base64')}">`
         : `<div class="photo">${escapeHtml(initials(c.name))}</div>`;
-      const front = `<div class="card"><div class="band">${escapeHtml(input.company.name)}</div><div class="front">${photo}<div>
+      const front = `<div class="card"><div class="band">${escapeHtml(input.company.name)}</div><div class="front">${photo}<div class="details">
 <div class="name">${escapeHtml(c.name)}</div>
 <div>${escapeHtml(c.designation)}</div><div>${escapeHtml(c.department)}</div>
 <div style="margin-top:1.5mm"><span class="k">${l.id}:</span> <b>${escapeHtml(c.code)}</b></div>
 <div><span class="k">${l.blood}:</span> ${escapeHtml(c.bloodGroup)}</div>
-<div><span class="k">${l.joined}:</span> ${escapeHtml(c.joinedOn)}</div></div></div></div>`;
+<div><span class="k">${l.joined}:</span> ${escapeHtml(c.joinedOn)}</div></div>${qrSvg(c.code)}</div></div>`;
       const back = `<div class="card"><div class="band">${escapeHtml(input.company.name)}</div><div class="back">
 <p><span class="k">${l.emergency}:</span> ${escapeHtml(c.emergency)}</p>
 ${input.validUntil ? `<p><span class="k">${l.valid}:</span> ${escapeHtml(input.validUntil)}</p>` : ''}
@@ -209,6 +212,28 @@ ${input.validUntil ? `<p><span class="k">${l.valid}:</span> ${escapeHtml(input.v
     `${css}.break-before{break-before:page;margin-top:0}`,
     `<div class="sheet">${cards}</div>`,
   );
+}
+
+/**
+ * The employee code as a QR code, for signing in at a kiosk with the card. Medium error
+ * correction survives a scratched laminate; at 15 mm a short code's modules are about 0.6 mm,
+ * which tablet cameras read from a hand's length.
+ */
+function qrSvg(code: string): string {
+  const { size, data } = QRCode.create(code, { errorCorrectionLevel: 'M' }).modules;
+  const quiet = 2;
+  const runs: string[] = [];
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      if (!data[y * size + x]) continue;
+      let width = 1;
+      while (x + width < size && data[y * size + x + width]) width++;
+      runs.push(`M${x + quiet} ${y + quiet}h${width}v1h-${width}z`);
+      x += width;
+    }
+  }
+  const box = size + 2 * quiet;
+  return `<svg class="qr" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${box} ${box}" shape-rendering="crispEdges" role="img" aria-label="${escapeHtml(code)}"><rect width="${box}" height="${box}" fill="#fff"/><path fill="#000" d="${runs.join('')}"/></svg>`;
 }
 
 function initials(name: string): string {

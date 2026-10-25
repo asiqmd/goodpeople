@@ -45,7 +45,8 @@ describe('rule lookup across the 2025 amendment', () => {
   it('cites a section for every version', () => {
     for (const rule of allRules(BD_RULES)) {
       expect(rule.reference.act).toMatch(/Bangladesh Labour/);
-      expect(rule.reference.section).toMatch(/^\d+$/);
+      // A section number, lettered where the Act inserted one (90A, 332A).
+      expect(rule.reference.section).toMatch(/^\d+[A-Z]?$/);
     }
   });
 });

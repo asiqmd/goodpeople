@@ -59,6 +59,11 @@ export const CIPHER_FIELDS = {
   reconciliationResult: 'payroll_reconciliations.result',
   /** Payments a bank or wallet provider returned, with their accounts. */
   paymentCheck: 'payment_checks.result',
+  /** A maternity case's wages and average daily wage, and each part of the benefit paid. */
+  maternityWages: 'maternity_cases.wages',
+  maternityPayments: 'maternity_payments.amount',
+  /** What a worker wrote in a grievance, and the messages that followed. */
+  grievanceText: 'grievances.text',
 } as const;
 export type CipherField = (typeof CIPHER_FIELDS)[keyof typeof CIPHER_FIELDS];
 

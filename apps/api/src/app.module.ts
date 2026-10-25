@@ -9,7 +9,14 @@ import { AccountModule } from './modules/account/account.module.js';
 import { ApprovalsModule } from './modules/approvals/approvals.module.js';
 import { AttendanceModule } from './modules/attendance/attendance.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
+import { AuditReportModule } from './modules/audit-report/audit-report.module.js';
 import { BillingModule } from './modules/billing/billing.module.js';
+import { ProductionModule } from './modules/production/production.module.js';
+import { ComplianceModule } from './modules/compliance/compliance.module.js';
+import { MaternityModule } from './modules/maternity/maternity.module.js';
+import { RelationsModule } from './modules/relations/relations.module.js';
+import { GrievancesModule } from './modules/grievances/grievances.module.js';
+import { KioskModule } from './modules/kiosk/kiosk.module.js';
 import { DocumentsModule } from './modules/documents/documents.module.js';
 import { ImportsModule } from './modules/imports/imports.module.js';
 import { LettersModule } from './modules/letters/letters.module.js';
@@ -57,6 +64,13 @@ export class AppModule {
         SetupModule,
         SignupModule,
         BillingModule,
+        ProductionModule,
+        ComplianceModule,
+        MaternityModule,
+        RelationsModule,
+        GrievancesModule,
+        KioskModule,
+        AuditReportModule,
       ],
       providers: [
         { provide: APP_CONFIG, useValue: config },

@@ -36,6 +36,7 @@ import { pfBalances, vestedPercent } from './provident-fund.service.js';
 import {
   approvedPay,
   attendanceOf,
+  extraVariablesOf,
   inputsOf,
   jobsOn,
   loansFor,
@@ -311,6 +312,11 @@ export class SettlementsService {
       start: run.periodStart,
       end: run.periodEnd,
     });
+    // Pieces made in the last month are paid; a leaver's union dues are not deducted.
+    const extra = await extraVariablesOf(tx, [person.id], run, tenant, {
+      production: true,
+      unionDues: false,
+    });
     const now = computePay({
       periodStart: run.periodStart,
       periodEnd: run.periodEnd,
@@ -326,6 +332,7 @@ export class SettlementsService {
       pf: pf.get(person.id) ?? null,
       loans,
       tax: tax && tax !== 'missing' ? (tax.get(person.id) ?? null) : null,
+      extra: extra.get(person.id),
     });
     if (now.status === 'error') return [{ employeeId: person.id, result: now, flagged: false }];
 

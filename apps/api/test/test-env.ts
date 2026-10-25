@@ -6,11 +6,15 @@ import request from 'supertest';
 import { createApp } from '../src/app.js';
 import { loadConfig, type AppConfig } from '../src/config.js';
 
-/** The same server and roles as development, against `<name>_test`. */
+/**
+ * The same server and roles as development, against `<name>_test`, or `<name>_test_<suffix>`
+ * with TEST_DB_SUFFIX set, so test runs side by side never share a database.
+ */
 export function testEnv() {
   loadRootEnv();
   const owner = requireEnv('DATABASE_OWNER_URL');
-  const name = `${databaseName(owner)}_test`;
+  const suffix = process.env.TEST_DB_SUFFIX?.replace(/[^a-z0-9_]/gi, '').toLowerCase();
+  const name = `${databaseName(owner)}_test${suffix ? `_${suffix}` : ''}`;
   return {
     adminUrl: process.env.DATABASE_ADMIN_URL,
     ownerUrl: withDatabase(owner, name),

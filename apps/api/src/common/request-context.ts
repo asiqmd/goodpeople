@@ -28,13 +28,16 @@ export function runInTenantContext<T>(tenantId: string, fn: () => T): T {
 
 /**
  * Runs each tenant request inside an async context that carries its tenant id: a workspace
- * user's, or an Edge Agent's (whose token names the workspace).
+ * user's, or an Edge Agent's or a kiosk's (whose tokens name the workspace).
  */
 @Injectable()
 export class TenantContextInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const req = context.switchToHttp().getRequest<AuthedRequest>();
-    const tenantId = req.user?.kind === 'tenant' ? req.user.tenantId : req.edgeAgent?.tenantId;
+    const tenantId =
+      req.user?.kind === 'tenant'
+        ? req.user.tenantId
+        : (req.edgeAgent?.tenantId ?? req.kiosk?.tenantId);
     if (!tenantId) return next.handle();
     return new Observable((subscriber) =>
       storage.run({ tenantId }, () => next.handle().subscribe(subscriber)),

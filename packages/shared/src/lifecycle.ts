@@ -33,6 +33,8 @@ export const DOCUMENT_CATEGORIES = [
   'appointment_letter',
   'contract',
   'medical_certificate',
+  /** An adolescent's certificate of fitness (Labour Act s.34, s.37), valid 12 months. */
+  'fitness_certificate',
   'police_verification',
   'nominee_form',
   'letter',

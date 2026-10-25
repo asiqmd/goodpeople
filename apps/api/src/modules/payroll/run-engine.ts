@@ -94,7 +94,21 @@ export interface EngineInput {
   loans?: EngineLoan[];
   /** Salary tax to deduct; null or absent where the run does not work it out. */
   tax?: EngineTax | null;
+  /**
+   * Formula variables from other modules, by name: production (PIECES, PIECE_EARNINGS,
+   * PRODUCTION_INCENTIVE) and union dues (UNION_DUES). Missing ones are zero.
+   */
+  extra?: Partial<Record<ExtraVariable, string>>;
 }
+
+/** Run variables that come from outside attendance and pay records. */
+export const EXTRA_VARIABLES = [
+  'PIECES',
+  'PIECE_EARNINGS',
+  'PRODUCTION_INCENTIVE',
+  'UNION_DUES',
+] as const;
+export type ExtraVariable = (typeof EXTRA_VARIABLES)[number];
 
 export interface EngineResult {
   status: 'ok' | 'error';
@@ -342,6 +356,7 @@ export function computePay(input: EngineInput): EngineResult {
   })) {
     variables.set(name, new Decimal(value));
   }
+  for (const name of EXTRA_VARIABLES) variables.set(name, new Decimal(input.extra?.[name] ?? 0));
   for (const c of input.components) {
     if (c.calculation !== 'run' || !c.isActive) continue;
     let value: Decimal | null = null;

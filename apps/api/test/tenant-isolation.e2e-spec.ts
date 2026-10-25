@@ -45,10 +45,12 @@ describe('tenant isolation (row-level security)', () => {
       .get('/tenant/legal-entities')
       .set(bearer(ngo.accessToken))
       .expect(200);
-    expect(groupList.body.map((e: { name: string }) => e.name).toSorted()).toEqual([
-      'My Group Foods Ltd',
-      'My Group Textiles Ltd',
-    ]);
+    // Other tests add companies to My Group; none of them may show up for the NGO.
+    const groupNames = groupList.body.map((e: { name: string }) => e.name);
+    expect(groupNames).toEqual(
+      expect.arrayContaining(['My Group Foods Ltd', 'My Group Textiles Ltd']),
+    );
+    expect(groupNames).not.toContain('Sponsored NGO Foundation');
     expect(ngoList.body.map((e: { name: string }) => e.name)).toEqual(['Sponsored NGO Foundation']);
   });
 

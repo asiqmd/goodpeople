@@ -86,6 +86,7 @@ import { WppfService } from './wppf.service.js';
 import {
   approvedPay,
   attendanceOf,
+  extraVariablesOf,
   inputsOf,
   jobsOn,
   loansFor,
@@ -395,6 +396,10 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
     const pf = await pfRatesFor(tx, settings, ids, { start: run.periodStart, end: run.periodEnd });
     const loans = await loansFor(tx, this.cipher, ids, run.periodStart.slice(0, 7));
     const tax = await taxContextsFor(tx, this.cipher, settings, run, members, components);
+    const extra = await extraVariablesOf(tx, ids, run, tenant, {
+      production: true,
+      unionDues: true,
+    });
 
     return members.map((m) => {
       if (tax === 'missing') {
@@ -422,6 +427,7 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
         pf: pf.get(m.id) ?? null,
         loans: loans.get(m.id) ?? [],
         tax: tax?.get(m.id) ?? null,
+        extra: extra.get(m.id),
       });
       const prev = previous.nets.get(m.id);
       const flagged =
@@ -490,6 +496,10 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
       start: run.periodStart,
       end: run.periodEnd,
     });
+    const extra = await extraVariablesOf(tx, scope, run, tenant, {
+      production: true,
+      unionDues: true,
+    });
     const paidLines = new Map<string, PayLineView[]>();
     for (const item of paidItems) {
       const result = this.decrypt<ItemResult>(item.resultEnc, CIPHER_FIELDS.runResults);
@@ -525,6 +535,7 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
         inputs: { ...carried, ...entered.get(p.id) },
         components,
         pf: pf.get(p.id) ?? null,
+        extra: extra.get(p.id),
       });
       if (now.status === 'error') return [{ employeeId: p.id, result: now, flagged: false }];
       const lines = difference(paidLines.get(p.id) ?? [], now.lines);

@@ -596,8 +596,10 @@ describe('tax, provident fund, loans, increments and bonuses', () => {
       .body;
     expect(settings).toMatchObject({
       autoTax: true,
-      pfRequired: { threshold: 100, required: false, permanentWorkers: expect.any(Number) },
+      pfRequired: { threshold: 100, permanentWorkers: expect.any(Number) },
     });
+    // Other tests hire into My Group, so the count varies; the rule must follow it.
+    expect(settings.pfRequired.required).toBe(settings.pfRequired.permanentWorkers >= 100);
     const rahima = await loginAs(app, 'rahima@my-group.test');
     await api(app).get('/tenant/payroll/loans').set(bearer(rahima)).expect(403);
     await api(app).get('/tenant/payroll/pf/members').set(bearer(rahima)).expect(403);

@@ -74,7 +74,8 @@ describe('employees', () => {
 
   it('lists the seeded employees with their current job', async () => {
     const page = await list('pageSize=100&search=MG-');
-    expect(page.total).toBe(10);
+    // Other tests' codes are random and can contain "mg-" too: count the seeded ones.
+    expect(page.items.filter((e) => /^MG-\d{4}$/.test(e.employeeCode))).toHaveLength(10);
     const shirin = page.items.find((e) => e.employeeCode === 'MG-0004')!;
     expect(shirin.designation?.name).toBe('Line Supervisor');
     expect(page.items.find((e) => e.employeeCode === 'MG-0010')!.isAdolescent).toBe(true);

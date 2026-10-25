@@ -20,8 +20,11 @@ describe('org structure', () => {
   const unit = (code: string) => org.orgUnits.find((u) => u.code === code)!;
 
   it('returns the whole org in one call for HR', () => {
-    expect(org.legalEntities).toHaveLength(2);
-    expect(org.locations.map((l) => l.code).toSorted()).toEqual(['GZP', 'HO', 'NRJ']);
+    // The seeded companies and sites; other tests may add their own.
+    expect(org.legalEntities.map((e) => e.name)).toEqual(
+      expect.arrayContaining(['My Group Foods Ltd', 'My Group Textiles Ltd']),
+    );
+    expect(org.locations.map((l) => l.code)).toEqual(expect.arrayContaining(['GZP', 'HO', 'NRJ']));
     expect(unit('MGT-L1').parentId).toBe(unit('MGT-SEW').id);
     expect(org.designations.length).toBeGreaterThanOrEqual(9);
     expect(org.grades[0]!.rank).toBeLessThan(org.grades.at(-1)!.rank);

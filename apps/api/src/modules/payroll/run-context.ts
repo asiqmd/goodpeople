@@ -10,6 +10,10 @@ import {
   leaveRequests,
   leaveTypes,
   legalEntities,
+  maternityCases,
+  productionEntries,
+  tradeUnions,
+  unionMemberships,
   locations,
   orgUnits,
   payrollInputs,
@@ -53,6 +57,7 @@ import type {
   EngineDay,
   EngineLoan,
   EngineTax,
+  ExtraVariable,
 } from './run-engine.js';
 import type { payrollSettingsOf } from './payroll-setup.service.js';
 
@@ -557,10 +562,20 @@ export async function attendanceOf(
         lateMinutes: attendanceDays.lateMinutes,
         leaveDays: attendanceDays.leaveDays,
         paid: leaveTypes.paid,
+        maternityCase: maternityCases.id,
       })
       .from(attendanceDays)
       .leftJoin(leaveRequests, eq(leaveRequests.id, attendanceDays.leaveRequestId))
       .leftJoin(leaveTypes, eq(leaveTypes.id, leaveRequests.leaveTypeId))
+      // Maternity leave linked to a case is not paid as wages: the benefit pays it (s.48), or,
+      // where she is not entitled to the benefit (s.46(2)), it is leave without pay.
+      .leftJoin(
+        maternityCases,
+        and(
+          eq(maternityCases.leaveRequestId, attendanceDays.leaveRequestId),
+          ne(maternityCases.status, 'cancelled'),
+        ),
+      )
       .where(
         and(
           inArray(attendanceDays.employeeId, ids.slice(i, i + 10_000)),
@@ -575,13 +590,75 @@ export async function attendanceOf(
           status: d.status,
           overtimeMinutes: d.overtimeMinutes,
           leaveDays: d.leaveDays,
-          unpaidLeave: d.paid === false,
+          unpaidLeave: d.paid === false || d.maternityCase !== null,
           late: d.lateMinutes > 0,
         })),
       );
     }
   }
   return { trackingFrom: settings.trackingFrom, days: out };
+}
+
+/**
+ * Formula variables from production and union check-off, per person: pieces made in the
+ * period, their pay at the rates entered with them, the incentive for pieces above each
+ * day's target, and the subscription of each union whose dues the member agreed to have
+ * deducted (Labour Act s.204).
+ */
+export async function extraVariablesOf(
+  tx: Tx,
+  ids: string[],
+  run: { periodStart: string; periodEnd: string },
+  tenant: TenantWithAccess,
+  include: { production: boolean; unionDues: boolean },
+): Promise<Map<string, Partial<Record<ExtraVariable, string>>>> {
+  const out = new Map<string, Partial<Record<ExtraVariable, string>>>();
+  if (ids.length === 0) return out;
+  const set = (id: string, name: ExtraVariable, value: string) =>
+    out.set(id, { ...out.get(id), [name]: value });
+  if (include.production && tenant.access.features.includes('production')) {
+    const rows = await tx
+      .select({
+        employeeId: productionEntries.employeeId,
+        pieces: sql<string>`sum(${productionEntries.quantity})::text`,
+        earnings: sql<string>`coalesce(sum(${productionEntries.quantity} * ${productionEntries.pieceRate}), 0)::text`,
+        incentive: sql<string>`coalesce(sum(greatest(0, ${productionEntries.quantity} - ${productionEntries.dailyTarget}) * ${productionEntries.incentiveRate}), 0)::text`,
+      })
+      .from(productionEntries)
+      .where(
+        and(
+          inArray(productionEntries.employeeId, ids),
+          sql`${productionEntries.date} between ${run.periodStart} and ${run.periodEnd}`,
+        ),
+      )
+      .groupBy(productionEntries.employeeId);
+    for (const r of rows) {
+      set(r.employeeId, 'PIECES', r.pieces);
+      set(r.employeeId, 'PIECE_EARNINGS', money(r.earnings));
+      set(r.employeeId, 'PRODUCTION_INCENTIVE', money(r.incentive));
+    }
+  }
+  if (include.unionDues) {
+    const rows = await tx
+      .select({
+        employeeId: unionMemberships.employeeId,
+        dues: sql<string>`sum(${tradeUnions.monthlySubscription})::text`,
+      })
+      .from(unionMemberships)
+      .innerJoin(tradeUnions, eq(tradeUnions.id, unionMemberships.unionId))
+      .where(
+        and(
+          inArray(unionMemberships.employeeId, ids),
+          eq(tradeUnions.checkOff, true),
+          lte(unionMemberships.joinedOn, run.periodEnd),
+          lte(unionMemberships.checkOffConsentOn, run.periodEnd),
+          or(isNull(unionMemberships.leftOn), gte(unionMemberships.leftOn, run.periodEnd)),
+        ),
+      )
+      .groupBy(unionMemberships.employeeId);
+    for (const r of rows) if (r.dues) set(r.employeeId, 'UNION_DUES', money(r.dues));
+  }
+  return out;
 }
 
 /** Amounts entered in a run, per person. */

@@ -59,6 +59,13 @@ A multi-tenant HR and payroll platform, built for Bangladesh first and ready to 
     cheque (matched from a statement); VAT and income tax withheld by customers with their
     certificates; reminders, then read-only until paid; trial reminders; and partner
     billing.
+  - **Phase 3 M3 (RMG pack):** piece rates and production incentives entered by line and
+    paid through payroll above the minimum wage; working-time alerts for adults,
+    adolescents, women at night and the company's overtime caps; adolescents' certificates
+    of fitness; maternity benefit cases paid at the Act's average wage; participation,
+    safety and complaint committees and trade unions with check-off; an anonymous grievance
+    channel with a QR poster; worker kiosks with ID-card QR codes and PINs set by SMS; and a
+    buyer audit report in English and Bangla.
 - **Next:**
   - Our own organisations go live: [docs/ops/go-live.md](docs/ops/go-live.md).
   - Payroll goes live after three parallel months with a design partner:
@@ -66,7 +73,10 @@ A multi-tenant HR and payroll platform, built for Bangladesh first and ready to 
   - Before the first real invoice: the tax consultant's sign-off on the VAT service code,
     and SSLCommerz and bKash tried in their sandboxes
     ([docs/phases/phase-3.md](docs/phases/phase-3.md#m2-billing--invoicing)).
-  - Phase 3 M3: the RMG pack. The plan is in [docs/phases/phase-3.md](docs/phases/phase-3.md).
+  - Before factories rely on the RMG pack: the labour lawyer's sign-off on the rules marked
+    for review ([docs/phases/phase-3.md](docs/phases/phase-3.md#m3-rmg-pack)).
+  - Phase 3 M4: NGO and group packs. The plan is in
+    [docs/phases/phase-3.md](docs/phases/phase-3.md).
 
 ## Repository layout
 
@@ -74,7 +84,8 @@ A multi-tenant HR and payroll platform, built for Bangladesh first and ready to 
 apps/
   api/       NestJS 12 (ESM) modular monolith: auth, tenancy, entitlements, platform admin, org,
              employees, leave, attendance, approvals, documents, lifecycle, letters, imports,
-             accounts and users, notifications, setup checklist, payroll, sign-up, billing
+             accounts and users, notifications, setup checklist, payroll, sign-up, billing,
+             production, compliance, maternity, relations, grievances, kiosk, audit report
   web/       Next.js 16: Super Admin console (/platform) and workspace app (/workspace), en/bn
   mobile/    Flutter app: sign-in (password or SMS code), profile, documents, leave, attendance
              (location and selfie punching, offline queue), resignation, approvals, team view,

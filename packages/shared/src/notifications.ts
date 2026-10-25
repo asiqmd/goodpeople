@@ -34,6 +34,12 @@ export const NOTIFICATION_EVENTS = [
   'billing.payment_due',
   /** The free trial ends in a week, tomorrow, or has ended. */
   'trial.ending',
+  /** A working-time limit was passed, or a committee fell behind (to HR and the manager). */
+  'compliance.alert',
+  /** A worker raised a grievance (to those who handle them; never its content). */
+  'grievance.received',
+  /** A maternity benefit payment falls due within three working days. */
+  'maternity.payment_due',
   /** A sign-in code: SMS only, always sent. */
   'auth.otp',
 ] as const;
@@ -58,6 +64,9 @@ export const DEFAULT_EVENT_CHANNELS: Record<NotificationEvent, readonly Delivery
   'billing.payment_received': ['email'],
   'billing.payment_due': ['email'],
   'trial.ending': ['email'],
+  'compliance.alert': ['email', 'push'],
+  'grievance.received': ['email', 'push'],
+  'maternity.payment_due': ['email'],
   'auth.otp': ['sms'],
 };
 

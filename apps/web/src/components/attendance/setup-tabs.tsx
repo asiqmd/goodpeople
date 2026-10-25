@@ -1,7 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 
-const TABS = ['settings', 'roster', 'devices', 'summary'] as const;
+const TABS = ['settings', 'roster', 'devices', 'kiosks', 'summary'] as const;
 
 /** Sub-navigation across HR's attendance pages. */
 export async function SetupTabs({ active }: { active: (typeof TABS)[number] }) {

@@ -67,6 +67,62 @@ export interface BdRules {
   'separation.dues_within_working_days': number;
   'separation.wage_basis': SeparationWageBasis;
   'wppf.shares': WppfShares;
+  'adolescent.min_age': number;
+  'adolescent.adult_age': number;
+  'adolescent.daily_hours': Record<WorkplaceKind, number>;
+  'adolescent.weekly_hours': Record<WorkplaceKind, number>;
+  'adolescent.weekly_max_hours_with_overtime': Record<WorkplaceKind, number>;
+  'adolescent.no_work_between': ClockWindow;
+  'adolescent.max_shift_hours': number;
+  'adolescent.fitness_certificate_months': number;
+  'women.night_work_needs_consent': ClockWindow;
+  'work.overtime_notice_hours': number;
+  'maternity.days_before_delivery': number;
+  'maternity.average_wage_months': number;
+  'maternity.no_benefit_from_surviving_children': number;
+  'maternity.payment_working_days': number;
+  'maternity.proof_within_months': number;
+  'maternity.second_part_after_proof_days': number;
+  'maternity.protected_months_before': number;
+  'maternity.protected_days_after': number;
+  'committee.participation': CommitteeRule;
+  'committee.safety': CommitteeRule;
+  'committee.complaint': CommitteeRule | null;
+  'union.min_members': UnionThreshold;
+  'union.max_per_establishment': number | null;
+  'union.checkoff_deposit_days': number;
+  'grievance.complaint_within_days': number;
+  'grievance.decision_within_days': number;
+}
+
+/** Adolescent hours differ in factories and mines from other establishments (s.41). */
+export type WorkplaceKind = 'factory' | 'other';
+
+/** A daily clock window, "HH:MM" in local time; `to` before `from` runs past midnight. */
+export interface ClockWindow {
+  from: string;
+  to: string;
+}
+
+/** A committee the Act requires: when, how big, how long, how often it meets. */
+export interface CommitteeRule {
+  /** Workers ordinarily employed from which it is required; 0 for every establishment. */
+  minWorkers: number;
+  /** Members by workforce: the first row whose `upToWorkers` covers it (null: any size). */
+  sizes: readonly { upToWorkers: number | null; maxMembers: number }[];
+  termYears: number | null;
+  /** Meets at least this often, in months; null when the law sets no rhythm. */
+  meetEveryMonths: number | null;
+  /** Minutes sent to the Director of Labour within this many days of a meeting. */
+  minutesWithinDays: number | null;
+  /** Its chair is a woman and most members are women (complaint committees). */
+  womanChairAndMajority: boolean;
+}
+
+/** Members a trade union needs to register: a share of workers, or a count by size. */
+export interface UnionThreshold {
+  percentOfWorkers: number | null;
+  byWorkforce: readonly { upToWorkers: number | null; members: number }[] | null;
 }
 
 /** How the participation and welfare funds share a company's net profit (Chapter XV). */
@@ -713,5 +769,284 @@ export const BD_RULES: Rulebook<BdRules> = {
         note: 'Substituted s.242(1): the whole participation fund is paid equally to beneficiaries.',
       },
     ],
+  },
+  'adolescent.min_age': {
+    title: 'Youngest age at which a person may be employed (an adolescent)',
+    versions: [
+      {
+        from: ACT_START,
+        value: 14,
+        reference: BLA('34'),
+        status: 'verified',
+        note: 'A child (under 14) may not work (s.2(63), s.34); light work from 12 is a narrow exception (s.44) not supported here.',
+      },
+    ],
+  },
+  'adolescent.adult_age': {
+    title: 'Age from which a worker is an adult',
+    versions: [{ from: ACT_START, value: 18, reference: BLA('2'), status: 'verified' }],
+  },
+  'adolescent.daily_hours': {
+    title: 'Most hours an adolescent may work in a day',
+    versions: [
+      {
+        from: ACT_START,
+        value: { factory: 5, other: 7 },
+        reference: BLA('41'),
+        status: 'verified',
+      },
+    ],
+  },
+  'adolescent.weekly_hours': {
+    title: 'Most hours an adolescent may work in a week, before overtime',
+    versions: [
+      {
+        from: ACT_START,
+        value: { factory: 30, other: 42 },
+        reference: BLA('41'),
+        status: 'verified',
+      },
+    ],
+  },
+  'adolescent.weekly_max_hours_with_overtime': {
+    title: 'Most hours an adolescent may work in a week, including overtime',
+    versions: [
+      {
+        from: ACT_START,
+        value: { factory: 36, other: 48 },
+        reference: BLA('41'),
+        status: 'verified',
+      },
+    ],
+  },
+  'adolescent.no_work_between': {
+    title: 'Hours in which no adolescent may work',
+    versions: [
+      {
+        from: ACT_START,
+        value: { from: '19:00', to: '07:00' },
+        reference: BLA('41'),
+        status: 'verified',
+      },
+    ],
+  },
+  'adolescent.max_shift_hours': {
+    title: 'Longest shift for an adolescent, in hours',
+    versions: [{ from: ACT_START, value: 7.5, reference: BLA('41'), status: 'verified' }],
+  },
+  'adolescent.fitness_certificate_months': {
+    title: "Months an adolescent's certificate of fitness stays valid",
+    versions: [
+      {
+        from: ACT_START,
+        value: 12,
+        reference: BLA('37'),
+        status: 'verified',
+        note: 'Issued by a registered medical practitioner (Labour Rules 2015, rule 34, Form 15); the employer pays and keeps it (s.34(2)).',
+      },
+    ],
+  },
+  'women.night_work_needs_consent': {
+    title: 'Hours in which a woman works only with her consent',
+    versions: [
+      {
+        from: ACT_START,
+        value: { from: '22:00', to: '06:00' },
+        reference: BLA('109'),
+        status: 'verified',
+      },
+    ],
+  },
+  'work.overtime_notice_hours': {
+    title: 'Overtime needs the worker’s consent, asked at least this many hours before',
+    versions: [
+      {
+        from: ACT_START,
+        value: 2,
+        reference: { act: 'Bangladesh Labour Rules 2015', section: '99' },
+        status: 'verified',
+      },
+    ],
+  },
+  'maternity.days_before_delivery': {
+    title: 'Maternity leave before the expected delivery, in days',
+    versions: [
+      { from: ACT_START, value: 56, reference: BLA('46'), status: 'verified' },
+      {
+        from: AMENDMENT_2025,
+        value: 60,
+        reference: ORDINANCE_2025('46'),
+        status: 'needs_review',
+        note: '120 days split 60 before and 60 after delivery; confirm against the gazette.',
+      },
+    ],
+  },
+  'maternity.average_wage_months': {
+    title: 'Maternity benefit: months of wages averaged over the days actually worked',
+    versions: [
+      {
+        from: ACT_START,
+        value: 3,
+        reference: BLA('48'),
+        status: 'verified',
+        note: 'Wages earned in the three months before the notice, divided by the days actually worked; paid wholly in cash (s.48(1)).',
+      },
+    ],
+  },
+  'maternity.no_benefit_from_surviving_children': {
+    title: 'Surviving children at delivery from which no benefit is payable (leave still is)',
+    versions: [{ from: ACT_START, value: 2, reference: BLA('46'), status: 'needs_review' }],
+  },
+  'maternity.payment_working_days': {
+    title: 'Working days to pay maternity benefit after the certificate or proof of birth',
+    versions: [{ from: ACT_START, value: 3, reference: BLA('47'), status: 'verified' }],
+  },
+  'maternity.proof_within_months': {
+    title: 'Months after delivery within which proof of birth must be produced',
+    versions: [{ from: ACT_START, value: 3, reference: BLA('47'), status: 'verified' }],
+  },
+  'maternity.second_part_after_proof_days': {
+    title: 'Paying in two parts after the birth: days after the proof for the second part',
+    versions: [
+      {
+        from: ACT_START,
+        value: 56,
+        reference: BLA('47'),
+        status: 'verified',
+        note: 's.47(4)(b): the rest within 8 weeks of producing the proof of birth.',
+      },
+    ],
+  },
+  'maternity.protected_months_before': {
+    title: 'Months before delivery in which dismissal without cause keeps the benefit',
+    versions: [{ from: ACT_START, value: 6, reference: BLA('50'), status: 'verified' }],
+  },
+  'maternity.protected_days_after': {
+    title: 'Days after delivery in which dismissal without cause keeps the benefit',
+    versions: [
+      { from: ACT_START, value: 56, reference: BLA('50'), status: 'verified' },
+      {
+        from: AMENDMENT_2025,
+        value: 60,
+        reference: ORDINANCE_2025('50'),
+        status: 'needs_review',
+        note: 'Assumed to follow the 60 days after delivery; confirm against the gazette.',
+      },
+    ],
+  },
+  'committee.participation': {
+    title: 'Participation committee',
+    versions: [
+      {
+        from: ACT_START,
+        value: {
+          minWorkers: 50,
+          sizes: [
+            { upToWorkers: 100, maxMembers: 6 },
+            { upToWorkers: 400, maxMembers: 10 },
+            { upToWorkers: 800, maxMembers: 12 },
+            { upToWorkers: 1500, maxMembers: 14 },
+            { upToWorkers: 3000, maxMembers: 18 },
+            { upToWorkers: 5000, maxMembers: 22 },
+            { upToWorkers: 7500, maxMembers: 24 },
+            { upToWorkers: null, maxMembers: 30 },
+          ],
+          termYears: 2,
+          meetEveryMonths: 2,
+          minutesWithinDays: 7,
+          womanChairAndMajority: false,
+        },
+        reference: BLA('205'),
+        status: 'verified',
+        note: 'Workers’ members at least equal the employer’s, nominated by the unions (the CBA one more) or elected by secret ballot where there is none (s.205; Labour Rules 2015, rules 183–197).',
+      },
+    ],
+  },
+  'committee.safety': {
+    title: 'Safety committee',
+    versions: [
+      {
+        from: ACT_START,
+        value: {
+          minWorkers: 50,
+          sizes: [
+            { upToWorkers: 500, maxMembers: 6 },
+            { upToWorkers: 1000, maxMembers: 8 },
+            { upToWorkers: 3000, maxMembers: 10 },
+            { upToWorkers: null, maxMembers: 12 },
+          ],
+          termYears: 2,
+          meetEveryMonths: 3,
+          minutesWithinDays: null,
+          womanChairAndMajority: false,
+        },
+        reference: BLA('90A'),
+        status: 'verified',
+        note: 'Equal employer and worker members, at least six (Labour Rules 2015, rules 81 and 83; Schedule IV). From 2025 every establishment of 50 or more, not only factories.',
+      },
+    ],
+  },
+  'committee.complaint': {
+    title: 'Complaint committee on violence and sexual harassment',
+    versions: [
+      { from: ACT_START, value: null, reference: BLA('332'), status: 'verified' },
+      {
+        from: AMENDMENT_2025,
+        value: {
+          minWorkers: 0,
+          sizes: [{ upToWorkers: null, maxMembers: 5 }],
+          termYears: null,
+          meetEveryMonths: null,
+          minutesWithinDays: null,
+          womanChairAndMajority: true,
+        },
+        reference: ORDINANCE_2025('332A'),
+        status: 'needs_review',
+        note: 'Five members, a woman chairing and women the majority, in every establishment; the rules on its procedure are not yet published.',
+      },
+    ],
+  },
+  'union.min_members': {
+    title: 'Members a trade union needs to register',
+    versions: [
+      {
+        from: ACT_START,
+        value: { percentOfWorkers: 20, byWorkforce: null },
+        reference: BLA('179'),
+        status: 'needs_review',
+        note: '30% at first, 20% from the 2018 amendment.',
+      },
+      {
+        from: AMENDMENT_2025,
+        value: {
+          percentOfWorkers: null,
+          byWorkforce: [
+            { upToWorkers: 300, members: 20 },
+            { upToWorkers: 500, members: 40 },
+            { upToWorkers: 1500, members: 100 },
+            { upToWorkers: 3000, members: 300 },
+            { upToWorkers: null, members: 400 },
+          ],
+        },
+        reference: ORDINANCE_2025('179'),
+        status: 'needs_review',
+      },
+    ],
+  },
+  'union.max_per_establishment': {
+    title: 'Most registered trade unions in one establishment',
+    versions: [{ from: ACT_START, value: 3, reference: BLA('179'), status: 'needs_review' }],
+  },
+  'union.checkoff_deposit_days': {
+    title: 'Days to deposit union subscriptions deducted from wages',
+    versions: [{ from: ACT_START, value: 15, reference: BLA('204'), status: 'needs_review' }],
+  },
+  'grievance.complaint_within_days': {
+    title: 'Days a worker has to complain in writing to the employer',
+    versions: [{ from: ACT_START, value: 30, reference: BLA('33'), status: 'verified' }],
+  },
+  'grievance.decision_within_days': {
+    title: 'Days the employer has to enquire, hear the worker and decide',
+    versions: [{ from: ACT_START, value: 30, reference: BLA('33'), status: 'verified' }],
   },
 };

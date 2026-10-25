@@ -120,7 +120,11 @@ describe('accounts, sign-in and notifications', () => {
     const token = (await signIn(officer.email!, testEnv().password).expect(200)).body.accessToken;
     const account = (await api(app).get('/account').set(bearer(token)).expect(200))
       .body as AccountView;
-    expect(account.permissions).toEqual(['employees.read', 'attendance.manage']);
+    expect(account.permissions).toEqual([
+      'employees.read',
+      'attendance.manage',
+      'production.manage',
+    ]);
 
     // Reads people, but their identity numbers stay masked.
     const list = await api(app).get('/tenant/employees?pageSize=1').set(bearer(token)).expect(200);

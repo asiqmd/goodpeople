@@ -172,6 +172,28 @@ Before the first workspace is invoiced for real money (Finance, IT, the tax cons
 - [ ] One test workspace chooses a plan, is invoiced, and pays a small amount by card and by
       bKash. The Mushak-6.3 PDF is checked against a printed form, in both languages.
 
+## 7. A factory on the RMG pack (Phase 3)
+
+Before a garment factory relies on the pack (HR, Compliance, IT):
+
+- [ ] The labour lawyer signs off the rules marked for review in the Bangladesh pack, above
+      all the 2025–26 amendments (maternity days, union thresholds, the complaint committee).
+- [ ] **Compliance → Settings:** the overtime caps the factory and its buyers have agreed.
+- [ ] **Adolescents:** each worker under 18 has a certificate of fitness uploaded (category
+      "Certificate of fitness", with its expiry); the Adolescents page shows none missing.
+- [ ] **Women at night:** consent recorded for every woman rostered between 10 pm and 6 am.
+- [ ] **Committees:** the complaint committee formed (five members, a woman chairing, women
+      the majority) and, from 50 workers, the participation and safety committees with their
+      last meetings; unions recorded with their members' consent to check-off.
+- [ ] **Production:** operations and rates entered, and the structure of piece-rated workers
+      checked against one month paid the old way.
+- [ ] **Grievances:** the Speak up poster printed in Bangla and English and put up where
+      workers pass; at least one complaint committee member has a login.
+- [ ] **Kiosks:** each tablet registered and pinned to `/kiosk`; ID cards printed again with
+      their QR codes; SMS turned on for the workspace, with credits for PIN codes. Use a kiosk
+      browser that shows PDFs on the page: Android's Chrome saves payslips to the tablet's
+      downloads, where the next worker could open them (see phase-3.md).
+
 ## If it goes wrong
 
 The old register stays readable and can be reopened for new entries. Going back is a

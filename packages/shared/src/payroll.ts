@@ -59,6 +59,13 @@ export const RESERVED_PAY_NAMES = [
   'WORKER',
   'LATE_DAYS',
   'LEAVE_DAYS',
+  // From production entries (Phase 3 M3): pieces made, their pay at the piece rates, and
+  // the incentive for pieces above each day's target.
+  'PIECES',
+  'PIECE_EARNINGS',
+  'PRODUCTION_INCENTIVE',
+  // A trade union subscription deducted from wages with the member's consent (s.204).
+  'UNION_DUES',
 ] as const;
 
 /**

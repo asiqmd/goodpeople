@@ -34,6 +34,7 @@ export default async function WorkspaceLayout({ children }: LayoutProps<'/worksp
   const hasLeave = result.ok && result.data.access.features.includes('leave');
   const hasAttendance = result.ok && result.data.access.features.includes('attendance');
   const hasPayroll = result.ok && result.data.access.features.includes('payroll');
+  const hasProduction = result.ok && result.data.access.features.includes('production');
   // Resignations need approval in every workspace; leave and corrections where enabled.
   const [approvals, inbox] = result.ok
     ? await Promise.all([
@@ -42,6 +43,10 @@ export default async function WorkspaceLayout({ children }: LayoutProps<'/worksp
       ])
     : [null, null];
   const waiting = approvals?.ok ? approvals.data.count : 0;
+  // Complaint committee members hear harassment cases whatever their role (s.332A).
+  const handlesGrievances =
+    may('grievances.manage') ||
+    (result.ok && (await authedFetch('tenant', '/tenant/grievances/access')).ok);
   const unread = inbox?.ok ? inbox.data.unread : 0;
 
   const links = [
@@ -59,14 +64,19 @@ export default async function WorkspaceLayout({ children }: LayoutProps<'/worksp
     ...(may('org.manage') ? [{ href: '/workspace/organization', label: tn('organization') }] : []),
     ...(may('documents.manage') ? [{ href: '/workspace/letters', label: tlc('letters') }] : []),
     ...(hasLeave && may('leave.manage')
-      ? [{ href: '/workspace/leave/settings', label: tl('settings') }]
+      ? [
+          { href: '/workspace/leave/settings', label: tl('settings') },
+          { href: '/workspace/leave/maternity', label: tw('maternity') },
+        ]
       : []),
     ...(hasAttendance && may('attendance.manage')
       ? [
           {
             href: '/workspace/attendance/settings',
             label: ta('setup'),
-            match: ['roster', 'devices', 'summary'].map((p) => `/workspace/attendance/${p}`),
+            match: ['roster', 'devices', 'summary', 'kiosks'].map(
+              (p) => `/workspace/attendance/${p}`,
+            ),
           },
         ]
       : []),
@@ -80,6 +90,13 @@ export default async function WorkspaceLayout({ children }: LayoutProps<'/worksp
         ]
       : []),
     ...(hasPayroll ? [{ href: '/workspace/payslips', label: tw('payslips') }] : []),
+    ...(hasProduction && may('production.manage')
+      ? [{ href: '/workspace/production', label: tw('production') }]
+      : []),
+    ...(may('compliance.manage')
+      ? [{ href: '/workspace/compliance', label: tw('compliance') }]
+      : []),
+    ...(handlesGrievances ? [{ href: '/workspace/grievances', label: tw('grievances') }] : []),
     ...(may('users.manage') ? [{ href: '/workspace/users', label: tw('users') }] : []),
     ...(may('billing.manage') ? [{ href: '/workspace/billing', label: tw('billing') }] : []),
     ...(may('org.manage') ? [{ href: '/workspace/setup', label: tw('setup') }] : []),
