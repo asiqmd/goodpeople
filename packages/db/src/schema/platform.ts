@@ -143,3 +143,31 @@ export const authSessions = pgTable(
   },
   (t) => [index('auth_sessions_subject_idx').on(t.subjectKind, t.subjectId)],
 );
+
+/**
+ * A self-serve sign-up: who started it and the emailed code (only its hash). It becomes a trial
+ * workspace once the code is entered. Platform-level, like tenants: there is no workspace yet.
+ */
+export const signups = pgTable(
+  'signups',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    name: text('name').notNull(),
+    /** Lower-cased. */
+    email: text('email').notNull(),
+    company: text('company').notNull(),
+    industryTemplate: industryTemplate('industry_template').notNull(),
+    language: text('language').$type<'en' | 'bn'>().notNull().default('en'),
+    codeHash: text('code_hash').notNull(),
+    attempts: integer('attempts').notNull().default(0),
+    expiresAt: timestamptz('expires_at').notNull(),
+    tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'set null' }),
+    /** The network it came from, for rate limits and abuse reports. */
+    ip: text('ip'),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index('signups_email_idx').on(t.email, t.createdAt),
+    index('signups_created_idx').on(t.createdAt),
+  ],
+);

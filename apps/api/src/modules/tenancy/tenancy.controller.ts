@@ -12,7 +12,11 @@ export class TenancyController {
   /** What this workspace may do right now. The web and mobile apps render from this. */
   @Get('access')
   access(@CurrentTenant() tenant: TenantWithAccess): TenantAccessView {
-    const { id, name, slug, billingMode, status, planCode, access } = tenant;
-    return { tenant: { id, name, slug, billingMode, status, planCode }, access };
+    const { id, name, slug, billingMode, status, planCode, accessExpiresAt, industryTemplate } =
+      tenant;
+    return {
+      tenant: { id, name, slug, billingMode, status, planCode, accessExpiresAt, industryTemplate },
+      access: tenant.access,
+    };
   }
 }

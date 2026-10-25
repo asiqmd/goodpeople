@@ -19,6 +19,7 @@ export * from './lifecycle.js';
 export * from './lifecycle-schemas.js';
 export * from './notifications.js';
 export * from './account-schemas.js';
+export * from './signup.js';
 export type * from './api-types.js';
 export type * from './hr-types.js';
 export type * from './leave-types.js';

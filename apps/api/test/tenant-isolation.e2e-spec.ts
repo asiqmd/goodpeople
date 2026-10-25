@@ -8,6 +8,7 @@ const PLATFORM_TABLES_WITH_TENANT_ID = [
   'auth_sessions',
   'entitlement_grants',
   'platform_audit_log',
+  'signups',
   'subscriptions',
 ];
 

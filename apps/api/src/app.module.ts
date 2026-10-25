@@ -21,6 +21,7 @@ import { OrgModule } from './modules/org/org.module.js';
 import { PayrollModule } from './modules/payroll/payroll.module.js';
 import { PlatformAdminModule } from './modules/platform-admin/platform-admin.module.js';
 import { ReferenceModule } from './modules/reference/reference.controller.js';
+import { SignupModule } from './modules/signup/signup.module.js';
 import { SetupModule } from './modules/setup/setup.module.js';
 import { TenancyModule } from './modules/tenancy/tenancy.module.js';
 import { UsersModule } from './modules/users/users.module.js';
@@ -53,6 +54,7 @@ export class AppModule {
         ImportsModule,
         PayrollModule,
         SetupModule,
+        SignupModule,
       ],
       providers: [
         { provide: APP_CONFIG, useValue: config },

@@ -5,7 +5,8 @@ import { desc, eq } from 'drizzle-orm';
 import { DB } from '../../db/db.module.js';
 
 export interface AuditRecord {
-  actorId: string;
+  /** null for what nobody on the platform did, such as a self-serve sign-up. */
+  actorId: string | null;
   action: string;
   tenantId: string | null;
   reason: string;

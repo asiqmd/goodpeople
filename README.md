@@ -49,11 +49,16 @@ A multi-tenant HR and payroll platform, built for Bangladesh first and ready to 
     site or pay group; comparing a run with the current payroll's sheet to the taka, with
     three matched months as the go-live test; hand-worked golden tests; and matching the
     bank's returns.
+  - **Phase 3 M1 (sign-up & onboarding):** a public home and pricing page in English and
+    Bangla; self-serve sign-up with an emailed code that creates a 30-day trial workspace;
+    starting organisations for RMG, corporate, NGO and group companies; a first-steps guide
+    and trial banner; and the sign-up funnel in the platform console.
 - **Next:**
   - Our own organisations go live: [docs/ops/go-live.md](docs/ops/go-live.md).
   - Payroll goes live after three parallel months with a design partner:
     [docs/ops/go-live.md](docs/ops/go-live.md#5-payroll-go-live-phase-2).
-  - Phase 3: Bangladesh commercial launch and industry packs.
+  - Phase 3 M2: billing and invoicing. The plan is in
+    [docs/phases/phase-3.md](docs/phases/phase-3.md).
 
 ## Repository layout
 

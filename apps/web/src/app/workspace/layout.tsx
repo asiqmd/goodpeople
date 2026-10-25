@@ -7,6 +7,10 @@ import { NavLinks } from '@/components/nav-links';
 import { Banner, buttonClass, Logo } from '@/components/ui';
 import { authedFetch, currentTenantUser } from '@/lib/api';
 
+/** Whole days until a trial ends, counting today's remainder as a day. */
+const daysLeft = (expiresAt: string) =>
+  Math.max(0, Math.ceil((Date.parse(expiresAt) - Date.now()) / 86_400_000));
+
 export default async function WorkspaceLayout({ children }: LayoutProps<'/workspace'>) {
   const t = await getTranslations('workspace');
   const tn = await getTranslations('hr.nav');
@@ -142,6 +146,20 @@ export default async function WorkspaceLayout({ children }: LayoutProps<'/worksp
                 {t('readOnly')} ({tr(result.data.access.reason)})
               </Banner>
             )}
+            {result.data.tenant.billingMode === 'trial' &&
+              result.data.access.accessState === 'full' &&
+              result.data.tenant.accessExpiresAt && (
+                <Banner tone="slate">
+                  {t('trial', { days: daysLeft(result.data.tenant.accessExpiresAt) })}{' '}
+                  <Link href="/workspace/welcome" className="font-medium underline">
+                    {t('gettingStarted')}
+                  </Link>{' '}
+                  ·{' '}
+                  <Link href="/pricing" className="font-medium underline">
+                    {t('plans')}
+                  </Link>
+                </Banner>
+              )}
             {children}
           </main>
         </div>

@@ -49,7 +49,17 @@ export interface TenantWithAccess extends TenantSummary {
 }
 
 export interface TenantAccessView {
-  tenant: Pick<TenantSummary, 'id' | 'name' | 'slug' | 'billingMode' | 'status' | 'planCode'>;
+  tenant: Pick<
+    TenantSummary,
+    | 'id'
+    | 'name'
+    | 'slug'
+    | 'billingMode'
+    | 'status'
+    | 'planCode'
+    | 'accessExpiresAt'
+    | 'industryTemplate'
+  >;
   access: Access;
 }
 

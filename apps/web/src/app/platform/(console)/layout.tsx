@@ -20,6 +20,9 @@ export default async function ConsoleLayout({ children }: LayoutProps<'/platform
               <Link href="/platform" className="hover:text-slate-900">
                 {t('tenants')}
               </Link>
+              <Link href="/platform/signups" className="hover:text-slate-900">
+                {t('signupsNav')}
+              </Link>
               <Link href="/platform/audit" className="hover:text-slate-900">
                 {t('audit')}
               </Link>

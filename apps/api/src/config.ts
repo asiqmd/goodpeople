@@ -43,6 +43,11 @@ const configSchema = z
       .enum(['on', 'off'])
       .default('off')
       .transform((v) => v === 'on'),
+    /** Self-serve sign-up for 30-day trials; off for our own and self-hosted installations. */
+    SIGNUP_ENABLED: z
+      .enum(['on', 'off'])
+      .default('on')
+      .transform((v) => v === 'on'),
     /** Where notifications go. `log` writes them to the API log instead of sending them. */
     EMAIL_DRIVER: z.enum(['log', 'smtp']).default('log'),
     SMTP_URL: z.string().optional(),
