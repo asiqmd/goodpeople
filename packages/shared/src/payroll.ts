@@ -69,8 +69,11 @@ export const RESERVED_PAY_NAMES = [
 export const RUN_VARIABLES = RESERVED_PAY_NAMES;
 export type RunVariable = (typeof RUN_VARIABLES)[number];
 
-/** regular: a month's pay; adjustment: corrects a locked month; bonus: a festival bonus. */
-export const RUN_KINDS = ['regular', 'adjustment', 'bonus'] as const;
+/**
+ * regular: a month's pay; adjustment: corrects a locked month; bonus: a festival bonus;
+ * settlement: a leaver's final dues; wppf: the workers' share of the participation fund.
+ */
+export const RUN_KINDS = ['regular', 'adjustment', 'bonus', 'settlement', 'wppf'] as const;
 export type RunKind = (typeof RUN_KINDS)[number];
 
 /**
@@ -178,3 +181,30 @@ export type IncrementBasis = (typeof INCREMENT_BASES)[number];
 
 /** Money as the API sends it: a decimal string with at most two places, e.g. "12500.00". */
 export type Money = string;
+
+// ── Disbursement and accounts (Phase 2 M4) ───────────────────────────────────
+
+/** The ledger accounts a run's journal posts to besides each component's own. */
+export interface GlAccounts {
+  /** Earnings and employer costs without an account of their own. */
+  salaryExpense: string;
+  netPayable: string;
+  taxPayable: string;
+  pfPayable: string;
+  loansReceivable: string;
+  gratuityExpense: string;
+  gratuityProvision: string;
+  /** The participation fund owed to workers, settled by their payouts. */
+  wppfPayable: string;
+}
+
+export const DEFAULT_GL_ACCOUNTS: GlAccounts = {
+  salaryExpense: '5100',
+  netPayable: '2100',
+  taxPayable: '2110',
+  pfPayable: '2120',
+  loansReceivable: '1410',
+  gratuityExpense: '5150',
+  gratuityProvision: '2200',
+  wppfPayable: '2300',
+};

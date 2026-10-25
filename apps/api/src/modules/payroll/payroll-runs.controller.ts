@@ -20,6 +20,7 @@ import {
   runInputRemoveSchema,
   runInputSchema,
   runItemsQuerySchema,
+  settlementCreateSchema,
   type AdjustmentCreateInput,
   type BonusRunInput,
   type PayrollRunItemPage,
@@ -28,6 +29,8 @@ import {
   type RunCreateInput,
   type RunInputInput,
   type RunItemsQuery,
+  type SettlementCase,
+  type SettlementCreateInput,
   type TenantWithAccess,
 } from '@gp/shared';
 import type { z } from 'zod';
@@ -37,6 +40,7 @@ import { openApiBody, zod } from '../../common/zod.js';
 import { fileResponse } from '../documents/documents.controller.js';
 import { AccessStateGuard, FeatureGuard, RequireFeature } from '../entitlements/guards.js';
 import { PayrollRunsService } from './payroll-runs.service.js';
+import { SettlementsService } from './settlements.service.js';
 
 type Language = z.infer<typeof payslipLanguageSchema>;
 
@@ -46,7 +50,10 @@ type Language = z.infer<typeof payslipLanguageSchema>;
 @RequireFeature('payroll')
 @Controller('tenant')
 export class PayrollRunsController {
-  constructor(private readonly runs: PayrollRunsService) {}
+  constructor(
+    private readonly runs: PayrollRunsService,
+    private readonly settlements: SettlementsService,
+  ) {}
 
   @Get('payroll/runs')
   @Permits('payroll.view')
@@ -62,6 +69,23 @@ export class PayrollRunsController {
     @Body(zod(runCreateSchema)) body: RunCreateInput,
   ): Promise<PayrollRunView> {
     return this.runs.create(user, body);
+  }
+
+  @Get('payroll/settlements')
+  @Permits('payroll.view')
+  settlementCases(): Promise<SettlementCase[]> {
+    return this.settlements.list();
+  }
+
+  /** Opens the final settlement for a decided separation. */
+  @Post('payroll/settlements')
+  @Permits('payroll.manage')
+  @ApiBody(openApiBody(settlementCreateSchema))
+  async createSettlement(
+    @CurrentUser() user: AuthUser,
+    @Body(zod(settlementCreateSchema)) body: SettlementCreateInput,
+  ): Promise<PayrollRunView> {
+    return this.runs.view(await this.settlements.create(user, body.separationId));
   }
 
   /** A festival bonus run for a pay group. */

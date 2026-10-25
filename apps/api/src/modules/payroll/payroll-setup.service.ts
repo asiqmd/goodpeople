@@ -10,6 +10,7 @@ import {
   type Tx,
 } from '@gp/db';
 import {
+  DEFAULT_GL_ACCOUNTS,
   money,
   ROLE_PERMISSIONS,
   TENANT_ROLES,
@@ -60,6 +61,7 @@ const toComponentView = (c: ComponentRow): PayComponentView => ({
   isActive: c.isActive,
   isSystem: c.isSystem,
   runFormula: c.runFormula,
+  glAccount: c.glAccount,
 });
 
 /** A 400 listing each structure line's problem against its field, for the editor. */
@@ -100,6 +102,8 @@ const DEFAULT_SETTINGS: SettingsRow = {
     { afterYears: 0, percent: 0 },
     { afterYears: 3, percent: 100 },
   ],
+  glAccounts: DEFAULT_GL_ACCOUNTS,
+  gratuityEnabled: true,
 };
 
 /**
@@ -455,6 +459,8 @@ export class PayrollSetupService {
         pfEmployerRate: settings.pfEmployerRate,
         pfRecognised: settings.pfRecognised,
         pfVesting: settings.pfVesting,
+        glAccounts: { ...DEFAULT_GL_ACCOUNTS, ...settings.glAccounts },
+        gratuityEnabled: settings.gratuityEnabled,
         pfRequired: await pfRequired(tx),
       };
     });

@@ -22,8 +22,11 @@ class PayslipsTab extends ConsumerStatefulWidget {
 
   static ValueKey<String> payslipKey(String itemId) =>
       ValueKey('payslip-$itemId');
-  static ValueKey<String> adjustmentKey(String itemId) =>
-      ValueKey('payslip-adjustment-$itemId');
+
+  /// The mark on a payslip that is not from a regular month, such as an
+  /// adjustment or a final settlement.
+  static ValueKey<String> kindKey(String itemId) =>
+      ValueKey('payslip-kind-$itemId');
   static ValueKey<String> openKey(String itemId, LetterLanguage language) =>
       ValueKey('payslip-open-${language.wire}-$itemId');
 
@@ -134,8 +137,8 @@ String payFileErrorText(AppLocalizations l10n, Object error) => switch (error) {
   _ => describeError(l10n, error),
 };
 
-/// One payslip: its period, net pay and payment date, an adjustment mark,
-/// and buttons to open it in either language.
+/// One payslip: its period, net pay and payment date, a mark if it is not
+/// from a regular month, and buttons to open it in either language.
 class _PayslipCard extends StatelessWidget {
   const _PayslipCard({
     super.key,
@@ -182,14 +185,14 @@ class _PayslipCard extends StatelessWidget {
                     style: theme.textTheme.titleMedium,
                   ),
                 ),
-                if (payslip.isAdjustment) ...[
+                if (runKindPill(
+                      context,
+                      payslip.kind,
+                      key: PayslipsTab.kindKey(payslip.itemId),
+                    )
+                    case final pill?) ...[
                   const SizedBox(width: 8),
-                  LeavePill(
-                    key: PayslipsTab.adjustmentKey(payslip.itemId),
-                    label: l10n.payslipAdjustment,
-                    background: scheme.tertiaryContainer,
-                    foreground: scheme.onTertiaryContainer,
-                  ),
+                  pill,
                 ],
               ],
             ),

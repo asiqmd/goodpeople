@@ -356,6 +356,9 @@ export function ComponentEditForm({ component }: { component: PayComponentView }
         <Field label={t('nameBn')}>
           <input name="nameBn" defaultValue={component.nameBn ?? ''} className={inputClass} />
         </Field>
+        <Field label={t('components.glAccount')} hint={t('components.glAccountHint')}>
+          <input name="glAccount" defaultValue={component.glAccount ?? ''} className={inputClass} />
+        </Field>
       </div>
       <div className="flex flex-wrap gap-4 text-sm">
         <label className="flex items-center gap-2">

@@ -17,7 +17,7 @@ import {
   PayGroupForm,
   StructureEditor,
 } from '@/components/payroll/payroll-forms';
-import { TaxFundSettingsForm } from '@/components/payroll/benefit-forms';
+import { AccountsForm, TaxFundSettingsForm } from '@/components/payroll/benefit-forms';
 import { isSetupTab, PayrollTabs, taka } from '@/components/payroll/payroll-views';
 import { Badge, Card } from '@/components/ui';
 import { currentTenantUser, load } from '@/lib/api';
@@ -211,6 +211,11 @@ export default async function PayrollSetupPage({ searchParams }: PageProps<'/wor
             </p>
           )}
         </Card>
+        {canEdit && (
+          <Card title={t('settings.accountsTitle')}>
+            <AccountsForm settings={settings} />
+          </Card>
+        )}
       </>
     );
   }

@@ -38,9 +38,14 @@ A multi-tenant HR and payroll platform, built for Bangladesh first and ready to 
     2025-26 and 2026-27 rules with investment declarations, certificates and challans; a
     provident fund ledger with interest, fund loans and vesting; advances and loans through
     maker-checker; festival bonus runs by religion; and annual increments in one approval.
+  - **Phase 2 M4 (settlement, gratuity & disbursement):** final settlement runs for every
+    separation type under the 2025/26 amendments (notice, earned leave, gratuity or the
+    separation's benefit, loans, the provident fund paid out); a monthly gratuity provision;
+    the workers' participation fund with tax at source; split payments, bank and wallet
+    files, a Form 38 cash sheet, the bank advice and a journal by cost centre.
 - **Next:**
   - Our own organisations go live: [docs/ops/go-live.md](docs/ops/go-live.md).
-  - Phase 2 M4: settlement, gratuity and disbursement. The plan is in
+  - Phase 2 M5: reports and parallel runs. The plan is in
     [docs/phases/phase-2.md](docs/phases/phase-2.md).
 
 ## Repository layout

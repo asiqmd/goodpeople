@@ -355,3 +355,79 @@ export async function createBonusRun(
   if (!result.ok) return fail(result);
   redirect(`${PAYROLL}/runs/${result.data.id}`);
 }
+
+// ── Payments ─────────────────────────────────────────────────────────────────
+
+export async function markRunPaid(
+  runId: string,
+  _: ActionState,
+  form: FormData,
+): Promise<ActionState> {
+  const result = await authedFetch('tenant', `/tenant/payroll/runs/${runId}/paid`, {
+    method: 'POST',
+    body: { paidOn: nest(form).paidOn },
+  });
+  if (!result.ok) return fail(result);
+  revalidatePath(`${PAYROLL}/runs/${runId}`);
+  return { ok: true };
+}
+
+export async function saveAccounts(_: ActionState, form: FormData): Promise<ActionState> {
+  const data = nest(form);
+  const result = await authedFetch('tenant', '/tenant/payroll/settings', {
+    method: 'PATCH',
+    body: { glAccounts: data.gl, gratuityEnabled: form.has('gratuityEnabled') },
+  });
+  if (!result.ok) return fail(result);
+  revalidatePath(PAYROLL, 'layout');
+  return { ok: true };
+}
+
+// ── Settlements ──────────────────────────────────────────────────────────────
+
+export async function openSettlement(separationId: string): Promise<ActionState> {
+  const result = await authedFetch<PayrollRunView>('tenant', '/tenant/payroll/settlements', {
+    method: 'POST',
+    body: { separationId },
+  });
+  if (!result.ok) return fail(result);
+  redirect(`${PAYROLL}/runs/${result.data.id}`);
+}
+
+// ── Workers' participation fund ──────────────────────────────────────────────
+
+export async function createWppfYear(_: ActionState, form: FormData): Promise<ActionState> {
+  const data = nest(form);
+  const months = data.minServiceMonths ? Number(data.minServiceMonths) : undefined;
+  const result = await authedFetch('tenant', '/tenant/payroll/wppf', {
+    method: 'POST',
+    body: {
+      accountingYear: data.accountingYear,
+      yearStart: data.yearStart,
+      yearEnd: data.yearEnd,
+      netProfit: data.netProfit,
+      ...(months === undefined ? {} : { minServiceMonths: months }),
+    },
+  });
+  if (!result.ok) return fail(result);
+  revalidatePath(`${PAYROLL}/wppf`);
+  return { ok: true };
+}
+
+export async function openWppfRun(
+  yearId: string,
+  _: ActionState,
+  form: FormData,
+): Promise<ActionState> {
+  const data = nest(form);
+  const result = await authedFetch<PayrollRunView>(
+    'tenant',
+    `/tenant/payroll/wppf/${yearId}/runs`,
+    {
+      method: 'POST',
+      body: { payGroupId: data.payGroupId, paymentDate: data.paymentDate },
+    },
+  );
+  if (!result.ok) return fail(result);
+  redirect(`${PAYROLL}/runs/${result.data.id}`);
+}

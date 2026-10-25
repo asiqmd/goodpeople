@@ -1,5 +1,5 @@
 import { takaInWords } from '@gp/country-packs';
-import type { PayLineView, RunKind, RunVariables } from '@gp/shared';
+import type { PayLineView, RunKind, RunVariables, SettlementWorking } from '@gp/shared';
 import { escapeHtml, page, type Letterhead } from '../letters/render.js';
 
 export interface PayslipData {
@@ -7,6 +7,8 @@ export interface PayslipData {
   kind: RunKind;
   /** A bonus run's festival, in the payslip's language. */
   festival?: string | null;
+  /** A final settlement's working: notice, leave, benefits and the fund paid out. */
+  settlement?: SettlementWorking | null;
   company: Letterhead;
   periodStart: string;
   periodEnd: string;
@@ -30,6 +32,37 @@ const LABELS = {
     payslip: 'Payslip',
     adjustment: 'Pay adjustment',
     bonus: 'Festival bonus',
+    settlement: 'Final settlement',
+    wppf: "Workers' participation fund",
+    lastDay: 'Last working day',
+    service: 'Service',
+    serviceText: (years: string, months: string) => `${years} years ${months} months`,
+    wage: {
+      last_month: 'Daily wage (a thirtieth of the last basic)',
+      average_12_months: "Daily wage (a thirtieth of the last 12 months' average basic)",
+    },
+    slab: (years: string, perYear: string, rate: string) =>
+      `${years} years × ${perYear} days, at Tk ${rate} a day`,
+    leaveRate: (rate: string) => `at Tk ${rate} a day (gross)`,
+    gratuity: 'Gratuity',
+    benefit: {
+      resignation: 'Resignation benefit',
+      termination: 'Termination compensation',
+      dismissal: 'Dismissal compensation',
+      discharge: 'Discharge compensation',
+      retrenchment: 'Retrenchment compensation',
+      retirement: 'Retirement benefit',
+      death: 'Death benefit',
+      contract_end: 'Separation benefit',
+    } as Record<string, string>,
+    section: (ref: string) => `s.${ref}`,
+    noticeShort: 'Notice not given',
+    leaveDays: 'Unused earned leave',
+    daysUnit: 'days',
+    fund: 'Provident fund paid out (not part of net pay)',
+    fundOwn: 'Own contributions',
+    fundEmployer: "Employer's vested share",
+    dueBy: 'Due by',
     employee: 'Employee',
     code: 'Employee code',
     designation: 'Designation',
@@ -56,6 +89,37 @@ const LABELS = {
     payslip: 'বেতন বিবরণী',
     adjustment: 'বেতন সমন্বয়',
     bonus: 'উৎসব বোনাস',
+    settlement: 'চূড়ান্ত নিষ্পত্তি',
+    wppf: 'শ্রমিকদের অংশগ্রহণ তহবিল',
+    lastDay: 'শেষ কর্মদিবস',
+    service: 'চাকরির মেয়াদ',
+    serviceText: (years: string, months: string) => `${years} বছর ${months} মাস`,
+    wage: {
+      last_month: 'দৈনিক মজুরি (সর্বশেষ মূল বেতনের ৩০ ভাগের এক ভাগ)',
+      average_12_months: 'দৈনিক মজুরি (গত ১২ মাসের গড় মূল বেতনের ৩০ ভাগের এক ভাগ)',
+    },
+    slab: (years: string, perYear: string, rate: string) =>
+      `${years} বছর × ${perYear} দিন, দৈনিক ৳${rate} হারে`,
+    leaveRate: (rate: string) => `দৈনিক ৳${rate} হারে (মোট মজুরি)`,
+    gratuity: 'গ্র্যাচুইটি',
+    benefit: {
+      resignation: 'ইস্তফার সুবিধা',
+      termination: 'চাকরি অবসানের ক্ষতিপূরণ',
+      dismissal: 'বরখাস্তের ক্ষতিপূরণ',
+      discharge: 'ডিসচার্জের ক্ষতিপূরণ',
+      retrenchment: 'ছাঁটাইয়ের ক্ষতিপূরণ',
+      retirement: 'অবসরের সুবিধা',
+      death: 'মৃত্যুজনিত সুবিধা',
+      contract_end: 'অবসানের সুবিধা',
+    } as Record<string, string>,
+    section: (ref: string) => `ধারা ${ref}`,
+    noticeShort: 'নোটিশ না দেওয়া',
+    leaveDays: 'অভোগকৃত অর্জিত ছুটি',
+    daysUnit: 'দিন',
+    fund: 'ভবিষ্য তহবিল থেকে পরিশোধ (নিট বেতনের অংশ নয়)',
+    fundOwn: 'নিজের চাঁদা',
+    fundEmployer: 'নিয়োগকর্তার প্রাপ্য অংশ',
+    dueBy: 'পরিশোধের শেষ তারিখ',
     employee: 'কর্মী',
     code: 'কর্মী কোড',
     designation: 'পদবি',
@@ -153,7 +217,7 @@ tfoot td{font-weight:700;background:#f9fafb}
     css,
     `<div class="head"><div><div class="company">${escapeHtml(data.company.name)}</div>
 <div class="details">${escapeHtml(data.company.details)}</div></div>
-<div class="title">${data.kind === 'bonus' ? l.bonus : data.kind === 'adjustment' ? l.adjustment : l.payslip}<br>${escapeHtml(data.festival ?? periodName(data.language, data.periodStart, data.periodEnd))}</div></div>
+<div class="title">${data.kind === 'settlement' ? l.settlement : data.kind === 'wppf' ? l.wppf : data.kind === 'bonus' ? l.bonus : data.kind === 'adjustment' ? l.adjustment : l.payslip}<br>${escapeHtml(data.festival ?? periodName(data.language, data.periodStart, data.periodEnd))}</div></div>
 <div class="grid">
 <div><span>${l.employee}:</span> ${escapeHtml(data.employee.name)}</div>
 <div><span>${l.code}:</span> ${escapeHtml(data.employee.code)}</div>
@@ -176,6 +240,46 @@ ${
 </div>
 <div class="net"><span>${l.net}</span><span>${l.amount} ${amountText(data.language, data.net)}</span></div>
 ${words ? `<div class="words">${l.inWords}: ${escapeHtml(words)}</div>` : ''}
+${data.settlement ? settlementSection(data.language, data.settlement) : ''}
 <div class="note">${l.note}</div>`,
   );
+}
+
+/** A final settlement's working on its statement: how each due was counted. */
+function settlementSection(language: 'en' | 'bn', w: SettlementWorking): string {
+  const l = LABELS[language];
+  const n = (v: number) => number(language, v);
+  const rows: [string, string][] = [
+    [l.lastDay, date(language, w.lastWorkingDay)],
+    [l.service, l.serviceText(n(w.serviceYears), n(w.serviceMonths % 12))],
+    [l.wage[w.wageBasis], `${l.amount} ${amountText(language, w.dailyWage)}`],
+  ];
+  if (w.notice.shortDays > 0) {
+    rows.push([
+      l.noticeShort,
+      `${n(w.notice.shortDays)} ${l.daysUnit}: ${l.amount} ${amountText(language, w.notice.amount)}`,
+    ]);
+  }
+  if (w.leave.days > 0) {
+    rows.push([
+      l.leaveDays,
+      `${n(w.leave.days)} ${l.daysUnit} ${l.leaveRate(amountText(language, w.leave.dailyWage))}: ${l.amount} ${amountText(language, w.leave.amount)}`,
+    ]);
+  }
+  for (const b of w.benefits) {
+    rows.push([
+      `${b.code === 'GRATUITY' ? l.gratuity : (l.benefit[w.type] ?? escapeHtml(b.label))} (${l.section(escapeHtml(b.reference))})`,
+      `${l.slab(n(b.years), n(b.daysPerYear), amountText(language, b.dailyWage))}: ${l.amount} ${amountText(language, b.amount)}`,
+    ]);
+  }
+  rows.push([l.dueBy, date(language, w.dueBy)]);
+  const fund = w.providentFund
+    ? `<table style="margin-top:10px"><thead><tr><th>${l.fund}</th><th class="num">${l.amount}</th></tr></thead><tbody>
+<tr><td>${l.fundOwn}</td><td class="num">${amountText(language, w.providentFund.own)}</td></tr>
+<tr><td>${l.fundEmployer}</td><td class="num">${amountText(language, w.providentFund.employer)}</td></tr></tbody>
+<tfoot><tr><td>${l.amount}</td><td class="num">${amountText(language, w.providentFund.total)}</td></tr></tfoot></table>`
+    : '';
+  return `<table style="margin-top:14px"><tbody>${rows
+    .map(([k, v]) => `<tr><td>${k}</td><td class="num">${v}</td></tr>`)
+    .join('')}</tbody></table>${fund}`;
 }

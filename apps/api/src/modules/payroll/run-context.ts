@@ -1,12 +1,23 @@
 import { BD_INVESTMENT_CAPS, bdTaxYear, type Taxpayer } from '@gp/country-packs';
 import {
+  attendanceDays,
+  attendanceSettings,
   CIPHER_FIELDS,
+  designations,
   employeeLoans,
+  employeePay,
+  jobAssignments,
+  leaveRequests,
+  leaveTypes,
+  legalEntities,
+  orgUnits,
+  payrollInputs,
   loanRepayments,
   payrollRunItems,
   payrollRuns,
   pfEntries,
   pfMembers,
+  salaryStructures,
   taxDeclarations,
   taxOpenings,
   taxProfiles,
@@ -15,19 +26,33 @@ import {
   type Tx,
 } from '@gp/db';
 import {
+  addDays,
   ageOn,
   Decimal,
+  DEFAULT_WEEKLY_OFF_DAYS,
   fiscalYearBounds,
   fiscalYearOf,
+  groupBy,
   LOAN_COMPONENT,
   money,
   type Gender,
   type InvestmentKind,
   type PayLineView,
+  type EmploymentType,
+  type TenantWithAccess,
+  type WorkerCategory,
+  weekdayOf,
 } from '@gp/shared';
-import { and, eq, gte, inArray, isNull, lt, lte, ne, or } from 'drizzle-orm';
+import { and, asc, eq, gte, inArray, isNull, lt, lte, ne, or, sql } from 'drizzle-orm';
 import { currentTenantId } from '../../common/request-context.js';
-import type { EngineComponent, EngineLoan, EngineTax } from './run-engine.js';
+import type { WorkCalendarService } from '../calendar/work-calendar.service.js';
+import type {
+  computePay,
+  EngineComponent,
+  EngineDay,
+  EngineLoan,
+  EngineTax,
+} from './run-engine.js';
 import type { payrollSettingsOf } from './payroll-setup.service.js';
 
 // What a run needs besides pay and attendance (the provident fund, loans), and what a locked
@@ -416,4 +441,185 @@ export async function taxContextsFor(
     });
   }
   return out;
+}
+
+// ── Jobs ───────────────────────────────────────────────────────────────────
+
+export interface JobOnDate {
+  entity: typeof legalEntities.$inferSelect | null;
+  designation: string | null;
+  designationBn: string | null;
+  orgUnit: string | null;
+  orgUnitBn: string | null;
+  /** The unit's code: the cost centre in the journal. */
+  orgUnitCode: string | null;
+  workerCategory: WorkerCategory;
+  employmentType: EmploymentType;
+}
+
+/** Each person's job on a date: company, designation and unit. */
+export async function jobsOn(tx: Tx, ids: string[], on: string) {
+  const out = new Map<string, JobOnDate>();
+  if (ids.length === 0) return out;
+  const rows = await tx
+    .select({
+      employeeId: jobAssignments.employeeId,
+      entity: legalEntities,
+      designation: designations.name,
+      designationBn: designations.nameBn,
+      orgUnit: orgUnits.name,
+      orgUnitBn: orgUnits.nameBn,
+      orgUnitCode: orgUnits.code,
+      workerCategory: jobAssignments.workerCategory,
+      employmentType: jobAssignments.employmentType,
+    })
+    .from(jobAssignments)
+    .innerJoin(legalEntities, eq(legalEntities.id, jobAssignments.legalEntityId))
+    .leftJoin(designations, eq(designations.id, jobAssignments.designationId))
+    .leftJoin(orgUnits, eq(orgUnits.id, jobAssignments.orgUnitId))
+    .where(and(inArray(jobAssignments.employeeId, ids), lte(jobAssignments.effectiveFrom, on)))
+    .orderBy(asc(jobAssignments.effectiveFrom));
+  for (const row of rows) out.set(row.employeeId, row);
+  return out;
+}
+
+// ── Data the engine reads ────────────────────────────────────────────────────
+
+/** Approved pay up to a date, per person, oldest first, with what the engine needs. */
+export async function approvedPay(tx: Tx, cipher: FieldCipher, upTo: string) {
+  const rows = await tx
+    .select({ p: employeePay, structure: salaryStructures })
+    .from(employeePay)
+    .innerJoin(salaryStructures, eq(salaryStructures.id, employeePay.structureId))
+    .where(and(eq(employeePay.status, 'approved'), lte(employeePay.effectiveFrom, upTo)))
+    .orderBy(asc(employeePay.effectiveFrom));
+  const out = new Map<
+    string,
+    {
+      effectiveFrom: string;
+      payGroupId: string;
+      engine: Parameters<typeof computePay>[0]['records'][number];
+    }[]
+  >();
+  for (const { p, structure } of rows) {
+    const amounts = JSON.parse(
+      cipher.decrypt(p.amountsEnc, {
+        tenantId: currentTenantId(),
+        field: CIPHER_FIELDS.payAmounts,
+      }),
+    ) as { amount: string; fixed: Record<string, string> };
+    const list = out.get(p.employeeId) ?? [];
+    list.push({
+      effectiveFrom: p.effectiveFrom,
+      payGroupId: p.payGroupId,
+      engine: {
+        effectiveFrom: p.effectiveFrom,
+        structure: {
+          basis: structure.basis,
+          lines: structure.lines,
+          wageBoard: structure.wageBoard,
+        },
+        amount: amounts.amount,
+        fixed: amounts.fixed,
+      },
+    });
+    out.set(p.employeeId, list);
+  }
+  return out;
+}
+
+/** Processed days per person, or null where attendance is not tracked for the period. */
+export async function attendanceOf(
+  tx: Tx,
+  ids: string[],
+  run: { periodStart: string; periodEnd: string },
+  tenant: TenantWithAccess,
+): Promise<{ trackingFrom: string; days: Map<string, EngineDay[]> } | null> {
+  if (!tenant.access.features.includes('attendance')) return null;
+  const [settings] = await tx.select().from(attendanceSettings);
+  if (!settings || settings.trackingFrom > run.periodEnd) return null;
+  const out = new Map<string, EngineDay[]>();
+  for (let i = 0; i < ids.length; i += 10_000) {
+    const rows = await tx
+      .select({
+        employeeId: attendanceDays.employeeId,
+        date: attendanceDays.date,
+        status: attendanceDays.status,
+        overtimeMinutes: attendanceDays.overtimeMinutes,
+        lateMinutes: attendanceDays.lateMinutes,
+        leaveDays: attendanceDays.leaveDays,
+        paid: leaveTypes.paid,
+      })
+      .from(attendanceDays)
+      .leftJoin(leaveRequests, eq(leaveRequests.id, attendanceDays.leaveRequestId))
+      .leftJoin(leaveTypes, eq(leaveTypes.id, leaveRequests.leaveTypeId))
+      .where(
+        and(
+          inArray(attendanceDays.employeeId, ids.slice(i, i + 10_000)),
+          sql`${attendanceDays.date} between ${run.periodStart} and ${run.periodEnd}`,
+        ),
+      );
+    for (const [employeeId, days] of groupBy(rows, (r) => r.employeeId)) {
+      out.set(
+        employeeId,
+        days.map((d) => ({
+          date: d.date,
+          status: d.status,
+          overtimeMinutes: d.overtimeMinutes,
+          leaveDays: d.leaveDays,
+          unpaidLeave: d.paid === false,
+          late: d.lateMinutes > 0,
+        })),
+      );
+    }
+  }
+  return { trackingFrom: settings.trackingFrom, days: out };
+}
+
+/** Amounts entered in a run, per person. */
+export async function inputsOf(tx: Tx, cipher: FieldCipher, runId: string, ids?: string[]) {
+  if (ids?.length === 0)
+    return new Map<string, { employeeId: string; component: string; amount: string }[]>();
+  const rows = await tx
+    .select()
+    .from(payrollInputs)
+    .where(
+      and(eq(payrollInputs.runId, runId), ids ? inArray(payrollInputs.employeeId, ids) : undefined),
+    );
+  return groupBy(
+    rows.map((r) => ({
+      employeeId: r.employeeId,
+      component: r.component,
+      amount: JSON.parse(
+        cipher.decrypt(r.amountEnc, {
+          tenantId: currentTenantId(),
+          field: CIPHER_FIELDS.runInputs,
+        }),
+      ) as string,
+    })),
+    (r) => r.employeeId,
+  );
+}
+
+/** The day `n` working days after a date: weekly offs and the workspace's holidays skipped. */
+export async function workingDaysAfter(
+  tx: Tx,
+  calendars: WorkCalendarService,
+  from: string,
+  n: number,
+): Promise<string> {
+  const calendarId = await calendars.defaultCalendarId(tx);
+  const holidays = await calendars.holidaysIn(
+    tx,
+    calendarId,
+    addDays(from, 1),
+    addDays(from, n * 2 + 30),
+  );
+  let day = from;
+  let counted = 0;
+  while (counted < n) {
+    day = addDays(day, 1);
+    if (!DEFAULT_WEEKLY_OFF_DAYS.includes(weekdayOf(day)) && !holidays.has(day)) counted += 1;
+  }
+  return day;
 }

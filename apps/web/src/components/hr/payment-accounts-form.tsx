@@ -22,6 +22,7 @@ interface Row {
   routingNumber: string;
   accountName: string;
   masked: string | null;
+  splitAmount: string;
 }
 
 const fromView = (a: PaymentAccountView): Row => ({
@@ -33,6 +34,7 @@ const fromView = (a: PaymentAccountView): Row => ({
   routingNumber: a.routingNumber ?? '',
   accountName: a.accountName ?? '',
   masked: a.accountNumberMasked,
+  splitAmount: a.splitAmount ? String(Number(a.splitAmount)) : '',
 });
 
 /**
@@ -177,6 +179,19 @@ export function PaymentAccountsForm({
                   className={`${inputClass} mt-1`}
                 />
               </label>
+              <label className={label}>
+                {t('splitAmount')}
+                <input
+                  name={`rows.${i}.splitAmount`}
+                  inputMode="decimal"
+                  value={row.splitAmount}
+                  onChange={(e) => update(row.key, { splitAmount: e.target.value })}
+                  className={`${inputClass} mt-1`}
+                />
+                <span className="mt-1 block text-xs font-normal text-slate-500">
+                  {t('splitAmountHint')}
+                </span>
+              </label>
             </>
           )}
           <div className="flex items-end justify-between gap-3 sm:col-span-3">
@@ -207,6 +222,7 @@ export function PaymentAccountsForm({
               branchName: '',
               routingNumber: '',
               accountName: '',
+              splitAmount: '',
               masked: null,
             },
           ])

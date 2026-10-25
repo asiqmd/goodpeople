@@ -2,8 +2,10 @@ import type { ApprovalStepView } from './leave-types.js';
 import type { EmployeeRef } from './attendance-types.js';
 import type { LineProblem } from './formula.js';
 import type { Religion } from './hr.js';
+import type { SeparationType } from './lifecycle.js';
 import type {
   DeclarationStatus,
+  GlAccounts,
   IncrementBasis,
   InvestmentKind,
   LoanKind,
@@ -63,6 +65,8 @@ export interface PayComponentView {
   isSystem: boolean;
   /** Run components worked out in each run; null means entered per person. */
   runFormula: string | null;
+  /** The ledger account in the journal; null uses the settings' default. */
+  glAccount: string | null;
 }
 
 export interface StructureLineView {
@@ -113,6 +117,8 @@ export interface PayrollSettingsView {
   pfEmployerRate: string;
   pfRecognised: boolean;
   pfVesting: PfVestingStep[];
+  glAccounts: GlAccounts;
+  gratuityEnabled: boolean;
   /** The workspace has enough permanent workers that the law requires a fund. */
   pfRequired: { required: boolean; permanentWorkers: number; threshold: number | null };
 }
@@ -281,6 +287,53 @@ export interface RunTaxWorking {
   thisMonth: Money;
 }
 
+/** How a leaver's final dues were worked out, for the run and the settlement statement. */
+export interface SettlementWorking {
+  separationId: string;
+  type: SeparationType;
+  noticeDate: string;
+  lastWorkingDay: string;
+  /** Completed years and months of service on the last working day. */
+  serviceYears: number;
+  serviceMonths: number;
+  /**
+   * The wage compensation and notice pay are counted on (s.14(3)): basic, as the last
+   * month's or the average of the last twelve, and a day of it (a thirtieth).
+   */
+  wageBasis: 'average_12_months' | 'last_month';
+  monthlyWage: Money;
+  dailyWage: Money;
+  notice: {
+    requiredDays: number | null;
+    servedDays: number;
+    /** Days of notice not given: paid by the employer, or recovered from the employee. */
+    shortDays: number;
+    owedBy: 'employer' | 'employee' | null;
+    amount: Money;
+  };
+  /** Unused earned leave at a day's gross wage (s.11, s.119). */
+  leave: { days: number; dailyWage: Money; amount: Money };
+  /**
+   * Gratuity (at the last basic) or the separation's benefit (compensation, the resignation
+   * benefit): the years counted and the days for each.
+   */
+  benefits: {
+    code: string;
+    label: string;
+    years: number;
+    daysPerYear: number;
+    days: number;
+    dailyWage: Money;
+    amount: Money;
+    reference: string;
+  }[];
+  /** Paid from the provident fund, not from salary. */
+  providentFund: { own: Money; employer: Money; total: Money } | null;
+  loansRecovered: Money;
+  /** The latest the dues may be paid (s.30). */
+  dueBy: string;
+}
+
 export interface PayrollRunItemView {
   id: string;
   employee: EmployeeRef & { designation: string | null; orgUnit: string | null };
@@ -297,6 +350,7 @@ export interface PayrollRunItemView {
   /** Salary income this period, for tax. */
   taxable: Money;
   tax: RunTaxWorking | null;
+  settlement: SettlementWorking | null;
   previousNet: Money | null;
   variance: 'new' | 'up' | 'down' | 'same' | null;
   /** Change in net since last month, in percent, when there was a last month. */
@@ -507,4 +561,104 @@ export interface TaxYearView {
   /** The year projected from the latest run, if one worked tax out. */
   latest: RunTaxWorking | null;
   declaration: TaxDeclarationView;
+}
+
+// ── Disbursement (M4) ────────────────────────────────────────────────────────
+
+/** Money going out one way: bank transfers, one wallet (bkash, nagad…), or cash. */
+export interface DisbursementChannel {
+  channel: string;
+  people: number;
+  payments: number;
+  amount: Money;
+}
+
+export interface DisbursementProblem {
+  employee: EmployeeRef;
+  issue: 'bank_incomplete' | 'wallet_incomplete' | 'wallet_over_limit';
+}
+
+export interface DisbursementView {
+  runId: string;
+  paymentDue: string;
+  paymentDate: string;
+  /** When the money actually went out; null until recorded. */
+  paidOn: string | null;
+  /** Paid after the Labour Act's deadline (s.123); null until paid. */
+  late: boolean | null;
+  people: number;
+  total: Money;
+  channels: DisbursementChannel[];
+  problems: DisbursementProblem[];
+}
+
+// ── WPPF (M4) ────────────────────────────────────────────────────────────────
+
+export interface WppfAmounts {
+  netProfit: Money;
+  /** 5% of net profit. */
+  fund: Money;
+  participation: Money;
+  welfare: Money;
+  foundation: Money;
+  /** The share of the participation fund paid to workers in cash. */
+  cash: Money;
+  invested: Money;
+}
+
+export interface WppfYearView {
+  id: string;
+  accountingYear: string;
+  yearStart: string;
+  yearEnd: string;
+  amounts: WppfAmounts;
+  minServiceMonths: number;
+  /** Workers with enough service in the year, and the equal cash share each is paid. */
+  beneficiaries: number;
+  share: Money;
+  runs: {
+    id: string;
+    payGroupId: string;
+    payGroup: string;
+    status: RunStatus;
+    headcount: number;
+  }[];
+  createdAt: string;
+}
+
+// ── Gratuity provision (M4) ──────────────────────────────────────────────────
+
+export interface GratuityLine {
+  employee: EmployeeRef;
+  joinedOn: string;
+  serviceYears: number;
+  monthlyWage: Money;
+  days: number;
+  liability: Money;
+}
+
+export interface GratuityProvision {
+  asOf: string;
+  previousAsOf: string;
+  total: Money;
+  previousTotal: Money;
+  /** This period's charge: Dr gratuity expense, Cr gratuity provision. */
+  change: Money;
+  people: number;
+  lines: GratuityLine[];
+  page: number;
+  size: number;
+}
+
+// ── Settlements (M4) ─────────────────────────────────────────────────────────
+
+/** A decided separation and its final settlement, if one was opened. */
+export interface SettlementCase {
+  separationId: string;
+  employee: EmployeeRef;
+  type: SeparationType;
+  status: string;
+  noticeDate: string;
+  lastWorkingDay: string;
+  run: { id: string; status: RunStatus; net: Money | null; paidOn: string | null } | null;
 }

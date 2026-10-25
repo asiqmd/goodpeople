@@ -96,8 +96,9 @@ class PdfLanguageButtons extends StatelessWidget {
   }
 }
 
-/// The mark for a run that is not a regular month: an adjustment or a
-/// bonus. Nothing for a regular run.
+/// The mark for a run that is not a regular month: an adjustment, a bonus,
+/// a final settlement or a participation fund payout. Nothing for a
+/// regular run.
 Widget? runKindPill(BuildContext context, PayrollRunKind kind, {Key? key}) {
   final l10n = AppLocalizations.of(context);
   final scheme = Theme.of(context).colorScheme;
@@ -111,6 +112,18 @@ Widget? runKindPill(BuildContext context, PayrollRunKind kind, {Key? key}) {
     PayrollRunKind.bonus => LeavePill(
       key: key,
       label: l10n.payrollRunKindBonus,
+      background: scheme.secondaryContainer,
+      foreground: scheme.onSecondaryContainer,
+    ),
+    PayrollRunKind.settlement => LeavePill(
+      key: key,
+      label: l10n.payrollRunKindSettlement,
+      background: scheme.secondaryContainer,
+      foreground: scheme.onSecondaryContainer,
+    ),
+    PayrollRunKind.wppf => LeavePill(
+      key: key,
+      label: l10n.payrollRunKindWppf,
       background: scheme.secondaryContainer,
       foreground: scheme.onSecondaryContainer,
     ),

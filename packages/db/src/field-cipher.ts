@@ -53,6 +53,7 @@ export const CIPHER_FIELDS = {
   pfEntries: 'pf_entries.amount',
   loanAmounts: 'employee_loans.amounts',
   loanRepayments: 'loan_repayments.amount',
+  wppfAmounts: 'wppf_years.amounts',
 } as const;
 export type CipherField = (typeof CIPHER_FIELDS)[keyof typeof CIPHER_FIELDS];
 

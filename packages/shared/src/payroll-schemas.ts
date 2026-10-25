@@ -58,6 +58,8 @@ const componentFields = {
   isActive: z.boolean().default(true),
   /** Run components: a formula over run variables and monthly amounts; empty means entered. */
   runFormula: formula.nullable().optional(),
+  /** The ledger account in the journal; the settings' default when empty. */
+  glAccount: z.string().trim().max(30).nullable().optional(),
 };
 
 export const payComponentSchema = z.object({ code: componentCodeSchema, ...componentFields });
@@ -133,6 +135,17 @@ export const payrollSettingsSchema = z
     pfEmployeeRate: percent,
     pfEmployerRate: percent,
     pfRecognised: z.boolean(),
+    glAccounts: z.object({
+      salaryExpense: z.string().trim().min(1).max(30),
+      netPayable: z.string().trim().min(1).max(30),
+      taxPayable: z.string().trim().min(1).max(30),
+      pfPayable: z.string().trim().min(1).max(30),
+      loansReceivable: z.string().trim().min(1).max(30),
+      gratuityExpense: z.string().trim().min(1).max(30),
+      gratuityProvision: z.string().trim().min(1).max(30),
+      wppfPayable: z.string().trim().min(1).max(30),
+    }),
+    gratuityEnabled: z.boolean(),
     pfVesting: z
       .array(
         z.object({
@@ -362,3 +375,39 @@ export const bonusRunSchema = z.object({
   minServiceMonths: z.number().int().min(0).max(60).default(12),
 });
 export type BonusRunInput = z.infer<typeof bonusRunSchema>;
+
+// ── Disbursement ─────────────────────────────────────────────────────────────
+
+export const runPaidSchema = z.object({ paidOn: isoDate });
+export type RunPaidInput = z.infer<typeof runPaidSchema>;
+
+export const settlementCreateSchema = z.object({ separationId: id });
+export type SettlementCreateInput = z.infer<typeof settlementCreateSchema>;
+
+// ── Gratuity and the participation fund ──────────────────────────────────────
+
+export const gratuityQuerySchema = z.object({
+  asOf: isoDate,
+  page: z.coerce.number().int().min(1).default(1),
+});
+export type GratuityQuery = z.infer<typeof gratuityQuerySchema>;
+
+export const wppfYearSchema = z
+  .object({
+    accountingYear: z
+      .string()
+      .trim()
+      .regex(/^\d{4}(-\d{2})?$/, 'Use a year like 2025-26'),
+    yearStart: isoDate,
+    yearEnd: isoDate,
+    netProfit: positive,
+    minServiceMonths: z.number().int().min(0).max(12).optional(),
+  })
+  .refine((v) => v.yearEnd > v.yearStart, {
+    path: ['yearEnd'],
+    message: 'The year ends after it starts',
+  });
+export type WppfYearInput = z.infer<typeof wppfYearSchema>;
+
+export const wppfRunSchema = z.object({ payGroupId: id, paymentDate: isoDate });
+export type WppfRunInput = z.infer<typeof wppfRunSchema>;

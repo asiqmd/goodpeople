@@ -203,3 +203,32 @@ export function bdSalaryTax(
     tax: above ? Math.max(grossTax - rebate, minimumTax) : 0,
   };
 }
+
+/** Tax deducted at source from a worker's participation fund payout (s.88), by payment date. */
+export const BD_WPPF_TDS: readonly {
+  from: string;
+  percent: number;
+  reference: LegalReference;
+  status: ReviewStatus;
+  note: string;
+}[] = [
+  {
+    from: '2023-07-01',
+    percent: 5,
+    reference: ITA('88'),
+    status: 'needs_review',
+    note: 'As enacted, continuing the 5% of the 1984 Ordinance (s.52DD).',
+  },
+  {
+    from: '2025-07-01',
+    percent: 10,
+    reference: ITA('88'),
+    status: 'needs_review',
+    note:
+      'Substituted by the Finance Act 2026 (Act 89 of 2026) notwithstanding Labour Act s.246. ' +
+      'Confirm the date it applies from and whether it is the final tax.',
+  },
+];
+
+export const bdWppfTdsPercent = (on: string) =>
+  BD_WPPF_TDS.filter((v) => v.from <= on).at(-1)?.percent ?? 0;

@@ -7,7 +7,9 @@ import {
   RUN_KINDS,
   RUN_STATUSES,
   TAX_TREATMENTS,
+  DEFAULT_GL_ACCOUNTS,
   type BonusRule,
+  type GlAccounts,
   type PfVestingStep,
   type RunProblem,
   type TaxArea,
@@ -30,6 +32,7 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 import { employees } from './hr.js';
+import { separations } from './lifecycle.js';
 import { tenants } from './platform.js';
 
 export const payComponentKind = pgEnum('pay_component_kind', PAY_COMPONENT_KINDS);
@@ -70,6 +73,8 @@ export const payComponents = pgTable(
     isSystem: boolean('is_system').notNull().default(false),
     /** Run components: worked out in each run (overtime, absence); null means entered. */
     runFormula: text('run_formula'),
+    /** The ledger account for the journal export; the settings' default when null. */
+    glAccount: text('gl_account'),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -147,6 +152,10 @@ export const payrollSettings = pgTable('payroll_settings', {
       { afterYears: 0, percent: 0 },
       { afterYears: 3, percent: 100 },
     ]),
+  /** Account codes for the journal export. */
+  glAccounts: jsonb('gl_accounts').$type<GlAccounts>().notNull().default(DEFAULT_GL_ACCOUNTS),
+  /** Gratuity is provided for (a gratuity scheme or the Act's gratuity on separation). */
+  gratuityEnabled: boolean('gratuity_enabled').notNull().default(true),
   updatedAt: updatedAt(),
 });
 
@@ -222,6 +231,12 @@ export const payrollRuns = pgTable(
     status: runStatus('status').notNull().default('draft'),
     /** A bonus run's festival and rules; null for other runs. */
     bonus: jsonb('bonus').$type<BonusRule>(),
+    /** A settlement run's separation. */
+    separationId: uuid('separation_id'),
+    /** A WPPF run's distribution. */
+    wppfId: uuid('wppf_id'),
+    /** When the money actually went out (s.123 asks for it by the due date). */
+    paidOn: isoDate('paid_on'),
     headcount: integer('headcount').notNull().default(0),
     /** { earnings, deductions, net, employerCost } as encrypted JSON. */
     totalsEnc: text('totals_enc'),
@@ -252,6 +267,11 @@ export const payrollRuns = pgTable(
       name: 'payroll_runs_parent_fk',
       columns: [t.tenantId, t.parentRunId],
       foreignColumns: [t.tenantId, t.id],
+    }),
+    foreignKey({
+      name: 'payroll_runs_separation_fk',
+      columns: [t.tenantId, t.separationId],
+      foreignColumns: [separations.tenantId, separations.id],
     }),
   ],
 );

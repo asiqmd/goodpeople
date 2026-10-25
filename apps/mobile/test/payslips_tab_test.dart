@@ -167,10 +167,7 @@ void main() {
       'Open in English',
       'Open in Bangla',
     ]);
-    expect(
-      find.byKey(PayslipsTab.adjustmentKey(septemberPayslipId)),
-      findsNothing,
-    );
+    expect(find.byKey(PayslipsTab.kindKey(septemberPayslipId)), findsNothing);
 
     expectIn(septemberAdjustmentId, [
       'September 2026',
@@ -179,7 +176,7 @@ void main() {
     ]);
     expect(
       within(
-        PayslipsTab.adjustmentKey(septemberAdjustmentId),
+        PayslipsTab.kindKey(septemberAdjustmentId),
         find.text('Adjustment'),
       ),
       findsOneWidget,
@@ -191,6 +188,74 @@ void main() {
       '৳6,250',
       'Paid on Sep 7, 2026',
     ]);
+  });
+
+  testWidgets('a final settlement and a participation fund payout are '
+      'marked, in English and in Bangla', (tester) async {
+    const settlementId = 'e1000000-0000-4000-8000-000000000005';
+    const wppfId = 'e1000000-0000-4000-8000-000000000004';
+    final api = FakeGoodPeopleApi()
+      ..payslips = [
+        // A leaver's last days of October, settled on the 22nd.
+        payslipJson(
+          itemId: settlementId,
+          runId: 'e2000000-0000-4000-8000-000000000005',
+          kind: 'settlement',
+          periodStart: '2026-10-01',
+          periodEnd: '2026-10-15',
+          paymentDate: '2026-10-22',
+          net: '48200.00',
+          publishedAt: '2026-10-21T06:00:00.000Z',
+        ),
+        payslipJson(
+          itemId: wppfId,
+          runId: 'e2000000-0000-4000-8000-000000000004',
+          kind: 'wppf',
+          paymentDate: '2026-10-15',
+          net: '3000.00',
+          publishedAt: '2026-10-14T06:00:00.000Z',
+        ),
+        ...myPayslipsJson(),
+      ];
+    final container = await pumpPayslips(tester, api);
+
+    expectIn(settlementId, [
+      'Oct 1 – Oct 15, 2026',
+      '৳48,200',
+      'Paid on Oct 22, 2026',
+    ]);
+    expect(
+      within(PayslipsTab.kindKey(settlementId), find.text('Final settlement')),
+      findsOneWidget,
+    );
+    expect(
+      within(PayslipsTab.kindKey(wppfId), find.text('Participation fund')),
+      findsOneWidget,
+    );
+    // The others keep their marks, or none.
+    expect(
+      within(
+        PayslipsTab.kindKey(septemberAdjustmentId),
+        find.text('Adjustment'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.byKey(PayslipsTab.kindKey(septemberPayslipId)), findsNothing);
+
+    container.read(localeProvider.notifier).select(const Locale('bn'));
+    await tester.pumpAndSettle();
+
+    expect(
+      within(
+        PayslipsTab.kindKey(settlementId),
+        find.text('চূড়ান্ত নিষ্পত্তি'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      within(PayslipsTab.kindKey(wppfId), find.text('অংশগ্রহণ তহবিল')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('a payslip opens as a PDF in the app\'s language, or in the '

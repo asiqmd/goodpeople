@@ -23,6 +23,11 @@ import {
   createLoan,
   joinFund,
   leaveFund,
+  markRunPaid,
+  openSettlement,
+  createWppfYear,
+  openWppfRun,
+  saveAccounts,
   postInterest,
   previewIncrement,
   repayLoan,
@@ -891,6 +896,172 @@ export function BonusRunForm({
         )}
       </fieldset>
       <SubmitButton>{t('create')}</SubmitButton>
+    </Form>
+  );
+}
+
+// ── Payments ─────────────────────────────────────────────────────────────────
+
+export function MarkPaidForm({ runId, today }: { runId: string; today: string }) {
+  const t = useTranslations('payroll.payments');
+  const [state, action] = useActionState<ActionState, FormData>(
+    markRunPaid.bind(null, runId),
+    undefined,
+  );
+  return (
+    <Form state={state} action={action} className="flex flex-wrap items-end gap-3">
+      <Errors state={state} />
+      <Field label={t('paidOn')}>
+        <input type="date" name="paidOn" defaultValue={today} required className={inputClass} />
+      </Field>
+      <SubmitButton variant="secondary">{t('markPaid')}</SubmitButton>
+    </Form>
+  );
+}
+
+const GL_KEYS = [
+  'salaryExpense',
+  'netPayable',
+  'taxPayable',
+  'pfPayable',
+  'loansReceivable',
+  'gratuityExpense',
+  'gratuityProvision',
+  'wppfPayable',
+] as const;
+
+/** The journal's accounts and whether gratuity is provided for. */
+export function AccountsForm({ settings }: { settings: PayrollSettingsView }) {
+  const t = useTranslations('payroll.settings');
+  const [state, action] = useActionState(saveAccounts, undefined);
+  return (
+    <Form state={state} action={action} className="space-y-4 text-sm">
+      <Errors state={state} />
+      <Saved state={state}>{t('saved')}</Saved>
+      <p className="text-slate-600">{t('accountsHint')}</p>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {GL_KEYS.map((key) => (
+          <Field key={key} label={t(`gl.${key}`)} error={issueFor(state, `glAccounts.${key}`)}>
+            <input
+              name={`gl.${key}`}
+              defaultValue={settings.glAccounts[key]}
+              required
+              className={inputClass}
+            />
+          </Field>
+        ))}
+      </div>
+      <label className="flex items-center gap-2">
+        <input type="checkbox" name="gratuityEnabled" defaultChecked={settings.gratuityEnabled} />
+        {t('gratuityEnabled')}
+      </label>
+      <SubmitButton>{t('saveTaxFund')}</SubmitButton>
+    </Form>
+  );
+}
+
+export function OpenSettlementButton({ separationId }: { separationId: string }) {
+  const t = useTranslations('payroll.settlements');
+  return (
+    <ActionButton
+      label={t('open')}
+      className={buttonClass.secondary}
+      run={() => openSettlement(separationId)}
+    />
+  );
+}
+
+// ── Workers' participation fund ──────────────────────────────────────────────
+
+export function WppfYearForm({
+  suggested,
+}: {
+  suggested: { start: string; end: string; year: string };
+}) {
+  const t = useTranslations('payroll.wppf');
+  const [state, action] = useActionState(createWppfYear, undefined);
+  return (
+    <Form state={state} action={action} className="space-y-3 text-sm">
+      <Errors state={state} />
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field label={t('accountingYear')} error={issueFor(state, 'accountingYear')}>
+          <input
+            name="accountingYear"
+            defaultValue={suggested.year}
+            required
+            className={inputClass}
+          />
+        </Field>
+        <Field label={t('yearStart')}>
+          <input
+            type="date"
+            name="yearStart"
+            defaultValue={suggested.start}
+            required
+            className={inputClass}
+          />
+        </Field>
+        <Field label={t('yearEnd')} error={issueFor(state, 'yearEnd')}>
+          <input
+            type="date"
+            name="yearEnd"
+            defaultValue={suggested.end}
+            required
+            className={inputClass}
+          />
+        </Field>
+        <Field label={t('netProfit')} error={issueFor(state, 'netProfit')}>
+          <input name="netProfit" inputMode="decimal" required className={inputClass} />
+        </Field>
+        <Field label={t('minServiceMonths')} hint={t('minServiceMonthsHint')}>
+          <input
+            type="number"
+            name="minServiceMonths"
+            min={0}
+            max={12}
+            placeholder="6"
+            className={inputClass}
+          />
+        </Field>
+      </div>
+      <SubmitButton>{t('create')}</SubmitButton>
+    </Form>
+  );
+}
+
+export function WppfRunForm({
+  yearId,
+  groups,
+  today,
+}: {
+  yearId: string;
+  groups: Pick<PayGroupView, 'id' | 'name'>[];
+  today: string;
+}) {
+  const t = useTranslations('payroll.wppf');
+  const [state, action] = useActionState(openWppfRun.bind(null, yearId), undefined);
+  return (
+    <Form state={state} action={action} className="flex flex-wrap items-end gap-3 text-sm">
+      <Errors state={state} />
+      <Field label={t('payGroup')}>
+        <select name="payGroupId" required className={inputClass}>
+          {groups.map((g) => (
+            <option key={g.id} value={g.id}>
+              {g.name}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <Field label={t('paymentDate')} error={issueFor(state, 'paymentDate')}>
+        <input
+          type="date"
+          name="paymentDate"
+          defaultValue={today}
+          required
+          className={inputClass}
+        />
+      </Field>
+      <SubmitButton variant="secondary">{t('openRun')}</SubmitButton>
     </Form>
   );
 }

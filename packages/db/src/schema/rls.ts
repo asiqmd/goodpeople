@@ -59,4 +59,5 @@ export const RLS_TABLES = [
   'employee_loans',
   'loan_repayments',
   'pay_batches',
+  'wppf_years',
 ] as const;

@@ -1245,6 +1245,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get payrollRunKindBonus => 'Bonus';
 
   @override
+  String get payrollRunKindSettlement => 'Final settlement';
+
+  @override
+  String get payrollRunKindWppf => 'Participation fund';
+
+  @override
   String get taxLoadFailed => 'We could not load your tax.';
 
   @override

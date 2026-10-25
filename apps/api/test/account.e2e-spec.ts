@@ -448,6 +448,9 @@ describe('accounts, sign-in and notifications', () => {
     const worker = await hireWithLogin(manager.employee.id);
     const cl = await leaveTypeId(app, admin, 'CL');
     const span = await workingSpan(app, worker.token, cl, `${NEXT_YEAR}-03-01`, 1);
+    // Counted before the request: the dispatcher may send the email by itself half a second
+    // after it is queued.
+    const sentBefore = email.sent.length;
     await api(app)
       .post('/tenant/me/leave/requests')
       .set(bearer(worker.token))
@@ -466,7 +469,6 @@ describe('accounts, sign-in and notifications', () => {
     expect(inbox.items[0]!.body).toContain('Casual');
 
     // The email waits in the outbox until the dispatcher sends it.
-    const sentBefore = email.sent.length;
     await send();
     const mail = email.sent.slice(sentBefore).find((m) => m.to === manager.email);
     expect(mail?.subject).toContain(worker.employee.fullName);

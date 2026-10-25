@@ -2,6 +2,7 @@ import {
   can,
   RUN_ITEM_FILTERS,
   todayIn,
+  type DisbursementView,
   type PayComponentView,
   type PayLineView,
   type PayrollRunItemPage,
@@ -16,15 +17,22 @@ import {
   RunStatusBadge,
   RunTotalsTable,
   runTitle,
+  SettlementBox,
   taka,
   TaxWorking,
 } from '@/components/payroll/payroll-views';
-import { TaxDepositForm } from '@/components/payroll/benefit-forms';
+import { MarkPaidForm, TaxDepositForm } from '@/components/payroll/benefit-forms';
 import { RemoveInputButton, RunActions, RunInputForm } from '@/components/payroll/run-forms';
 import { Badge, Banner, buttonClass, Card, inputClass } from '@/components/ui';
 import { currentTenantUser, load } from '@/lib/api';
 
 const SIZE = 50;
+
+const DUE_HINT: Partial<Record<string, string>> = {
+  bonus: 'paymentDueBonus',
+  settlement: 'paymentDueSettlement',
+  wppf: 'paymentDueWppf',
+};
 
 export default async function PayrollRunPage({
   params,
@@ -102,7 +110,9 @@ export default async function PayrollRunPage({
               <dt className="text-slate-500">{t('paymentDue')}</dt>
               <dd>
                 {day(format, run.paymentDue)}
-                <span className="block text-xs text-slate-500">{t('paymentDueHint')}</span>
+                <span className="block text-xs text-slate-500">
+                  {t(DUE_HINT[run.kind] ?? 'paymentDueHint')}
+                </span>
               </dd>
               {run.totals && (
                 <>
@@ -153,7 +163,8 @@ export default async function PayrollRunPage({
         )}
       </div>
 
-      {run.status === 'locked' && run.kind !== 'bonus' && (
+      {run.status === 'locked' && <Payments runId={run.id} canManage={canManage} />}
+      {run.status === 'locked' && run.kind !== 'bonus' && run.kind !== 'wppf' && (
         <TaxDeposit runId={run.id} canManage={canManage} />
       )}
 
@@ -279,7 +290,9 @@ async function ItemRow({
           )}
         </span>
         <span className="text-slate-600">
-          {t('paidDays', { days: format.number(v.paidDays), of: format.number(v.periodDays) })}
+          {/* Bonus and fund payouts are not counted in days. */}
+          {v.periodDays > 0 &&
+            t('paidDays', { days: format.number(v.paidDays), of: format.number(v.periodDays) })}
         </span>
         <span className="text-slate-600">
           {v.absentDays > 0 && t('absentDays', { days: format.number(v.absentDays) })}
@@ -383,6 +396,7 @@ async function ItemRow({
         {editable && entered.length > 0 && (
           <RunInputForm runId={runId} employeeId={item.employee.id} components={entered} />
         )}
+        {item.settlement && <SettlementBox working={item.settlement} />}
         {item.tax && (
           <details>
             <summary className="cursor-pointer text-sm font-medium text-slate-700">
@@ -449,6 +463,122 @@ async function TaxDeposit({ runId, canManage }: { runId: string; canManage: bool
         </>
       ) : (
         !tax.deposit && <p className="text-sm text-slate-500">{tt('notYet')}</p>
+      )}
+    </Card>
+  );
+}
+
+const CHANNEL_FILES: Record<string, string> = {
+  bank: 'bank',
+  bkash: 'wallet/bkash',
+  nagad: 'wallet/nagad',
+  rocket: 'wallet/rocket',
+  upay: 'wallet/upay',
+};
+
+/** How a locked run is paid: by channel, the files for each, the cash sheet and the journal. */
+async function Payments({ runId, canManage }: { runId: string; canManage: boolean }) {
+  const t = await getTranslations('payroll.payments');
+  const format = await getFormatter();
+  const view = await load<DisbursementView>('tenant', `/tenant/payroll/runs/${runId}/disbursement`);
+  const file = (path: string, language?: 'en' | 'bn') =>
+    `/workspace/files/run-files/${runId}/${path}${language ? `?language=${language}` : ''}`;
+  return (
+    <Card
+      title={t('title')}
+      action={
+        view.paidOn ? (
+          <Badge tone={view.late ? 'red' : 'green'}>
+            {t(view.late ? 'paidLate' : 'paid', { date: day(format, view.paidOn) })}
+          </Badge>
+        ) : (
+          <Badge tone="amber">{t('notPaid', { date: day(format, view.paymentDue) })}</Badge>
+        )
+      }
+    >
+      <div className="-mx-5 overflow-x-auto">
+        <table className="min-w-full text-sm">
+          <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+            <tr>
+              <th className="px-5 py-2 font-medium">{t('channel')}</th>
+              <th className="px-5 py-2 text-right font-medium">{t('people')}</th>
+              <th className="px-5 py-2 text-right font-medium">{t('amount')}</th>
+              <th className="px-5 py-2 font-medium">{t('file')}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {view.channels.map((c) => (
+              <tr key={c.channel}>
+                <td className="px-5 py-2">
+                  {t.has(`channels.${c.channel}`) ? t(`channels.${c.channel}`) : c.channel}
+                </td>
+                <td className="px-5 py-2 text-right tabular-nums">{format.number(c.people)}</td>
+                <td className="px-5 py-2 text-right tabular-nums">{taka(format, c.amount)}</td>
+                <td className="px-5 py-2">
+                  {c.channel === 'cash' ? (
+                    <span className="flex gap-3">
+                      <a
+                        href={file('cash-sheet', 'en')}
+                        className="font-medium text-brand-700 hover:underline"
+                      >
+                        {t('cashSheet')} (EN)
+                      </a>
+                      <a
+                        href={file('cash-sheet', 'bn')}
+                        className="font-medium text-brand-700 hover:underline"
+                      >
+                        {t('cashSheet')} (বাংলা)
+                      </a>
+                    </span>
+                  ) : canManage && CHANNEL_FILES[c.channel] ? (
+                    <a
+                      href={file(CHANNEL_FILES[c.channel]!)}
+                      className="font-medium text-brand-700 hover:underline"
+                    >
+                      {t('download')}
+                    </a>
+                  ) : null}
+                </td>
+              </tr>
+            ))}
+            <tr className="font-semibold">
+              <td className="px-5 py-2">{t('total')}</td>
+              <td className="px-5 py-2 text-right tabular-nums">{format.number(view.people)}</td>
+              <td className="px-5 py-2 text-right tabular-nums">{taka(format, view.total)}</td>
+              <td />
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      {(['bank_incomplete', 'wallet_incomplete', 'wallet_over_limit'] as const).map((issue) => {
+        const people = view.problems.filter((p) => p.issue === issue);
+        return (
+          people.length > 0 && (
+            <Banner key={issue} tone="amber">
+              {t(`issues.${issue}`, { count: people.length })}{' '}
+              {people
+                .slice(0, 10)
+                .map((p) => p.employee.employeeCode)
+                .join(', ')}
+            </Banner>
+          )
+        );
+      })}
+      <p className="mt-4 flex flex-wrap gap-4 text-sm">
+        <a href={file('bank-advice', 'en')} className="font-medium text-brand-700 hover:underline">
+          {t('advice')} (EN)
+        </a>
+        <a href={file('bank-advice', 'bn')} className="font-medium text-brand-700 hover:underline">
+          {t('advice')} (বাংলা)
+        </a>
+        <a href={file('journal')} className="font-medium text-brand-700 hover:underline">
+          {t('journal')}
+        </a>
+      </p>
+      {canManage && (
+        <div className="mt-4 border-t border-slate-100 pt-4">
+          <MarkPaidForm runId={runId} today={todayIn()} />
+        </div>
       )}
     </Card>
   );

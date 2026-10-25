@@ -476,14 +476,186 @@ either side took 4–5 s.
 - **The app's approvals list** shows loans, increments and runs as generic items; payroll
   approvals are decided on the web.
 
+## M4: Settlement, gratuity & disbursement
+
+How these fit into runs and why is in [ADR 011](../adr/011-settlement-funds-and-payment.md).
+
+### What the law says, as encoded
+
+Researched on 25 Oct 2026 from the Labour Act as amended on bdlaws (Ordinance 65 of 2025, in
+force 17 Nov 2025, re-enacted with the same text for these sections by Act 43 of 2026 from 10
+Apr 2026), the Labour Rules 2015 and the Income Tax Act 2023. Every value is a country-pack
+rule with its reference and `needs_review` until counsel signs it off.
+
+| Rule                                  | Before 17 Nov 2025                                                                          | From 17 Nov 2025                                                   |
+| ------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Wage for compensation and notice pay  | average basic (+ dearness, ad hoc) of the last 12 months (s.14(3))                          | the last month's                                                   |
+| Resignation benefit (s.27(4))         | nothing under 5 years; 14 days a year from 5, 30 from 10 (or gratuity)                      | 7 days a year up to 3 years, 15 for 3–10, 30 from 10 (or gratuity) |
+| Termination (s.26), permanent         | 120 days' notice or pay; 30 days a year or gratuity                                         | same                                                               |
+| Retrenchment (s.20), discharge (s.22) | a year's service; 30 days a year or gratuity                                                | same                                                               |
+| Dismissal (s.23(3))                   | 15 days a year after a year (none for theft, fraud or riot)                                 | same, now expressly for dismissed workers                          |
+| Death (s.19)                          | more than 2 years; 30 days a year, 45 for a work accident, or gratuity                      | more than 1 year                                                   |
+| Retirement (s.28)                     | at 60; 30 days a year or gratuity                                                           | same                                                               |
+| Gratuity (s.2(10))                    | 30 days of the last wage a year, 45 past ten years; payable under the employer's scheme     | not amended                                                        |
+| Part years                            | over six months count as a year for gratuity and death only                                 | same                                                               |
+| Unused earned leave (s.11, s.119)     | paid at a day's full wage                                                                   | same                                                               |
+| Dues paid within                      | 30 working days of the last day (s.30)                                                      | same                                                               |
+| WPPF (Chapter XV)                     | 5% of net profit, 80:10:10; two thirds of the participation fund in cash                    | all of it in cash (s.242(1))                                       |
+| WPPF beneficiaries                    | any rank but owners and directors; nine months employed, six in the year; dismissed forfeit | same                                                               |
+| Tax on WPPF payouts (ITA s.88)        | 5% at source                                                                                | 10% from 1 Jul 2025 (Finance Act 2026; date to confirm)            |
+
+Wages are paid in cash, by cheque or, at the worker's wish, to a bank account or by any digital
+method (s.124). Rule 111 keeps the wage record in Form 38, signed by the worker over a revenue
+stamp when paid. Bangladesh Bank limits a personal mobile wallet to a balance of Tk 5 lakh.
+Neither BEFTN nor bKash or Nagad publish a standard salary file: banks and wallets each have
+their own template, with the same content.
+
+### Final settlement
+
+- **Opened from a decided separation** (approved, or completed once the last day passes) on
+  the Settlements tab: one settlement run for the leaver's last month, in their pay group,
+  due 30 working days after the last day. Only one per separation.
+- **What it pays:**
+  - the last month to the last day, less what that month's locked runs already paid;
+  - pay in lieu of notice the employer did not give, or notice the worker did not serve,
+    recovered;
+  - unused earned leave at a day's gross;
+  - the separation's benefit by its slab, or gratuity at the last basic when the Act says
+    "whichever is higher" and the workspace provides for gratuity;
+  - every loan left, recovered in full;
+  - tax worked out on all of it, as in any run.
+- **Entered amounts win:** HR may enter any of the dues (for example nothing for a dismissal
+  for theft), and the run uses that instead.
+- **The working is kept** with the result and shown on the run, and on the Bangla or English
+  statement (the payslip titled "Final settlement"): service in years and months, the wage
+  basis, notice, leave and each benefit as years × days at the day's rate, the due date, and
+  the provident fund paid out.
+- **The month's regular run leaves the leaver out**, so nobody is paid twice.
+- **Locking ends fund membership** and pays out the member's own money and the vested part of
+  the employer's; the rest is forfeited back to the fund.
+
+### Gratuity provision
+
+- A report for any date (by default the last month end) of what the company would owe if
+  every permanent employee left then, per person and in total, with the change since the
+  previous month end: the month's charge, debit gratuity expense and credit the provision.
+  CSV for the accounts.
+- A setting turns gratuity off for workspaces without a scheme; the settlement then pays the
+  separation's own benefit.
+
+### Workers' participation fund
+
+- **A year:** the accounting year, its dates and the net profit. The fund (5%), the three
+  parts and the cash to pay are worked out under the rule for the year's end, and stored
+  encrypted.
+- **Beneficiaries** are worked out when needed: employed nine months, six of them in the year
+  (a year may lower the six where the trust deed allows), not dismissed. Leavers keep their
+  share.
+- **Paying it:** one run per pay group, each beneficiary in the group getting the equal share
+  less tax at source. The run is approved, locked and paid like any other, and due nine
+  months after the year end.
+
+### Paying runs
+
+- **Payment accounts can be split:** a fixed amount to a secondary account (a wallet, say),
+  the rest to the primary; cash when there is no account.
+- **For a locked run:**
+  - the total by channel (bank, each wallet, cash) and the accounts that need fixing,
+    including a wallet payment over the Tk 5 lakh cap;
+  - the bank transfer file and one file per wallet provider (CSV, for those who run payroll
+    only, each download audited);
+  - the cash pay sheet as Form 38 by unit, with a column to sign over a revenue stamp or
+    thumbprint, in English or Bangla;
+  - a covering advice to the bank;
+  - the date it was paid, flagged when after the legal deadline.
+- **The journal:** a balanced CSV by account and cost centre (the unit's code). Each
+  component can name its own ledger account; otherwise the settings' accounts for salary
+  expense, net pay, tax, provident fund, loans, gratuity and the participation fund apply.
+  Gratuity paid out draws on the provision; a fund payout settles the fund's liability.
+
+### What else it does
+
+- **References:** each run's payments carry a reference such as `SAL-2026-09`, `FS-2026-09`
+  or `WPPF-2025-26`.
+- **The app** marks final settlement and participation fund payslips.
+- **Fixes found on the way:**
+  - the run page's deadline note always quoted s.123; it now gives each kind's own (s.30,
+    s.234, before the festival);
+  - bonus and fund payouts no longer show "0 of 0 days paid".
+
+### Performance at 20,000 employees
+
+Measured on a MacBook Air (M-series) against `scale-20k` after October 2026 was computed,
+locked and published (`apps/api/scripts/measure-payroll.mjs scale-20k`, which now goes on to
+pay the run):
+
+| Step                                                      | Time            |
+| --------------------------------------------------------- | --------------- |
+| Payment summary by channel                                | 0.56 s          |
+| Bank file / journal                                       | 0.55 s / 0.48 s |
+| Cash pay sheet PDF in Bangla, 20,000 people (~600 pages)  | 11.2 s          |
+| Gratuity provision, first page (20,000 people, two dates) | 1.7 s           |
+| Gratuity provision CSV                                    | 0.9 s           |
+| A participation fund year (20,000 beneficiaries)          | 0.4 s           |
+
+The cash sheet is the slow one: a whole factory in one PDF. It is downloaded once a month, so
+it stays a direct download for now; a background job can take it over if larger workspaces
+need it.
+
+### Done when
+
+- **Unit tests:**
+  - service in months and years, with part years counted only where the Act says so;
+  - each separation across the 2025 amendment, gratuity against compensation, the wage basis
+    and the participation fund's cash share;
+  - splitting pay across accounts.
+- **API end-to-end tests (6 new):**
+  - a termination settled: notice, gratuity over compensation, leave, the fund paid out,
+    the regular run leaving the leaver out, and the Bangla statement;
+  - a resignation recovering notice not served;
+  - the gratuity provision and its CSV;
+  - the participation fund: the split, beneficiaries, a run with tax at source, and its
+    journal;
+  - payment files, the cash sheet, advice and payment date;
+  - a balanced journal by account and unit.
+- **Web and mobile:** the pages above in English and Bangla, and the app's payslip marks.
+
+**Checked:**
+
+- 178 API tests in 20 files, also passing shuffled ten times out of eleven; country-pack
+  tests (49, 13 of them new), shared (93) and the Edge Agent's (64). The one shuffled
+  failure was an older notifications test counting sent emails after the dispatcher could
+  already have sent one on its own; it now counts before the request.
+- The browser in English and Bangla:
+  - Anjali Das terminated with 60 of 120 days' notice. Her settlement shows 4 years 2
+    months, ৳15,134 notice pay, 22 days' leave at ৳460 a day, and 4 × 30 days'
+    compensation (৳30,268), net ৳68,792. Her fund of ৳10,600 is shown as paid separately.
+    The Bangla statement PDF was checked.
+  - The gratuity provision on 30 Sep 2026: ৳20.4 lakh for 8 people, with this month's
+    ৳8,500 from Rahima's service passing six and a half years.
+  - The 2025-26 participation fund on ৳2.5 crore of profit: ৳10 lakh to 8 beneficiaries,
+    ৳1.25 lakh each less 10% tax. Its run was locked, then the payments card split it
+    across bank, bKash and cash.
+- Flutter: 221 tests and analyze clean.
+
+**Carried into later milestones from M4:**
+
+- **Bank and wallet templates:** the files carry what BEFTN uploads and B2C disbursements
+  ask for; per-bank column layouts (and RTGS for payments of Tk 1 lakh or more) come with
+  the first design partners' banks.
+- **Rules to confirm with counsel:** where the 7-day resignation tier starts, the wage
+  gratuity is counted on, leave at gross, the scope of s.23(3), the 10% WPPF tax's start
+  date and whether it is final, and the Labour Rules amendments since 2022.
+- **Average wage for older separations:** the 12-month average uses the basic in force at
+  each month end, not dearness or ad hoc pay.
+- **Tax on gratuity:** gratuity and compensation are taxed as salary; any exemption the tax
+  consultant confirms is a component setting.
+- **Sector funds:** 100% export-oriented industries pay into a sector Central Fund instead
+  of a company WPPF; recording that comes with the RMG pack.
+- **Statutory registers** (Form 38 as a register rather than a pay sheet) come with M5.
+
 ## Later milestones (outline; detailed when each starts)
 
-- **M4 Settlement, gratuity & disbursement:**
-  - Final settlement for each separation type: notice pay, unused earned leave, gratuity,
-    the resignation benefit.
-  - Gratuity provisioning, WPPF.
-  - Bank advice files (BEFTN, NPSB), bKash and Nagad bulk files, cash pay sheets with
-    signature columns, split payments, accounting export with cost centres.
 - **M5 Reports & parallel runs:**
   - Payroll register, wage and overtime registers, tax and PF statements, bank
     reconciliation, management reports.
@@ -505,3 +677,11 @@ either side took 4–5 s.
   [PwC tax summary](https://taxsummaries.pwc.com/bangladesh/individual/taxes-on-personal-income)
 - Provident fund for 100+ permanent workers: [WTW, Mar 2026](https://www.wtwco.com/en-us/insights/2026/03/bangladesh-new-mandate-for-provident-funds-for-large-employers),
   [Prothom Alo on Act 43 of 2026](https://en.prothomalo.com/bangladesh/7z52cjg8f2)
+- Final settlement, gratuity and WPPF after the 2025/26 amendments: [Labour Act 2006 as amended (bdlaws)](http://bdlaws.minlaw.gov.bd/act-print-952.html),
+  [Ordinance 65 of 2025](http://bdlaws.minlaw.gov.bd/act-details-1578.html),
+  [Act 43 of 2026](http://bdlaws.minlaw.gov.bd/act-print-1672.html),
+  [OGR Legal guide, Nov 2025](https://cdn5.ogrlegal.com/files/guide/Guide-2025-Labour-Law-Amend.pdf),
+  [MiHCM on Act 43, Aug 2026](https://mihcm.com/blog/the-bangladesh-labour-amendment-act-2026-what-changed-and-what-hr-must-do-now)
+- Wage records (Rule 111, Form 38): [Labour Rules 2015 (DIFE copy)](https://objectstorage.ap-dcc-gazipur-1.oraclecloud15.com/n/axvjbnqprylg/b/V2Ministry/o/office-dife-chittagong/2024/12/522f3f452b02462a9464be1819640c94.pdf)
+- WPPF payout tax (s.88): [Income Tax Act 2023, consolidated (bdlaws)](http://bdlaws.minlaw.gov.bd/act-print-1429.html)
+- Mobile wallet limits: [TBS, 27 Mar 2025](https://www.tbsnews.net/economy/mfs-transaction-limit-refixed-daily-maximum-cash-tk50000-cash-out-tk30000-1103256)

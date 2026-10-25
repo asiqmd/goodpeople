@@ -274,3 +274,30 @@ export const payBatches = pgTable(
       .where(sql`${t.status} = 'pending'`),
   ],
 );
+
+/**
+ * A year's Workers' Participation Fund (Labour Act Chapter XV): 5% of net profit, split
+ * between the participation fund, the welfare fund and the Workers' Welfare Foundation, and
+ * the cash share paid equally to the eligible workers through a run.
+ */
+export const wppfYears = pgTable(
+  'wppf_years',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: tenantId(),
+    /** The company's accounting year it covers, e.g. "2025-26". */
+    accountingYear: text('accounting_year').notNull(),
+    yearStart: isoDate('year_start').notNull(),
+    yearEnd: isoDate('year_end').notNull(),
+    /** { netProfit, fund, participation, welfare, foundation, cash, invested } as encrypted JSON. */
+    amountsEnc: text('amounts_enc').notNull(),
+    /** Months of service in the year that make a worker eligible. */
+    minServiceMonths: integer('min_service_months').notNull(),
+    createdBy: uuid('created_by'),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    unique('wppf_years_tenant_id_uq').on(t.tenantId, t.id),
+    unique('wppf_years_year_uq').on(t.tenantId, t.accountingYear),
+  ],
+);

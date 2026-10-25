@@ -929,6 +929,14 @@
   "@payrollRunKindBonus": {
     "description": "Mark on a month from a festival bonus run."
   },
+  "payrollRunKindSettlement": "Final settlement",
+  "@payrollRunKindSettlement": {
+    "description": "Mark on a payslip or month from a final settlement run, which pays what a leaver is owed."
+  },
+  "payrollRunKindWppf": "Participation fund",
+  "@payrollRunKindWppf": {
+    "description": "Mark on a payslip or month from a workers' participation fund (WPPF) payout run."
+  },
   "taxLoadFailed": "We could not load your tax.",
   "taxNoEmployeeBody": "Salary tax belongs to an employee record, and your login is not linked to one. If you think it should be, ask your HR team.",
   "taxYearSoFar": "Year so far",

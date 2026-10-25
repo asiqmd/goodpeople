@@ -21,6 +21,7 @@ import {
   index,
   integer,
   jsonb,
+  numeric,
   pgEnum,
   pgTable,
   smallint,
@@ -353,6 +354,8 @@ export const employeePaymentAccounts = pgTable(
     accountNumberEnc: text('account_number_enc'),
     accountNumberLast4: text('account_number_last4'),
     isPrimary: boolean('is_primary').notNull().default(false),
+    /** A fixed amount of each pay sent here; the primary account gets what is left. */
+    splitAmount: numeric('split_amount', { precision: 12, scale: 2 }),
     createdAt: createdAt(),
   },
   (t) => [

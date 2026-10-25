@@ -1246,6 +1246,12 @@ class AppLocalizationsBn extends AppLocalizations {
   String get payrollRunKindBonus => 'বোনাস';
 
   @override
+  String get payrollRunKindSettlement => 'চূড়ান্ত নিষ্পত্তি';
+
+  @override
+  String get payrollRunKindWppf => 'অংশগ্রহণ তহবিল';
+
+  @override
   String get taxLoadFailed => 'আপনার করের তথ্য লোড করা যায়নি।';
 
   @override

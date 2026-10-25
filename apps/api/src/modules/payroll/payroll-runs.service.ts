@@ -1,37 +1,25 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   approvalSteps,
-  attendanceDays,
-  attendanceSettings,
   CIPHER_FIELDS,
-  designations,
-  employeePay,
   employees,
-  jobAssignments,
-  leaveRequests,
-  leaveTypes,
-  legalEntities,
-  orgUnits,
   payGroups,
   payrollInputs,
   payrollRunItems,
   payrollRuns,
-  salaryStructures,
+  pfMembers,
+  separations,
   tenantUsers,
   type FieldCipher,
   type Tx,
 } from '@gp/db';
 import {
-  addDays,
-  DEFAULT_WEEKLY_OFF_DAYS,
   Decimal,
   fiscalYearOf,
   formatAddress,
-  groupBy,
   monthBounds,
   money,
   todayIn,
-  weekdayOf,
   type AdjustmentCreateInput,
   type ApprovalItem,
   type BonusRule,
@@ -46,10 +34,10 @@ import {
   type RunItemsQuery,
   type RunProblemCode,
   type RunTaxWorking,
+  type SettlementWorking,
   type RunTotals,
   type RunVariables,
   type TenantWithAccess,
-  type WorkerCategory,
 } from '@gp/shared';
 import {
   and,
@@ -89,11 +77,23 @@ import {
   computePay,
   difference,
   employment,
-  type EngineDay,
   type EngineResult,
 } from './run-engine.js';
 import { amountText, payslipHtml, periodName } from './payslip.js';
-import { loansFor, pfRatesFor, postLockedRun, taxContextsFor } from './run-context.js';
+import { endMembership } from './provident-fund.service.js';
+import { SettlementsService } from './settlements.service.js';
+import { WppfService } from './wppf.service.js';
+import {
+  approvedPay,
+  attendanceOf,
+  inputsOf,
+  jobsOn,
+  loansFor,
+  pfRatesFor,
+  postLockedRun,
+  taxContextsFor,
+  workingDaysAfter,
+} from './run-context.js';
 
 type RunRow = typeof payrollRuns.$inferSelect;
 
@@ -108,6 +108,7 @@ interface ItemResult {
   taxable?: string;
   tax?: RunTaxWorking | null;
   loans?: { loanId: string; amount: string }[];
+  settlement?: SettlementWorking | null;
 }
 
 /** A person's net moving this much since last month is flagged for review. */
@@ -163,6 +164,8 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
     private readonly notifications: NotificationsService,
     private readonly calendars: WorkCalendarService,
     private readonly pdf: PdfService,
+    private readonly settlements: SettlementsService,
+    private readonly wppf: WppfService,
     @Inject(FIELD_CIPHER) private readonly cipher: FieldCipher,
   ) {}
 
@@ -245,6 +248,7 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
           ...result,
           taxable: result.taxable ?? '0.00',
           tax: result.tax ?? null,
+          settlement: result.settlement ?? null,
           inputs: Object.fromEntries(
             (inputs.get(employee.id) ?? []).map((i) => [i.component, money(i.amount)]),
           ),
@@ -331,7 +335,11 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
           ? await this.computeRegular(tx, run, tenant)
           : run.kind === 'bonus'
             ? await this.computeBonusRun(tx, run)
-            : await this.computeAdjustment(tx, run, tenant);
+            : run.kind === 'settlement'
+              ? await this.settlements.compute(tx, run, tenant)
+              : run.kind === 'wppf'
+                ? await this.wppf.compute(tx, run)
+                : await this.computeAdjustment(tx, run, tenant);
       await this.store(tx, run, results);
       await this.audit.record(tx, {
         actorUserId: actor.id,
@@ -366,7 +374,10 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
     const pay = await this.approvedPay(tx, run.periodEnd);
     // Members are paid in this group on their last employed day of the period. People with
     // no pay at all are listed in the default group's run, so nobody is missed silently.
+    // Leavers whose last month a settlement pays are not paid here as well.
+    const settled = await this.settlements.settledIn(tx, run.periodStart);
     const members = people.filter((p) => {
+      if (settled.has(p.id)) return false;
       const records = pay.get(p.id);
       if (!records?.length) return group!.isDefault;
       const span = employment({ ...run, joinedOn: p.joinedOn, separatedOn: p.separatedOn });
@@ -559,6 +570,7 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
               taxable: result.taxable,
               tax: result.tax,
               loans: result.loans,
+              settlement: (result as { settlement?: SettlementWorking }).settlement ?? null,
             } satisfies ItemResult,
             CIPHER_FIELDS.runResults,
           ),
@@ -963,6 +975,7 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
       return payslipHtml({
         language,
         kind: row.run.kind,
+        settlement: result.settlement ?? null,
         festival: row.run.bonus
           ? language === 'bn'
             ? (row.run.bonus.festivalBn ?? row.run.bonus.festival)
@@ -1033,7 +1046,10 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
       )
       .where(eq(payrollRuns.id, subjectId));
     // Locked: contributions reach the provident fund and repayments the loans.
-    if (outcome === 'approved') await postLockedRun(tx, this.cipher, subjectId, actorUserId);
+    if (outcome === 'approved') {
+      await postLockedRun(tx, this.cipher, subjectId, actorUserId);
+      await this.settleFund(tx, subjectId, actorUserId);
+    }
   }
 
   async inboxItems(tx: Tx, steps: ApprovalStepRow[]) {
@@ -1093,6 +1109,31 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
   }
 
   // ── Internals ──────────────────────────────────────────────────────────────
+
+  /** A locked settlement ends the leaver's fund membership and pays out what is theirs. */
+  private async settleFund(tx: Tx, runId: string, actorUserId: string) {
+    const [run] = await tx.select().from(payrollRuns).where(eq(payrollRuns.id, runId));
+    if (run?.kind !== 'settlement' || !run.separationId) return;
+    const [separation] = await tx
+      .select()
+      .from(separations)
+      .where(eq(separations.id, run.separationId));
+    const [member] = await tx
+      .select()
+      .from(pfMembers)
+      .where(eq(pfMembers.employeeId, separation!.employeeId));
+    if (!member || member.leftOn) return;
+    await endMembership(
+      tx,
+      this.cipher,
+      separation!.employeeId,
+      separation!.lastWorkingDay,
+      actorUserId,
+      {
+        payOut: true,
+      },
+    );
+  }
 
   private async views(tx: Tx, where: SQL | undefined): Promise<PayrollRunView[]> {
     const rows = await tx
@@ -1163,134 +1204,21 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
   }
 
   /** The Labour Act's deadline: the seventh working day after the period (s.123). */
-  private async paymentDue(tx: Tx, periodEnd: string): Promise<string> {
-    const calendarId = await this.calendars.defaultCalendarId(tx);
-    const holidays = await this.calendars.holidaysIn(
-      tx,
-      calendarId,
-      addDays(periodEnd, 1),
-      addDays(periodEnd, 40),
-    );
-    let day = periodEnd;
-    let counted = 0;
-    while (counted < 7) {
-      day = addDays(day, 1);
-      if (!DEFAULT_WEEKLY_OFF_DAYS.includes(weekdayOf(day)) && !holidays.has(day)) counted += 1;
-    }
-    return day;
+  /** Wages are due before the seventh working day after the period ends (s.123). */
+  private paymentDue(tx: Tx, periodEnd: string): Promise<string> {
+    return workingDaysAfter(tx, this.calendars, periodEnd, 7);
   }
 
-  /** Approved pay up to a date, per person, oldest first, with what the engine needs. */
-  private async approvedPay(tx: Tx, upTo: string) {
-    const rows = await tx
-      .select({ p: employeePay, structure: salaryStructures })
-      .from(employeePay)
-      .innerJoin(salaryStructures, eq(salaryStructures.id, employeePay.structureId))
-      .where(and(eq(employeePay.status, 'approved'), lte(employeePay.effectiveFrom, upTo)))
-      .orderBy(asc(employeePay.effectiveFrom));
-    const out = new Map<
-      string,
-      {
-        effectiveFrom: string;
-        payGroupId: string;
-        engine: Parameters<typeof computePay>[0]['records'][number];
-      }[]
-    >();
-    for (const { p, structure } of rows) {
-      const amounts = JSON.parse(
-        this.cipher.decrypt(p.amountsEnc, {
-          tenantId: currentTenantId(),
-          field: CIPHER_FIELDS.payAmounts,
-        }),
-      ) as { amount: string; fixed: Record<string, string> };
-      const list = out.get(p.employeeId) ?? [];
-      list.push({
-        effectiveFrom: p.effectiveFrom,
-        payGroupId: p.payGroupId,
-        engine: {
-          effectiveFrom: p.effectiveFrom,
-          structure: {
-            basis: structure.basis,
-            lines: structure.lines,
-            wageBoard: structure.wageBoard,
-          },
-          amount: amounts.amount,
-          fixed: amounts.fixed,
-        },
-      });
-      out.set(p.employeeId, list);
-    }
-    return out;
+  private approvedPay(tx: Tx, upTo: string) {
+    return approvedPay(tx, this.cipher, upTo);
   }
 
-  /** Processed days per person, or null where attendance is not tracked for the period. */
-  private async attendanceOf(
-    tx: Tx,
-    ids: string[],
-    run: RunRow,
-    tenant: TenantWithAccess,
-  ): Promise<{ trackingFrom: string; days: Map<string, EngineDay[]> } | null> {
-    if (!tenant.access.features.includes('attendance')) return null;
-    const [settings] = await tx.select().from(attendanceSettings);
-    if (!settings || settings.trackingFrom > run.periodEnd) return null;
-    const out = new Map<string, EngineDay[]>();
-    for (let i = 0; i < ids.length; i += 10_000) {
-      const rows = await tx
-        .select({
-          employeeId: attendanceDays.employeeId,
-          date: attendanceDays.date,
-          status: attendanceDays.status,
-          overtimeMinutes: attendanceDays.overtimeMinutes,
-          lateMinutes: attendanceDays.lateMinutes,
-          leaveDays: attendanceDays.leaveDays,
-          paid: leaveTypes.paid,
-        })
-        .from(attendanceDays)
-        .leftJoin(leaveRequests, eq(leaveRequests.id, attendanceDays.leaveRequestId))
-        .leftJoin(leaveTypes, eq(leaveTypes.id, leaveRequests.leaveTypeId))
-        .where(
-          and(
-            inArray(attendanceDays.employeeId, ids.slice(i, i + 10_000)),
-            sql`${attendanceDays.date} between ${run.periodStart} and ${run.periodEnd}`,
-          ),
-        );
-      for (const [employeeId, days] of groupBy(rows, (r) => r.employeeId)) {
-        out.set(
-          employeeId,
-          days.map((d) => ({
-            date: d.date,
-            status: d.status,
-            overtimeMinutes: d.overtimeMinutes,
-            leaveDays: d.leaveDays,
-            unpaidLeave: d.paid === false,
-            late: d.lateMinutes > 0,
-          })),
-        );
-      }
-    }
-    return { trackingFrom: settings.trackingFrom, days: out };
+  private attendanceOf(tx: Tx, ids: string[], run: RunRow, tenant: TenantWithAccess) {
+    return attendanceOf(tx, ids, run, tenant);
   }
 
-  private async inputsOf(tx: Tx, runId: string, ids?: string[]) {
-    if (ids?.length === 0)
-      return new Map<string, { employeeId: string; component: string; amount: string }[]>();
-    const rows = await tx
-      .select()
-      .from(payrollInputs)
-      .where(
-        and(
-          eq(payrollInputs.runId, runId),
-          ids ? inArray(payrollInputs.employeeId, ids) : undefined,
-        ),
-      );
-    return groupBy(
-      rows.map((r) => ({
-        employeeId: r.employeeId,
-        component: r.component,
-        amount: this.decrypt<string>(r.amountEnc, CIPHER_FIELDS.runInputs),
-      })),
-      (r) => r.employeeId,
-    );
+  private inputsOf(tx: Tx, runId: string, ids?: string[]) {
+    return inputsOf(tx, this.cipher, runId, ids);
   }
 
   /** Each person's net in the group's last locked regular run before this one. */
@@ -1333,38 +1261,8 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
   }
 
   /** Each person's job on a date: company, designation and unit, for payslips and lists. */
-  private async jobsOn(tx: Tx, ids: string[], on: string) {
-    const out = new Map<
-      string,
-      {
-        entity: typeof legalEntities.$inferSelect | null;
-        designation: string | null;
-        designationBn: string | null;
-        orgUnit: string | null;
-        orgUnitBn: string | null;
-        workerCategory: WorkerCategory;
-      }
-    >();
-    if (ids.length === 0) return out;
-    const rows = await tx
-      .select({
-        employeeId: jobAssignments.employeeId,
-        from: jobAssignments.effectiveFrom,
-        entity: legalEntities,
-        designation: designations.name,
-        designationBn: designations.nameBn,
-        orgUnit: orgUnits.name,
-        orgUnitBn: orgUnits.nameBn,
-        workerCategory: jobAssignments.workerCategory,
-      })
-      .from(jobAssignments)
-      .innerJoin(legalEntities, eq(legalEntities.id, jobAssignments.legalEntityId))
-      .leftJoin(designations, eq(designations.id, jobAssignments.designationId))
-      .leftJoin(orgUnits, eq(orgUnits.id, jobAssignments.orgUnitId))
-      .where(and(inArray(jobAssignments.employeeId, ids), lte(jobAssignments.effectiveFrom, on)))
-      .orderBy(asc(jobAssignments.effectiveFrom));
-    for (const row of rows) out.set(row.employeeId, row);
-    return out;
+  private jobsOn(tx: Tx, ids: string[], on: string) {
+    return jobsOn(tx, ids, on);
   }
 
   private encrypt(

@@ -628,6 +628,8 @@ export class EmployeesService {
                     : (kept?.accountNumberEnc ?? null),
                   accountNumberLast4: number?.slice(-4) ?? kept?.accountNumberLast4 ?? null,
                   isPrimary: a.isPrimary,
+                  // The primary account takes what is left; only the others take a fixed part.
+                  splitAmount: a.isPrimary ? null : (a.splitAmount ?? null),
                 };
               }),
             )
@@ -825,4 +827,5 @@ const toPaymentAccountView = (
   accountName: a.accountName,
   accountNumberMasked: a.accountNumberLast4 ? `•••• ${a.accountNumberLast4}` : null,
   isPrimary: a.isPrimary,
+  splitAmount: a.splitAmount,
 });

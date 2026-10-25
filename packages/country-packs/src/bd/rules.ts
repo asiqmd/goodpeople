@@ -61,7 +61,63 @@ export interface BdRules {
   'bonus.festival_per_year': number;
   'bonus.festival_max_percent_of_basic': number;
   'bonus.festival_min_service_months': number;
+  'separation.part_year_counts_after_months': number;
+  'separation.gratuity': SeparationBenefit;
+  'separation.benefits': Record<SeparationKindKey, SeparationBenefit | null>;
+  'separation.dues_within_working_days': number;
+  'separation.wage_basis': SeparationWageBasis;
+  'wppf.shares': WppfShares;
 }
+
+/** How the participation and welfare funds share a company's net profit (Chapter XV). */
+export interface WppfShares {
+  /** Of net profit, set aside each year. */
+  percentOfNetProfit: number;
+  /** The set-aside split between the participation, welfare and foundation funds. */
+  participation: number;
+  welfare: number;
+  foundation: number;
+  /** The part of the participation fund paid to workers in cash, equally, as a fraction. */
+  cash: { numerator: number; denominator: number };
+  /** Months employed that make a person a beneficiary at all. */
+  minEmploymentMonths: number;
+  /** Months of service within the accounting year needed to share in that year. */
+  minMonthsInYear: number;
+}
+
+type SeparationKindKey =
+  | 'resignation'
+  | 'termination'
+  | 'dismissal'
+  | 'discharge'
+  | 'retrenchment'
+  | 'retirement'
+  | 'death'
+  | 'contract_end';
+
+/**
+ * Days of wages for each year of service, at the rate of the slab the whole service falls in.
+ * Slabs go by months served, as the Act words them ("up to three years", "more than three
+ * years", "ten years or more").
+ */
+export interface SeparationBenefit {
+  label: string;
+  section: string;
+  /** Months of service before anything is due. */
+  minServiceMonths: number;
+  slabs: readonly { fromMonths: number; daysPerYear: number }[];
+  /** A part year longer than six months counts as a year (gratuity and the death benefit). */
+  partYearCounts?: boolean;
+  /** "Or gratuity, whichever is higher": one of the two. */
+  orGratuity?: boolean;
+  /** Only a permanent worker is owed it (termination and resignation). */
+  permanentOnly?: boolean;
+  /** For a death caused by an accident at or on the way to work. */
+  workAccidentDaysPerYear?: number;
+}
+
+/** Which wage compensation and notice pay are counted on (s.14(3)). */
+export type SeparationWageBasis = 'average_12_months' | 'last_month';
 
 /** Clerical work has a longer probation than other work (s.4). */
 export type ProbationCategory = 'clerical' | 'other';
@@ -276,7 +332,7 @@ export const BD_RULES: Rulebook<BdRules> = {
         },
         reference: BLA('27'),
         status: 'needs_review',
-        note: 'Without notice, wages for the notice period may be deducted. Confirm the 2025 amendment left this unchanged.',
+        note: 'Without notice, wages for the notice period may be deducted (s.27(3)). Unchanged by the 2025/26 amendments.',
       },
     ],
   },
@@ -293,7 +349,7 @@ export const BD_RULES: Rulebook<BdRules> = {
         },
         reference: BLA('26'),
         status: 'needs_review',
-        note: 'Or wages in lieu of notice. Confirm the 2025 amendment left this unchanged.',
+        note: 'Or wages in lieu of notice (s.26(3)). Unchanged by the 2025/26 amendments.',
       },
     ],
   },
@@ -358,7 +414,9 @@ export const BD_RULES: Rulebook<BdRules> = {
         value: 100,
         reference: ORDINANCE_2025('264'),
         status: 'needs_review',
-        note: 'Joining the government Progoti pension, with the employer contributing, is an alternative.',
+        note:
+          'Mandatory from 100 permanent workers; joining the government Progoti pension, half ' +
+          'paid by the employer, is an alternative.',
       },
       {
         from: '2026-04-10',
@@ -366,8 +424,8 @@ export const BD_RULES: Rulebook<BdRules> = {
         reference: { act: 'Bangladesh Labour (Amendment) Act 2026 (Act No. 43)', section: '264' },
         status: 'needs_review',
         note:
-          'Sources differ on the two-thirds rule: a fund on a written demand of two thirds of the ' +
-          'workers, or no fund needed when two thirds join Progoti. The employer pays half.',
+          'From 100 permanent workers only when two thirds of the workers ask in writing; ' +
+          's.264(1) is back to "may". Progoti remains an alternative. 7–8% of basic after a year.',
       },
     ],
   },
@@ -411,6 +469,248 @@ export const BD_RULES: Rulebook<BdRules> = {
         value: 12,
         reference: { act: 'Bangladesh Labour Rules 2015', section: '111' },
         status: 'needs_review',
+      },
+    ],
+  },
+  'separation.part_year_counts_after_months': {
+    title: 'A part year of service counts as a year when longer than this many months',
+    versions: [
+      {
+        from: ACT_START,
+        value: 6,
+        reference: BLA('2'),
+        status: 'needs_review',
+        note: 'Clause (10), on counting service for gratuity.',
+      },
+    ],
+  },
+  'separation.gratuity': {
+    title: 'Gratuity: days of wages for each completed year of service',
+    versions: [
+      {
+        from: ACT_START,
+        value: {
+          label: 'Gratuity',
+          section: '2(10)',
+          minServiceMonths: 0,
+          slabs: [
+            { fromMonths: 0, daysPerYear: 30 },
+            { fromMonths: 121, daysPerYear: 45 },
+          ],
+          partYearCounts: true,
+        },
+        reference: BLA('2'),
+        status: 'needs_review',
+        note:
+          'Clause (10), not changed in 2025/26: 30 days at the last wage for each year or part ' +
+          'over six months, 45 once service exceeds ten years. Only payable where the employer ' +
+          'has a scheme, contract or service rule ("gratuity, if payable").',
+      },
+    ],
+  },
+  'separation.benefits': {
+    title: 'What each kind of separation pays, in days of wages per completed year',
+    versions: [
+      {
+        from: ACT_START,
+        value: {
+          resignation: {
+            label: 'Resignation benefit',
+            section: '27(4)',
+            minServiceMonths: 60,
+            slabs: [
+              { fromMonths: 60, daysPerYear: 14 },
+              { fromMonths: 120, daysPerYear: 30 },
+            ],
+            orGratuity: true,
+            permanentOnly: true,
+          },
+          termination: {
+            label: 'Termination compensation',
+            section: '26(4)',
+            minServiceMonths: 0,
+            slabs: [{ fromMonths: 0, daysPerYear: 30 }],
+            orGratuity: true,
+            permanentOnly: true,
+          },
+          retrenchment: {
+            label: 'Retrenchment compensation',
+            section: '20(2)',
+            minServiceMonths: 12,
+            slabs: [{ fromMonths: 0, daysPerYear: 30 }],
+            orGratuity: true,
+          },
+          discharge: {
+            label: 'Discharge compensation',
+            section: '22(2)',
+            minServiceMonths: 12,
+            slabs: [{ fromMonths: 0, daysPerYear: 30 }],
+            orGratuity: true,
+          },
+          dismissal: {
+            label: 'Dismissal compensation',
+            section: '23(3)',
+            minServiceMonths: 12,
+            slabs: [{ fromMonths: 0, daysPerYear: 15 }],
+          },
+          retirement: {
+            label: 'Retirement benefit',
+            section: '28',
+            minServiceMonths: 0,
+            slabs: [{ fromMonths: 0, daysPerYear: 30 }],
+            orGratuity: true,
+          },
+          contract_end: null,
+          death: {
+            label: 'Death benefit',
+            section: '19',
+            minServiceMonths: 25,
+            slabs: [{ fromMonths: 0, daysPerYear: 30 }],
+            partYearCounts: true,
+            orGratuity: true,
+            workAccidentDaysPerYear: 45,
+          },
+        },
+        reference: BLA('19'),
+        status: 'needs_review',
+        note:
+          'Sections 19 (death, after more than two years), 20 (retrenchment), 22 (discharge), ' +
+          '23 (dismissal, other than for theft, fraud or riot under s.23(4)(b) and (g)), 26 ' +
+          '(termination of a permanent worker), 27 (resignation, from five years) and 28 ' +
+          '(retirement, as s.26(4)). Nominees receive the death benefit.',
+      },
+      {
+        from: AMENDMENT_2025,
+        value: {
+          resignation: {
+            label: 'Resignation benefit',
+            section: '27(4)',
+            minServiceMonths: 0,
+            slabs: [
+              { fromMonths: 0, daysPerYear: 7 },
+              { fromMonths: 37, daysPerYear: 15 },
+              { fromMonths: 120, daysPerYear: 30 },
+            ],
+            orGratuity: true,
+            permanentOnly: true,
+          },
+          termination: {
+            label: 'Termination compensation',
+            section: '26(4)',
+            minServiceMonths: 0,
+            slabs: [{ fromMonths: 0, daysPerYear: 30 }],
+            orGratuity: true,
+            permanentOnly: true,
+          },
+          retrenchment: {
+            label: 'Retrenchment compensation',
+            section: '20(2)',
+            minServiceMonths: 12,
+            slabs: [{ fromMonths: 0, daysPerYear: 30 }],
+            orGratuity: true,
+          },
+          discharge: {
+            label: 'Discharge compensation',
+            section: '22(2)',
+            minServiceMonths: 12,
+            slabs: [{ fromMonths: 0, daysPerYear: 30 }],
+            orGratuity: true,
+          },
+          dismissal: {
+            label: 'Dismissal compensation',
+            section: '23(3)',
+            minServiceMonths: 12,
+            slabs: [{ fromMonths: 0, daysPerYear: 15 }],
+          },
+          retirement: {
+            label: 'Retirement benefit',
+            section: '28',
+            minServiceMonths: 0,
+            slabs: [{ fromMonths: 0, daysPerYear: 30 }],
+            orGratuity: true,
+          },
+          contract_end: null,
+          death: {
+            label: 'Death benefit',
+            section: '19',
+            minServiceMonths: 13,
+            slabs: [{ fromMonths: 0, daysPerYear: 30 }],
+            partYearCounts: true,
+            orGratuity: true,
+            workAccidentDaysPerYear: 45,
+          },
+        },
+        reference: ORDINANCE_2025('13'),
+        status: 'needs_review',
+        note:
+          'Section 13 substituted s.27(4): 7 days a year for service up to three years, 15 for ' +
+          'more than three and under ten, 30 from ten (or gratuity). Section 11 lowered the ' +
+          "death benefit's service to more than one year; s.12 extended s.23(3) to dismissed " +
+          'workers. Act 43 of 2026 re-enacted the same text. Counsel to confirm the 7-day tier ' +
+          'starts from the first completed year.',
+      },
+    ],
+  },
+  'separation.wage_basis': {
+    title: 'The wage compensation and notice pay are counted on',
+    versions: [
+      {
+        from: ACT_START,
+        value: 'average_12_months',
+        reference: BLA('14'),
+        status: 'needs_review',
+        note: 'Subsection (3): the average basic, dearness and ad hoc wages of the last 12 months.',
+      },
+      {
+        from: AMENDMENT_2025,
+        value: 'last_month',
+        reference: ORDINANCE_2025('8'),
+        status: 'needs_review',
+        note: "Substituted s.14(3): the last month's basic, dearness and ad hoc wages.",
+      },
+    ],
+  },
+  'separation.dues_within_working_days': {
+    title: 'Final dues paid within this many working days of leaving',
+    versions: [{ from: ACT_START, value: 30, reference: BLA('30'), status: 'needs_review' }],
+  },
+  'wppf.shares': {
+    title: "Workers' participation fund: the share of net profit and how it is paid",
+    versions: [
+      {
+        from: ACT_START,
+        value: {
+          percentOfNetProfit: 5,
+          participation: 80,
+          welfare: 10,
+          foundation: 10,
+          cash: { numerator: 2, denominator: 3 },
+          minEmploymentMonths: 9,
+          minMonthsInYear: 6,
+        },
+        reference: BLA('234'),
+        status: 'needs_review',
+        note:
+          'Companies with paid-up capital of Tk 1 crore or fixed assets of Tk 2 crore (s.232): ' +
+          '5% of net profit within nine months of the year end, 80:10:10 (s.234). Two thirds of ' +
+          'the participation fund paid equally in cash, one third invested (s.242). Beneficiaries ' +
+          'of any rank but owners and directors, employed nine months, six in the year (s.233); ' +
+          'dismissed workers forfeit their share.',
+      },
+      {
+        from: AMENDMENT_2025,
+        value: {
+          percentOfNetProfit: 5,
+          participation: 80,
+          welfare: 10,
+          foundation: 10,
+          cash: { numerator: 1, denominator: 1 },
+          minEmploymentMonths: 9,
+          minMonthsInYear: 6,
+        },
+        reference: ORDINANCE_2025('55'),
+        status: 'needs_review',
+        note: 'Substituted s.242(1): the whole participation fund is paid equally to beneficiaries.',
       },
     ],
   },

@@ -1886,6 +1886,18 @@ abstract class AppLocalizations {
   /// **'Bonus'**
   String get payrollRunKindBonus;
 
+  /// Mark on a payslip or month from a final settlement run, which pays what a leaver is owed.
+  ///
+  /// In en, this message translates to:
+  /// **'Final settlement'**
+  String get payrollRunKindSettlement;
+
+  /// Mark on a payslip or month from a workers' participation fund (WPPF) payout run.
+  ///
+  /// In en, this message translates to:
+  /// **'Participation fund'**
+  String get payrollRunKindWppf;
+
   /// No description provided for @taxLoadFailed.
   ///
   /// In en, this message translates to:

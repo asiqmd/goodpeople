@@ -6,6 +6,7 @@ import type {
   PayBatchApprovalItem,
   PfStatement,
   RunTaxWorking,
+  SettlementWorking,
   TaxYearView,
   PayLineView,
   PayRecordView,
@@ -171,7 +172,16 @@ export async function CompensationItem({ item }: { item: CompensationApprovalIte
 const SETUP_TABS = ['structures', 'components', 'groups', 'wages', 'settings'] as const;
 export type SetupTab = (typeof SETUP_TABS)[number];
 
-const WORK_TABS = ['runs', 'loans', 'pf', 'tax', 'increments'] as const;
+const WORK_TABS = [
+  'runs',
+  'settlements',
+  'loans',
+  'pf',
+  'tax',
+  'increments',
+  'gratuity',
+  'wppf',
+] as const;
 export type WorkTab = (typeof WORK_TABS)[number];
 
 /** The day-to-day pages first (runs, loans, the fund, tax, increments), then the setup tabs. */
@@ -633,3 +643,76 @@ export const recentYears = (today: string) => {
   const start = Number(current.slice(0, 4)) - 1;
   return [current, `${start}-${String((start + 1) % 100).padStart(2, '0')}`];
 };
+
+/** How a leaver's final dues were counted: notice, leave, benefits and the fund. */
+export async function SettlementBox({ working }: { working: SettlementWorking }) {
+  const t = await getTranslations('payroll.settlements.working');
+  const format = await getFormatter();
+  const days = (n: number) => t('days', { days: format.number(n) });
+  const rows: [string, string][] = [
+    [t('lastDay'), day(format, working.lastWorkingDay)],
+    [
+      t('service'),
+      t('serviceLine', {
+        years: format.number(working.serviceYears),
+        months: format.number(working.serviceMonths % 12),
+      }),
+    ],
+    [
+      t(working.wageBasis === 'last_month' ? 'wageLast' : 'wageAverage'),
+      `${taka(format, working.monthlyWage)} · ${taka(format, working.dailyWage)} ${t('perDay')}`,
+    ],
+  ];
+  if (working.notice.requiredDays !== null) {
+    rows.push([
+      t('notice'),
+      t('noticeLine', {
+        required: format.number(working.notice.requiredDays),
+        served: format.number(working.notice.servedDays),
+      }),
+    ]);
+  }
+  if (working.notice.shortDays > 0) {
+    rows.push([
+      working.notice.owedBy === 'employee' ? t('noticeRecovered') : t('noticePaid'),
+      `${days(working.notice.shortDays)}: ${taka(format, working.notice.amount)}`,
+    ]);
+  }
+  rows.push([
+    t('leave'),
+    `${t('leaveLine', { days: format.number(working.leave.days), rate: taka(format, working.leave.dailyWage) })}: ${taka(format, working.leave.amount)}`,
+  ]);
+  for (const b of working.benefits) {
+    const label = b.code === 'GRATUITY' ? t('gratuity') : t(`benefit.${working.type}`);
+    rows.push([
+      `${label} (${t('section', { ref: b.reference })})`,
+      `${t('slab', { years: format.number(b.years), perYear: format.number(b.daysPerYear), rate: taka(format, b.dailyWage) })}: ${taka(format, b.amount)}`,
+    ]);
+  }
+  if (Number(working.loansRecovered) > 0)
+    rows.push([t('loans'), taka(format, working.loansRecovered)]);
+  rows.push([t('dueBy'), day(format, working.dueBy)]);
+  return (
+    <div className="space-y-3 text-sm">
+      <table className="w-full max-w-lg">
+        <tbody className="divide-y divide-slate-200/70">
+          {rows.map(([k, v]) => (
+            <tr key={k}>
+              <td className="py-1 text-slate-600">{k}</td>
+              <td className="py-1 text-right tabular-nums">{v}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {working.providentFund && (
+        <p className="text-slate-700">
+          {t('fund', {
+            total: taka(format, working.providentFund.total),
+            own: taka(format, working.providentFund.own),
+            employer: taka(format, working.providentFund.employer),
+          })}
+        </p>
+      )}
+    </div>
+  );
+}

@@ -22,6 +22,6 @@ import { LeaveTypesService } from './leave-types.service.js';
     EmployeeLeaveService,
     TenantRolesGuard,
   ],
-  exports: [LeaveRequestsService],
+  exports: [LeaveRequestsService, BalancesService],
 })
 export class LeaveModule {}

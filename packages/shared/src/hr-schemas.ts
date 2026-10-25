@@ -354,6 +354,12 @@ export const paymentAccountsSchema = z
         accountName: optionalText(160),
         accountNumber: z.string().trim().max(34).optional(),
         isPrimary: z.boolean(),
+        /** Sent here from each pay before the rest goes to the primary account. */
+        splitAmount: z
+          .string()
+          .trim()
+          .regex(/^\d{1,9}(\.\d{1,2})?$/, 'Enter an amount like 5000')
+          .optional(),
       })
       .superRefine((a, ctx) => {
         if (a.method === 'bank') {

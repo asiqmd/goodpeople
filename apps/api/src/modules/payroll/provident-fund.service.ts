@@ -47,6 +47,68 @@ export async function pfBalances(tx: Tx, cipher: FieldCipher, ids: string[], on?
   return out;
 }
 
+/**
+ * Ends a membership on a date: the employer's contributions not vested by the years of service
+ * go back to the fund, and with `payOut` what is left is paid out (a final settlement).
+ */
+export async function endMembership(
+  tx: Tx,
+  cipher: FieldCipher,
+  employeeId: string,
+  leftOn: string,
+  actorId: string,
+  options: { payOut: boolean },
+) {
+  const { seal } = sealed(cipher);
+  await tx.update(pfMembers).set({ leftOn }).where(eq(pfMembers.employeeId, employeeId));
+  const [employee] = await tx.select().from(employees).where(eq(employees.id, employeeId));
+  const settings = await payrollSettingsOf(tx);
+  const percent = vestedPercent(settings.pfVesting, ageOn(employee!.joinedOn, leftOn));
+  const balance = (await pfBalances(tx, cipher, [employeeId])).get(employeeId) ?? {
+    own: new Decimal(0),
+    employer: new Decimal(0),
+  };
+  const forfeited = balance.employer
+    .times(100 - percent)
+    .dividedBy(100)
+    .toDecimalPlaces(0, Decimal.ROUND_HALF_UP);
+  const entry = (
+    kind: 'forfeited' | 'withdrawal',
+    account: 'own' | 'employer',
+    amount: Decimal,
+    note: string,
+  ) => ({
+    tenantId: currentTenantId(),
+    employeeId,
+    date: leftOn,
+    kind,
+    account,
+    amountEnc: seal(CIPHER_FIELDS.pfEntries, money(amount.negated())),
+    note,
+    createdBy: actorId,
+  });
+  const rows = [];
+  if (forfeited.greaterThan(0)) {
+    rows.push(
+      entry(
+        'forfeited',
+        'employer',
+        forfeited,
+        `${100 - percent}% of the employer's contributions not vested`,
+      ),
+    );
+  }
+  const paidOwn = options.payOut ? balance.own : new Decimal(0);
+  const paidEmployer = options.payOut ? balance.employer.minus(forfeited) : new Decimal(0);
+  if (paidOwn.greaterThan(0))
+    rows.push(entry('withdrawal', 'own', paidOwn, 'Paid in the final settlement'));
+  if (paidEmployer.greaterThan(0)) {
+    rows.push(entry('withdrawal', 'employer', paidEmployer, 'Paid in the final settlement'));
+  }
+  if (rows.length) await tx.insert(pfEntries).values(rows);
+  return { vestedPercent: percent, own: money(paidOwn), employer: money(paidEmployer) };
+}
+
 /** The share of the employer's contributions kept after `years` completed years. */
 export const vestedPercent = (steps: PfVestingStep[], years: number) =>
   steps.filter((s) => s.afterYears <= years).at(-1)?.percent ?? 0;
@@ -160,7 +222,6 @@ export class ProvidentFundService {
    * are forfeited back to the fund; the rest is what the leaver is paid out (M4 settlement).
    */
   async leave(actor: AuthUser, employeeId: string, leftOn: string): Promise<PfStatement> {
-    const { seal } = sealed(this.cipher);
     await this.tenantDb.run(async (tx) => {
       const [member] = await tx
         .select()
@@ -172,27 +233,14 @@ export class ProvidentFundService {
       if (leftOn < member.joinedOn) {
         throw badRequest('before_joining', `Joined the fund on ${member.joinedOn}`);
       }
-      await tx.update(pfMembers).set({ leftOn }).where(eq(pfMembers.employeeId, employeeId));
-      const [employee] = await tx.select().from(employees).where(eq(employees.id, employeeId));
-      const settings = await payrollSettingsOf(tx);
-      const percent = vestedPercent(settings.pfVesting, ageOn(employee!.joinedOn, leftOn));
-      const balance = (await pfBalances(tx, this.cipher, [employeeId], leftOn)).get(employeeId);
-      const forfeited = (balance?.employer ?? new Decimal(0))
-        .times(100 - percent)
-        .dividedBy(100)
-        .toDecimalPlaces(0, Decimal.ROUND_HALF_UP);
-      if (forfeited.greaterThan(0)) {
-        await tx.insert(pfEntries).values({
-          tenantId: currentTenantId(),
-          employeeId,
-          date: leftOn,
-          kind: 'forfeited',
-          account: 'employer',
-          amountEnc: seal(CIPHER_FIELDS.pfEntries, money(forfeited.negated())),
-          note: `${100 - percent}% of the employer's contributions not vested`,
-          createdBy: actor.id,
-        });
-      }
+      const { vestedPercent: percent } = await endMembership(
+        tx,
+        this.cipher,
+        employeeId,
+        leftOn,
+        actor.id,
+        { payOut: false },
+      );
       await this.audit.record(tx, {
         actorUserId: actor.id,
         action: 'payroll.pf.leave',

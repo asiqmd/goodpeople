@@ -139,6 +139,8 @@ export interface PaymentAccountView {
   /** Only the last 4 digits ever leave the server. */
   accountNumberMasked: string | null;
   isPrimary: boolean;
+  /** A fixed amount of each pay sent here; null on the primary account, which takes the rest. */
+  splitAmount: string | null;
 }
 
 export interface EmployeeDetail {

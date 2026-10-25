@@ -81,6 +81,15 @@ export const BD_PAY_COMPONENTS: readonly PackPayComponent[] = [
   runItem('ATTENDANCE_BONUS', 'Attendance bonus', 'হাজিরা বোনাস', 'earning', 110),
   runItem('FESTIVAL_BONUS', 'Festival bonus', 'উৎসব বোনাস', 'earning', 120),
   runItem('ARREARS', 'Arrears', 'বকেয়া', 'earning', 130),
+  // Final settlement (s.19–30) and the workers' participation fund (Chapter XV).
+  runItem('NOTICE_PAY', 'Pay in lieu of notice', 'নোটিশের পরিবর্তে মজুরি', 'earning', 140),
+  runItem('LEAVE_ENCASHMENT', 'Unused earned leave', 'অভোগকৃত অর্জিত ছুটির মজুরি', 'earning', 150),
+  runItem('GRATUITY', 'Gratuity', 'গ্র্যাচুইটি', 'earning', 160),
+  runItem('SEPARATION_BENEFIT', 'Separation benefit', 'চাকরি অবসানের সুবিধা', 'earning', 170),
+  // Paid from the fund, not salary: taxed on its own at source (WPPF_TDS), not as salary.
+  runItem('WPPF', 'Participation fund share', 'অংশগ্রহণ তহবিলের অংশ', 'earning', 180, {
+    taxTreatment: 'exempt',
+  }),
   // Within s.126's cap (the pay for the days absent); basic ÷ 30 per day is common practice.
   // Deductions marked taxable reduce salary income for tax: pay not earned is not income.
   runItem('ABSENCE', 'Absence deduction', 'অনুপস্থিতি কর্তন', 'deduction', 200, {
@@ -93,6 +102,10 @@ export const BD_PAY_COMPONENTS: readonly PackPayComponent[] = [
     taxTreatment: 'taxable',
   }),
   // Advances and loans are recovered from their schedules; an entered amount replaces it.
+  // A resigning worker who does not serve the notice pays wages for the days not given.
+  runItem('NOTICE_RECOVERY', 'Notice not served', 'নোটিশ না দেওয়ার মজুরি', 'deduction', 207, {
+    taxTreatment: 'taxable',
+  }),
   runItem('ADVANCE', 'Advance recovery', 'অগ্রিম কর্তন', 'deduction', 210),
   runItem('LOAN', 'Loan repayment', 'ঋণ পরিশোধ', 'deduction', 212),
   // The provident fund's rates are in payroll settings; contributions apply to members.
@@ -100,6 +113,14 @@ export const BD_PAY_COMPONENTS: readonly PackPayComponent[] = [
   runItem('PF_LOAN', 'Provident fund loan repayment', 'ভবিষ্য তহবিল ঋণ পরিশোধ', 'deduction', 225),
   // Worked out by each run from the year's projected salary (Income Tax Act 2023, s.86).
   runItem('TAX', 'Income tax', 'আয়কর', 'deduction', 230),
+  // Income Tax Act 2023, s.88: deducted from a participation fund payout.
+  runItem(
+    'WPPF_TDS',
+    'Tax on participation fund share',
+    'অংশগ্রহণ তহবিলের অংশের উপর কর',
+    'deduction',
+    232,
+  ),
   runItem(
     'PF_EMPLOYER',
     'Provident fund (employer)',
@@ -207,3 +228,9 @@ export const BD_WAGE_BOARDS: readonly WageBoard[] = [
 
 /** The wage table by id, or undefined. */
 export const bdWageBoard = (id: string) => BD_WAGE_BOARDS.find((b) => b.id === id);
+
+/**
+ * Bangladesh Bank's limits on a personal mobile wallet (circular of 27 March 2025): a wallet
+ * may hold at most this much, so a larger payment would bounce. Providers may set lower.
+ */
+export const BD_MFS_LIMITS = { balanceCap: 500_000, cashInPerDay: 50_000 } as const;

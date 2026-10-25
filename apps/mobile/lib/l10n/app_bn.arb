@@ -298,6 +298,8 @@
   "myPayTabProvidentFund": "ভবিষ্য তহবিল",
   "myPayTabLoans": "ঋণ",
   "payrollRunKindBonus": "বোনাস",
+  "payrollRunKindSettlement": "চূড়ান্ত নিষ্পত্তি",
+  "payrollRunKindWppf": "অংশগ্রহণ তহবিল",
   "taxLoadFailed": "আপনার করের তথ্য লোড করা যায়নি।",
   "taxNoEmployeeBody": "বেতনের কর কর্মী রেকর্ডের সাথে যুক্ত থাকে, কিন্তু আপনার লগইনের সাথে কোনো কর্মী রেকর্ড যুক্ত নেই। আপনার থাকার কথা মনে হলে আপনার এইচআর টিমকে জানান।",
   "taxYearSoFar": "এ বছর এ পর্যন্ত",

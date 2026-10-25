@@ -63,6 +63,7 @@ export async function updateComponent(
       inOvertimeBase: form.has('inOvertimeBase'),
       prorate: form.has('prorate'),
       isActive: form.has('isActive'),
+      glAccount: data.glAccount ?? null,
     },
   });
   if (!result.ok) return fail(result);

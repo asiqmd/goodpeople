@@ -305,7 +305,9 @@
       "noAccounts": "No payment accounts yet.",
       "portalUser": "Workspace login",
       "noPortal": "No login",
-      "since": "From {from}"
+      "since": "From {from}",
+      "splitAmount": "Fixed amount each pay (৳)",
+      "splitAmountHint": "Optional. This much goes here; the primary account gets the rest."
     },
     "org": {
       "title": "Organization",
@@ -1109,7 +1111,15 @@
     "verify_every_item": "Give an accepted amount for every item.",
     "more_than_declared": "Accept at most what was declared.",
     "pf_left": "This member has left the fund.",
-    "interest_posted": "Interest is already credited for that date."
+    "interest_posted": "Interest is already credited for that date.",
+    "paid_before_period": "A run cannot be paid before its period starts.",
+    "settlement_exists": "This separation already has a settlement.",
+    "separation_not_decided": "Settle a separation once it is approved.",
+    "no_pay": "There is no approved pay to settle on.",
+    "gratuity_off": "Gratuity is not provided for in this workspace.",
+    "wppf_year_exists": "This accounting year already has a fund.",
+    "wppf_run_exists": "This pay group already has a run for the year.",
+    "wppf_before_year_end": "Pay the fund after the year it is for."
   },
   "platformRoles": {
     "super_admin": "Super admin",
@@ -1359,7 +1369,10 @@
       "loans": "Loans",
       "pf": "Provident fund",
       "tax": "Tax",
-      "increments": "Increments"
+      "increments": "Increments",
+      "settlements": "Settlements",
+      "gratuity": "Gratuity",
+      "wppf": "Participation fund"
     },
     "code": "Code",
     "name": "Name",
@@ -1430,7 +1443,9 @@
       },
       "inGross": "Counts in gross",
       "prorate": "Prorated by paid days",
-      "inOvertimeBase": "In the overtime rate"
+      "inOvertimeBase": "In the overtime rate",
+      "glAccount": "Ledger account",
+      "glAccountHint": "For the journal export; empty uses the settings' account."
     },
     "groups": {
       "title": "Pay groups",
@@ -1478,7 +1493,20 @@
       "yearsKeep": "years or more: keeps",
       "percentKept": "Percent kept",
       "addStep": "Add a step",
-      "saveTaxFund": "Save"
+      "saveTaxFund": "Save",
+      "accountsTitle": "Accounts for the journal",
+      "accountsHint": "The ledger accounts each run's journal posts to. A component with its own account uses that instead.",
+      "gl": {
+        "salaryExpense": "Salary expense",
+        "netPayable": "Net salary payable",
+        "taxPayable": "Tax deducted, payable",
+        "pfPayable": "Provident fund payable",
+        "loansReceivable": "Loans and advances to staff",
+        "gratuityExpense": "Gratuity expense",
+        "gratuityProvision": "Gratuity provision",
+        "wppfPayable": "Participation fund payable"
+      },
+      "gratuityEnabled": "Provide for gratuity: show the liability each month and pay gratuity from the provision"
     },
     "pay": {
       "current": "Current pay",
@@ -1543,7 +1571,9 @@
       "kinds": {
         "regular": "Regular",
         "adjustment": "Adjustment",
-        "bonus": "Festival bonus"
+        "bonus": "Festival bonus",
+        "settlement": "Final settlement",
+        "wppf": "Participation fund"
       },
       "published": "Payslips published",
       "errors": "{count, plural, one {# person to fix} other {# people to fix}}",
@@ -1634,7 +1664,10 @@
       "payslipBn": "Payslip in Bangla",
       "newBonus": "Festival bonus run",
       "bonusIntro": "Pays a share of one month's basic to people of the festival's religion who have worked long enough by the cut-off day (Labour Rules 2015, rule 111). It is approved, locked and published like a month.",
-      "taxHow": "How the tax of {amount} was worked out"
+      "taxHow": "How the tax of {amount} was worked out",
+      "paymentDueBonus": "A festival bonus is paid before the festival.",
+      "paymentDueSettlement": "A leaver's dues are paid within 30 working days of the last day (Labour Act s.30).",
+      "paymentDueWppf": "The fund is paid within nine months of the year end (Labour Act s.234)."
     },
     "payslips": {
       "title": "Payslips",
@@ -1648,7 +1681,9 @@
       },
       "kinds": {
         "adjustment": "Adjustment",
-        "bonus": "Festival bonus"
+        "bonus": "Festival bonus",
+        "settlement": "Final settlement",
+        "wppf": "Participation fund"
       }
     },
     "myPay": {
@@ -1941,6 +1976,133 @@
       "religions": "For",
       "unrecorded": "People with no religion recorded",
       "create": "Open the bonus run"
+    },
+    "payments": {
+      "title": "Payments",
+      "paid": "Paid on {date}",
+      "paidLate": "Paid late, on {date}",
+      "notPaid": "Not paid yet; due by {date}",
+      "channel": "Paid by",
+      "people": "People",
+      "amount": "Amount",
+      "file": "File",
+      "total": "Total",
+      "channels": {
+        "bank": "Bank transfer (BEFTN)",
+        "bkash": "bKash",
+        "nagad": "Nagad",
+        "rocket": "Rocket",
+        "upay": "Upay",
+        "cash": "Cash"
+      },
+      "download": "Download file",
+      "cashSheet": "Cash pay sheet",
+      "advice": "Advice to the bank",
+      "journal": "Journal (CSV)",
+      "paidOn": "Paid on",
+      "markPaid": "Record payment",
+      "issues": {
+        "bank_incomplete": "{count, plural, one {# bank account is missing its routing or account number:} other {# bank accounts are missing routing or account numbers:}}",
+        "wallet_incomplete": "{count, plural, one {# wallet has no number:} other {# wallets have no number:}}",
+        "wallet_over_limit": "{count, plural, one {# wallet payment is over the Tk 5 lakh a personal wallet may hold; pay it by bank:} other {# wallet payments are over the Tk 5 lakh a personal wallet may hold; pay them by bank:}}"
+      }
+    },
+    "settlements": {
+      "intro": "Final dues for each approved separation: the last month's pay, notice not given, unused earned leave, gratuity or the separation's benefit, loans recovered and the provident fund paid out. The Labour Act asks for them within 30 working days of the last day (s.30).",
+      "title": "Separations",
+      "none": "No approved separations yet.",
+      "person": "Person",
+      "type": "Separation",
+      "lastDay": "Last working day",
+      "settlement": "Settlement",
+      "net": "Net",
+      "view": "View settlement",
+      "paid": "Paid on {date}",
+      "notOpened": "Not opened yet",
+      "open": "Open settlement",
+      "working": {
+        "title": "How the dues were counted",
+        "lastDay": "Last working day",
+        "service": "Service",
+        "serviceLine": "{years} years {months} months",
+        "wageLast": "Wage: last month's basic",
+        "wageAverage": "Wage: average basic of the last 12 months",
+        "perDay": "a day",
+        "notice": "Notice",
+        "noticeLine": "{required} days required, {served} served",
+        "noticeRecovered": "Notice not served, recovered",
+        "noticePaid": "Pay in lieu of notice",
+        "days": "{days} days",
+        "leave": "Unused earned leave",
+        "leaveLine": "{days} days at {rate} a day (gross)",
+        "gratuity": "Gratuity",
+        "benefit": {
+          "resignation": "Resignation benefit",
+          "termination": "Termination compensation",
+          "dismissal": "Dismissal compensation",
+          "discharge": "Discharge compensation",
+          "retrenchment": "Retrenchment compensation",
+          "retirement": "Retirement benefit",
+          "death": "Death benefit",
+          "contract_end": "Separation benefit"
+        },
+        "slab": "{years} years × {perYear} days, at {rate} a day",
+        "loans": "Loans recovered",
+        "dueBy": "Pay by",
+        "fund": "Provident fund paid out separately: {total} ({own} own, {employer} employer).",
+        "section": "s.{ref}"
+      }
+    },
+    "gratuity": {
+      "intro": "What the company would owe in gratuity if every permanent employee left on the date: 30 days of the last basic for each year (a part year over six months counts), 45 once service passes ten years (s.2(10)). The change since the previous month end is the month's charge.",
+      "off": "Gratuity is not provided for in this workspace.",
+      "toSettings": "Payroll settings",
+      "title": "Gratuity owed on {date}",
+      "asOf": "On",
+      "show": "Show",
+      "total": "Liability",
+      "people": "{count, plural, one {# person} other {# people}}",
+      "previous": "On {date}",
+      "change": "This month's charge",
+      "entry": "Debit {expense}, credit {provision}.",
+      "download": "Download (CSV)",
+      "lines": "By person",
+      "none": "Nobody has gratuity due yet.",
+      "person": "Person",
+      "joined": "Joined",
+      "years": "Years",
+      "basic": "Basic",
+      "days": "Days",
+      "liability": "Gratuity"
+    },
+    "wppf": {
+      "intro": "Companies with paid-up capital of Tk 1 crore or fixed assets of Tk 2 crore set aside 5% of net profit within nine months of the year end, split 80:10:10 between the participation fund, the welfare fund and the Workers' Welfare Foundation. The participation fund is paid in equal shares to everyone of any rank (but owners and directors) employed nine months, six of them in the year; dismissed workers forfeit (Labour Act, Chapter XV).",
+      "createTitle": "Add a year",
+      "accountingYear": "Accounting year",
+      "yearStart": "From",
+      "yearEnd": "To",
+      "netProfit": "Net profit (Tk)",
+      "minServiceMonths": "Months in the year to share",
+      "minServiceMonthsHint": "Six under the Act; fewer if the trust deed allows.",
+      "create": "Work out the fund",
+      "none": "No years yet.",
+      "yearTitle": "Accounting year {year}",
+      "amounts": {
+        "netProfit": "Net profit",
+        "fund": "Fund (5%)",
+        "participation": "Participation fund (80%)",
+        "welfare": "Welfare fund (10%)",
+        "foundation": "Workers' Welfare Foundation (10%)",
+        "cash": "Paid to beneficiaries in cash",
+        "invested": "Invested by the trustees"
+      },
+      "beneficiaries": "{count, plural, one {# beneficiary} other {# beneficiaries}} with nine months' service, {months} in the year",
+      "share": "Each receives {amount}",
+      "taxNote": "Tax is deducted at source from each share (Income Tax Act 2023, s.88).",
+      "headcount": "{count, plural, one {# person} other {# people}}",
+      "payGroup": "Pay group",
+      "paymentDate": "Payment date",
+      "openRun": "Open a run to pay it"
     }
   }
 }
