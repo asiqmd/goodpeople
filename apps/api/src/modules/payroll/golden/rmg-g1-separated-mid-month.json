@@ -1,0 +1,45 @@
+{
+  "name": "RMG worker, grade G1 at Tk 14,750, last day 13 October: 13 of 31 days, with an absent day and overtime",
+  "source": "hand-worked from the BD pack rules",
+  "kind": "pay",
+  "period": { "start": "2026-10-01", "end": "2026-10-31" },
+  "joinedOn": "2022-05-01",
+  "separatedOn": "2026-10-13",
+  "worker": true,
+  "pay": [
+    { "effectiveFrom": "2025-12-01", "structure": "RMG_WORKER", "amount": "14750", "grade": "G1" }
+  ],
+  "attendance": { "summary": { "absentDays": 1, "otHours": 6 } },
+  "expected": {
+    "lines": {
+      "BASIC": "3439",
+      "HOUSE_RENT": "1718",
+      "MEDICAL": "315",
+      "CONVEYANCE": "189",
+      "FOOD": "524",
+      "OVERTIME": "473",
+      "ABSENCE": "273"
+    },
+    "earnings": "6658",
+    "deductions": "273",
+    "net": "6385"
+  },
+  "working": [
+    "Full-month split: BASIC = round((14750 − 2450) ÷ 1.5) = round(8200) = 8200; HOUSE_RENT = 14750 − 8200 − 750 − 450 − 1250 = 4100; MEDICAL 750, CONVEYANCE 450, FOOD 1250",
+    "Grade G1 minimum is gross 14750 and basic 8200: met",
+    "Employed 1–13 Oct (separatedOn, the last day employed, is 13 Oct) = 13 of 31 days; each structure line is paid × 13 ÷ 31",
+    "BASIC = 8200 × 13 ÷ 31 = 3438.71 → 3439",
+    "HOUSE_RENT before balancing = 4100 × 13 ÷ 31 = 1719.35 → 1719",
+    "MEDICAL = 750 × 13 ÷ 31 = 314.52 → 315",
+    "CONVEYANCE = 450 × 13 ÷ 31 = 188.71 → 189",
+    "FOOD = 1250 × 13 ÷ 31 = 524.19 → 524",
+    "Prorated gross = 14750 × 13 ÷ 31 = 6185.48 → 6185; the rounded lines add up to 3439 + 1719 + 315 + 189 + 524 = 6186, 1 taka over, so it is taken off the structure's last line",
+    "HOUSE_RENT = 1719 − 1 = 1718",
+    "OVERTIME = round(BASIC × 2 × OT hours ÷ 208) on the full monthly basic = round(8200 × 2 × 6 ÷ 208) = round(473.08) = 473",
+    "ABSENCE = round(BASIC ÷ 30 × absent days) on the full monthly basic = round(8200 ÷ 30 × 1) = round(273.33) = 273",
+    "Final settlement items (notice pay, unused leave, gratuity) are the settlement's, not this run's, and are not in this case",
+    "Earnings = 3439 + 1718 + 315 + 189 + 524 + 473 = 6658",
+    "Deductions = 273",
+    "Net = 6658 − 273 = 6385"
+  ]
+}

@@ -54,6 +54,11 @@ export const CIPHER_FIELDS = {
   loanAmounts: 'employee_loans.amounts',
   loanRepayments: 'loan_repayments.amount',
   wppfAmounts: 'wppf_years.amounts',
+  /** A payroll sheet uploaded for a parallel run, and the comparison with ours. */
+  reconciliationSheet: 'payroll_reconciliations.sheet',
+  reconciliationResult: 'payroll_reconciliations.result',
+  /** Payments a bank or wallet provider returned, with their accounts. */
+  paymentCheck: 'payment_checks.result',
 } as const;
 export type CipherField = (typeof CIPHER_FIELDS)[keyof typeof CIPHER_FIELDS];
 

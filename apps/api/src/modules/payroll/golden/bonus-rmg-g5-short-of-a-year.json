@@ -1,0 +1,24 @@
+{
+  "name": "Festival bonus for an RMG worker, grade G5 at Tk 12,500, one day short of a year's service on the cut-off: not due",
+  "source": "hand-worked from the BD pack rules",
+  "kind": "bonus",
+  "joinedOn": "2026-03-02",
+  "pay": [
+    { "effectiveFrom": "2026-03-02", "structure": "RMG_WORKER", "amount": "12500", "grade": "G5" }
+  ],
+  "bonus": { "cutOff": "2027-03-01", "percentOfBasic": 100, "minServiceMonths": 12 },
+  "expected": {
+    "qualifies": false,
+    "lines": {},
+    "earnings": "0",
+    "deductions": "0",
+    "net": "0"
+  },
+  "working": [
+    "Service from 2 Mar 2026 to the cut-off 1 Mar 2027 = 11 completed months (the 12th completes on 2 Mar 2027); 11 < 12, so no bonus",
+    "Had it been due: BASIC = round((12500 − 2450) ÷ 1.5) = 6700, so the bonus would have been 6700",
+    "Earnings = 0",
+    "Deductions = 0",
+    "Net = 0"
+  ]
+}

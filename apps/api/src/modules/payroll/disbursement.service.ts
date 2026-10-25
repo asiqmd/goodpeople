@@ -7,6 +7,7 @@ import {
   payGroups,
   payrollRunItems,
   payrollRuns,
+  paymentChecks,
   type FieldCipher,
   type Tx,
 } from '@gp/db';
@@ -20,11 +21,14 @@ import {
   type EmployeeRef,
   type GlAccounts,
   type PayLineView,
+  type PaymentCheckView,
+  type ReturnedPayment,
 } from '@gp/shared';
-import { and, asc, eq, inArray } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 import type { AuthUser } from '../../common/auth-user.js';
 import { badRequest, conflict } from '../../common/errors.js';
 import { currentTenantId } from '../../common/request-context.js';
+import { readSheet } from '../../common/sheets.js';
 import { FIELD_CIPHER, TenantDb } from '../../db/db.module.js';
 import { employeeRef } from '../attendance/attendance-views.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
@@ -32,6 +36,7 @@ import { PdfService } from '../letters/pdf.service.js';
 import { allocate, channelOf, csv, type PayableAccount, type Payment } from './disbursement.js';
 import { componentsOf, payrollSettingsOf } from './payroll-setup.service.js';
 import { bankAdviceHtml, cashSheetHtml } from './disbursement-pdf.js';
+import { checkPayments, isReportHeading } from './payment-check.js';
 import { jobsOn, sealed, type JobOnDate, type StoredResult } from './run-context.js';
 
 type RunRow = typeof payrollRuns.$inferSelect;
@@ -226,6 +231,110 @@ export class DisbursementService {
     return {
       bytes: await this.pdf.render(html),
       fileName: `bank-advice-${runId.slice(0, 8)}-${language}.pdf`,
+    };
+  }
+
+  /**
+   * Matches a bank's or wallet provider's report on the run's payments (a returns file, or a
+   * status for every payment) and keeps what came back, with the reason.
+   */
+  async checkPayments(
+    actor: AuthUser,
+    runId: string,
+    file: { buffer: Buffer; originalname: string } | undefined,
+  ): Promise<PaymentCheckView> {
+    if (!file) throw badRequest('file_required', "Choose the bank's report");
+    if (!/\.(xlsx|csv)$/i.test(file.originalname)) {
+      throw badRequest('sheet_type', 'Upload the report as .xlsx or .csv');
+    }
+    const sheet = await readSheet(file, isReportHeading).catch(() => {
+      throw badRequest('sheet_unreadable', 'This file could not be read as a spreadsheet');
+    });
+    if (!sheet.headers.some((h) => isReportHeading([h]))) {
+      throw badRequest('report_no_account', 'The report has no account number column');
+    }
+    return this.tenantDb.run(async (tx) => {
+      const run = await this.lockedRun(tx, runId);
+      const sent = (await this.peopleOf(tx, run)).flatMap((p) =>
+        p.payments
+          .filter((pay) => pay.method !== 'cash' && pay.accountNumber)
+          .map((pay) => ({
+            employee: p.employee,
+            channel: channelOf(pay),
+            accountNumber: pay.accountNumber!,
+            amount: pay.amount,
+          })),
+      );
+      const result = checkPayments(sheet, sent);
+      const [row] = await tx
+        .insert(paymentChecks)
+        .values({
+          tenantId: currentTenantId(),
+          runId,
+          fileName: file.originalname.slice(0, 200),
+          summary: result.summary,
+          resultEnc: sealed(this.cipher).seal(CIPHER_FIELDS.paymentCheck, result.returned),
+          createdBy: actor.id,
+        })
+        .returning();
+      await this.audit.record(tx, {
+        actorUserId: actor.id,
+        action: 'payroll.run.payment_check',
+        entityType: 'payroll_run',
+        entityId: runId,
+        after: { checkId: row!.id, fileName: row!.fileName, ...result.summary },
+      });
+      return this.checkView(row!);
+    });
+  }
+
+  /** The run's checked reports, newest first. */
+  paymentChecks(runId: string): Promise<PaymentCheckView[]> {
+    return this.tenantDb.run(async (tx) => {
+      const rows = await tx
+        .select()
+        .from(paymentChecks)
+        .where(eq(paymentChecks.runId, runId))
+        .orderBy(desc(paymentChecks.createdAt));
+      return rows.map((r) => this.checkView(r));
+    });
+  }
+
+  /** What came back, as CSV, to pay again by cash or in the next run. */
+  returnedCsv(checkId: string): Promise<{ text: string; fileName: string }> {
+    return this.tenantDb.run(async (tx) => {
+      const [row] = await tx.select().from(paymentChecks).where(eq(paymentChecks.id, checkId));
+      if (!row) throw new NotFoundException('Payment report not found');
+      const view = this.checkView(row);
+      return {
+        text: csv([
+          ['Employee code', 'Name', 'Paid by', 'Account', 'Amount', 'Code', 'Reason'],
+          ...view.returned.map((r) => [
+            r.employee?.employeeCode ?? '',
+            r.employee?.fullName ?? '',
+            r.channel,
+            r.account,
+            r.amount,
+            r.code ?? '',
+            r.reason,
+          ]),
+        ]),
+        fileName: `returned-payments-${row.createdAt.toISOString().slice(0, 10)}.csv`,
+      };
+    });
+  }
+
+  private checkView(row: typeof paymentChecks.$inferSelect): PaymentCheckView {
+    return {
+      id: row.id,
+      runId: row.runId,
+      fileName: row.fileName,
+      createdAt: row.createdAt.toISOString(),
+      summary: row.summary,
+      returned: sealed(this.cipher).open<ReturnedPayment[]>(
+        CIPHER_FIELDS.paymentCheck,
+        row.resultEnc,
+      ),
     };
   }
 

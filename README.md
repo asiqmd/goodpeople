@@ -43,10 +43,17 @@ A multi-tenant HR and payroll platform, built for Bangladesh first and ready to 
     separation's benefit, loans, the provident fund paid out); a monthly gratuity provision;
     the workers' participation fund with tax at source; split payments, bank and wallet
     files, a Form 38 cash sheet, the bank advice and a journal by cost centre.
+  - **Phase 2 M5 (reports & parallel runs):** the payroll register and the Labour Rules'
+    wage (Form 38), overtime (Form 34) and advances (Form 40) registers; the quarterly
+    withholding statement (s.177) and the fund's year; what each month cost by unit, company,
+    site or pay group; comparing a run with the current payroll's sheet to the taka, with
+    three matched months as the go-live test; hand-worked golden tests; and matching the
+    bank's returns.
 - **Next:**
   - Our own organisations go live: [docs/ops/go-live.md](docs/ops/go-live.md).
-  - Phase 2 M5: reports and parallel runs. The plan is in
-    [docs/phases/phase-2.md](docs/phases/phase-2.md).
+  - Payroll goes live after three parallel months with a design partner:
+    [docs/ops/go-live.md](docs/ops/go-live.md#5-payroll-go-live-phase-2).
+  - Phase 3: Bangladesh commercial launch and industry packs.
 
 ## Repository layout
 

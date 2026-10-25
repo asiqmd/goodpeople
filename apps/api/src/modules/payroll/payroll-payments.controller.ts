@@ -8,14 +8,18 @@ import {
   Post,
   Query,
   StreamableFile,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import {
   MFS_PROVIDERS,
   payslipLanguageSchema,
   runPaidSchema,
   type DisbursementView,
+  type PaymentCheckView,
   type RunPaidInput,
 } from '@gp/shared';
 import { z } from 'zod';
@@ -100,6 +104,31 @@ export class PayrollPaymentsController {
     @Query(zod(payslipLanguageSchema)) query: Language,
   ): Promise<StreamableFile> {
     return pdfFile(await this.payments.bankAdvice(id, query.language));
+  }
+
+  @Get('payment-checks')
+  @Permits('payroll.view')
+  checks(@Param('id', ParseUUIDPipe) id: string): Promise<PaymentCheckView[]> {
+    return this.payments.paymentChecks(id);
+  }
+
+  /** The bank's or wallet provider's report on the payments: a returns file or statuses. */
+  @Post('payment-checks')
+  @Permits('payroll.manage')
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024, files: 1 } }))
+  check(
+    @CurrentUser() user: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile() file: Express.Multer.File | undefined,
+  ): Promise<PaymentCheckView> {
+    return this.payments.checkPayments(user, id, file);
+  }
+
+  @Get('payment-checks/:checkId/file')
+  @Permits('payroll.manage')
+  async returned(@Param('checkId', ParseUUIDPipe) checkId: string): Promise<StreamableFile> {
+    return csvFile(await this.payments.returnedCsv(checkId));
   }
 
   @Get('files/journal')

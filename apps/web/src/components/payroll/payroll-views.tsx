@@ -181,6 +181,8 @@ const WORK_TABS = [
   'increments',
   'gratuity',
   'wppf',
+  'reports',
+  'parallel',
 ] as const;
 export type WorkTab = (typeof WORK_TABS)[number];
 

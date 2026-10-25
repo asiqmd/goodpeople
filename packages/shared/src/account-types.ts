@@ -144,6 +144,9 @@ export const SETUP_STEPS = [
   'leave_types',
   'email',
   'sms',
+  'pay_records',
+  'payment_accounts',
+  'parallel_runs',
 ] as const;
 export type SetupStepKey = (typeof SETUP_STEPS)[number];
 

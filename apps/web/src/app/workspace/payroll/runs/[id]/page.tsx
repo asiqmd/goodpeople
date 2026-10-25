@@ -7,7 +7,9 @@ import {
   type PayLineView,
   type PayrollRunItemPage,
   type PayrollRunItemView,
+  type PaymentCheckView,
   type PayrollRunView,
+  type ReconciliationListItem,
 } from '@gp/shared';
 import { getFormatter, getLocale, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
@@ -22,6 +24,7 @@ import {
   TaxWorking,
 } from '@/components/payroll/payroll-views';
 import { MarkPaidForm, TaxDepositForm } from '@/components/payroll/benefit-forms';
+import { PaymentCheckForm, ReconcileUploadForm } from '@/components/payroll/report-forms';
 import { RemoveInputButton, RunActions, RunInputForm } from '@/components/payroll/run-forms';
 import { Badge, Banner, buttonClass, Card, inputClass } from '@/components/ui';
 import { currentTenantUser, load } from '@/lib/api';
@@ -166,6 +169,9 @@ export default async function PayrollRunPage({
       {run.status === 'locked' && <Payments runId={run.id} canManage={canManage} />}
       {run.status === 'locked' && run.kind !== 'bonus' && run.kind !== 'wppf' && (
         <TaxDeposit runId={run.id} canManage={canManage} />
+      )}
+      {run.status !== 'draft' && run.status !== 'cancelled' && (
+        <Reports runId={run.id} canManage={canManage} />
       )}
 
       <Card title={t('people', { count: run.headcount })}>
@@ -580,6 +586,145 @@ async function Payments({ runId, canManage }: { runId: string; canManage: boolea
           <MarkPaidForm runId={runId} today={todayIn()} />
         </div>
       )}
+      <PaymentChecks runId={runId} canManage={canManage} />
+    </Card>
+  );
+}
+
+/** What the bank and wallet providers reported back: anything returned, and why. */
+async function PaymentChecks({ runId, canManage }: { runId: string; canManage: boolean }) {
+  const t = await getTranslations('payroll.payments.check');
+  const format = await getFormatter();
+  const checks = await load<PaymentCheckView[]>(
+    'tenant',
+    `/tenant/payroll/runs/${runId}/payment-checks`,
+  );
+  const latest = checks[0];
+  return (
+    <div className="mt-4 space-y-3 border-t border-slate-100 pt-4 text-sm">
+      <p className="font-medium">{t('title')}</p>
+      {latest ? (
+        <>
+          <p className="text-slate-600">
+            {t(latest.summary.full ? 'summary' : 'summaryReturns', {
+              file: latest.fileName,
+              payments: latest.summary.payments,
+              credited: latest.summary.credited,
+              returned: latest.summary.returned,
+            })}
+            {latest.summary.notReported > 0 &&
+              ` ${t('notReported', { count: latest.summary.notReported })}`}
+            {latest.summary.unknown > 0 && ` ${t('unknown', { count: latest.summary.unknown })}`}
+          </p>
+          {latest.returned.length > 0 && (
+            <>
+              <table className="w-full max-w-2xl">
+                <tbody className="divide-y divide-slate-100">
+                  {latest.returned.map((r, i) => (
+                    <tr key={i}>
+                      <td className="py-1">
+                        {r.employee?.fullName ?? '—'}{' '}
+                        <span className="font-mono text-xs text-slate-400">
+                          {r.employee?.employeeCode}
+                        </span>
+                      </td>
+                      <td className="py-1 text-slate-600">{r.account}</td>
+                      <td className="py-1 text-right tabular-nums">{taka(format, r.amount)}</td>
+                      <td className="py-1 pl-3 text-slate-600">{r.reason}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {canManage && (
+                <a
+                  href={`/workspace/files/payment-check/${runId}/${latest.id}`}
+                  className="font-medium text-brand-700 hover:underline"
+                >
+                  {t('download')}
+                </a>
+              )}
+            </>
+          )}
+        </>
+      ) : (
+        <p className="text-slate-600">{t('none')}</p>
+      )}
+      {canManage && <PaymentCheckForm runId={runId} />}
+    </div>
+  );
+}
+
+/** The run's register, and comparing it with the payroll it replaces (a parallel run). */
+async function Reports({ runId, canManage }: { runId: string; canManage: boolean }) {
+  const t = await getTranslations('payroll.reconcile');
+  const tr = await getTranslations('payroll.reports');
+  const format = await getFormatter();
+  const compared = await load<ReconciliationListItem[]>(
+    'tenant',
+    `/tenant/payroll/runs/${runId}/reconciliations`,
+  );
+  const file = (query: string) => `/workspace/files/register/${runId}?${query}`;
+  const TONE = { draft: 'slate', matched: 'green', differences: 'amber' } as const;
+  return (
+    <Card title={t('title')}>
+      <div className="mb-3 space-y-1 text-sm">
+        {(['register', 'wage', 'overtime'] as const).map((kind) => (
+          <p key={kind} className="flex flex-wrap gap-4">
+            <span className="text-slate-600">{tr(`registers.${kind}`)}:</span>
+            <a
+              href={file(`kind=${kind}&format=csv`)}
+              className="font-medium text-brand-700 hover:underline"
+            >
+              CSV
+            </a>
+            <a
+              href={file(`kind=${kind}&format=pdf&language=en`)}
+              className="font-medium text-brand-700 hover:underline"
+            >
+              PDF (EN)
+            </a>
+            <a
+              href={file(`kind=${kind}&format=pdf&language=bn`)}
+              className="font-medium text-brand-700 hover:underline"
+            >
+              PDF (বাংলা)
+            </a>
+          </p>
+        ))}
+      </div>
+      <div id="compare" className="space-y-3 border-t border-slate-100 pt-3">
+        <p className="text-sm text-slate-600">{t('intro')}</p>
+        {compared.length > 0 && (
+          <ul className="space-y-1 text-sm">
+            {compared.map((c) => (
+              <li key={c.id} className="flex flex-wrap items-center gap-2">
+                <Link
+                  href={`/workspace/payroll/reconciliations/${c.id}`}
+                  className="font-medium text-brand-700 hover:underline"
+                >
+                  {c.fileName}
+                </Link>
+                <Badge tone={TONE[c.status]}>{t(`statuses.${c.status}`)}</Badge>
+                {c.summary && (
+                  <span className="text-slate-500">
+                    {t('summaryLine', {
+                      matched: c.summary.matched,
+                      people: c.summary.people,
+                    })}
+                  </span>
+                )}
+                <span className="text-slate-400">
+                  {format.dateTime(new Date(c.comparedAt ?? c.createdAt), {
+                    dateStyle: 'medium',
+                    timeStyle: 'short',
+                  })}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+        {canManage && <ReconcileUploadForm runId={runId} />}
+      </div>
     </Card>
   );
 }

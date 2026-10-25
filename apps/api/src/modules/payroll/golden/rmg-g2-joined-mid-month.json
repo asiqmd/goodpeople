@@ -1,0 +1,42 @@
+{
+  "name": "RMG worker, grade G2 at Tk 14,150, joined on 12 October: 20 of 31 days, with overtime",
+  "source": "hand-worked from the BD pack rules",
+  "kind": "pay",
+  "period": { "start": "2026-10-01", "end": "2026-10-31" },
+  "joinedOn": "2026-10-12",
+  "separatedOn": null,
+  "worker": true,
+  "pay": [
+    { "effectiveFrom": "2026-10-12", "structure": "RMG_WORKER", "amount": "14150", "grade": "G2" }
+  ],
+  "attendance": { "summary": { "otHours": 7.5 } },
+  "expected": {
+    "lines": {
+      "BASIC": "5032",
+      "HOUSE_RENT": "2517",
+      "MEDICAL": "484",
+      "CONVEYANCE": "290",
+      "FOOD": "806",
+      "OVERTIME": "563"
+    },
+    "earnings": "9692",
+    "deductions": "0",
+    "net": "9692"
+  },
+  "working": [
+    "Full-month split: BASIC = round((14150 − 2450) ÷ 1.5) = round(7800) = 7800; HOUSE_RENT = 14150 − 7800 − 750 − 450 − 1250 = 3900; MEDICAL 750, CONVEYANCE 450, FOOD 1250",
+    "Grade G2 minimum is gross 14150 and basic 7800: met",
+    "Employed 12–31 Oct = 20 of 31 days; each structure line is paid × 20 ÷ 31 and rounded to whole taka",
+    "BASIC = 7800 × 20 ÷ 31 = 5032.26 → 5032",
+    "HOUSE_RENT before balancing = 3900 × 20 ÷ 31 = 2516.13 → 2516",
+    "MEDICAL = 750 × 20 ÷ 31 = 483.87 → 484",
+    "CONVEYANCE = 450 × 20 ÷ 31 = 290.32 → 290",
+    "FOOD = 1250 × 20 ÷ 31 = 806.45 → 806",
+    "Prorated gross = 14150 × 20 ÷ 31 = 9129.03 → 9129; the rounded lines add up to 5032 + 2516 + 484 + 290 + 806 = 9128, so the 1 taka short goes to the structure's last line",
+    "HOUSE_RENT = 2516 + 1 = 2517",
+    "OVERTIME = round(BASIC × 2 × OT hours ÷ 208) on the full monthly basic = round(7800 × 2 × 7.5 ÷ 208) = round(562.5) = 563 (half rounds up)",
+    "Earnings = 5032 + 2517 + 484 + 290 + 806 + 563 = 9692",
+    "Deductions = 0",
+    "Net = 9692 − 0 = 9692"
+  ]
+}

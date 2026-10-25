@@ -1,0 +1,52 @@
+{
+  "name": "RMG worker, grade G5 at Tk 12,500, full month of October with overtime and an attendance bonus",
+  "source": "hand-worked from the BD pack rules",
+  "kind": "pay",
+  "period": { "start": "2026-10-01", "end": "2026-10-31" },
+  "joinedOn": "2024-01-01",
+  "separatedOn": null,
+  "worker": true,
+  "pay": [
+    { "effectiveFrom": "2026-01-01", "structure": "RMG_WORKER", "amount": "12500", "grade": "G5" }
+  ],
+  "attendance": {
+    "days": {
+      "2026-10-04": { "otHours": 2 },
+      "2026-10-05": { "otHours": 2 },
+      "2026-10-06": { "otHours": 1.5 },
+      "2026-10-07": { "otHours": 1.5 },
+      "2026-10-11": { "otHours": 3 },
+      "2026-10-12": { "otHours": 3 },
+      "2026-10-13": { "otHours": 2 },
+      "2026-10-14": { "otHours": 1 }
+    }
+  },
+  "inputs": { "ATTENDANCE_BONUS": "700" },
+  "expected": {
+    "lines": {
+      "BASIC": "6700",
+      "HOUSE_RENT": "3350",
+      "MEDICAL": "750",
+      "CONVEYANCE": "450",
+      "FOOD": "1250",
+      "OVERTIME": "1031",
+      "ATTENDANCE_BONUS": "700"
+    },
+    "earnings": "14231",
+    "deductions": "0",
+    "net": "14231"
+  },
+  "working": [
+    "Period 1–31 Oct 2026 = 31 days; employed all 31 (joined 2024-01-01), so every structure line is paid in full (31 ÷ 31)",
+    "MEDICAL = 750, CONVEYANCE = 450, FOOD = 1250 (RMG fixed allowances; 750 + 450 + 1250 = 2450)",
+    "BASIC = round((GROSS − 2450) ÷ 1.5) = round((12500 − 2450) ÷ 1.5) = round(6700) = 6700",
+    "HOUSE_RENT = GROSS − BASIC − MEDICAL − CONVEYANCE − FOOD = 12500 − 6700 − 750 − 450 − 1250 = 3350",
+    "Grade G5 minimum is gross 12500 and basic 6700: met",
+    "OT hours = 2 + 2 + 1.5 + 1.5 + 3 + 3 + 2 + 1 = 16",
+    "OVERTIME = round(BASIC × 2 × OT hours ÷ 208) = round(6700 × 2 × 16 ÷ 208) = round(1030.77) = 1031 (a worker, so overtime is paid)",
+    "ATTENDANCE_BONUS = 700 (entered for the run; the pack has no formula for it)",
+    "Earnings = 6700 + 3350 + 750 + 450 + 1250 + 1031 + 700 = 14231",
+    "Deductions = 0 (no absence, no leave, no provident fund, no loans)",
+    "Net = 14231 − 0 = 14231"
+  ]
+}

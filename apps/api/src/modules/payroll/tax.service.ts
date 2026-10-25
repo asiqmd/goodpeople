@@ -417,6 +417,68 @@ export class TaxService {
     };
   }
 
+  /**
+   * A quarter of the income year for the withholding return (s.177, due 25 October, January,
+   * April and July): each person's salary and tax deducted by the quarter's locked runs, with
+   * the challans that deposited it.
+   */
+  quarterStatement(fiscalYear: string, quarter: 1 | 2 | 3 | 4): Promise<string> {
+    return this.tenantDb.run(async (tx) => {
+      const { open } = sealed(this.cipher);
+      const components = await componentsOf(tx);
+      const { start } = fiscalYearBounds(fiscalYear);
+      const [y, m] = start.split('-').map(Number) as [number, number];
+      const from = new Date(Date.UTC(y, m - 1 + (quarter - 1) * 3, 1)).toISOString().slice(0, 10);
+      const to = new Date(Date.UTC(y, m - 1 + quarter * 3, 0)).toISOString().slice(0, 10);
+      const items = await tx
+        .select({ item: payrollRunItems, employee: employees, deposit: taxDeposits })
+        .from(payrollRunItems)
+        .innerJoin(payrollRuns, eq(payrollRuns.id, payrollRunItems.runId))
+        .innerJoin(employees, eq(employees.id, payrollRunItems.employeeId))
+        .leftJoin(taxDeposits, eq(taxDeposits.runId, payrollRuns.id))
+        .where(
+          and(
+            eq(payrollRuns.status, 'locked'),
+            eq(payrollRunItems.status, 'ok'),
+            gte(payrollRuns.periodStart, from),
+            lte(payrollRuns.periodStart, to),
+          ),
+        )
+        .orderBy(asc(employees.employeeCode), asc(payrollRuns.periodStart));
+      const rows = new Map<
+        string,
+        { e: Employee; salary: Decimal; tax: Decimal; challans: Set<string> }
+      >();
+      for (const { item, employee, deposit } of items) {
+        const { lines } = open<StoredResult>(CIPHER_FIELDS.runResults, item.resultEnc);
+        const tax = new Decimal(lines.find((l) => l.code === 'TAX')?.amount ?? 0);
+        const r = rows.get(employee.id) ?? {
+          e: employee,
+          salary: new Decimal(0),
+          tax: new Decimal(0),
+          challans: new Set<string>(),
+        };
+        r.salary = r.salary.plus(salaryIn(lines, components));
+        r.tax = r.tax.plus(tax);
+        if (deposit && tax.greaterThan(0))
+          r.challans.add(`${deposit.challanNo} (${deposit.depositedOn})`);
+        rows.set(employee.id, r);
+      }
+      const out = ['Employee code,Name,TIN,Salary,Tax deducted,Challans'];
+      for (const { e, salary, tax, challans } of rows.values()) {
+        const tin = e.tinEnc
+          ? this.cipher.decrypt(e.tinEnc, { tenantId: currentTenantId(), field: CIPHER_FIELDS.tin })
+          : '';
+        out.push(
+          [e.employeeCode, e.fullName, tin, money(salary), money(tax), [...challans].join('; ')]
+            .map(csv)
+            .join(','),
+        );
+      }
+      return `${out.join('\n')}\n`;
+    });
+  }
+
   /** Everyone's salary and tax for the year, as CSV for the employer's withholding return. */
   register(fiscalYear: string): Promise<string> {
     return this.tenantDb.run(async (tx) => {

@@ -3,6 +3,8 @@ import {
   attendanceDevices,
   attendanceSettings,
   designations,
+  employeePay,
+  employeePaymentAccounts,
   employees,
   holidayCalendars,
   holidays,
@@ -13,6 +15,7 @@ import {
   orgUnits,
   shifts,
   tenantUsers,
+  type Tx,
 } from '@gp/db';
 import {
   addDays,
@@ -20,9 +23,23 @@ import {
   todayIn,
   type SetupChecklist,
   type SetupStep,
+  type TenantWithAccess,
 } from '@gp/shared';
-import { and, count, eq, gte, inArray, isNotNull, isNull, lte, sql } from 'drizzle-orm';
+import {
+  and,
+  count,
+  countDistinct,
+  eq,
+  gte,
+  inArray,
+  isNotNull,
+  isNull,
+  lte,
+  sql,
+  type SQL,
+} from 'drizzle-orm';
 import { TenantDb } from '../../db/db.module.js';
+import { parallelRunsOf } from '../payroll/reconciliation.service.js';
 import { EMAIL_SENDER, SMS_SENDER, type Sender } from '../notifications/senders.js';
 
 const ratio = (done: number, total: number): SetupStep['status'] =>
@@ -42,7 +59,7 @@ export class SetupService {
     @Inject(SMS_SENDER) private readonly sms: Sender<unknown>,
   ) {}
 
-  checklist(): Promise<SetupChecklist> {
+  checklist(tenant: TenantWithAccess): Promise<SetupChecklist> {
     return this.tenantDb.run(async (tx) => {
       const today = todayIn();
       const year = today.slice(0, 4);
@@ -267,6 +284,10 @@ export class SetupService {
         link: '/workspace/notifications',
       });
 
+      if (tenant.access.features.includes('payroll')) {
+        steps.push(...(await this.payrollSteps(tx, staff, active)));
+      }
+
       const counting = steps.filter((s) => s.status !== 'not_needed');
       return {
         steps,
@@ -274,5 +295,56 @@ export class SetupService {
         total: counting.length,
       };
     });
+  }
+
+  /** Payroll is ready when everyone has approved pay, a way to be paid, and three months match. */
+  private async payrollSteps(tx: Tx, staff: number, active: SQL): Promise<SetupStep[]> {
+    const steps: SetupStep[] = [];
+    const today = todayIn();
+    const paid = await n(
+      tx
+        .select({ n: countDistinct(employeePay.employeeId) })
+        .from(employeePay)
+        .innerJoin(employees, eq(employees.id, employeePay.employeeId))
+        .where(
+          and(active, eq(employeePay.status, 'approved'), lte(employeePay.effectiveFrom, today)),
+        ),
+    );
+    steps.push({
+      key: 'pay_records',
+      status: ratio(paid, staff),
+      done: paid,
+      total: staff,
+      link: '/workspace/employees',
+    });
+    // Without an account a person is paid in cash, which is allowed, so this is a warning.
+    const accounts = await n(
+      tx
+        .select({ n: countDistinct(employeePaymentAccounts.employeeId) })
+        .from(employeePaymentAccounts)
+        .innerJoin(employees, eq(employees.id, employeePaymentAccounts.employeeId))
+        .where(active),
+    );
+    steps.push({
+      key: 'payment_accounts',
+      status: ratio(accounts, staff),
+      done: accounts,
+      total: staff,
+      link: '/workspace/employees',
+    });
+    const parallel = await parallelRunsOf(tx);
+    steps.push({
+      key: 'parallel_runs',
+      status:
+        parallel.consecutive >= parallel.required
+          ? 'done'
+          : parallel.consecutive > 0
+            ? 'warning'
+            : 'todo',
+      done: Math.min(parallel.consecutive, parallel.required),
+      total: parallel.required,
+      link: '/workspace/payroll/parallel',
+    });
+    return steps;
   }
 }

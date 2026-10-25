@@ -1,0 +1,54 @@
+{
+  "name": "Staff member on the STAFF structure at Tk 38,750 plus a Tk 2,000 special allowance, provident fund at 7.5% and the last installment of a salary advance",
+  "source": "hand-worked from the BD pack rules",
+  "kind": "pay",
+  "period": { "start": "2026-10-01", "end": "2026-10-31" },
+  "joinedOn": "2021-08-01",
+  "separatedOn": null,
+  "worker": false,
+  "pay": [
+    {
+      "effectiveFrom": "2026-07-01",
+      "structure": "STAFF",
+      "amount": "38750",
+      "fixed": { "SPECIAL": "2000" }
+    }
+  ],
+  "attendance": null,
+  "pf": { "employeeRate": "7.5", "employerRate": "7.5" },
+  "loans": [
+    { "loanId": "adv-1", "component": "ADVANCE", "installment": "5000", "outstanding": "3500" }
+  ],
+  "expected": {
+    "lines": {
+      "BASIC": "23250",
+      "HOUSE_RENT": "11625",
+      "MEDICAL": "1938",
+      "CONVEYANCE": "1937",
+      "SPECIAL": "2000",
+      "ADVANCE": "3500",
+      "PF_EMPLOYEE": "1744",
+      "PF_EMPLOYER": "1744"
+    },
+    "earnings": "40750",
+    "deductions": "5244",
+    "net": "35506",
+    "employerCost": "1744"
+  },
+  "working": [
+    "BASIC = round(GROSS × 0.6) = round(38750 × 0.6) = 23250",
+    "HOUSE_RENT = round(BASIC × 0.5) = round(23250 × 0.5) = 11625",
+    "MEDICAL = round(GROSS × 0.05) = round(38750 × 0.05) = round(1937.5) = 1938 (half rounds up)",
+    "CONVEYANCE = GROSS − BASIC − HOUSE_RENT − MEDICAL = 38750 − 23250 − 11625 − 1938 = 1937",
+    "SPECIAL = 2000 (a fixed amount on top of the structure)",
+    "Full month and attendance not tracked, so every line is paid in full; staff, not a worker, so no overtime",
+    "PF_EMPLOYEE = round(BASIC paid × 7.5 ÷ 100) = round(23250 × 7.5 ÷ 100) = round(1743.75) = 1744",
+    "PF_EMPLOYER = round(23250 × 7.5 ÷ 100) = round(1743.75) = 1744 (an employer cost: not deducted from pay)",
+    "ADVANCE = min(outstanding 3500, installment 5000) = 3500, the last installment; pay left before it is 40750 − 1744 = 39006, enough",
+    "No salary tax in this case (no tax context is given, so the run does not work it out)",
+    "Earnings = 23250 + 11625 + 1938 + 1937 + 2000 = 40750",
+    "Deductions = 3500 + 1744 = 5244",
+    "Net = 40750 − 5244 = 35506",
+    "Employer cost = PF_EMPLOYER 1744"
+  ]
+}

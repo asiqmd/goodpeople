@@ -1,0 +1,49 @@
+{
+  "name": "RMG worker, grade G3 at Tk 13,550, full month with two absent days, a half day, a day of leave without pay and a day of paid leave",
+  "source": "hand-worked from the BD pack rules",
+  "kind": "pay",
+  "period": { "start": "2026-10-01", "end": "2026-10-31" },
+  "joinedOn": "2023-06-15",
+  "separatedOn": null,
+  "worker": true,
+  "pay": [
+    { "effectiveFrom": "2025-12-01", "structure": "RMG_WORKER", "amount": "13550", "grade": "G3" }
+  ],
+  "attendance": {
+    "days": {
+      "2026-10-07": { "status": "absent" },
+      "2026-10-08": { "status": "absent" },
+      "2026-10-14": { "status": "half_day" },
+      "2026-10-21": { "status": "on_leave", "unpaidLeave": true },
+      "2026-10-26": { "status": "on_leave" }
+    }
+  },
+  "expected": {
+    "lines": {
+      "BASIC": "7400",
+      "HOUSE_RENT": "3700",
+      "MEDICAL": "750",
+      "CONVEYANCE": "450",
+      "FOOD": "1250",
+      "ABSENCE": "617",
+      "UNPAID_LEAVE": "452"
+    },
+    "earnings": "13550",
+    "deductions": "1069",
+    "net": "12481"
+  },
+  "working": [
+    "BASIC = round((13550 − 2450) ÷ 1.5) = round(7400) = 7400",
+    "HOUSE_RENT = 13550 − 7400 − 750 − 450 − 1250 = 3700; MEDICAL = 750, CONVEYANCE = 450, FOOD = 1250",
+    "Grade G3 minimum is gross 13550 and basic 7400: met",
+    "Employed all 31 days, so the structure lines are paid in full; absence and leave without pay are deducted separately, per day of a 30-day month",
+    "Absent days = 2 (7 and 8 Oct) + 0.5 (half day on 14 Oct) = 2.5",
+    "ABSENCE = round(BASIC ÷ 30 × absent days) = round(7400 ÷ 30 × 2.5) = round(616.67) = 617",
+    "Days of leave without pay = 1 (21 Oct); the paid leave day (26 Oct) deducts nothing",
+    "UNPAID_LEAVE = round(GROSS ÷ 30 × unpaid leave days) = round(13550 ÷ 30 × 1) = round(451.67) = 452",
+    "Labour Act s.126 cap on the absence deduction: 13550 × 2.5 ÷ 30 = 1129.17; 617 is within it",
+    "Earnings = 7400 + 3700 + 750 + 450 + 1250 = 13550",
+    "Deductions = 617 + 452 = 1069",
+    "Net = 13550 − 1069 = 12481"
+  ]
+}

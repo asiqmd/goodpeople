@@ -1,0 +1,26 @@
+{
+  "name": "Festival bonus for an RMG worker, grade G4 at Tk 13,025, with exactly one year of service on the cut-off",
+  "source": "hand-worked from the BD pack rules",
+  "kind": "bonus",
+  "joinedOn": "2026-03-01",
+  "pay": [
+    { "effectiveFrom": "2026-03-01", "structure": "RMG_WORKER", "amount": "13025", "grade": "G4" }
+  ],
+  "bonus": { "cutOff": "2027-03-01", "percentOfBasic": 100, "minServiceMonths": 12 },
+  "expected": {
+    "qualifies": true,
+    "lines": { "FESTIVAL_BONUS": "7050" },
+    "earnings": "7050",
+    "deductions": "0",
+    "net": "7050"
+  },
+  "working": [
+    "Service from 1 Mar 2026 to the cut-off 1 Mar 2027 = 12 completed months (a month completes on the same day of the month); 12 ≥ 12, so the bonus is due (Labour Rules 2015, rule 111)",
+    "Pay in force on the cut-off: Tk 13025 on RMG_WORKER (from 1 Mar 2026); BASIC = round((13025 − 2450) ÷ 1.5) = round(7050) = 7050",
+    "Grade G4 minimum is gross 13025 and basic 7050: met",
+    "FESTIVAL_BONUS = round(BASIC × 100 ÷ 100) = round(7050 × 100 ÷ 100) = 7050",
+    "Earnings = 7050",
+    "Deductions = 0",
+    "Net = 7050 − 0 = 7050"
+  ]
+}

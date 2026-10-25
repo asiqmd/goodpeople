@@ -4,7 +4,8 @@
 // Processes this month's attendance, opens (or reopens) this month's run, computes it twice,
 // reads pages of it, then locks it with maker-checker briefly off and publishes the payslips.
 // Then times paying it (the files, the cash sheet, the journal), the gratuity provision and
-// the participation fund's beneficiaries.
+// the participation fund's beneficiaries, and the reports: the registers, what the month cost,
+// and comparing the run with a 20,000-row sheet of the "current payroll".
 // With FISCAL_YEAR=1 it first locks every earlier month of the fiscal year, so the salary tax
 // projection reads a full year so far.
 
@@ -186,3 +187,51 @@ if (!years.some((y) => y.accountingYear === year)) {
   line('Participation fund year', created.ms, `${created.json.beneficiaries} beneficiaries`);
 }
 line('Participation fund years', (await call('/tenant/payroll/wppf', { token })).ms);
+
+// Reports and parallel runs (M5).
+const at = (path) => `/tenant/payroll/runs/${run.id}/${path}`;
+line('Payroll register CSV', (await call(at('register?format=csv'), { token })).ms);
+line(
+  'Wage register (Form 38) PDF, Bangla',
+  (await call(at('wage-register?format=pdf&language=bn'), { token })).ms,
+);
+line(
+  'Overtime register (Form 34) CSV',
+  (await call(at('overtime-register?format=csv'), { token })).ms,
+);
+line(
+  'Cost summary by unit',
+  (await call(`/tenant/payroll/reports/summary?month=${month}&by=unit`, { token })).ms,
+);
+line(
+  'Cost over 12 months',
+  (await call(`/tenant/payroll/reports/trend?to=${month}&months=12`, { token })).ms,
+);
+const register = await (
+  await fetch(`${API}${at('register?format=csv')}`, {
+    headers: { authorization: `Bearer ${token}` },
+  })
+).text();
+const [heading, ...registerRows] = register
+  .trim()
+  .split('\n')
+  .map((r) => r.split(','));
+const netAt = heading.indexOf('Net pay');
+const sheet = ['Emp ID,Net Pay', ...registerRows.map((r) => `${r[0]},${r[netAt]}`)].join('\n');
+const form = new FormData();
+form.append('file', new Blob([sheet], { type: 'text/csv' }), 'current-payroll.csv');
+let started = performance.now();
+const uploaded = await (
+  await fetch(`${API}${at('reconciliations')}`, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${token}` },
+    body: form,
+  })
+).json();
+line('Upload a 20,000-row sheet', performance.now() - started, `${uploaded.rows} rows`);
+const compared = await call(`/tenant/payroll/reconciliations/${uploaded.id}/compare`, {
+  token,
+  method: 'POST',
+  body: uploaded.mapping,
+});
+line('Compare it with the run', compared.ms, `${compared.json.summary.matched} matched`);

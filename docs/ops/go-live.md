@@ -103,6 +103,55 @@ Review weekly, then monthly. This is Phase 1's exit test.
 - [ ] Month one closed on Good People with no fallback to the old register.
 - [ ] Month two closed the same way. **Phase 1 internal go-live is done.**
 
+## 5. Payroll go-live (Phase 2)
+
+Payroll moves over after attendance and leave have run on Good People for a month. The
+**Go-live checklist** page adds three payroll steps (approved pay for everyone, payment
+accounts, parallel runs); the rest is below.
+
+### Before the first parallel month
+
+- [ ] **HR:** every active employee has approved pay, on the right structure, wage grade and
+      pay group. The checklist shows who does not.
+- [ ] **Payroll:** bank and wallet accounts are entered for everyone not paid in cash, with
+      split amounts where pay is divided. Wallet payments over Tk 5 lakh are flagged.
+- [ ] **Payroll:** go-live openings for the income year so far: salary and tax paid before,
+      provident fund balances, loans still being recovered.
+- [ ] **Finance:** the ledger accounts in Payroll settings match the chart of accounts, and
+      every unit has a code (it is the cost centre in the journal).
+- [ ] **Legal and tax:** the labour lawyer has reviewed the separation, gratuity and WPPF
+      rules, and the tax consultant the income years in use. Both are marked `needs_review`
+      in the country pack until then.
+- [ ] **Golden tests:** at least one anonymised person-month per pay structure from the
+      current payroll is added to `apps/api/src/modules/payroll/golden/` (see its README) and
+      passes, or its difference is explained.
+
+### Three parallel months
+
+Each month, the current payroll still pays people. Good People runs alongside:
+
+1. Process attendance, compute each pay group's regular run, and review its problems.
+2. Export the current payroll's sheet for the same month (Excel or CSV, one row per person).
+3. On the run's page, upload it under **Register and parallel run**, match the columns
+   (codes, gross, net, tax, overtime, days) and compare.
+4. Explain every difference: our data (fix it and compute again), the old payroll (note it),
+   or a rule (raise it with counsel or the tax consultant). Compare again until every pay
+   group matches to the taka.
+5. Lock the run. Do not publish payslips or send payment files while the old payroll pays.
+
+- [ ] Month one matched for every pay group.
+- [ ] Month two matched.
+- [ ] Month three matched. The **Parallel runs** page shows three months in a row: payroll
+      can go live.
+
+### Cut-over
+
+- [ ] The go/no-go group signs off on the three months and the open differences (none).
+- [ ] The first live month: compute, approve, lock, then publish payslips, send the bank and
+      wallet files, print the cash sheet (Form 38), record the payment date and post the
+      journal. Deposit the tax and record the challan.
+- [ ] The old payroll is kept read-only for at least a year for reference.
+
 ## If it goes wrong
 
 The old register stays readable and can be reopened for new entries. Going back is a

@@ -12,8 +12,8 @@ browser.
 | **M1 Pay foundations**                     | Pay components, a safe formula engine, salary structures, minimum wages, pay groups, employee pay with maker-checker                           | Phase 1    | Done   |
 | **M2 Payroll runs & payslips**             | Pay periods, attendance and leave inputs, proration, overtime, the run lifecycle with locking, adjustment runs, EN/BN payslips                 | M1         | Done   |
 | **M3 Tax, provident fund & bonuses**       | Salary income tax (projection, declarations, proofs, certificates), PF, festival and attendance bonuses, loans and advances, annual increments | M2         | Done   |
-| **M4 Settlement, gratuity & disbursement** | Final settlement per separation type, gratuity, WPPF, bank and MFS payment files, cash sheets, split pay, accounting export                    | M3         |        |
-| **M5 Reports & parallel runs**             | Statutory and management reports, golden tests from real (anonymised) sheets, reconciliation against the current payroll, go-live              | M4         |        |
+| **M4 Settlement, gratuity & disbursement** | Final settlement per separation type, gratuity, WPPF, bank and MFS payment files, cash sheets, split pay, accounting export                    | M3         | Done   |
+| **M5 Reports & parallel runs**             | Statutory and management reports, golden tests from real (anonymised) sheets, reconciliation against the current payroll, go-live              | M4         | Done   |
 
 ## Principles
 
@@ -654,14 +654,168 @@ need it.
   of a company WPPF; recording that comes with the RMG pack.
 - **Statutory registers** (Form 38 as a register rather than a pay sheet) come with M5.
 
-## Later milestones (outline; detailed when each starts)
+## M5: Reports & parallel runs
 
-- **M5 Reports & parallel runs:**
-  - Payroll register, wage and overtime registers, tax and PF statements, bank
-    reconciliation, management reports.
-  - Golden tests from design partners' anonymised sheets; a reconciliation tool that
-    compares our run with the current payroll line by line.
-  - The payroll go-live checklist and three parallel cycles.
+How these fit together and why is in [ADR 012](../adr/012-reports-and-parallel-runs.md). The
+payroll go-live steps are in [go-live.md](../ops/go-live.md#5-payroll-go-live-phase-2).
+
+### What the law says, as encoded
+
+Researched on 25 Oct 2026 from the Labour Rules 2015 (the DIFE copy, with its forms read from
+the scans), the Labour Act as amended, and the Income Tax Act 2023 as amended by the Finance
+Act 2026.
+
+| Register or return                     | Reference                       | What we produce                                                                     |
+| -------------------------------------- | ------------------------------- | ----------------------------------------------------------------------------------- |
+| Wage register and wage slip            | s.121; rule 111; **Form 38**    | Per run, for workers: Form 38's columns, signed over a revenue stamp. CSV and PDF   |
+| Daily attendance and overtime register | s.108; rule 102(4); **Form 34** | Per run's month (the form allows monthly): hours each day, payable OT, rate, amount |
+| Advances                               | s.129; rule 117; **Form 40**    | Per fiscal year: each advance and every instalment recovered. CSV                   |
+| Salary tax withholding return          | ITA s.177, quarterly            | Per quarter (due 25 Oct, Jan, Apr, Jul): salary, tax and challans per person. CSV   |
+| Provident fund members' year           | rules 252–256                   | Per fiscal year: brought forward, contributions, interest, loans, carried forward   |
+| Retention                              | rule 363                        | Registers are kept three years; nothing in payroll is deleted                       |
+
+- **Overtime** is twice the hourly basic (and dearness allowance), the monthly amount over
+  208 (rule 102(1)). Days over ten hours are shaded on Form 34.
+- **Not done here:** the fines register (Form 12) and damage deductions (Form 39), since the
+  pack has no fine or damage components, and the half-yearly and annual returns (Forms 80
+  and 81), which are about headcount and hours, not pay.
+- **Bank returns:** BEFTN return codes have no published table, so the bank's own reason
+  text is shown, with a code where the bank gives one (R02 and so on).
+
+### Parallel runs
+
+- **Upload:** on a computed or locked run, upload the payroll still in use for that month
+  (Excel or CSV, one row per person). The heading row is found by its employee code column,
+  even under title rows.
+- **Columns:** proposed from codes, names in English or Bangla and common headings ("OT
+  Amount", "Net Pay", "Gross Salary"). The workspace's last mapping is proposed again where
+  its headings are still there. Columns can be any component or a total: gross, earnings,
+  deductions, net, paid days, absent days, overtime hours.
+- **Compare:** person by person. Money matches when it agrees to the taka, days and hours
+  to two decimals. People only on one side are listed. A person split over several rows is
+  added up. Amounts may have separators, taka signs, Bangla digits or brackets.
+- **Result:**
+  - per column, how many matched and both totals;
+  - per person, each difference;
+  - everything as CSV.
+    Sheets and results are encrypted; each upload and comparison is audited.
+- **Parallel runs page:** each month's regular runs and their latest comparison. Months in
+  a row where every pay group matched count towards the three the go-live test needs. The
+  newest months, not compared yet, do not break the streak.
+- **Go-live checklist:** three payroll steps: approved pay for everyone active, payment
+  accounts (a warning, since cash is allowed), and parallel runs.
+
+### Golden tests
+
+`apps/api/src/modules/payroll/golden/` holds person-months worked out by hand, as JSON with
+the arithmetic for every figure. A spec runs each through the engine and fails on any
+difference of a taka or more, and on any line the case does not expect. The seven cases so
+far come from the BD pack's rules. Design partners' anonymised rows go in the same format
+(its README explains how). A case the engine disagrees with is kept and marked
+`knownDifference` until the rule is settled.
+
+The seven:
+
+- a G5 worker's full month with overtime and an attendance bonus;
+- a G2 worker who joined mid-month (proration, with the taka a rounding leaves going to the
+  last line);
+- a worker with absent days, a half day and leave without pay;
+- staff with a provident fund and an advance capped at what is outstanding;
+- a festival bonus at exactly a year's service, and none a day short;
+- a worker who left mid-month with absence and overtime.
+
+The engine agreed with every hand-worked figure.
+
+### Reports
+
+- **What a month cost**, by unit, company, site or pay group: headcount, gross, overtime
+  (taka and hours), earnings, deductions, net, the employer's costs and the total, against
+  last month. Only locked runs count; runs not locked yet are named as left out.
+- **The last twelve months** as columns from one baseline, with a readout on hover or
+  focus, and the same figures as a table.
+- **The payroll register** for any computed run: every component in sort order, by unit
+  with subtotals, signed off at the foot. CSV and a landscape PDF in English or Bangla.
+- **Downloads** for the fiscal year: the withholding return by quarter, the advances
+  register, the tax register, the fund's year, and the gratuity provision.
+
+### Bank reconciliation
+
+- On a paid run, upload the bank's or wallet provider's report: a returns file (only what
+  bounced) or a status report (every payment).
+- Rows are matched to our payments by account number, then amount.
+- The result lists what came back, with the bank's reason and the last four digits of the
+  account: credited, returned, ours the report does not mention, and rows that are not ours.
+- The returned payments download as CSV, to be paid in cash or in the next run.
+
+### Performance at 20,000 employees
+
+Measured on a MacBook Air (M-series) against `scale-20k` after October 2026 was computed,
+locked and published (`apps/api/scripts/measure-payroll.mjs scale-20k` now goes on to the
+reports):
+
+| Step                                                           | Time            |
+| -------------------------------------------------------------- | --------------- |
+| Payroll register / Form 34 as CSV                              | 0.7 s / 1.6 s   |
+| Cost summary by unit / twelve months of cost                   | 0.44 s / 0.05 s |
+| Upload a 20,000-row sheet / compare it with the run            | 0.04 s / 0.52 s |
+| Payroll register PDF in Bangla (~700 pages)                    | 21 s            |
+| Form 38 PDF in Bangla (691 pages) / Form 34 PDF (~1,000 pages) | 25 s / 40 s     |
+
+**Found at scale:** Chromium could not print a register of 20,000 people as one document
+("Printing failed"). Registers now print in parts of 1,500 rows, four at a time, joined into
+one PDF (`pdf-lib`). Numbering runs on across parts, a unit's subtotal follows its last row,
+and the totals close the last part. Whole-factory PDFs still take 20–40 s; they are monthly
+downloads, and a background job can take them over if a workspace needs it.
+
+### Done when
+
+- **Unit tests:** reading payroll sheets (CSV quoting, heading rows, Bangla digits),
+  proposing columns, comparing to the taka, months in a row, printing a register in
+  parts; and the seven golden cases.
+- **API end-to-end tests (3 new):**
+  - a parallel run: a CSV with a difference, a person missing and an extra, then the
+    corrected sheet as Excel matching every person; the go-live checklist;
+  - the payroll register as CSV and Bangla PDF, and what May cost by pay group and unit, its
+    trend, and the fund register;
+  - a bank's returns file and status report against a paid run; Form 38, Form 34, the
+    advances register and the s.177 quarter.
+- **Web:** the Reports and Parallel runs tabs, the comparison page, the run page's registers
+  and comparisons, and the payments card's bank report, in English and Bangla. The app needed
+  nothing new: these are HR's pages.
+
+**Checked:**
+
+- 199 API tests in 24 files (178 before M5), country-pack tests (49), shared (93) and the
+  Edge Agent's (64). Shuffled runs at first failed twice in three on an older notifications
+  test: `send()` could join a dispatcher run already under way that had not seen the new
+  email. The test now dispatches until the email goes, as the next sweep would, and the
+  failing seeds and three more shuffled runs pass.
+- The browser in English and Bangla, with July to October 2026 run for my-group:
+  - July, August and September compared with "old payroll" sheets built from their
+    registers. September first had Nusrat Jahan ৳50 off, found and listed. After the
+    corrected sheet, the Parallel runs page reads three months in a row, ready to go live,
+    with October not compared yet. The go-live checklist shows the same.
+  - What September cost by unit, company, site and pay group against August, the
+    twelve-month chart with its hover readout, and every download on the Reports tab.
+  - September's payroll register, Form 38 and Form 34 in both languages. October's Form 34
+    shades Rahima's 10.3-hour day and pays her 2 OT hours at ৳81.73 (৳163, as the run did).
+  - A bank returns file for September listing Farhan Rahman's ৳91,604 as returned
+    ("Account dormant", •••• 2345).
+- Flutter: 221 tests, analyze clean (no app changes in M5).
+
+**Carried into later phases from M5:**
+
+- **Design partners' sheets:** the golden tests and the three parallel months need real,
+  anonymised payrolls; the format and the tools are ready for them.
+- **Withholding return format:** the NBR's e-TDS upload template is not public; the
+  quarterly CSV carries what it asks for, and an exact template comes with the first tax
+  consultant's file.
+- **PSR (s.264):** management, administrative and production-supervisory staff must show
+  proof of a tax return before being paid (no taka threshold since the Finance Act 2026);
+  recording and checking it comes with the employee tax profile.
+- **Forms 12, 39, 80 and 81**, and confirming whether the 2022 and 2026 Labour Rules
+  amendments changed the forms used here.
+- **Return codes:** a code table per sponsor bank, when one is shared.
 
 ## Sources (checked 25 Oct 2026; confirm against the gazettes before release)
 
@@ -685,3 +839,7 @@ need it.
 - Wage records (Rule 111, Form 38): [Labour Rules 2015 (DIFE copy)](https://objectstorage.ap-dcc-gazipur-1.oraclecloud15.com/n/axvjbnqprylg/b/V2Ministry/o/office-dife-chittagong/2024/12/522f3f452b02462a9464be1819640c94.pdf)
 - WPPF payout tax (s.88): [Income Tax Act 2023, consolidated (bdlaws)](http://bdlaws.minlaw.gov.bd/act-print-1429.html)
 - Mobile wallet limits: [TBS, 27 Mar 2025](https://www.tbsnews.net/economy/mfs-transaction-limit-refixed-daily-maximum-cash-tk50000-cash-out-tk30000-1103256)
+- Registers and returns (M5): [Labour Rules 2015 (DIFE copy)](https://objectstorage.ap-dcc-gazipur-1.oraclecloud15.com/n/axvjbnqprylg/b/V2Ministry/o/office-dife-chittagong/2024/12/522f3f452b02462a9464be1819640c94.pdf),
+  [DIFE register and form list](https://dife.khulna.gov.bd/pages/static-pages/69812dfe35ce18e1c06fa1b0),
+  [Income Tax Act 2023, consolidated (bdlaws)](http://bdlaws.minlaw.gov.bd/act-print-1429.html),
+  [e-TDS user manual](https://etds.gov.bd/user-manual/eTDS_User_Manual_v1.1.pdf)

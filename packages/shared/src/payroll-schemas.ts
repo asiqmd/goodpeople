@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { MAX_FORMULA_LENGTH } from './formula.js';
 import {
   COMPONENT_CODE,
+  COST_DIMENSIONS,
   PAY_BASES,
   PAY_CALCULATIONS,
   PAY_COMPONENT_KINDS,
@@ -411,3 +412,42 @@ export type WppfYearInput = z.infer<typeof wppfYearSchema>;
 
 export const wppfRunSchema = z.object({ payGroupId: id, paymentDate: isoDate });
 export type WppfRunInput = z.infer<typeof wppfRunSchema>;
+
+// ── Parallel runs ────────────────────────────────────────────────────────────
+
+export const reconciliationCompareSchema = z.object({
+  employeeCode: z.string().trim().min(1).max(200),
+  name: z.string().trim().min(1).max(200).optional(),
+  columns: z.record(z.string().trim().min(1).max(40), z.string().trim().min(1).max(200)),
+});
+export type ReconciliationCompareInput = z.infer<typeof reconciliationCompareSchema>;
+
+// ── Reports ──────────────────────────────────────────────────────────────────
+
+export const costSummaryQuerySchema = z.object({
+  month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Use a month like 2026-10'),
+  by: z.enum(COST_DIMENSIONS).default('unit'),
+});
+export type CostSummaryQuery = z.infer<typeof costSummaryQuerySchema>;
+
+export const costTrendQuerySchema = z.object({
+  to: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Use a month like 2026-10'),
+  months: z.coerce.number().int().min(1).max(36).default(12),
+});
+export type CostTrendQuery = z.infer<typeof costTrendQuerySchema>;
+
+export const registerQuerySchema = z.object({
+  format: z.enum(['csv', 'pdf']).default('csv'),
+  language: z.enum(['en', 'bn']).default('en'),
+});
+export type RegisterQuery = z.infer<typeof registerQuerySchema>;
+
+export const fiscalYearRequiredSchema = z.object({ fiscalYear });
+
+export const taxQuarterQuerySchema = z.object({
+  fiscalYear,
+  quarter: z.coerce
+    .number()
+    .pipe(z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)])),
+});
+export type TaxQuarterQuery = z.infer<typeof taxQuarterQuerySchema>;

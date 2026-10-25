@@ -662,3 +662,156 @@ export interface SettlementCase {
   lastWorkingDay: string;
   run: { id: string; status: RunStatus; net: Money | null; paidOn: string | null } | null;
 }
+
+// ── Parallel runs (M5) ───────────────────────────────────────────────────────
+
+/** Which of their columns holds what: employee codes, and ours by component code or total. */
+export interface ReconciliationMapping {
+  employeeCode: string;
+  /** Their name column, to show people only they have. */
+  name?: string;
+  columns: Record<string, string>;
+}
+
+export type ReconciliationStatus = 'draft' | 'matched' | 'differences';
+
+export interface ReconciliationColumn {
+  key: string;
+  label: string;
+  matched: number;
+  differing: number;
+  ours: string;
+  theirs: string;
+}
+
+export interface ReconciliationDifference {
+  employeeCode: string;
+  /** Ours when we have the person, else the name in their sheet if a column was mapped. */
+  name: string | null;
+  employeeId: string | null;
+  status: 'differs' | 'only_ours' | 'only_theirs';
+  lines: { key: string; ours: string | null; theirs: string | null; difference: string }[];
+}
+
+export interface ReconciliationSummary {
+  people: number;
+  matched: number;
+  differing: number;
+  onlyOurs: number;
+  onlyTheirs: number;
+}
+
+export interface ReconciliationView {
+  id: string;
+  runId: string;
+  fileName: string;
+  status: ReconciliationStatus;
+  /** The sheet's column headings and how many people rows it has. */
+  headers: string[];
+  rows: number;
+  /** The mapping used, or (for a draft) the one proposed. */
+  mapping: ReconciliationMapping;
+  summary: ReconciliationSummary | null;
+  columns: ReconciliationColumn[];
+  /** People who differ or appear on one side only, at most 500. */
+  differences: ReconciliationDifference[];
+  createdAt: string;
+  comparedAt: string | null;
+}
+
+export interface ReconciliationListItem {
+  id: string;
+  fileName: string;
+  status: ReconciliationStatus;
+  summary: ReconciliationSummary | null;
+  createdAt: string;
+  comparedAt: string | null;
+}
+
+/** The go-live test: consecutive months whose regular runs matched the current payroll. */
+export interface ParallelRunsView {
+  required: number;
+  consecutive: number;
+  months: {
+    period: string;
+    payGroup: string;
+    runId: string;
+    status: ReconciliationStatus | null;
+    reconciliationId: string | null;
+  }[];
+}
+
+// ── Reports (M5) ─────────────────────────────────────────────────────────────
+
+export interface CostFigures {
+  headcount: number;
+  /** The salary structures' gross, before overtime and other run items. */
+  gross: Money;
+  overtime: Money;
+  otHours: number;
+  earnings: Money;
+  deductions: Money;
+  net: Money;
+  employerCost: Money;
+  /** Earnings plus the employer's costs: what the month cost. */
+  cost: Money;
+}
+
+export interface CostSummaryRow extends CostFigures {
+  key: string;
+  label: string;
+  /** Last month's cost for the same group, where it had any. */
+  previousCost: Money | null;
+  previousHeadcount: number | null;
+}
+
+export interface CostSummary {
+  month: string;
+  by: 'unit' | 'entity' | 'location' | 'group';
+  rows: CostSummaryRow[];
+  total: CostSummaryRow;
+  /** Locked runs counted, and runs of the month not locked yet (left out). */
+  runs: number;
+  unlocked: number;
+}
+
+export interface CostTrendPoint {
+  month: string;
+  headcount: number;
+  earnings: Money;
+  net: Money;
+  employerCost: Money;
+  cost: Money;
+}
+
+/** A payment the bank or wallet provider reported as not credited. */
+export interface ReturnedPayment {
+  employee: EmployeeRef | null;
+  channel: string;
+  /** The last four digits only. */
+  account: string;
+  amount: Money;
+  code: string | null;
+  reason: string;
+}
+
+/** A bank's or wallet provider's report on a run's payments, matched to them. */
+export interface PaymentCheckView {
+  id: string;
+  runId: string;
+  fileName: string;
+  createdAt: string;
+  summary: {
+    /** A status for every payment, rather than a returns file listing only what bounced. */
+    full: boolean;
+    /** Our bank and wallet payments, and how the report accounts for them. */
+    payments: number;
+    credited: number;
+    returned: number;
+    /** In a full status report, ours it does not mention. */
+    notReported: number;
+    /** Rows in the report that are not ours. */
+    unknown: number;
+  };
+  returned: ReturnedPayment[];
+}

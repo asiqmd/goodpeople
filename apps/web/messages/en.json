@@ -1092,7 +1092,7 @@
     "run_exists": "This pay group already has a run for that month.",
     "run_not_open": "This run can no longer change.",
     "not_a_run_component": "That component is not entered in runs.",
-    "run_not_computed": "Compute the run before sending it for approval.",
+    "run_not_computed": "Compute the run first.",
     "run_has_errors": "Fix the people with problems first.",
     "run_empty": "Nobody is paid in this run.",
     "run_closed": "This run is already locked or cancelled.",
@@ -1119,7 +1119,16 @@
     "gratuity_off": "Gratuity is not provided for in this workspace.",
     "wppf_year_exists": "This accounting year already has a fund.",
     "wppf_run_exists": "This pay group already has a run for the year.",
-    "wppf_before_year_end": "Pay the fund after the year it is for."
+    "wppf_before_year_end": "Pay the fund after the year it is for.",
+    "file_required": "Choose the payroll sheet to compare.",
+    "sheet_type": "Upload the sheet as .xlsx or .csv.",
+    "sheet_unreadable": "This file could not be read as a spreadsheet.",
+    "sheet_empty": "The sheet has no rows under its headings.",
+    "mapping_unknown_column": "One of the chosen columns is not in the sheet.",
+    "mapping_unknown_key": "One of the chosen components does not exist.",
+    "mapping_empty": "Choose at least one column to compare.",
+    "not_compared": "Compare the sheet first.",
+    "report_no_account": "The report has no account number column."
   },
   "platformRoles": {
     "super_admin": "Super admin",
@@ -1345,6 +1354,21 @@
         "title": "SMS delivery",
         "done": "SMS go out through the SMS gateway.",
         "todo": "SMS are turned on but only written to the server log. Set the SMS gateway on the server."
+      },
+      "pay_records": {
+        "title": "Approved pay",
+        "done": "All {total} active employees have approved pay.",
+        "todo": "{done} of {total} active employees have approved pay. Give the rest a salary on their Pay tab."
+      },
+      "payment_accounts": {
+        "title": "Payment accounts",
+        "done": "All {total} active employees have a bank or wallet account, or are paid in cash.",
+        "todo": "{done} of {total} active employees have a payment account; the rest will be paid in cash."
+      },
+      "parallel_runs": {
+        "title": "Parallel runs",
+        "done": "{total} months in a row matched the current payroll.",
+        "todo": "{done} of {total} months in a row matched the current payroll so far."
       }
     },
     "statuses": {
@@ -1354,7 +1378,7 @@
       "not_needed": "Not needed"
     },
     "fix": "Fix",
-    "outsideApp": "Some go-live steps happen outside the app: a parallel month with your current process, legal review of letters and leave rules, and a tested backup. See docs/ops/go-live.md."
+    "outsideApp": "Some go-live steps happen outside the app: legal review of letters, leave and pay rules, the tax consultant’s review of the tax rules, and a tested backup. See docs/ops/go-live.md."
   },
   "payroll": {
     "title": "Payroll",
@@ -1372,7 +1396,9 @@
       "increments": "Increments",
       "settlements": "Settlements",
       "gratuity": "Gratuity",
-      "wppf": "Participation fund"
+      "wppf": "Participation fund",
+      "reports": "Reports",
+      "parallel": "Parallel runs"
     },
     "code": "Code",
     "name": "Name",
@@ -2005,6 +2031,18 @@
         "bank_incomplete": "{count, plural, one {# bank account is missing its routing or account number:} other {# bank accounts are missing routing or account numbers:}}",
         "wallet_incomplete": "{count, plural, one {# wallet has no number:} other {# wallets have no number:}}",
         "wallet_over_limit": "{count, plural, one {# wallet payment is over the Tk 5 lakh a personal wallet may hold; pay it by bank:} other {# wallet payments are over the Tk 5 lakh a personal wallet may hold; pay them by bank:}}"
+      },
+      "check": {
+        "title": "The bank's report",
+        "none": "No report from the bank or wallet provider uploaded yet.",
+        "file": "Bank or wallet report",
+        "fileHint": "A returns file, or a status for every payment (.xlsx or .csv), with an account number column.",
+        "upload": "Check the payments",
+        "summary": "{file}: {payments} payments sent, {credited} credited, {returned} returned.",
+        "notReported": "{count, plural, one {# payment is not in the report.} other {# payments are not in the report.}}",
+        "unknown": "{count, plural, one {# row is not one of ours.} other {# rows are not ours.}}",
+        "download": "Download the returned payments (CSV)",
+        "summaryReturns": "{file}: {payments} payments sent, {returned} returned."
       }
     },
     "settlements": {
@@ -2103,6 +2141,114 @@
       "payGroup": "Pay group",
       "paymentDate": "Payment date",
       "openRun": "Open a run to pay it"
+    },
+    "reconcile": {
+      "title": "Register and parallel run",
+      "intro": "Upload the payroll you still pay with for this month (Excel or CSV, one row per person) to compare it with this run, person by person. Money matches when it agrees to the taka.",
+      "file": "Current payroll sheet",
+      "fileHint": ".xlsx or .csv, with a heading row that names the employee code column.",
+      "upload": "Upload and compare",
+      "notCompared": "Not compared",
+      "codeColumn": "Employee code column",
+      "nameColumn": "Name column (optional)",
+      "mappingHint": "Choose which of their columns holds each of ours. Columns left as \"Not compared\" are skipped.",
+      "compare": "Compare",
+      "compareAgain": "Compare again",
+      "statuses": {
+        "draft": "Not compared yet",
+        "matched": "Matched",
+        "differences": "Differences"
+      },
+      "fileLine": "{file}: {rows, plural, one {# row} other {# rows}}.",
+      "resultTitle": "Result",
+      "download": "Download the differences (CSV)",
+      "summary": {
+        "people": "People",
+        "matched": "Matched",
+        "differing": "Differ",
+        "onlyOurs": "Only in ours",
+        "onlyTheirs": "Only in theirs"
+      },
+      "column": "Column",
+      "ours": "Ours",
+      "theirs": "Theirs",
+      "differencesTitle": "{count, plural, one {# person to look at} other {# people to look at}}",
+      "people": {
+        "differs": "Differs",
+        "only_ours": "Only in ours",
+        "only_theirs": "Only in theirs"
+      },
+      "oursValue": "ours {value}",
+      "theirsValue": "theirs {value}",
+      "mappingTitle": "Match the columns",
+      "mappingAgain": "Change the columns",
+      "summaryLine": "{matched} of {people} matched",
+      "totals": {
+        "GROSS": "Gross",
+        "EARNINGS": "Total earnings",
+        "DEDUCTIONS": "Total deductions",
+        "NET": "Net pay",
+        "PAID_DAYS": "Paid days",
+        "ABSENT_DAYS": "Absent days",
+        "OT_HOURS": "Overtime hours"
+      }
+    },
+    "parallel": {
+      "intro": "Before payroll goes live, run it alongside the payroll you pay with now. Each month, compute the run here, upload the current payroll's sheet on the run page and compare. Three months in a row in which every pay group matches to the taka is the go-live test.",
+      "ready": "{required} months in a row matched: payroll is ready to go live.",
+      "progress": "{done} of {required} months in a row matched so far.",
+      "title": "Months",
+      "none": "No regular runs computed yet.",
+      "month": "Month",
+      "payGroup": "Pay group",
+      "result": "Comparison",
+      "compare": "Compare"
+    },
+    "reports": {
+      "summaryTitle": "What {month} cost",
+      "month": "Month",
+      "show": "Show",
+      "by": {
+        "unit": "Unit",
+        "entity": "Company",
+        "location": "Site",
+        "group": "Pay group"
+      },
+      "unlocked": "{count, plural, one {# run of this month is not locked yet and is left out.} other {# runs of this month are not locked yet and are left out.}}",
+      "none": "No locked runs for this month.",
+      "columns": {
+        "people": "People",
+        "gross": "Gross",
+        "overtime": "Overtime",
+        "earnings": "Earnings",
+        "deductions": "Deductions",
+        "net": "Net pay",
+        "employerCost": "Employer cost",
+        "cost": "Cost",
+        "change": "vs last month"
+      },
+      "hours": "{hours} h",
+      "total": "Total",
+      "trendTitle": "Cost over the last twelve months",
+      "trendTable": "Show as a table",
+      "trendPoint": "{month}: {cost} for {people, plural, one {# person} other {# people}}",
+      "downloadsTitle": "Registers for {year}",
+      "downloads": {
+        "tax": "Salary and tax deducted (CSV)",
+        "pf": "Provident fund: the year per member (CSV)",
+        "gratuity": "Gratuity provision",
+        "perRun": "Each run's payroll register is on the run's page.",
+        "quarters": "Withholding return (s.177):",
+        "quarter": "Q{quarter}",
+        "advances": "Advances register (Form 40, CSV)",
+        "retention": "Registers are kept for three years (Labour Rules 2015, rule 363)."
+      },
+      "register": "Payroll register",
+      "registers": {
+        "register": "Payroll register",
+        "wage": "Wage register (Form 38)",
+        "overtime": "Overtime register (Form 34)"
+      }
     }
   }
 }

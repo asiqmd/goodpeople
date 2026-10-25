@@ -146,7 +146,7 @@ const LABELS = {
 
 const locale = (language: 'en' | 'bn') => (language === 'bn' ? 'bn-BD' : 'en-GB');
 
-const date = (language: 'en' | 'bn', iso: string) =>
+export const date = (language: 'en' | 'bn', iso: string) =>
   new Intl.DateTimeFormat(locale(language), {
     day: 'numeric',
     month: 'long',

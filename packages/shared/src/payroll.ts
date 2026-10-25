@@ -208,3 +208,22 @@ export const DEFAULT_GL_ACCOUNTS: GlAccounts = {
   gratuityProvision: '2200',
   wppfPayable: '2300',
 };
+
+/**
+ * What a reconciliation compares besides components: the structure's gross, the run's
+ * totals, and the days and hours that explain most differences.
+ */
+export const RECONCILE_TOTALS = [
+  'GROSS',
+  'EARNINGS',
+  'DEDUCTIONS',
+  'NET',
+  'PAID_DAYS',
+  'ABSENT_DAYS',
+  'OT_HOURS',
+] as const;
+export type ReconcileTotal = (typeof RECONCILE_TOTALS)[number];
+
+/** How the cost summary groups people. */
+export const COST_DIMENSIONS = ['unit', 'entity', 'location', 'group'] as const;
+export type CostDimension = (typeof COST_DIMENSIONS)[number];

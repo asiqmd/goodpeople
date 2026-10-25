@@ -20,6 +20,10 @@ import { GratuityService } from './gratuity.service.js';
 import { SettlementsService } from './settlements.service.js';
 import { WppfService } from './wppf.service.js';
 import { PayrollFundsController } from './payroll-funds.controller.js';
+import { PayrollReconciliationController } from './payroll-reconciliation.controller.js';
+import { ReconciliationService } from './reconciliation.service.js';
+import { PayrollReportsController } from './payroll-reports.controller.js';
+import { PayrollReportsService } from './payroll-reports.service.js';
 import { PayrollPaymentsController } from './payroll-payments.controller.js';
 import { PayrollRunsController } from './payroll-runs.controller.js';
 import { PayrollRunsService } from './payroll-runs.service.js';
@@ -39,6 +43,8 @@ import { TaxService } from './tax.service.js';
     IncrementsController,
     PayrollPaymentsController,
     PayrollFundsController,
+    PayrollReconciliationController,
+    PayrollReportsController,
   ],
   providers: [
     PayrollSetupService,
@@ -52,8 +58,16 @@ import { TaxService } from './tax.service.js';
     SettlementsService,
     GratuityService,
     WppfService,
+    ReconciliationService,
+    PayrollReportsService,
     TenantRolesGuard,
   ],
-  exports: [EmployeePayService, PayrollRunsService, LoansService, PayBatchesService],
+  exports: [
+    EmployeePayService,
+    PayrollRunsService,
+    LoansService,
+    PayBatchesService,
+    ReconciliationService,
+  ],
 })
 export class PayrollModule {}

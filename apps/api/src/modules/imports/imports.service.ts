@@ -28,6 +28,7 @@ import {
   type TenantWithAccess,
 } from '@gp/shared';
 import ExcelJS from 'exceljs';
+import { cellText } from '../../common/sheets.js';
 import { desc, eq, inArray, sql } from 'drizzle-orm';
 import type { AuthUser } from '../../common/auth-user.js';
 import { currentTenantId } from '../../common/request-context.js';
@@ -145,24 +146,6 @@ const MS_PER_DAY = 86_400_000;
 /** Records by lower-cased code, for matching what people type in a spreadsheet. */
 const byCode = async <T extends { id: string; code: string | null }>(rows: Promise<T[]>) =>
   new Map((await rows).filter((r) => r.code).map((r) => [r.code!.toLowerCase(), r.id]));
-
-/** A cell as text: dates as YYYY-MM-DD, numbers without trailing zeros, rich text joined. */
-function cellText(value: ExcelJS.CellValue): string {
-  if (value === null || value === undefined) return '';
-  if (value instanceof Date) return value.toISOString().slice(0, 10);
-  if (typeof value === 'number') return String(value);
-  if (typeof value === 'object') {
-    if ('richText' in value)
-      return value.richText
-        .map((r) => r.text)
-        .join('')
-        .trim();
-    if ('text' in value) return String(value.text).trim();
-    if ('result' in value) return cellText(value.result as ExcelJS.CellValue);
-    return '';
-  }
-  return String(value).trim();
-}
 
 /**
  * Bulk hiring from a spreadsheet. Uploading checks every row with the same rules as the

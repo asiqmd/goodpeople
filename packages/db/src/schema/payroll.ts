@@ -10,7 +10,11 @@ import {
   DEFAULT_GL_ACCOUNTS,
   type BonusRule,
   type GlAccounts,
+  type PaymentCheckView,
   type PfVestingStep,
+  type ReconciliationMapping,
+  type ReconciliationStatus,
+  type ReconciliationSummary,
   type RunProblem,
   type TaxArea,
 } from '@gp/shared';
@@ -334,5 +338,69 @@ export const payrollInputs = pgTable(
       columns: [t.tenantId, t.employeeId],
       foreignColumns: [employees.tenantId, employees.id],
     }),
+  ],
+);
+
+/**
+ * A run compared with the payroll it replaces (a parallel run): the uploaded sheet, how its
+ * columns map to ours, and the result. The sheet and result hold pay, so both are encrypted;
+ * the headings and counts are not.
+ */
+export const payrollReconciliations = pgTable(
+  'payroll_reconciliations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: tenantId(),
+    runId: uuid('run_id').notNull(),
+    fileName: text('file_name').notNull(),
+    headers: jsonb('headers').$type<string[]>().notNull(),
+    rowCount: integer('row_count').notNull(),
+    /** The rows under the headings, as encrypted JSON. */
+    sheetEnc: text('sheet_enc').notNull(),
+    mapping: jsonb('mapping').$type<ReconciliationMapping>(),
+    status: text('status').$type<ReconciliationStatus>().notNull().default('draft'),
+    summary: jsonb('summary').$type<ReconciliationSummary>(),
+    /** Column totals and the people who differ, as encrypted JSON. */
+    resultEnc: text('result_enc'),
+    createdBy: uuid('created_by'),
+    createdAt: createdAt(),
+    comparedBy: uuid('compared_by'),
+    comparedAt: timestamp('compared_at', { withTimezone: true }),
+  },
+  (t) => [
+    unique('payroll_reconciliations_tenant_id_uq').on(t.tenantId, t.id),
+    index('payroll_reconciliations_run_idx').on(t.tenantId, t.runId),
+    foreignKey({
+      name: 'payroll_reconciliations_run_fk',
+      columns: [t.tenantId, t.runId],
+      foreignColumns: [payrollRuns.tenantId, payrollRuns.id],
+    }).onDelete('cascade'),
+  ],
+);
+
+/**
+ * A bank's or wallet provider's report on a run's payments (a returns file or a full status
+ * report), matched to what we sent. The result names accounts, so it is encrypted.
+ */
+export const paymentChecks = pgTable(
+  'payment_checks',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: tenantId(),
+    runId: uuid('run_id').notNull(),
+    fileName: text('file_name').notNull(),
+    summary: jsonb('summary').$type<PaymentCheckView['summary']>().notNull(),
+    resultEnc: text('result_enc').notNull(),
+    createdBy: uuid('created_by'),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    unique('payment_checks_tenant_id_uq').on(t.tenantId, t.id),
+    index('payment_checks_run_idx').on(t.tenantId, t.runId),
+    foreignKey({
+      name: 'payment_checks_run_fk',
+      columns: [t.tenantId, t.runId],
+      foreignColumns: [payrollRuns.tenantId, payrollRuns.id],
+    }).onDelete('cascade'),
   ],
 );

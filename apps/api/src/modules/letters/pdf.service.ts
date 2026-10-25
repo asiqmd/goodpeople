@@ -6,8 +6,12 @@ import {
   ServiceUnavailableException,
   type OnApplicationShutdown,
 } from '@nestjs/common';
+import { PDFDocument } from 'pdf-lib';
 import puppeteer, { type Browser } from 'puppeteer-core';
 import { APP_CONFIG, type AppConfig } from '../../config.js';
+
+/** Parts of a long document rendered at the same time. */
+const PARALLEL_PARTS = 4;
 
 /** Where Chrome or Chromium usually lives, when CHROME_PATH is not set. */
 const CHROME_CANDIDATES = [
@@ -75,6 +79,30 @@ export class PdfService implements OnApplicationShutdown {
     } finally {
       await page.close().catch((error: Error) => this.logger.warn(error.message));
     }
+  }
+
+  /**
+   * Several HTML documents as one PDF, rendered one after another and joined. Chromium cannot
+   * print a document of many hundreds of pages in one go, so long registers come in parts.
+   */
+  async renderParts(parts: string[]): Promise<Buffer> {
+    if (parts.length === 1) return this.render(parts[0]!);
+    // A few parts at a time, each in its own tab, joined in order.
+    const rendered: Buffer[] = Array.from({ length: parts.length });
+    let next = 0;
+    const worker = async () => {
+      while (next < parts.length) {
+        const i = next++;
+        rendered[i] = await this.render(parts[i]!);
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(PARALLEL_PARTS, parts.length) }, worker));
+    const merged = await PDFDocument.create();
+    for (const bytes of rendered) {
+      const part = await PDFDocument.load(bytes);
+      for (const p of await merged.copyPages(part, part.getPageIndices())) merged.addPage(p);
+    }
+    return Buffer.from(await merged.save());
   }
 
   async onApplicationShutdown() {

@@ -10,6 +10,7 @@ import {
   leaveRequests,
   leaveTypes,
   legalEntities,
+  locations,
   orgUnits,
   payrollInputs,
   loanRepayments,
@@ -453,6 +454,9 @@ export interface JobOnDate {
   orgUnitBn: string | null;
   /** The unit's code: the cost centre in the journal. */
   orgUnitCode: string | null;
+  orgUnitId: string | null;
+  locationId: string | null;
+  location: string | null;
   workerCategory: WorkerCategory;
   employmentType: EmploymentType;
 }
@@ -470,6 +474,9 @@ export async function jobsOn(tx: Tx, ids: string[], on: string) {
       orgUnit: orgUnits.name,
       orgUnitBn: orgUnits.nameBn,
       orgUnitCode: orgUnits.code,
+      orgUnitId: jobAssignments.orgUnitId,
+      locationId: jobAssignments.locationId,
+      location: locations.name,
       workerCategory: jobAssignments.workerCategory,
       employmentType: jobAssignments.employmentType,
     })
@@ -477,6 +484,7 @@ export async function jobsOn(tx: Tx, ids: string[], on: string) {
     .innerJoin(legalEntities, eq(legalEntities.id, jobAssignments.legalEntityId))
     .leftJoin(designations, eq(designations.id, jobAssignments.designationId))
     .leftJoin(orgUnits, eq(orgUnits.id, jobAssignments.orgUnitId))
+    .leftJoin(locations, eq(locations.id, jobAssignments.locationId))
     .where(and(inArray(jobAssignments.employeeId, ids), lte(jobAssignments.effectiveFrom, on)))
     .orderBy(asc(jobAssignments.effectiveFrom));
   for (const row of rows) out.set(row.employeeId, row);

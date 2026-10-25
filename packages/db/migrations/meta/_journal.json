@@ -148,6 +148,20 @@
       "when": 1792916087420,
       "tag": "0020_payroll_settlement_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1792919639567,
+      "tag": "0021_payroll_reports",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1792919639944,
+      "tag": "0022_payroll_reports_rls",
+      "breakpoints": true
     }
   ]
 }

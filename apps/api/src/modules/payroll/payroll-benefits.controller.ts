@@ -16,6 +16,8 @@ import {
   declarationVerifySchema,
   fiscalYearOf,
   fiscalYearQuerySchema,
+  taxQuarterQuerySchema,
+  type TaxQuarterQuery,
   loanCreateSchema,
   loanRepaySchema,
   payBatchSchema,
@@ -298,6 +300,20 @@ export class TaxController {
     return fileResponse(Buffer.from(await this.tax.register(year)), {
       contentType: 'text/csv; charset=utf-8',
       fileName: `salary-tax-${year}.csv`,
+      download: true,
+    });
+  }
+
+  /** A quarter's salary and tax for the withholding return (s.177). */
+  @Get('payroll/tax/quarter')
+  @Permits('payroll.view')
+  async quarter(
+    @Query(zod(taxQuarterQuerySchema)) query: TaxQuarterQuery,
+  ): Promise<StreamableFile> {
+    const text = await this.tax.quarterStatement(query.fiscalYear, query.quarter);
+    return fileResponse(Buffer.from(text), {
+      contentType: 'text/csv; charset=utf-8',
+      fileName: `withholding-${query.fiscalYear}-q${query.quarter}.csv`,
       download: true,
     });
   }

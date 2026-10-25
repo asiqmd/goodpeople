@@ -1,6 +1,7 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import type { SetupChecklist } from '@gp/shared';
+import type { SetupChecklist, TenantWithAccess } from '@gp/shared';
+import { CurrentTenant } from '../../common/auth-user.js';
 import { Permits, TenantRolesGuard } from '../../common/roles.js';
 import { AccessStateGuard } from '../entitlements/guards.js';
 import { SetupService } from './setup.service.js';
@@ -15,7 +16,7 @@ export class SetupController {
   /** What the workspace still needs before go-live. */
   @Get()
   @Permits('org.manage')
-  checklist(): Promise<SetupChecklist> {
-    return this.setup.checklist();
+  checklist(@CurrentTenant() tenant: TenantWithAccess): Promise<SetupChecklist> {
+    return this.setup.checklist(tenant);
   }
 }
