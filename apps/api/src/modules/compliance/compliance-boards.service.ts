@@ -41,6 +41,8 @@ import {
 import type { AuthUser } from '../../common/auth-user.js';
 import { badRequest } from '../../common/errors.js';
 import { TenantDb } from '../../db/db.module.js';
+import { keepVisible, mustChangeEmployee } from '../access-scopes/employee-scope.js';
+import { entityScope } from '../access-scopes/entity-scope.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
 import { employeeRef } from '../attendance/attendance-views.js';
 import { employeesInUnits, inForceOn, unitAndBelow } from '../employees/employee.queries.js';
@@ -52,6 +54,7 @@ import {
   settingsOf,
 } from './compliance-check.service.js';
 import { adolescentsOn, certificatesOf, unknownWorkplace, workplacesOn } from './people.js';
+import { PolicyService } from '../group/policy.service.js';
 
 const NIGHT_DAYS = 30;
 /** Retroactive consent clears alerts this far back at most, as a check covers 93 days. */
@@ -70,13 +73,14 @@ export class ComplianceBoardsService {
     private readonly tenantDb: TenantDb,
     private readonly audit: TenantAuditService,
     private readonly check: ComplianceCheckService,
+    private readonly policy: PolicyService,
   ) {}
 
   /**
    * One week's hours so far per worker against the law and the company's caps, from the same
    * processed days that pay them: there is no other set of hours.
    */
-  hours(query: HoursBoardQuery): Promise<HoursBoardView> {
+  hours(user: AuthUser, query: HoursBoardQuery): Promise<HoursBoardView> {
     return this.tenantDb.run(async (tx) => {
       const today = todayIn();
       const weekStart = weekStartOf(query.week ?? today);
@@ -84,10 +88,10 @@ export class ComplianceBoardsService {
       const asOf = minDate(weekEnd, today);
       const month = asOf.slice(0, 7);
       const settings = await settingsOf(tx);
-      const caps = capsOf(settings);
       const law = workingTimeLaw(weekStart);
       const units = query.orgUnitId ? await unitAndBelow(tx, query.orgUnitId) : null;
       const readFrom = minDate(weekStart, `${month}-01`);
+      const scope = await entityScope(tx, user, employees.id);
       const days = await tx
         .select({
           employeeId: attendanceDays.employeeId,
@@ -107,6 +111,7 @@ export class ComplianceBoardsService {
         .innerJoin(employees, eq(employees.id, attendanceDays.employeeId))
         .where(
           and(
+            scope,
             units
               ? inArray(attendanceDays.employeeId, employeesInUnits(tx, units, asOf))
               : undefined,
@@ -118,6 +123,14 @@ export class ComplianceBoardsService {
       const people = [...new Map(inWeek.map((d) => [d.employeeId, d.employee])).values()];
       const places = await workplacesOn(
         tx,
+        people.map((p) => p.id),
+        asOf,
+      );
+      // Each person against their own company's caps.
+      const policies = await this.policy.forEmployees(
+        tx,
+        'overtime_caps',
+        settings,
         people.map((p) => p.id),
         asOf,
       );
@@ -133,6 +146,7 @@ export class ComplianceBoardsService {
         const monthOvertime = days
           .filter((d) => d.employeeId === person.id && d.date.startsWith(month) && d.date <= asOf)
           .reduce((n, d) => n + d.overtimeMinutes, 0);
+        const caps = capsOf(policies.get(person.id)!);
         const place = places.get(person.id) ?? unknownWorkplace;
         const adolescent = isAdolescent(person.dateOfBirth, asOf);
         const weeklyLimit = adolescent
@@ -173,6 +187,8 @@ export class ComplianceBoardsService {
       rows.sort(
         (a, b) => b.percent - a.percent || a.employee.fullName.localeCompare(b.employee.fullName),
       );
+      // The group's caps for the heading; a row is measured against its company's.
+      const caps = capsOf(settings);
       return {
         weekStart,
         weekEnd,
@@ -190,14 +206,18 @@ export class ComplianceBoardsService {
   }
 
   /** Adolescents at work: their age, certificate of fitness and this week's hours (s.34–41). */
-  adolescents(): Promise<AdolescentsView> {
+  adolescents(user: AuthUser): Promise<AdolescentsView> {
     return this.tenantDb.run(async (tx) => {
       const today = todayIn();
       const weekStart = weekStartOf(today);
       const weekEnd = addDays(weekStart, 6);
       const law = workingTimeLaw(today);
       const adultAge = ruleOn(BD_RULES, 'adolescent.adult_age', today).value;
-      const minors = await adolescentsOn(tx, today);
+      const minors = await keepVisible(
+        tx,
+        await entityScope(tx, user, employees.id),
+        await adolescentsOn(tx, today),
+      );
       const ids = minors.map((m) => m.id);
       // One query at a time: they share the transaction's connection.
       const places = await workplacesOn(tx, ids, today);
@@ -253,7 +273,7 @@ export class ComplianceBoardsService {
    * Women and night work (s.109): those with consent on record, those who worked at night in
    * the last 30 days or have an open alert for it, or anyone found by name or code.
    */
-  nightWork(query: NightWorkQuery): Promise<NightWorkView> {
+  nightWork(user: AuthUser, query: NightWorkQuery): Promise<NightWorkView> {
     return this.tenantDb.run(async (tx) => {
       const today = todayIn();
       const since = addDays(today, -(NIGHT_DAYS - 1));
@@ -263,6 +283,7 @@ export class ComplianceBoardsService {
         eq(employees.status, 'active'),
         eq(employees.gender, 'female'),
         lte(employees.dateOfBirth, addMonths(today, -12 * adultAge)),
+        await entityScope(tx, user, employees.id),
       );
       const nights = await this.nightsSince(tx, since, today, law.womenNight);
       let ids: string[];
@@ -312,6 +333,7 @@ export class ComplianceBoardsService {
     return this.tenantDb.run(async (tx) => {
       const [employee] = await tx.select().from(employees).where(eq(employees.id, employeeId));
       if (!employee) throw new NotFoundException('Employee not found');
+      await mustChangeEmployee(tx, user, employeeId);
       if (employee.gender !== 'female') {
         throw badRequest('consent_women_only', 'Night-work consent is recorded for women (s.109)');
       }

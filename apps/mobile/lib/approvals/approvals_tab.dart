@@ -12,9 +12,9 @@ import '../ui/load_error_view.dart';
 import '../ui/theme.dart';
 import 'approvals_providers.dart';
 
-/// Other people's leave, attendance corrections and resignations waiting
-/// for the signed-in user's decision. The Leave and Attendance screens both
-/// show it, since it is one inbox.
+/// Other people's leave, attendance corrections, resignations and project
+/// timesheets waiting for the signed-in user's decision. The Leave and
+/// Attendance screens both show it, since it is one inbox.
 class ApprovalsTab extends ConsumerWidget {
   const ApprovalsTab({super.key});
 
@@ -100,6 +100,10 @@ class _ApprovalCardState extends ConsumerState<_ApprovalCard> {
         approve
             ? (l10n.approveSeparationTitle, l10n.separationApproved)
             : (l10n.rejectSeparationTitle, l10n.separationRejected),
+      TimesheetApprovalItem() =>
+        approve
+            ? (l10n.approveTimesheetTitle, l10n.timesheetApproved)
+            : (l10n.rejectTimesheetTitle, l10n.timesheetRejected),
       // Never decided here: an unknown item has no buttons.
       UnknownApprovalItem() =>
         approve ? (l10n.approve, l10n.approve) : (l10n.reject, l10n.reject),
@@ -144,6 +148,7 @@ class _ApprovalCardState extends ConsumerState<_ApprovalCard> {
       LeaveApprovalItem() => _leaveDetails(context, item),
       RegularizationApprovalItem() => _correctionDetails(context, item),
       SeparationApprovalItem() => _separationDetails(context, item),
+      TimesheetApprovalItem() => _timesheetDetails(context, item),
       UnknownApprovalItem() => [
         _header(context),
         Text(
@@ -396,6 +401,50 @@ class _ApprovalCardState extends ConsumerState<_ApprovalCard> {
         const Divider(height: 8),
         ApprovalTrail(steps: separation.steps),
       ],
+    ];
+  }
+
+  List<Widget> _timesheetDetails(
+    BuildContext context,
+    TimesheetApprovalItem item,
+  ) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final timesheet = item.timesheet;
+    final employee = timesheet.employee;
+    // The API's decimals such as `126.00` or `33.33`, in the UI language's
+    // digits and without trailing zeros.
+    String number(String value) => formatNumber(l10n, num.tryParse(value) ?? 0);
+
+    return [
+      _header(
+        context,
+        name: localizedName(l10n, employee.fullName, employee.fullNameBn),
+        code: employee.employeeCode,
+      ),
+      Text(
+        '${l10n.approvalTimesheetTitle} · '
+        '${formatMonth(l10n, timesheet.month)}',
+        style: theme.textTheme.titleSmall,
+      ),
+      Text(
+        l10n.timesheetTotal(number(timesheet.totalHours)),
+        style: theme.textTheme.bodyMedium,
+      ),
+      for (final total in timesheet.totals)
+        LeaveFact(
+          label: switch (total.project) {
+            final TimesheetProjectRef project =>
+              '${project.code} · '
+                  '${localizedName(l10n, project.name, project.nameBn)}',
+            null => l10n.timesheetOtherWork,
+          },
+          value: [
+            l10n.timesheetShare(number(total.hours), number(total.percent)),
+            if (total.plannedPercent case final planned?)
+              '(${l10n.timesheetPlanned(number(planned))})',
+          ].join(' '),
+        ),
     ];
   }
 }

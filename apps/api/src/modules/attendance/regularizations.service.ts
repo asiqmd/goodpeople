@@ -25,6 +25,8 @@ import {
   createApprovalSteps,
   type ApprovalStepRow,
   type ApprovalSubjectHandler,
+  whose,
+  type Whose,
 } from '../approvals/approval-steps.js';
 import {
   correctionSummary,
@@ -39,6 +41,7 @@ import { employeeOfUser } from '../employees/employee.queries.js';
 import { timeZoneOf } from './attendance.service.js';
 import { employeeRef, toDayView } from './attendance-views.js';
 import { AttendanceProcessor, settingsOf, type ComputedDay } from './processor.service.js';
+import { entityScope } from '../access-scopes/entity-scope.js';
 
 type RegularizationRow = typeof regularizationRequests.$inferSelect;
 
@@ -237,9 +240,15 @@ export class RegularizationsService implements ApprovalSubjectHandler<Regulariza
     });
   }
 
-  listAll(query: { status?: RegularizationStatus }): Promise<RegularizationView[]> {
-    return this.tenantDb.run((tx) =>
-      this.load(tx, query.status ? eq(regularizationRequests.status, query.status) : undefined),
+  listAll(user: AuthUser, query: { status?: RegularizationStatus }): Promise<RegularizationView[]> {
+    return this.tenantDb.run(async (tx) =>
+      this.load(
+        tx,
+        and(
+          query.status ? eq(regularizationRequests.status, query.status) : undefined,
+          await entityScope(tx, user, regularizationRequests.employeeId),
+        ),
+      ),
     );
   }
 
@@ -268,13 +277,13 @@ export class RegularizationsService implements ApprovalSubjectHandler<Regulariza
     return row ?? null;
   }
 
-  ownedBy(tx: Tx, employeeId: string): SQL {
+  ownedBy(tx: Tx, who: Whose): SQL {
     return inArray(
       approvalSteps.subjectId,
       tx
         .select({ id: regularizationRequests.id })
         .from(regularizationRequests)
-        .where(eq(regularizationRequests.employeeId, employeeId)),
+        .where(whose(regularizationRequests.employeeId, who)),
     );
   }
 

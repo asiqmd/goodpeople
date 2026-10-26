@@ -194,6 +194,35 @@ Before a garment factory relies on the pack (HR, Compliance, IT):
       browser that shows PDFs on the page: Android's Chrome saves payslips to the tablet's
       downloads, where the next worker could open them (see phase-3.md).
 
+## 8. An NGO or a group of companies (Phase 3)
+
+Before an NGO charges salaries to donors from Good People (Finance, HR, programme managers):
+
+- [ ] Counsel confirms the Foreign Donations Act rules marked for review in the Bangladesh
+      pack: the 20% administration cap, and how a multi-year project's approved expenditure
+      is read.
+- [ ] **Projects:** every donor-funded project entered with its grant reference, FD-6
+      approval number and date, period, approved expenditure and staff budget.
+- [ ] **Shares:** each person's planned split entered from the start of the month that goes
+      live, and checked against the budget sheet the donors approved.
+- [ ] **Timesheets:** staff charged to projects know they submit one a month, and their
+      managers know to approve them in the inbox. Field staff have the app, with the month
+      opened once online so it works offline.
+- [ ] **One month in parallel:** the journal's Project column and the personnel cost schedule
+      match the finance team's own allocation for that month, or each difference is
+      explained.
+- [ ] Finance knows the month's split is final once its payroll is locked: timesheets are
+      approved before the run is locked.
+
+Before a group runs shared-service HR (HR, IT):
+
+- [ ] **Company overrides:** each company's differences from group policy entered on the
+      Group → Policies page (leave, app punching, provident fund, overtime caps), with what
+      the union or buyer agreed.
+- [ ] **Limited logins:** each shared-service HR login limited to the companies it looks
+      after on the Users page, then signed in once to check it sees only those people.
+      Payroll is not limited by company: payroll logins see every company's pay.
+
 ## If it goes wrong
 
 The old register stays readable and can be reopened for new entries. Going back is a

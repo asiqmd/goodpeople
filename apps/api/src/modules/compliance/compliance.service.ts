@@ -20,11 +20,13 @@ import {
   type ComplianceSettingsInput,
   type ComplianceSettingsView,
 } from '@gp/shared';
-import { and, count, desc, eq, gte, inArray, lte, sql, type SQL } from 'drizzle-orm';
+import { and, count, desc, eq, gte, inArray, isNull, lte, or, sql, type SQL } from 'drizzle-orm';
 import type { AuthUser } from '../../common/auth-user.js';
 import { badRequest, conflict } from '../../common/errors.js';
 import { currentTenantId } from '../../common/request-context.js';
 import { TenantDb } from '../../db/db.module.js';
+import { keepVisible } from '../access-scopes/employee-scope.js';
+import { employeesOfEntities, entityScopeOf } from '../access-scopes/entity-scope.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
 import { employeeRef } from '../attendance/attendance-views.js';
 import { duration } from './alert-text.js';
@@ -42,6 +44,38 @@ const toSettingsView = (s: ComplianceSettings): ComplianceSettingsView => ({
   law: workingTimeLaw(todayIn()),
   updatedAt: s.updatedAt?.toISOString() ?? null,
 });
+
+/**
+ * What a login limited to some companies sees: their people (a condition on employees), and
+ * alerts about those people or about the companies' sites and committees. Empty: everything.
+ */
+async function scopeOf(tx: Tx, user: AuthUser): Promise<{ people?: SQL; alerts?: SQL }> {
+  const entities = await entityScopeOf(tx, user.id);
+  if (!entities) return {};
+  const people = employeesOfEntities(tx, entities);
+  const sites = tx
+    .select({ id: locations.id })
+    .from(locations)
+    .where(inArray(locations.legalEntityId, entities));
+  const theirCommittees = tx
+    .select({ id: committees.id })
+    .from(committees)
+    .where(or(inArray(committees.legalEntityId, entities), inArray(committees.locationId, sites)));
+  return {
+    people: inArray(employees.id, people),
+    alerts: or(
+      inArray(a.employeeId, people),
+      and(
+        isNull(a.employeeId),
+        or(
+          inArray(a.subjectId, entities),
+          inArray(a.subjectId, sites),
+          inArray(a.subjectId, theirCommittees),
+        ),
+      ),
+    ),
+  };
+}
 
 /** Settings, the alert list with acknowledgement, and the overview. */
 @Injectable()
@@ -94,9 +128,10 @@ export class ComplianceService {
     });
   }
 
-  alerts(query: ComplianceAlertQuery): Promise<ComplianceAlertPage> {
+  alerts(user: AuthUser, query: ComplianceAlertQuery): Promise<ComplianceAlertPage> {
     return this.tenantDb.run(async (tx) => {
       const where = and(
+        (await scopeOf(tx, user)).alerts,
         query.kind ? eq(a.kind, query.kind) : undefined,
         query.status ? eq(a.status, query.status) : undefined,
         query.employeeId ? eq(a.employeeId, query.employeeId) : undefined,
@@ -118,7 +153,12 @@ export class ComplianceService {
     input: AcknowledgeAlertInput,
   ): Promise<ComplianceAlertView> {
     return this.tenantDb.run(async (tx) => {
-      const [alert] = await tx.select().from(a).where(eq(a.id, id)).for('update');
+      const scope = await scopeOf(tx, user);
+      const [alert] = await tx
+        .select()
+        .from(a)
+        .where(and(eq(a.id, id), scope.alerts))
+        .for('update');
       if (!alert) throw new NotFoundException('Alert not found');
       if (alert.status === 'acknowledged') {
         throw conflict('alert_acknowledged', 'This alert is already acknowledged');
@@ -150,13 +190,15 @@ export class ComplianceService {
     });
   }
 
-  overview(): Promise<ComplianceOverview> {
+  /** For the companies the user looks after. */
+  overview(user: AuthUser): Promise<ComplianceOverview> {
     return this.tenantDb.run(async (tx) => {
       const today = todayIn();
+      const scope = await scopeOf(tx, user);
       const counts = await tx
         .select({ kind: a.kind, status: a.status, n: count() })
         .from(a)
-        .where(inArray(a.status, ['open', 'acknowledged']))
+        .where(and(inArray(a.status, ['open', 'acknowledged']), scope.alerts))
         .groupBy(a.kind, a.status);
       const kinds = COMPLIANCE_ALERT_KINDS.map((kind) => {
         const of = (status: string) =>
@@ -166,8 +208,14 @@ export class ComplianceService {
       const [resolved] = await tx
         .select({ n: count() })
         .from(a)
-        .where(and(eq(a.status, 'resolved'), gte(a.updatedAt, sql`now() - interval '30 days'`)));
-      const minors = await adolescentsOn(tx, today);
+        .where(
+          and(
+            eq(a.status, 'resolved'),
+            gte(a.updatedAt, sql`now() - interval '30 days'`),
+            scope.alerts,
+          ),
+        );
+      const minors = await keepVisible(tx, scope.people, await adolescentsOn(tx, today));
       const certificates = await certificatesOf(
         tx,
         minors.map((m) => m.id),
@@ -181,6 +229,7 @@ export class ComplianceService {
             eq(employees.status, 'active'),
             eq(employees.gender, 'female'),
             lte(employees.nightWorkConsentFrom, today),
+            scope.people,
           ),
         );
       return {
@@ -194,7 +243,10 @@ export class ComplianceService {
           return state === 'missing' || state === 'expired';
         }).length,
         womenWithNightConsent: consents?.n ?? 0,
-        latest: await this.views(tx, eq(a.status, 'open'), { limit: 5, offset: 0 }),
+        latest: await this.views(tx, and(eq(a.status, 'open'), scope.alerts), {
+          limit: 5,
+          offset: 0,
+        }),
       };
     });
   }

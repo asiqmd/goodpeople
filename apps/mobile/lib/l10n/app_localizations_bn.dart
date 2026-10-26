@@ -2057,4 +2057,260 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get passwordChanged =>
       'পাসওয়ার্ড বদলানো হয়েছে। এই ফোনে আপনি সাইন ইন থাকবেন; অন্য ফোন ও ব্রাউজার থেকে সাইন আউট করে দেওয়া হয়েছে।';
+
+  @override
+  String get timesheetTitle => 'টাইমশিট';
+
+  @override
+  String get timesheetSubtitle =>
+      'প্রতিটি প্রকল্পে আপনার কাজের ঘণ্টা, অফলাইনেও';
+
+  @override
+  String get timesheetPreviousMonth => 'আগের মাস';
+
+  @override
+  String get timesheetNextMonth => 'পরের মাস';
+
+  @override
+  String get timesheetNoEmployeeBody =>
+      'টাইমশিট একজন কর্মীর রেকর্ডের অংশ, কিন্তু আপনার লগইনের সঙ্গে কোনো রেকর্ড যুক্ত নেই। থাকা উচিত মনে হলে আপনার মানবসম্পদ বিভাগকে জিজ্ঞাসা করুন।';
+
+  @override
+  String get timesheetLoadFailed => 'আপনার টাইমশিট লোড করা যায়নি।';
+
+  @override
+  String get timesheetOffline =>
+      'আপনি অফলাইনে আছেন। এটি আপনার ফোনে রাখা কপি; যে ঘণ্টা লিখবেন তা আবার অনলাইনে এলে পাঠানো হবে।';
+
+  @override
+  String timesheetStatus(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'draft': 'খসড়া',
+      'submitted': 'জমা দেওয়া হয়েছে',
+      'approved': 'অনুমোদিত',
+      'rejected': 'ফেরত এসেছে',
+      'other': 'অজানা',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get timesheetDue =>
+      'এ মাসে আপনি একটি প্রকল্পে নিযুক্ত আছেন। আপনার ঘণ্টাগুলো লিখুন এবং মাস শেষে জমা দিন।';
+
+  @override
+  String timesheetSubmittedNotice(String date) {
+    return '$date তারিখে জমা দেওয়া হয়েছে। অনুমোদনের অপেক্ষায়।';
+  }
+
+  @override
+  String timesheetApprovedNotice(String name, String date) {
+    return '$name $date তারিখে অনুমোদন করেছেন।';
+  }
+
+  @override
+  String get timesheetRejectedNotice =>
+      'সংশোধনের জন্য ফেরত এসেছে। ঘণ্টাগুলো ঠিক করে আবার জমা দিন।';
+
+  @override
+  String timesheetReopenedNotice(String note) {
+    return 'মানবসম্পদ বিভাগ এটি আবার খুলেছে: $note';
+  }
+
+  @override
+  String get timesheetWeekend => 'সাপ্তাহিক ছুটি';
+
+  @override
+  String get timesheetOffDay => 'বন্ধের দিন';
+
+  @override
+  String timesheetLeave(String name) {
+    return 'ছুটি: $name';
+  }
+
+  @override
+  String timesheetWorked(String hours) {
+    return 'হাজিরা $hours ঘণ্টা';
+  }
+
+  @override
+  String timesheetHours(String hours) {
+    return '$hours ঘণ্টা';
+  }
+
+  @override
+  String get timesheetHoursUnit => 'ঘণ্টা';
+
+  @override
+  String get timesheetOtherWork => 'অন্যান্য কাজ';
+
+  @override
+  String timesheetPlanned(String percent) {
+    return 'পরিকল্পিত $percent%';
+  }
+
+  @override
+  String timesheetShare(String hours, String percent) {
+    return '$hours ঘণ্টা · $percent%';
+  }
+
+  @override
+  String timesheetTotal(String hours) {
+    return 'মোট $hours ঘণ্টা';
+  }
+
+  @override
+  String get timesheetNoHours => 'কোনো ঘণ্টা নেই';
+
+  @override
+  String timesheetEditDay(String date) {
+    return '$date তারিখের ঘণ্টা';
+  }
+
+  @override
+  String get timesheetHoursInvalid =>
+      '০ থেকে ২৪-এর মধ্যে ঘণ্টা লিখুন, যেমন ৭.৫';
+
+  @override
+  String get timesheetDayTooLong => 'এক দিনে ২৪ ঘণ্টার বেশি হতে পারে না';
+
+  @override
+  String get timesheetSaveDay => 'সংরক্ষণ করুন';
+
+  @override
+  String get timesheetCancel => 'বাতিল';
+
+  @override
+  String get timesheetAddProject => 'প্রকল্প যোগ করুন';
+
+  @override
+  String get timesheetUnsent => 'এখনো পাঠানো হয়নি';
+
+  @override
+  String timesheetWaiting(num count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countStringটি পরিবর্তন পাঠানোর অপেক্ষায়',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get timesheetSendNow => 'এখনই পাঠান';
+
+  @override
+  String timesheetSent(num count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countStringটি পরিবর্তন পাঠানো হয়েছে',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get timesheetSavedOffline =>
+      'আপনার ফোনে রাখা হয়েছে। অনলাইনে এলে পাঠানো হবে।';
+
+  @override
+  String timesheetRefusedTitle(String project, String date) {
+    return '$date তারিখে $project-এর ঘণ্টা সংরক্ষিত হয়নি';
+  }
+
+  @override
+  String get timesheetPrefill => 'হাজিরা থেকে পূরণ করুন';
+
+  @override
+  String timesheetPrefilled(num count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'হাজিরা থেকে $countStringটি দিন পূরণ হয়েছে',
+      zero: 'পূরণ করার মতো কোনো দিন ছিল না',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get timesheetSubmit => 'জমা দিন';
+
+  @override
+  String get timesheetSubmitTitle => 'আপনার টাইমশিট জমা দিন';
+
+  @override
+  String get timesheetDeclaration =>
+      'আমি প্রত্যয়ন করছি যে এই টাইমশিটে উল্লিখিত ঘণ্টাগুলো এ মাসে প্রদর্শিত প্রকল্পগুলোতে আমার প্রকৃতপক্ষে সম্পাদিত কাজের সময়।';
+
+  @override
+  String get timesheetDeclarationConfirm => 'আমি এই ঘোষণা দিচ্ছি';
+
+  @override
+  String get timesheetSubmitted => 'টাইমশিট জমা দেওয়া হয়েছে';
+
+  @override
+  String get timesheetSendFirst =>
+      'আপনার পরিবর্তনগুলো এখনো সার্ভারে পৌঁছায়নি। জমা দেওয়ার আগে সেগুলো পাঠান।';
+
+  @override
+  String get timesheetNoProjects => 'এ মাসে ঘণ্টা লেখার মতো কোনো প্রকল্প নেই।';
+
+  @override
+  String get timesheetErrorLocked =>
+      'এই টাইমশিট জমা বা অনুমোদিত হয়ে গেছে, তাই আর বদলানো যাবে না।';
+
+  @override
+  String get timesheetErrorEmpty => 'জমা দেওয়ার আগে আপনার ঘণ্টাগুলো লিখুন।';
+
+  @override
+  String get timesheetErrorMonthNotStarted =>
+      'মাস শুরু হওয়ার পরেই তা জমা দেওয়া যায়।';
+
+  @override
+  String get timesheetErrorOutsideMonth => 'দিনটি এই মাসের নয়।';
+
+  @override
+  String get timesheetErrorProjectUnknown => 'এমন কোনো প্রকল্প নেই।';
+
+  @override
+  String get timesheetErrorProjectClosed => 'প্রকল্পটি বন্ধ হয়ে গেছে।';
+
+  @override
+  String get timesheetErrorOtherCompany => 'প্রকল্পটি অন্য কোম্পানির।';
+
+  @override
+  String get timesheetErrorOutsidePeriod => 'সেদিন প্রকল্পটি চালু ছিল না।';
+
+  @override
+  String get timesheetErrorDayOver24 => 'এক দিনে ২৪ ঘণ্টার বেশি হতে পারে না।';
+
+  @override
+  String get timesheetErrorClientIdTaken => 'এই এন্ট্রিটি অন্য কারও।';
+
+  @override
+  String get approvalTimesheetTitle => 'প্রকল্প টাইমশিট';
+
+  @override
+  String get approveTimesheetTitle => 'এই টাইমশিট অনুমোদন করবেন?';
+
+  @override
+  String get rejectTimesheetTitle => 'এই টাইমশিট প্রত্যাখ্যান করবেন?';
+
+  @override
+  String get timesheetApproved => 'টাইমশিট অনুমোদন করা হয়েছে';
+
+  @override
+  String get timesheetRejected => 'টাইমশিট সংশোধনের জন্য ফেরত পাঠানো হয়েছে';
 }

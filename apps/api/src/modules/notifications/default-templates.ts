@@ -184,6 +184,18 @@ export const DEFAULT_TEMPLATES: Record<NotificationEvent, Record<UserLanguage, T
       sms: 'Good People: {{person.name}}-এর প্রসূতি সুবিধা {{maternity.amount}}, {{maternity.due}}-এর মধ্যে দিতে হবে।',
     },
   },
+  'timesheet.due': {
+    en: {
+      title: 'Your timesheet for {{timesheet.month}} is due',
+      body: 'Please fill in and submit your timesheet for {{timesheet.month}}. Your salary is charged to projects by the hours on it.',
+      sms: 'Good People: please submit your timesheet for {{timesheet.month}}.',
+    },
+    bn: {
+      title: '{{timesheet.month}}-এর টাইমশিট জমা দেওয়ার সময় হয়েছে',
+      body: 'অনুগ্রহ করে {{timesheet.month}}-এর টাইমশিট পূরণ করে জমা দিন। এতে লেখা ঘণ্টা অনুযায়ী আপনার বেতন প্রকল্পগুলোতে ভাগ হয়।',
+      sms: 'Good People: অনুগ্রহ করে {{timesheet.month}}-এর টাইমশিট জমা দিন।',
+    },
+  },
   'auth.otp': {
     en: {
       title: 'Your sign-in code',
@@ -214,5 +226,6 @@ export const TEMPLATE_PLACEHOLDERS: Record<NotificationEvent, string[]> = {
   'compliance.alert': ['alert.headline', 'alert.detail'],
   'grievance.received': ['grievance.reference', 'grievance.category'],
   'maternity.payment_due': ['person.name', 'maternity.part', 'maternity.amount', 'maternity.due'],
+  'timesheet.due': ['timesheet.month'],
   'auth.otp': ['otp.code', 'otp.minutes', 'workspace.name'],
 };

@@ -34,6 +34,8 @@ import { and, asc, countDistinct, eq, gte, inArray, lte, ne, notInArray } from '
 import { conflict } from '../../common/errors.js';
 import { FIELD_CIPHER, TenantDb } from '../../db/db.module.js';
 import { PdfService } from '../letters/pdf.service.js';
+import { ProjectSharesService } from '../projects/project-shares.service.js';
+import { splitAmount } from '../projects/shares.js';
 import { csv } from './disbursement.js';
 import { componentsOf } from './payroll-setup.service.js';
 import { partsOf, registerHtml, type RegisterColumn, type RegisterRow } from './reports-pdf.js';
@@ -73,15 +75,18 @@ const shiftMonth = (month: string, by: number) => {
   return d.toISOString().slice(0, 7);
 };
 
-interface Tally {
+const FIGURES = [
+  'gross',
+  'overtime',
+  'otHours',
+  'earnings',
+  'deductions',
+  'net',
+  'employerCost',
+] as const;
+type Figures = Record<(typeof FIGURES)[number], Decimal>;
+interface Tally extends Figures {
   people: Set<string>;
-  gross: Decimal;
-  overtime: Decimal;
-  otHours: Decimal;
-  earnings: Decimal;
-  deductions: Decimal;
-  net: Decimal;
-  employerCost: Decimal;
 }
 const tally = (): Tally => ({
   people: new Set(),
@@ -114,6 +119,7 @@ export class PayrollReportsService {
   constructor(
     private readonly tenantDb: TenantDb,
     private readonly pdf: PdfService,
+    private readonly projectShares: ProjectSharesService,
     @Inject(FIELD_CIPHER) private readonly cipher: FieldCipher,
   ) {}
 
@@ -259,17 +265,7 @@ export class PayrollReportsService {
         const all = tally();
         for (const g of t.groups.values()) {
           for (const p of g.tally.people) all.people.add(p);
-          for (const k of [
-            'gross',
-            'overtime',
-            'otHours',
-            'earnings',
-            'deductions',
-            'net',
-            'employerCost',
-          ] as const) {
-            all[k] = all[k].plus(g.tally[k]);
-          }
+          for (const k of FIGURES) all[k] = all[k].plus(g.tally[k]);
         }
         return all;
       };
@@ -730,7 +726,10 @@ export class PayrollReportsService {
 
   // ── Internals ──────────────────────────────────────────────────────────────
 
-  /** A month's locked items, added up by group. */
+  /**
+   * A month's locked items, added up by group. By project, each person's month is split by
+   * their shares (as the journal charges it), the rest kept under no project.
+   */
   private async tallies(tx: Tx, month: string, by: CostDimension) {
     const inMonth = and(
       inArray(payrollRuns.kind, [...COST_KINDS]),
@@ -747,6 +746,12 @@ export class PayrollReportsService {
       .from(payrollRuns)
       .where(and(inMonth, notInArray(payrollRuns.status, ['locked', 'cancelled'])));
     const groups = new Map<string, { label: string; tally: Tally }>();
+    const add = (key: string, label: string, employeeId: string, f: Figures) => {
+      const g = groups.get(key) ?? { label, tally: tally() };
+      g.tally.people.add(employeeId);
+      for (const k of FIGURES) g.tally[k] = g.tally[k].plus(f[k]);
+      groups.set(key, g);
+    };
     if (runs.length) {
       const components = await componentsOf(tx);
       const inGross = new Set(components.filter((c) => c.inGross).map((c) => c.code));
@@ -763,24 +768,50 @@ export class PayrollReportsService {
             ne(payrollRunItems.status, 'error'),
           ),
         );
-      const jobs = await jobsOn(tx, [...new Set(items.map((i) => i.employeeId))], monthEnd(month));
+      const ids = [...new Set(items.map((i) => i.employeeId))];
+      const jobs = await jobsOn(tx, ids, monthEnd(month));
       const runOf = new Map(runs.map((r) => [r.run.id, r]));
+      const byPerson = new Map<string, Figures>();
       for (const item of items) {
         const r = open<StoredItem>(CIPHER_FIELDS.runResults, item.resultEnc);
-        const { key, label } = dimension(by, jobs.get(item.employeeId), runOf.get(item.runId)!);
-        const g = groups.get(key) ?? { label, tally: tally() };
-        const t = g.tally;
-        t.people.add(item.employeeId);
+        const f: Figures = {
+          gross: zero(),
+          overtime: zero(),
+          otHours: new Decimal(r.variables.otHours),
+          earnings: new Decimal(r.earnings),
+          deductions: new Decimal(r.deductions),
+          net: new Decimal(r.net),
+          employerCost: new Decimal(r.employerCost),
+        };
         for (const l of r.lines) {
-          if (l.kind === 'earning' && inGross.has(l.code)) t.gross = t.gross.plus(l.amount);
-          if (l.code === 'OVERTIME') t.overtime = t.overtime.plus(l.amount);
+          if (l.kind === 'earning' && inGross.has(l.code)) f.gross = f.gross.plus(l.amount);
+          if (l.code === 'OVERTIME') f.overtime = f.overtime.plus(l.amount);
         }
-        t.otHours = t.otHours.plus(r.variables.otHours);
-        t.earnings = t.earnings.plus(r.earnings);
-        t.deductions = t.deductions.plus(r.deductions);
-        t.net = t.net.plus(r.net);
-        t.employerCost = t.employerCost.plus(r.employerCost);
-        groups.set(key, g);
+        if (by === 'project') {
+          const mine = byPerson.get(item.employeeId);
+          if (mine) for (const k of FIGURES) mine[k] = mine[k].plus(f[k]);
+          else byPerson.set(item.employeeId, f);
+          continue;
+        }
+        const { key, label } = dimension(by, jobs.get(item.employeeId), runOf.get(item.runId)!);
+        add(key, label, item.employeeId, f);
+      }
+      if (by === 'project') {
+        const shares = (await this.projectShares.inPlan())
+          ? await this.projectShares.sharesFor(tx, ids, month)
+          : null;
+        for (const [employeeId, f] of byPerson) {
+          const mine = shares?.get(employeeId)?.shares ?? [];
+          const fractions = mine.map((s) => s.fraction);
+          const parts = FIGURES.map((k) => splitAmount(f[k], fractions));
+          const part = (i: number) =>
+            Object.fromEntries(FIGURES.map((k, j) => [k, parts[j]!.parts[i]!])) as Figures;
+          mine.forEach((s, i) => add(s.projectId, `${s.code} · ${s.name}`, employeeId, part(i)));
+          if (fractions.reduce((sum, x) => sum.plus(x), zero()).lessThan(1)) {
+            const rest = Object.fromEntries(FIGURES.map((k, j) => [k, parts[j]!.rest])) as Figures;
+            add('none', 'Not charged to a project', employeeId, rest);
+          }
+        }
       }
     }
     return { groups, runs: runs.length, unlocked: unlocked?.n ?? 0 };

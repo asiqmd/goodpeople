@@ -78,4 +78,12 @@ export const RLS_TABLES = [
   'grievance_messages',
   'kiosks',
   'kiosk_pin_codes',
+  // Phase 3 M4 (migration 0028)
+  'donors',
+  'projects',
+  'employee_allocations',
+  'timesheets',
+  'timesheet_entries',
+  'entity_policy_overrides',
+  'user_entity_scopes',
 ] as const;

@@ -36,6 +36,8 @@ import {
   cancelOpenSteps,
   type ApprovalStepRow,
   type ApprovalSubjectHandler,
+  whose,
+  type Whose,
 } from '../approvals/approval-steps.js';
 import { loadSteps } from '../approvals/approval-views.js';
 import { employeeRef } from '../attendance/attendance-views.js';
@@ -351,13 +353,10 @@ export class EmployeePayService implements ApprovalSubjectHandler<PayRecordView>
     return row ?? null;
   }
 
-  ownedBy(tx: Tx, employeeId: string): SQL {
+  ownedBy(tx: Tx, who: Whose): SQL {
     return inArray(
       approvalSteps.subjectId,
-      tx
-        .select({ id: employeePay.id })
-        .from(employeePay)
-        .where(eq(employeePay.employeeId, employeeId)),
+      tx.select({ id: employeePay.id }).from(employeePay).where(whose(employeePay.employeeId, who)),
     );
   }
 

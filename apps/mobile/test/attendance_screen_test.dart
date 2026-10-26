@@ -7,6 +7,7 @@ import 'package:good_people/api/api_exception.dart';
 import 'package:good_people/api/api_models.dart';
 import 'package:good_people/api/good_people_api.dart';
 import 'package:good_people/app.dart';
+import 'package:good_people/approvals/approvals_providers.dart';
 import 'package:good_people/approvals/approvals_tab.dart';
 import 'package:good_people/attendance/attendance_providers.dart';
 import 'package:good_people/attendance/attendance_screen.dart';
@@ -1098,6 +1099,125 @@ void main() {
     expect(find.byKey(card), findsNothing);
     expect(
       within(AttendanceScreen.approvalsBadgeKey, findText('1')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('approvals: a timesheet shows who, the month and the hours by '
+      'project, and is rejected and approved through its step', (tester) async {
+    final api = FakeGoodPeopleApi()
+      ..approvals = [timesheetApprovalJson(), approvalsJson().first];
+    final container = await pumpAttendance(tester, api);
+    await openTab(tester, AttendanceTab.approvals);
+
+    final card = ApprovalsTab.itemKey(timesheetStepId);
+    for (final text in [
+      'Kulsum Akter',
+      'MG-0012',
+      'Your step: Manager',
+      'Project timesheet · October 2026',
+      'Total 160 h',
+      'WASH-01 · Safe water for Kurigram',
+      '112.5 h · 70.31% (Planned 60%)',
+      'EDU-02 · Schools in Bhola',
+      '31.5 h · 19.69%',
+      'Other work',
+      '16 h · 10%',
+    ]) {
+      expect(within(card, findText(text)), findsOneWidget, reason: text);
+    }
+
+    // Rejecting returns it to Kulsum to correct, with the comment.
+    await tester.tap(find.byKey(ApprovalsTab.rejectKey(timesheetStepId)));
+    await tester.pumpAndSettle();
+    expect(findText('Reject this timesheet?'), findsOneWidget);
+    await tester.enterText(
+      find.byKey(ApprovalsTab.commentFieldKey),
+      'The school hours were on the water project',
+    );
+    await tester.tap(find.byKey(ApprovalsTab.confirmKey));
+    await tester.pumpAndSettle();
+
+    expect(api.decisions, [
+      (
+        stepId: timesheetStepId,
+        decision: ApprovalDecision.reject,
+        comment: 'The school hours were on the water project',
+      ),
+    ]);
+    expect(findText('Timesheet returned for correction'), findsOneWidget);
+    expect(find.byKey(card), findsNothing);
+    expect(
+      within(AttendanceScreen.approvalsBadgeKey, findText('1')),
+      findsOneWidget,
+    );
+    // Let the snack bar go.
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+
+    // Corrected and submitted again, it comes back with a new step.
+    api.approvals = [
+      timesheetApprovalJson(stepId: resubmittedTimesheetStepId),
+      ...api.approvals,
+    ];
+    container.invalidate(approvalsProvider);
+    await tester.pumpAndSettle();
+    final again = ApprovalsTab.itemKey(resubmittedTimesheetStepId);
+    expect(within(again, findText('Total 160 h')), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(ApprovalsTab.approveKey(resubmittedTimesheetStepId)),
+    );
+    await tester.pumpAndSettle();
+    expect(findText('Approve this timesheet?'), findsOneWidget);
+    await tester.tap(find.byKey(ApprovalsTab.confirmKey));
+    await tester.pumpAndSettle();
+
+    expect(api.decisions.last, (
+      stepId: resubmittedTimesheetStepId,
+      decision: ApprovalDecision.approve,
+      comment: null,
+    ));
+    expect(findText('Timesheet approved'), findsOneWidget);
+    expect(find.byKey(again), findsNothing);
+    expect(
+      within(AttendanceScreen.approvalsBadgeKey, findText('1')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('approvals: a timesheet reads in Bangla, with Bangla digits', (
+    tester,
+  ) async {
+    final api = FakeGoodPeopleApi()
+      ..approvals = [timesheetApprovalJson(), approvalsJson().first];
+    await pumpAttendance(tester, api, locale: const Locale('bn'));
+    await openTab(tester, AttendanceTab.approvals);
+
+    final card = ApprovalsTab.itemKey(timesheetStepId);
+    for (final text in [
+      'কুলসুম আক্তার',
+      'প্রকল্প টাইমশিট · অক্টোবর ২০২৬',
+      'মোট ১৬০ ঘণ্টা',
+      'WASH-01 · কুড়িগ্রামে নিরাপদ পানি',
+      '১১২.৫ ঘণ্টা · ৭০.৩১% (পরিকল্পিত ৬০%)',
+      // No Bangla name: the English one.
+      'EDU-02 · Schools in Bhola',
+      '৩১.৫ ঘণ্টা · ১৯.৬৯%',
+      'অন্যান্য কাজ',
+      '১৬ ঘণ্টা · ১০%',
+    ]) {
+      expect(within(card, findText(text)), findsOneWidget, reason: text);
+    }
+
+    await tester.tap(find.byKey(ApprovalsTab.rejectKey(timesheetStepId)));
+    await tester.pumpAndSettle();
+    expect(findText('এই টাইমশিট প্রত্যাখ্যান করবেন?'), findsOneWidget);
+    await tester.tap(find.byKey(ApprovalsTab.confirmKey));
+    await tester.pumpAndSettle();
+    expect(api.decisions.single.stepId, timesheetStepId);
+    expect(
+      findText('টাইমশিট সংশোধনের জন্য ফেরত পাঠানো হয়েছে'),
       findsOneWidget,
     );
   });

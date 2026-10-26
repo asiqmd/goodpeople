@@ -33,6 +33,8 @@ import { FIELD_CIPHER, TenantDb } from '../../db/db.module.js';
 import { employeeRef } from '../attendance/attendance-views.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
 import { PdfService } from '../letters/pdf.service.js';
+import { ProjectSharesService, type EmployeeShares } from '../projects/project-shares.service.js';
+import { splitAmount } from '../projects/shares.js';
 import { allocate, channelOf, csv, type PayableAccount, type Payment } from './disbursement.js';
 import { componentsOf, payrollSettingsOf } from './payroll-setup.service.js';
 import { bankAdviceHtml, cashSheetHtml } from './disbursement-pdf.js';
@@ -60,6 +62,7 @@ export class DisbursementService {
     private readonly tenantDb: TenantDb,
     private readonly audit: TenantAuditService,
     private readonly pdf: PdfService,
+    private readonly projectShares: ProjectSharesService,
     @Inject(FIELD_CIPHER) private readonly cipher: FieldCipher,
   ) {}
 
@@ -358,10 +361,13 @@ export class DisbursementService {
   }
 
   /**
-   * The run as journal lines, by account and cost centre (the unit): earnings and employer
-   * costs debited to expense, deductions and net pay credited to what is owed. It balances.
+   * The run as journal lines, by account, cost centre (the unit) and project: earnings and
+   * employer costs debited to expense, deductions and net pay credited to what is owed. It
+   * balances. Expense is charged to each person's projects by their shares for the month,
+   * the rest to no project; what is owed is not split.
    */
-  journal(runId: string): Promise<{ text: string; fileName: string }> {
+  async journal(runId: string): Promise<{ text: string; fileName: string }> {
+    const split = await this.projectShares.inPlan();
     return this.tenantDb.run(async (tx) => {
       const run = await this.lockedRun(tx, runId);
       const settings = await payrollSettingsOf(tx);
@@ -372,26 +378,37 @@ export class DisbursementService {
         .select()
         .from(payrollRunItems)
         .where(and(eq(payrollRunItems.runId, runId), eq(payrollRunItems.status, 'ok')));
-      const jobs = await jobsOn(
-        tx,
-        items.map((i) => i.employeeId),
-        run.periodEnd,
-      );
+      const ids = items.map((i) => i.employeeId);
+      const jobs = await jobsOn(tx, ids, run.periodEnd);
+      const shares = split
+        ? await this.projectShares.sharesFor(tx, ids, run.periodStart.slice(0, 7))
+        : new Map<string, EmployeeShares>();
+      // Paying gratuity from its provision, or the fund's share, settles what is owed.
+      const owed = new Set([gl.gratuityProvision, gl.wppfPayable]);
       const totals = new Map<
         string,
-        { account: string; centre: string; text: string; dr: Decimal; cr: Decimal }
+        {
+          account: string;
+          centre: string;
+          project: string;
+          text: string;
+          dr: Decimal;
+          cr: Decimal;
+        }
       >();
       const post = (
         account: string,
         centre: string,
+        project: string,
         text: string,
         dr: Decimal | number,
         cr: Decimal | number,
       ) => {
-        const key = `${account}|${centre}|${text}`;
+        const key = `${account}|${centre}|${project}|${text}`;
         const t = totals.get(key) ?? {
           account,
           centre,
+          project,
           text,
           dr: new Decimal(0),
           cr: new Decimal(0),
@@ -403,35 +420,61 @@ export class DisbursementService {
       for (const item of items) {
         const { lines } = open<StoredResult>(CIPHER_FIELDS.runResults, item.resultEnc);
         const centre = jobs.get(item.employeeId)?.orgUnitCode ?? '';
+        const mine = shares.get(item.employeeId)?.shares ?? [];
+        const fractions = mine.map((s) => s.fraction);
+        // A part per project, rounded to the paisa so the person's parts add up exactly.
+        const charge = (account: string, text: string, amount: Decimal) => {
+          const { parts, rest } = splitAmount(amount, fractions);
+          mine.forEach((s, i) => post(account, centre, s.code, text, parts[i]!, 0));
+          post(account, centre, '', text, rest, 0);
+        };
         let net = new Decimal(0);
         for (const line of lines) {
           const own = components.get(line.code)?.glAccount ?? null;
           const amount = new Decimal(line.amount);
           if (line.kind === 'earning') {
-            post(accountFor(line, own, gl, settings.gratuityEnabled), centre, line.name, amount, 0);
+            const account = accountFor(line, own, gl, settings.gratuityEnabled);
+            if (owed.has(account)) post(account, centre, '', line.name, amount, 0);
+            else charge(account, line.name, amount);
             net = net.plus(amount);
           } else if (line.kind === 'deduction') {
-            post(deductionAccount(line.code, own, gl), centre, line.name, 0, amount);
+            const account = deductionAccount(line.code, own, gl);
+            // Absence and the like reduce the salary cost, so they are split as it is.
+            if (account === gl.salaryExpense) charge(account, line.name, amount.negated());
+            else post(account, centre, '', line.name, 0, amount);
             net = net.minus(amount);
           } else if (line.kind === 'employer_cost') {
-            post(own ?? gl.salaryExpense, centre, line.name, amount, 0);
+            charge(own ?? gl.salaryExpense, line.name, amount);
             post(
               line.code.startsWith('PF_') ? gl.pfPayable : gl.netPayable,
               centre,
+              '',
               line.name,
               0,
               amount,
             );
           }
         }
-        post(gl.netPayable, centre, 'Net pay', 0, net);
+        post(gl.netPayable, centre, '', 'Net pay', 0, net);
       }
       const date = run.paidOn ?? run.paymentDate;
       const rows: string[][] = [
-        ['Date', 'Account', 'Cost centre', 'Description', 'Debit', 'Credit', 'Reference'],
+        [
+          'Date',
+          'Account',
+          'Cost centre',
+          'Project',
+          'Description',
+          'Debit',
+          'Credit',
+          'Reference',
+        ],
       ];
       for (const t of [...totals.values()].toSorted(
-        (a, b) => a.account.localeCompare(b.account) || a.centre.localeCompare(b.centre),
+        (a, b) =>
+          a.account.localeCompare(b.account) ||
+          a.centre.localeCompare(b.centre) ||
+          a.project.localeCompare(b.project),
       )) {
         // Negative amounts (an adjustment paying back) go to the other side.
         const balance = t.dr.minus(t.cr);
@@ -440,6 +483,7 @@ export class DisbursementService {
           date,
           t.account,
           t.centre,
+          t.project,
           t.text,
           balance.greaterThan(0) ? money(balance) : '',
           balance.lessThan(0) ? money(balance.negated()) : '',

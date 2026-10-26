@@ -13,6 +13,7 @@ import {
   type SelfPunchInput,
   type VoidPunchInput,
   OFFLINE_PUNCH_MAX_HOURS,
+  todayIn,
 } from '@gp/shared';
 import { and, desc, eq, isNotNull, isNull, lte } from 'drizzle-orm';
 import type { AuthUser } from '../../common/auth-user.js';
@@ -22,6 +23,7 @@ import { TenantDb } from '../../db/db.module.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
 import { DocumentsService } from '../documents/documents.service.js';
 import { employeeOfUser } from '../employees/employee.queries.js';
+import { PolicyService } from '../group/policy.service.js';
 import { AttendanceService, punchesOf, timeZoneOf } from './attendance.service.js';
 import { toPunchView } from './attendance-views.js';
 import { AttendanceProcessor, settingsOf } from './processor.service.js';
@@ -41,6 +43,7 @@ export class PunchesService {
     private readonly attendance: AttendanceService,
     private readonly documents: DocumentsService,
     private readonly audit: TenantAuditService,
+    private readonly policy: PolicyService,
   ) {}
 
   /**
@@ -86,7 +89,14 @@ export class PunchesService {
           );
         }
       }
-      const settings = await settingsOf(tx);
+      // Whether and how people punch from the app is the employee's company's rule.
+      const settings = await this.policy.forEmployee(
+        tx,
+        'attendance',
+        await settingsOf(tx),
+        me.id,
+        todayIn(),
+      );
       if (settings.selfPunch === 'off') {
         throw forbidden('self_punch_disabled', 'Punching from the app is turned off');
       }

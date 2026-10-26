@@ -88,7 +88,9 @@ describe('employees', () => {
 
   it('filters by org unit including everything below it', async () => {
     const page = await list(`orgUnitId=${unit('MGT-PROD')}&pageSize=100&search=MG-`);
-    expect(page.items.map((e) => e.employeeCode).toSorted()).toEqual([
+    // The seeded people of Production and its lines; other tests hire there too.
+    const seeded = page.items.map((e) => e.employeeCode).filter((c) => /^MG-\d{4}$/.test(c));
+    expect(seeded.toSorted()).toEqual([
       'MG-0003',
       'MG-0004',
       'MG-0005',
@@ -336,7 +338,11 @@ describe('employees', () => {
     const ngo = (await tenantLogin(app, 'sponsored-ngo')).accessToken;
     await api(app).get(`/tenant/employees/${id}`).set(bearer(ngo)).expect(404);
     const page = (await api(app).get('/tenant/employees').set(bearer(ngo)).expect(200)).body;
-    expect(page.total).toBe(0);
+    // The NGO has its own people, and none of My Group's.
+    expect(page.items.map((e: { id: string }) => e.id)).not.toContain(id);
+    expect(
+      page.items.every((e: { employeeCode: string }) => e.employeeCode.startsWith('SN-')),
+    ).toBe(true);
   });
 
   it("enforces the workspace's employee cap", async () => {

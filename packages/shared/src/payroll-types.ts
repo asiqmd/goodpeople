@@ -4,6 +4,7 @@ import type { LineProblem } from './formula.js';
 import type { Religion } from './hr.js';
 import type { SeparationType } from './lifecycle.js';
 import type {
+  CostDimension,
   DeclarationStatus,
   GlAccounts,
   IncrementBasis,
@@ -767,7 +768,7 @@ export interface CostSummaryRow extends CostFigures {
 
 export interface CostSummary {
   month: string;
-  by: 'unit' | 'entity' | 'location' | 'group';
+  by: CostDimension;
   rows: CostSummaryRow[];
   total: CostSummaryRow;
   /** Locked runs counted, and runs of the month not locked yet (left out). */

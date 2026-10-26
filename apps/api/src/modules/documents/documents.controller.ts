@@ -56,8 +56,11 @@ export class DocumentsController {
 
   @Get('employees/:id/documents')
   @Permits('documents.manage')
-  forEmployee(@Param('id', ParseUUIDPipe) id: string): Promise<DocumentView[]> {
-    return this.documents.forEmployee(id);
+  forEmployee(
+    @CurrentUser() user: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<DocumentView[]> {
+    return this.documents.forEmployee(user, id);
   }
 
   @Post('employees/:id/documents')
@@ -81,9 +84,10 @@ export class DocumentsController {
   @Get('documents/expiring')
   @Permits('documents.manage')
   expiring(
+    @CurrentUser() user: AuthUser,
     @Query(zod(expiringQuerySchema)) query: z.infer<typeof expiringQuerySchema>,
   ): Promise<DocumentView[]> {
-    return this.documents.expiring(query.days);
+    return this.documents.expiring(user, query.days);
   }
 
   /** The file itself; `?download=1` saves it instead of showing it. */

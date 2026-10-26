@@ -30,6 +30,8 @@ import {
   cancelOpenSteps,
   type ApprovalStepRow,
   type ApprovalSubjectHandler,
+  whose,
+  type Whose,
 } from '../approvals/approval-steps.js';
 import { loadSteps } from '../approvals/approval-views.js';
 import { employeeRef } from '../attendance/attendance-views.js';
@@ -222,7 +224,7 @@ export class PayBatchesService implements ApprovalSubjectHandler<PayBatchView> {
     return row ? { employeeId: '', madeBy: row.madeBy } : null;
   }
 
-  ownedBy(tx: Tx, employeeId: string): SQL {
+  ownedBy(tx: Tx, who: Whose): SQL {
     // Nobody may approve a batch that changes their own pay. Without the null filter, a NOT IN
     // over this list would match nothing at all.
     return inArray(
@@ -230,7 +232,7 @@ export class PayBatchesService implements ApprovalSubjectHandler<PayBatchView> {
       tx
         .select({ id: employeePay.batchId })
         .from(employeePay)
-        .where(and(eq(employeePay.employeeId, employeeId), isNotNull(employeePay.batchId))),
+        .where(and(whose(employeePay.employeeId, who), isNotNull(employeePay.batchId))),
     );
   }
 

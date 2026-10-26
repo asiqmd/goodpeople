@@ -49,6 +49,7 @@ import {
   type Letterhead,
   type ServiceBookSection,
 } from './render.js';
+import { entityScope } from '../access-scopes/entity-scope.js';
 
 type TemplateRow = typeof letterTemplates.$inferSelect;
 
@@ -384,7 +385,7 @@ export class LettersService {
 
   // ── ID cards and service book ──────────────────────────────────────────────
 
-  idCards(input: IdCardsInput): Promise<Buffer> {
+  idCards(user: AuthUser, input: IdCardsInput): Promise<Buffer> {
     return this.tenantDb.run(async (tx) => {
       const today = todayIn();
       const rows = await tx
@@ -402,7 +403,9 @@ export class LettersService {
         .leftJoin(legalEntities, eq(legalEntities.id, jobAssignments.legalEntityId))
         .leftJoin(designations, eq(designations.id, jobAssignments.designationId))
         .leftJoin(orgUnits, eq(orgUnits.id, jobAssignments.orgUnitId))
-        .where(inArray(employees.id, input.employeeIds))
+        .where(
+          and(inArray(employees.id, input.employeeIds), await entityScope(tx, user, employees.id)),
+        )
         .orderBy(asc(employees.employeeCode));
       if (rows.length === 0) throw new NotFoundException('Employee not found');
       const photos = await this.vault.photos(

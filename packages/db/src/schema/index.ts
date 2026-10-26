@@ -10,4 +10,6 @@ export * from './payroll.js';
 export * from './benefits.js';
 export * from './billing.js';
 export * from './factory.js';
+export * from './projects.js';
+export * from './group.js';
 export * from './rls.js';

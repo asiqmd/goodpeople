@@ -16,6 +16,7 @@ import {
   type UserCreateInput,
   type UserUpdateInput,
   type WorkspaceUserCreated,
+  type WorkspaceUserListItem,
   type WorkspaceUserView,
 } from '@gp/shared';
 import { CurrentUser, type AuthUser } from '../../common/auth-user.js';
@@ -33,7 +34,7 @@ export class UsersController {
   constructor(private readonly users: UsersService) {}
 
   @Get()
-  list(): Promise<WorkspaceUserView[]> {
+  list(): Promise<WorkspaceUserListItem[]> {
     return this.users.list();
   }
 

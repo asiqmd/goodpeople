@@ -35,6 +35,8 @@ export default async function WorkspaceLayout({ children }: LayoutProps<'/worksp
   const hasAttendance = result.ok && result.data.access.features.includes('attendance');
   const hasPayroll = result.ok && result.data.access.features.includes('payroll');
   const hasProduction = result.ok && result.data.access.features.includes('production');
+  const hasProjects = result.ok && result.data.access.features.includes('projects');
+  const hasGroup = result.ok && result.data.access.features.includes('multi_entity');
   // Resignations need approval in every workspace; leave and corrections where enabled.
   const [approvals, inbox] = result.ok
     ? await Promise.all([
@@ -58,8 +60,20 @@ export default async function WorkspaceLayout({ children }: LayoutProps<'/worksp
         ]
       : []),
     ...(hasLeave ? [{ href: '/workspace/leave', label: tl('leave') }] : []),
+    ...(hasProjects
+      ? [
+          {
+            href: '/workspace/timesheets',
+            label: tw('timesheets'),
+            match: ['/workspace/timesheets'],
+          },
+        ]
+      : []),
     { href: '/workspace/approvals', label: tl('approvals'), badge: waiting },
     ...(may('employees.read') ? [{ href: '/workspace/employees', label: tn('employees') }] : []),
+    ...(hasGroup && may('employees.read')
+      ? [{ href: '/workspace/group', label: tw('group'), match: ['/workspace/group'] }]
+      : []),
     ...(may('lifecycle.manage') ? [{ href: '/workspace/people', label: tlc('people') }] : []),
     ...(may('org.manage') ? [{ href: '/workspace/organization', label: tn('organization') }] : []),
     ...(may('documents.manage') ? [{ href: '/workspace/letters', label: tlc('letters') }] : []),
@@ -92,6 +106,9 @@ export default async function WorkspaceLayout({ children }: LayoutProps<'/worksp
     ...(hasPayroll ? [{ href: '/workspace/payslips', label: tw('payslips') }] : []),
     ...(hasProduction && may('production.manage')
       ? [{ href: '/workspace/production', label: tw('production') }]
+      : []),
+    ...(hasProjects && may('projects.manage')
+      ? [{ href: '/workspace/projects', label: tw('projects'), match: ['/workspace/projects'] }]
       : []),
     ...(may('compliance.manage')
       ? [{ href: '/workspace/compliance', label: tw('compliance') }]

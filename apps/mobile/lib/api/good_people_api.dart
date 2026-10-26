@@ -320,6 +320,43 @@ abstract interface class GoodPeopleApi {
   /// `GET /tenant/me/loans`: the employee's salary advances and loans.
   /// Empty for a login with no employee record.
   Future<List<LoanView>> fetchMyLoans(String accessToken);
+
+  // ── Timesheets ────────────────────────────────────────────────────────────
+  // Needs the workspace's `projects` feature. A login with no employee
+  // record gets a 404. A month already submitted or approved refuses
+  // changes with 409 `timesheet_locked`.
+
+  /// `GET /tenant/timesheets/me?month=`: the month's days, the projects the
+  /// person may charge, their entries and totals.
+  Future<Timesheet> fetchMyTimesheet(
+    String accessToken, {
+    required DateTime month,
+  });
+
+  /// `PUT /tenant/timesheets/me/entries`: saves the entries it can, in
+  /// order, and names every other with its reason. An entry whose clientId
+  /// was saved before counts as accepted and changes nothing.
+  Future<TimesheetSaveResult> saveTimesheetEntries(
+    String accessToken, {
+    required DateTime month,
+    required List<TimesheetEntryDraft> entries,
+  });
+
+  /// `POST /tenant/timesheets/me/prefill`: fills days with attendance and
+  /// no entries, split by the person's planned shares.
+  Future<TimesheetPrefillResult> prefillTimesheet(
+    String accessToken, {
+    required DateTime month,
+  });
+
+  /// `POST /tenant/timesheets/me/submit` with the declaration: the person
+  /// certifies the hours are the work they actually did. Refusals by
+  /// `code`: `timesheet_empty` and `month_not_started` (400),
+  /// `timesheet_locked` (409).
+  Future<Timesheet> submitTimesheet(
+    String accessToken, {
+    required DateTime month,
+  });
 }
 
 /// [GoodPeopleApi] over HTTP with dio.
@@ -878,6 +915,62 @@ class DioGoodPeopleApi implements GoodPeopleApi {
   Future<List<LoanView>> fetchMyLoans(String accessToken) => _callList(
     () => _dio.get<Object?>('/tenant/me/loans', options: _bearer(accessToken)),
     LoanView.fromJson,
+  );
+
+  @override
+  Future<Timesheet> fetchMyTimesheet(
+    String accessToken, {
+    required DateTime month,
+  }) => _call(
+    () => _dio.get<Object?>(
+      '/tenant/timesheets/me',
+      queryParameters: {'month': toWireMonth(month)},
+      options: _bearer(accessToken),
+    ),
+    Timesheet.fromJson,
+  );
+
+  @override
+  Future<TimesheetSaveResult> saveTimesheetEntries(
+    String accessToken, {
+    required DateTime month,
+    required List<TimesheetEntryDraft> entries,
+  }) => _call(
+    () => _dio.put<Object?>(
+      '/tenant/timesheets/me/entries',
+      data: {
+        'month': toWireMonth(month),
+        'entries': [for (final entry in entries) entry.toJson()],
+      },
+      options: _bearer(accessToken),
+    ),
+    TimesheetSaveResult.fromJson,
+  );
+
+  @override
+  Future<TimesheetPrefillResult> prefillTimesheet(
+    String accessToken, {
+    required DateTime month,
+  }) => _call(
+    () => _dio.post<Object?>(
+      '/tenant/timesheets/me/prefill',
+      data: {'month': toWireMonth(month)},
+      options: _bearer(accessToken),
+    ),
+    TimesheetPrefillResult.fromJson,
+  );
+
+  @override
+  Future<Timesheet> submitTimesheet(
+    String accessToken, {
+    required DateTime month,
+  }) => _call(
+    () => _dio.post<Object?>(
+      '/tenant/timesheets/me/submit',
+      data: {'month': toWireMonth(month), 'declaration': true},
+      options: _bearer(accessToken),
+    ),
+    Timesheet.fromJson,
   );
 
   void close() => _dio.close(force: true);

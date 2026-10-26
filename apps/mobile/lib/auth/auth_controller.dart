@@ -375,6 +375,26 @@ class AuthController extends Notifier<AuthState> {
 
   Future<List<LoanView>> fetchMyLoans() => _withSession(_api.fetchMyLoans);
 
+  // ── Timesheets ────────────────────────────────────────────────────────────
+  // Same refresh-once rule. Saving is safe to retry: entries carry their
+  // clientId.
+
+  Future<Timesheet> fetchMyTimesheet(DateTime month) =>
+      _withSession((token) => _api.fetchMyTimesheet(token, month: month));
+
+  Future<TimesheetSaveResult> saveTimesheetEntries(
+    DateTime month,
+    List<TimesheetEntryDraft> entries,
+  ) => _withSession(
+    (token) => _api.saveTimesheetEntries(token, month: month, entries: entries),
+  );
+
+  Future<TimesheetPrefillResult> prefillTimesheet(DateTime month) =>
+      _withSession((token) => _api.prefillTimesheet(token, month: month));
+
+  Future<Timesheet> submitTimesheet(DateTime month) =>
+      _withSession((token) => _api.submitTimesheet(token, month: month));
+
   /// Runs [call] with the stored access token.
   ///
   /// On a 401 it calls `/auth/refresh` once and retries with the new access

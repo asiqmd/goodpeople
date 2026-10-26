@@ -5,6 +5,7 @@ import { WorkCalendarModule } from '../calendar/work-calendar.module.js';
 import { EntitlementsModule } from '../entitlements/entitlements.module.js';
 import { LeaveModule } from '../leave/leave.module.js';
 import { LettersModule } from '../letters/letters.module.js';
+import { ProjectsModule } from '../projects/projects.module.js';
 import { EmployeePayService } from './employee-pay.service.js';
 import { LoansService } from './loans.service.js';
 import { PayBatchesService } from './pay-batches.service.js';
@@ -32,7 +33,14 @@ import { ProvidentFundService } from './provident-fund.service.js';
 import { TaxService } from './tax.service.js';
 
 @Module({
-  imports: [AuditModule, EntitlementsModule, WorkCalendarModule, LettersModule, LeaveModule],
+  imports: [
+    AuditModule,
+    EntitlementsModule,
+    WorkCalendarModule,
+    LettersModule,
+    LeaveModule,
+    ProjectsModule,
+  ],
   controllers: [
     PayrollSetupController,
     EmployeePayController,

@@ -1441,6 +1441,45 @@ void main() {
       expect(item.separation.employee.fullName, 'Kulsum Akter');
       expect(item.separation.noticeShortfallDays, 29);
     });
+
+    test('a timesheet in the inbox parses as a timesheet item', () async {
+      final (api, _) = client(200, [timesheetApprovalJson()]);
+
+      final item = (await api.fetchApprovals('access-1')).single;
+
+      expect(item, isA<TimesheetApprovalItem>());
+      item as TimesheetApprovalItem;
+      expect(item.stepId, timesheetStepId);
+      expect(item.kind, ApprovalStepKind.manager);
+      final timesheet = item.timesheet;
+      expect(timesheet.employee.fullNameBn, 'কুলসুম আক্তার');
+      expect(timesheet.month, DateTime.utc(2026, 10));
+      expect(timesheet.status, TimesheetStatus.submitted);
+      expect(timesheet.submittedAt, DateTime.utc(2026, 11, 2, 4));
+      expect(timesheet.decidedAt, isNull);
+      expect(timesheet.totalHours, '160.00');
+      final [water, school, other] = timesheet.totals;
+      expect(water.project?.code, 'WASH-01');
+      expect(water.hours, '112.50');
+      expect(water.percent, '70.31');
+      expect(water.plannedPercent, '60.00');
+      expect(school.project?.nameBn, isNull);
+      expect(school.plannedPercent, isNull);
+      // Work not charged to a project.
+      expect(other.project, isNull);
+      expect(other.percent, '10.00');
+    });
+
+    test('a timesheet month that is not YYYY-MM breaks the contract', () {
+      final json = timesheetApprovalJson();
+      expect(
+        () => ApprovalItem.fromJson({
+          ...json,
+          'timesheet': {...json['timesheet']! as Json, 'month': '2026-13'},
+        }),
+        throwsFormatException,
+      );
+    });
   });
 
   group('payroll', () {

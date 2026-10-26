@@ -39,6 +39,8 @@ export const PERMISSIONS = [
   'grievances.manage',
   /** Piece rates, operations and daily production. */
   'production.manage',
+  /** Donors, projects, salary splits, everyone's timesheets and donor reports. */
+  'projects.manage',
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
@@ -60,13 +62,20 @@ export const ROLE_PERMISSIONS: Record<TenantRole, readonly Permission[]> = {
     'compliance.manage',
   ],
   attendance_officer: ['employees.read', 'attendance.manage', 'production.manage'],
-  payroll_officer: ['employees.read', 'payroll.view', 'payroll.manage', 'production.manage'],
+  payroll_officer: [
+    'employees.read',
+    'payroll.view',
+    'payroll.manage',
+    'production.manage',
+    'projects.manage',
+  ],
   finance_officer: [
     'employees.read',
     'payroll.view',
     'payroll.approve',
     'audit.read',
     'billing.manage',
+    'projects.manage',
   ],
   auditor: ['employees.read', 'audit.read'],
   employee: [],

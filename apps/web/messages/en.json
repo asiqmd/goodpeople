@@ -116,7 +116,10 @@
       "maternity": "Maternity",
       "production": "Production",
       "compliance": "Compliance",
-      "grievances": "Grievances"
+      "grievances": "Grievances",
+      "timesheets": "Timesheets",
+      "projects": "Projects",
+      "group": "Group"
     },
     "trial": "Free trial: {days, plural, one {# day} other {# days}} left.",
     "gettingStarted": "Getting started",
@@ -364,7 +367,8 @@
     "api_access": "API access",
     "sso": "Single sign-on",
     "production": "Piece rates and production",
-    "kiosk": "Worker kiosks"
+    "kiosk": "Worker kiosks",
+    "projects": "Projects, grants and timesheets"
   },
   "limits": {
     "max_employees": "Employees",
@@ -1405,7 +1409,29 @@
     "union_has_members": "A union with members cannot be deleted.",
     "member_other_company": "The employee works for another company than the union’s.",
     "member_of_another_union": "Already a member of another union: a worker is in one union at a time (s.193).",
-    "payroll_pending": "This pay is waiting for approval in payroll; send the run back before changing production."
+    "payroll_pending": "This pay is waiting for approval in payroll; send the run back before changing production.",
+    "outside_scope": "This person works for a company you do not look after.",
+    "scope_not_for_admin": "A workspace admin always sees every company.",
+    "unknown_company": "Choose companies of this workspace.",
+    "policy_subject_invalid": "A leave override names its leave type; other policies have none.",
+    "below_statutory_minimum": "This is below the Labour Act’s minimum. See the note below the field.",
+    "project_code_taken": "Another project has this code.",
+    "donor_code_taken": "Another donor has this code.",
+    "allocation_over_100": "This person's shares would add up to more than 100% on some days.",
+    "allocation_outside_project": "The share must fall within the project's period.",
+    "project_closed": "This project is closed.",
+    "allocation_started": "This share has started; end it instead of removing it.",
+    "allocation_end_before_start": "A share cannot end before it starts.",
+    "allocation_end_later": "A share can be ended earlier, not stretched.",
+    "legal_entity_unknown": "Choose one of your companies.",
+    "donor_unknown": "Choose one of your donors.",
+    "employee_unknown": "Choose one of your employees.",
+    "timesheet_locked": "This timesheet is submitted or approved, so it cannot change.",
+    "timesheet_empty": "Enter your hours before submitting.",
+    "timesheet_draft": "This timesheet is already a draft.",
+    "timesheet_month_locked": "Pay for this month is locked in payroll, so its timesheet cannot change.",
+    "month_not_started": "A month can be submitted once it has started.",
+    "allocation_pay_locked": "Pay for these days is locked in payroll, so their project shares cannot change."
   },
   "platformRoles": {
     "super_admin": "Super admin",
@@ -1519,7 +1545,8 @@
       "trial_ending": "The free trial is ending",
       "compliance_alert": "A working-time limit was passed, or a committee fell behind",
       "grievance_received": "A worker raised a grievance",
-      "maternity_payment_due": "A maternity benefit payment falls due"
+      "maternity_payment_due": "A maternity benefit payment falls due",
+      "timesheet_due": "Your timesheet for last month is not yet submitted"
     },
     "languages": {
       "en": "English",
@@ -2496,7 +2523,8 @@
         "unit": "Unit",
         "entity": "Company",
         "location": "Site",
-        "group": "Pay group"
+        "group": "Pay group",
+        "project": "Project"
       },
       "unlocked": "{count, plural, one {# run of this month is not locked yet and is left out.} other {# runs of this month are not locked yet and are left out.}}",
       "none": "No locked runs for this month.",
@@ -2532,7 +2560,8 @@
         "register": "Payroll register",
         "wage": "Wage register (Form 38)",
         "overtime": "Overtime register (Form 34)"
-      }
+      },
+      "noProject": "Not charged to a project"
     }
   },
   "pricing": {
@@ -3908,6 +3937,341 @@
       },
       "notInRun": "Not in a locked run",
       "differs": "Differs from the subscription"
+    }
+  },
+  "accessScopes": {
+    "companies": "Companies",
+    "allCompanies": "All companies",
+    "choose": "Choose companies",
+    "hint": "Tick the companies whose people this login may see. None ticked: every company.",
+    "save": "Save companies",
+    "saved": "Saved."
+  },
+  "group": {
+    "title": "Group",
+    "intro": "Each company’s month beside the group’s: people, attendance, open compliance alerts and, for those who may see pay, the payroll cost.",
+    "notInPlan": "The group pack comes with the Business plan and up.",
+    "tabs": {
+      "dashboard": "Dashboard",
+      "policies": "Policies"
+    },
+    "dashboard": {
+      "title": "The group in {month}",
+      "month": "Month",
+      "show": "Show",
+      "noCompanies": "No companies to show.",
+      "byCompany": "By company",
+      "company": "Company",
+      "groupRow": "Group",
+      "trend": "Headcount over twelve months",
+      "trendLabel": "Headcount at each month’s end by company, {from} to {to}",
+      "trendTable": "Headcount at each month’s end",
+      "other": "Other companies",
+      "percent": "{value, number}%",
+      "years": "{value, number} years",
+      "hours": "{value, number} h",
+      "absentOf": "{absent, number} of {working, number} working days absent",
+      "costParts": "Gross {gross} + employer {employer}",
+      "figures": {
+        "headcount": "Headcount",
+        "joiners": "Joined",
+        "leavers": "Left",
+        "attrition": "Attrition (12 months)",
+        "women": "Women",
+        "service": "Average service",
+        "overtime": "Overtime",
+        "absence": "Absence",
+        "alerts": "Open compliance alerts",
+        "payrollCost": "Payroll cost"
+      },
+      "hints": {
+        "headcount": "On the books at the month’s end",
+        "joiners": "Joined during the month",
+        "leavers": "Last working day in the month",
+        "attrition": "Leavers in twelve months over the average headcount",
+        "women": "Share of the headcount",
+        "service": "Of those on the books",
+        "overtime": "From processed attendance",
+        "absence": "Of the working days processed",
+        "alerts": "Working-time and committee alerts still open",
+        "payrollCost": "Gross pay and employer cost of the month’s runs"
+      }
+    },
+    "policies": {
+      "intro": "What the workspace sets is the group’s policy. A company may set some values of its own; everything else follows the group, so a change to the group’s policy reaches every company that has not chosen otherwise. Statutory leave never goes below the Labour Act.",
+      "statutory": "Statutory: the Labour Act’s minimum applies",
+      "areas": {
+        "attendance": "Punching from the app",
+        "provident_fund": "Provident fund rates",
+        "overtime_caps": "Overtime caps",
+        "leave_type": "Leave"
+      },
+      "hints": {
+        "attendance": "Whether people punch from the web and mobile apps, and whether a photo is needed.",
+        "provident_fund": "Contributions in percent of basic, for the fund’s members in payroll.",
+        "overtime_caps": "The company’s own caps, at or below the law’s limits; the compliance check raises an alert past them.",
+        "leave_type": "Days a year, carry-forward and the most days per request."
+      },
+      "company": "Company",
+      "actions": "Actions",
+      "group": "Group’s policy",
+      "ownPolicy": "Own values",
+      "followsGroup": "Follows the group",
+      "change": "Change",
+      "useGroup": "Use the group’s",
+      "save": "Save",
+      "close": "Close",
+      "saved": "Saved.",
+      "chooseOne": "Set at least one value, or use the group’s policy.",
+      "formHint": "{company}’s values. Leave a field empty to follow the group.",
+      "groupValue": "Group: {value}",
+      "groupValueHours": "In hours. Group: {value}",
+      "followGroup": "As the group ({value})",
+      "fields": {
+        "daysPerYear": "Days a year",
+        "carryForwardMax": "Carry-forward cap",
+        "maxDaysPerRequest": "Most days per request",
+        "selfPunch": "Punching from the app",
+        "requireSelfie": "Photo with each punch",
+        "pfEmployeeRate": "Member’s contribution (% of basic)",
+        "pfEmployerRate": "Employer’s contribution (% of basic)",
+        "overtimeDailyCapMinutes": "Overtime a day",
+        "overtimeWeeklyCapMinutes": "Overtime a week",
+        "overtimeMonthlyCapMinutes": "Overtime a month"
+      },
+      "values": {
+        "days": "{count, plural, one {# day} other {# days}}",
+        "noLimit": "No limit",
+        "noCap": "No monthly cap",
+        "percent": "{value, number}%",
+        "hours": "{value, number} h",
+        "yes": "Yes",
+        "no": "No"
+      },
+      "selfPunch": {
+        "off": "Off",
+        "geofenced": "Inside the location’s geofence",
+        "anywhere": "Anywhere"
+      }
+    }
+  },
+  "projects": {
+    "title": "Projects",
+    "intro": "Donor-funded projects, the share of each person's salary charged to them, and what they have been charged from locked payroll.",
+    "notInPlan": "Projects and donor reports come with the Growth plan and above.",
+    "period": "{from} – {to}",
+    "periodOpen": "From {from}",
+    "statuses": {
+      "active": "Active",
+      "closed": "Closed"
+    },
+    "list": {
+      "title": "All projects",
+      "none": "No projects yet. Add the first one below.",
+      "project": "Project",
+      "donor": "Donor",
+      "company": "Company",
+      "period": "Period",
+      "status": "Status",
+      "people": "People",
+      "monthCost": "Charged this month",
+      "coreFunds": "Own funds"
+    },
+    "form": {
+      "addTitle": "New project",
+      "editTitle": "Project details",
+      "code": "Code",
+      "name": "Name",
+      "nameBn": "Name in Bangla",
+      "legalEntity": "Company",
+      "donor": "Donor",
+      "noDonor": "None (own funds)",
+      "grantReference": "Grant reference",
+      "fd6ApprovalNo": "FD-6 approval number",
+      "fd6Hint": "The NGO Affairs Bureau's approval of the project.",
+      "fd6ApprovedOn": "FD-6 approved on",
+      "startsOn": "Starts on",
+      "endsOn": "Ends on",
+      "endsOnHint": "Leave empty if it has no end date yet.",
+      "approvedBudget": "Approved budget (৳)",
+      "approvedBudgetHint": "The expenditure approved in the FD-6; the administration cap is a share of it.",
+      "staffBudget": "Staff budget (৳)",
+      "staffBudgetHint": "The part of the budget for salaries.",
+      "note": "Note",
+      "add": "Add project",
+      "save": "Save",
+      "saved": "Saved."
+    },
+    "donors": {
+      "title": "Donors",
+      "none": "No donors yet.",
+      "code": "Code",
+      "name": "Name",
+      "country": "Country",
+      "countryHint": "Two letters, e.g. GB",
+      "add": "Add donor",
+      "added": "Donor added.",
+      "inactive": "Inactive",
+      "deactivate": "Deactivate",
+      "activate": "Activate"
+    },
+    "close": {
+      "button": "Close project",
+      "confirm": "Close {code}? Its period ends today: shares still running end today, and shares not yet started are removed."
+    },
+    "costs": {
+      "title": "Salaries charged",
+      "from": "From",
+      "to": "To",
+      "show": "Show",
+      "staffBudget": "Staff budget",
+      "staffUsed": "{spent} of {budget} charged since the project started ({percent}).",
+      "overStaff": "More has been charged than the staff budget.",
+      "noStaffBudget": "{spent} charged since the project started. No staff budget is set.",
+      "adminCap": "Administration cap",
+      "adminUsed": "Administration charged so far: {admin} of the {cap} cap ({percent} of the approved budget; the cap is {limit}).",
+      "adminOver": "Administration charged is over {limit} of the approved budget. This is a warning; nothing is blocked.",
+      "reference": "{act}, s.{section}",
+      "needsReview": "To be confirmed against the gazette.",
+      "noApprovedBudget": "Set the approved budget to see the administration cap.",
+      "month": "Month",
+      "people": "People",
+      "fte": "FTE",
+      "earnings": "Gross",
+      "employerCost": "Employer cost",
+      "total": "Total",
+      "programme": "Programme",
+      "admin": "Administration",
+      "basis": "Basis",
+      "basisValue": "Timesheet {timesheet, number} · planned {planned, number}",
+      "unlocked": "Runs not locked yet are left out",
+      "totalRow": "Total",
+      "basisNote": "Salaries come from locked payroll. Timesheet: charged on the person's approved timesheet. Planned: charged on the planned share until a timesheet is approved, which donors accept only as an estimate."
+    },
+    "reports": {
+      "title": "Donor reports",
+      "intro": "The personnel cost schedule from {from} to {to}: a row per person and month, with totals and a certification for the finance signatory.",
+      "csv": "Schedule (CSV)",
+      "pdfEn": "PDF in English",
+      "pdfBn": "PDF in Bangla"
+    },
+    "timesheets": {
+      "title": "Approved timesheets",
+      "none": "No approved timesheets of the people on this project in this period.",
+      "hours": "{project} of {total} hours on this project",
+      "open": "Open"
+    },
+    "allocations": {
+      "title": "Salary shares",
+      "intro": "The planned share of each person's salary charged to this project. For a month with an approved timesheet, the timesheet is used instead. A person's shares on any day add up to at most 100%; the rest stays with their own unit.",
+      "none": "No one has a share in this project yet.",
+      "person": "Person",
+      "percent": "Share (%)",
+      "kind": "Kind",
+      "from": "From",
+      "to": "To",
+      "untilEnd": "End of the project",
+      "closed": "This project is closed; it takes no new shares.",
+      "addTitle": "Add a share",
+      "search": "Search by name or code",
+      "searchButton": "Search",
+      "noMatch": "No one matches.",
+      "choose": "Choose a person",
+      "added": "Share added.",
+      "add": "Add share",
+      "toHint": "Leave empty to run to the end of the project.",
+      "kinds": {
+        "programme": "Programme",
+        "admin": "Administration"
+      },
+      "end": "End",
+      "endOn": "End on",
+      "delete": "Remove",
+      "deleteConfirm": "Remove the share of {name}? It has not started yet."
+    }
+  },
+  "timesheets": {
+    "title": "My timesheet",
+    "intro": "The hours you worked on each project this month. Your salary is charged to projects by these hours once your manager approves them.",
+    "noEmployee": "Your login is not linked to an employee record, so you have no timesheet.",
+    "notInPlan": "Project timesheets are not part of this workspace's plan.",
+    "noProjects": "There are no projects you can charge hours to this month. Ask HR if you work on one.",
+    "previous": "Previous",
+    "next": "Next",
+    "pdfEn": "PDF (English)",
+    "pdfBn": "PDF (Bangla)",
+    "statuses": {
+      "draft": "Draft",
+      "submitted": "Submitted",
+      "approved": "Approved",
+      "rejected": "Returned"
+    },
+    "status": {
+      "due": "You are allocated to a project this month: fill in your hours and submit them at the end of the month.",
+      "submitted": "Submitted on {at}. Waiting for {approver} to approve it.",
+      "approved": "Approved by {name} on {at}.",
+      "rejected": "{name} returned it for correction. Change your hours and submit again.",
+      "reopened": "HR reopened it: {note}"
+    },
+    "grid": {
+      "day": "Day",
+      "attendance": "Attendance",
+      "uncharged": "Other work",
+      "planned": "Planned {percent, number}%",
+      "dayTotal": "Day total",
+      "weekend": "Weekly holiday",
+      "offDay": "Day off",
+      "leave": "Leave: {name}",
+      "hoursFor": "Hours on {day} for {project}",
+      "total": "Total",
+      "hoursShare": "{hours} h ({percent, number}%)",
+      "save": "{count, plural, =0 {Nothing to save} one {Save # change} other {Save # changes}}",
+      "saved": "{count, plural, one {# entry saved.} other {# entries saved.}}",
+      "keys": "Enter or ↓ for the next day, ↑ for the day before. An empty cell removes its hours.",
+      "addProject": "Add a project…"
+    },
+    "problems": {
+      "date_outside_month": "that day is not in this month.",
+      "project_unknown": "that project does not exist.",
+      "project_inactive": "the project is closed.",
+      "project_other_company": "the project belongs to another company.",
+      "project_outside_period": "the project was not running that day.",
+      "day_over_24_hours": "a day cannot have more than 24 hours.",
+      "client_id_taken": "this entry belongs to someone else."
+    },
+    "prefill": {
+      "title": "Fill from attendance",
+      "hint": "Days with attendance and no hours yet get the hours you worked, split across your projects by your planned shares. Leave and days off stay empty. Check them before you submit.",
+      "button": "Fill from attendance",
+      "filled": "{days, plural, =0 {No day needed filling.} one {# day filled.} other {# days filled.}}"
+    },
+    "submit": {
+      "title": "Submit to your manager",
+      "declaration": "Declaration",
+      "declarationNeeded": "Tick the declaration to submit.",
+      "button": "Submit timesheet",
+      "empty": "Enter your hours first."
+    },
+    "review": {
+      "link": "Everyone's timesheets",
+      "title": "Timesheets",
+      "notAllowed": "Only people who manage projects can see everyone's timesheets.",
+      "mine": "My timesheet",
+      "counts": "{people, number} people: {approved, number} approved, {submitted, number} waiting for approval, {missing, number} still to submit.",
+      "none": "Nobody is allocated to a project this month and no one has a timesheet.",
+      "person": "Person",
+      "status": "Status",
+      "hours": "Hours",
+      "allocated": "Allocated to a project",
+      "notStarted": "Not started",
+      "reason": "Reason",
+      "reopen": "Reopen",
+      "reopenNote": "Reopening sends a timesheet back to a draft for the person to change and submit again. It is not possible once the month's pay is locked in payroll."
+    },
+    "approval": {
+      "badge": "Timesheet",
+      "summary": "{month}: {hours} hours",
+      "pdf": "Open the timesheet (PDF)"
     }
   }
 }

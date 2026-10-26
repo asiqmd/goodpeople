@@ -25,6 +25,7 @@ import {
 import { and, desc, eq, gte, inArray, isNull, lte, ne, or, sql } from 'drizzle-orm';
 import { currentTenantId } from '../../common/request-context.js';
 import { TenantDb } from '../../db/db.module.js';
+import { PolicyService } from '../group/policy.service.js';
 import { NotificationsService, usersWith } from '../notifications/notifications.service.js';
 import { alertText } from './alert-text.js';
 import {
@@ -114,6 +115,7 @@ export class ComplianceCheckService {
   constructor(
     private readonly tenantDb: TenantDb,
     private readonly notifications: NotificationsService,
+    private readonly policy: PolicyService,
   ) {}
 
   run(range: { from: IsoDate; to: IsoDate }, employeeIds?: string[]) {
@@ -132,7 +134,7 @@ export class ComplianceCheckService {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtext('compliance'), hashtext(${currentTenantId()}))`,
     );
-    const caps = capsOf(await settingsOf(tx));
+    const settings = await settingsOf(tx);
     const people = await this.peopleOf(tx, from, to, employeeIds);
     result.people = people.length;
     const hr = await usersWith(tx, 'compliance.manage');
@@ -143,7 +145,7 @@ export class ComplianceCheckService {
     for (let i = 0; i < people.length; i += BATCH) {
       const batch = people.slice(i, i + BATCH);
       const rows = [
-        ...(await this.hoursFindings(tx, batch, from, to, caps)),
+        ...(await this.hoursFindings(tx, batch, from, to, settings)),
         ...(certificates ? await this.certificateFindings(tx, batch, to) : []),
       ];
       const saved = await this.save(tx, rows);
@@ -233,7 +235,7 @@ export class ComplianceCheckService {
     people: Person[],
     from: IsoDate,
     to: IsoDate,
-    caps: OvertimeCaps,
+    settings: ComplianceSettings,
   ): Promise<Row[]> {
     const readFrom = min(
       min(weekStartOf(from), monthBounds(from.slice(0, 7)).start),
@@ -266,8 +268,16 @@ export class ComplianceCheckService {
       list.push(d);
       daysOf.set(d.employeeId, list);
     }
+    // Each person is held to the overtime caps of the company they work for at the range's end.
+    const capsByPerson = await this.policy.forEmployees(
+      tx,
+      'overtime_caps',
+      settings,
+      people.map((p) => p.id),
+      to,
+    );
     return people.flatMap((person) =>
-      checkPerson(person, daysOf.get(person.id) ?? [], caps)
+      checkPerson(person, daysOf.get(person.id) ?? [], capsOf(capsByPerson.get(person.id)!))
         .filter((f) => f.periodEnd >= from && f.periodStart <= to)
         .map((f) => ({ ...f, employeeId: person.id })),
     );

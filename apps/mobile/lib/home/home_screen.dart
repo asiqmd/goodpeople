@@ -15,6 +15,7 @@ import '../payslips/my_pay_screen.dart';
 import '../profile/profile_screen.dart';
 import '../team/team_providers.dart';
 import '../team/team_screen.dart';
+import '../timesheets/timesheet_screen.dart';
 import '../ui/format.dart';
 import '../ui/language_menu.dart';
 import '../ui/load_error_view.dart';
@@ -36,6 +37,7 @@ class HomeScreen extends ConsumerWidget {
   static const documentsKey = ValueKey('home-documents');
   static const myPayKey = ValueKey('home-my-pay');
   static const teamKey = ValueKey('home-team');
+  static const timesheetKey = ValueKey('home-timesheet');
   static const accountKey = ValueKey('home-account');
   static const inboxKey = ValueKey('home-inbox');
   static const inboxBadgeKey = ValueKey('home-inbox-badge');
@@ -212,6 +214,17 @@ class _AccessDetails extends ConsumerWidget {
             onTap: () => Navigator.of(context).push(DocumentsScreen.route()),
           ),
         ],
+        // Staff charged to donor-funded projects (the NGO pack).
+        if (view.access.hasFeature('projects')) ...[
+          const SizedBox(height: 12),
+          _ShortcutCard(
+            key: HomeScreen.timesheetKey,
+            icon: Icons.timer_outlined,
+            title: l10n.timesheetTitle,
+            subtitle: l10n.timesheetSubtitle,
+            onTap: () => Navigator.of(context).push(TimesheetScreen.route()),
+          ),
+        ],
         if (view.access.hasFeature('payroll')) ...[
           const SizedBox(height: 12),
           _ShortcutCard(
@@ -351,7 +364,8 @@ class _ModuleTile extends StatelessWidget {
 }
 
 /// A tappable card on the home screen that opens a section, such as My
-/// profile, Leave, Attendance, My documents, My pay, Team or Account.
+/// profile, Leave, Attendance, My documents, Timesheet, My pay, Team or
+/// Account.
 class _ShortcutCard extends StatelessWidget {
   const _ShortcutCard({
     super.key,

@@ -51,6 +51,8 @@ import type { AuthUser } from '../../common/auth-user.js';
 import { forbidden } from '../../common/errors.js';
 import { currentTenantId } from '../../common/request-context.js';
 import { FIELD_CIPHER, TenantDb } from '../../db/db.module.js';
+import { mustChangeEmployee, mustUseCompany } from '../access-scopes/employee-scope.js';
+import { entityScope } from '../access-scopes/entity-scope.js';
 import { AttendanceProcessor } from '../attendance/processor.service.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
 import { currentOf, inForceOn, selectAssignments, toJobView } from './employee.queries.js';
@@ -175,10 +177,13 @@ export class EmployeesService {
     @Inject(FIELD_CIPHER) private readonly cipher: FieldCipher,
   ) {}
 
-  list(query: EmployeeListQuery): Promise<Page<EmployeeListItem>> {
+  /** People in the companies the user looks after, page by page. */
+  list(user: AuthUser, query: EmployeeListQuery): Promise<Page<EmployeeListItem>> {
     const today = todayIn();
     return this.tenantDb.run(async (tx) => {
       const conditions: SQL[] = [];
+      const scope = await entityScope(tx, user, employees.id);
+      if (scope) conditions.push(scope);
       if (query.status) conditions.push(eq(employees.status, query.status));
       if (query.search) {
         const like = `%${escapeLike(query.search)}%`;
@@ -252,11 +257,15 @@ export class EmployeesService {
     });
   }
 
-  /** `revealIdentity` false masks identity numbers to their last four digits. */
-  async get(id: string, revealIdentity = true): Promise<EmployeeDetail> {
-    const detail = await this.tenantDb.run((tx) =>
-      this.detail(tx, eq(employees.id, id), revealIdentity),
-    );
+  /**
+   * `revealIdentity` false masks identity numbers to their last four digits. Someone outside
+   * the companies a `viewer` looks after is not found, so the scope reveals nothing.
+   */
+  async get(id: string, revealIdentity = true, viewer?: AuthUser): Promise<EmployeeDetail> {
+    const detail = await this.tenantDb.run(async (tx) => {
+      const scope = viewer && (await entityScope(tx, viewer, employees.id));
+      return this.detail(tx, and(eq(employees.id, id), scope)!, revealIdentity);
+    });
     if (!detail) throw new NotFoundException('Employee not found');
     return detail;
   }
@@ -268,9 +277,10 @@ export class EmployeesService {
     return detail;
   }
 
-  history(id: string): Promise<JobAssignmentView[]> {
+  history(user: AuthUser, id: string): Promise<JobAssignmentView[]> {
     return this.tenantDb.run(async (tx) => {
-      const rows = await selectAssignments(tx, eq(jobAssignments.employeeId, id));
+      const scope = await entityScope(tx, user, jobAssignments.employeeId);
+      const rows = await selectAssignments(tx, and(eq(jobAssignments.employeeId, id), scope)!);
       if (rows.length === 0) throw new NotFoundException('Employee not found');
       return rows.map(toJobView);
     });
@@ -320,6 +330,7 @@ export class EmployeesService {
     passwordHash?: string,
   ): Promise<string> {
     const portal = input.portalAccess;
+    await mustUseCompany(tx, actor, input.job.legalEntityId);
     await this.checkJobRefs(tx, input.job);
     const tenantId = currentTenantId();
     const userId = portal
@@ -388,6 +399,7 @@ export class EmployeesService {
   async update(actor: AuthUser, id: string, input: UpdateEmployeeInput): Promise<EmployeeDetail> {
     const { identity, probationEndsOn, ...personal } = input;
     await this.tenantDb.run(async (tx) => {
+      await mustChangeEmployee(tx, actor, id);
       const [row] = await tx
         .update(employees)
         .set({
@@ -423,6 +435,7 @@ export class EmployeesService {
    */
   async changeJob(actor: AuthUser, id: string, input: JobChangeInput): Promise<EmployeeDetail> {
     await this.tenantDb.run(async (tx) => {
+      await this.mustChangeJob(tx, actor, id, input.changes);
       const [employee] = await tx
         .select()
         .from(employees)
@@ -518,6 +531,7 @@ export class EmployeesService {
     input: JobCorrectionInput,
   ): Promise<EmployeeDetail> {
     await this.tenantDb.run(async (tx) => {
+      await this.mustChangeJob(tx, actor, id, input.changes);
       const history = await tx
         .select()
         .from(jobAssignments)
@@ -553,6 +567,7 @@ export class EmployeesService {
   async replaceNominees(actor: AuthUser, id: string, input: NomineesInput): Promise<NomineeView[]> {
     return this.tenantDb.run(async (tx) => {
       await this.mustExist(tx, id);
+      await mustChangeEmployee(tx, actor, id);
       await tx.delete(employeeNominees).where(eq(employeeNominees.employeeId, id));
       const rows = input.length
         ? await tx
@@ -592,6 +607,7 @@ export class EmployeesService {
   ): Promise<PaymentAccountView[]> {
     return this.tenantDb.run(async (tx) => {
       await this.mustExist(tx, id);
+      await mustChangeEmployee(tx, actor, id);
       // Full numbers never leave the server, so an edited account that comes back without one
       // keeps the number already stored for it.
       const existing = new Map(
@@ -755,6 +771,12 @@ export class EmployeesService {
         throw new BadRequestException('The location belongs to another legal entity');
       }
     }
+  }
+
+  /** A job change for someone the actor looks after, and not into a company they do not. */
+  private async mustChangeJob(tx: Tx, actor: AuthUser, id: string, changes: JobChanges) {
+    await mustChangeEmployee(tx, actor, id);
+    if (changes.legalEntityId) await mustUseCompany(tx, actor, changes.legalEntityId);
   }
 
   private async unitAndBelow(tx: Tx, unitId: string): Promise<string[]> {

@@ -35,10 +35,13 @@ import {
   createApprovalSteps,
   type ApprovalStepRow,
   type ApprovalSubjectHandler,
+  whose,
+  type Whose,
 } from '../approvals/approval-steps.js';
 import { AttendanceProcessor } from '../attendance/processor.service.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
 import { WorkCalendarService } from '../calendar/work-calendar.service.js';
+import { PolicyService } from '../group/policy.service.js';
 import { userCan } from '../../common/roles.js';
 import { employeeOfUser, teamScope } from '../employees/employee.queries.js';
 import {
@@ -49,6 +52,7 @@ import {
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { BalancesService, type LeaveTypeRow } from './balances.service.js';
 import { loadRequests } from './leave-views.js';
+import { entityScope } from '../access-scopes/entity-scope.js';
 
 type EmployeeRow = typeof employees.$inferSelect;
 
@@ -64,6 +68,7 @@ export class LeaveRequestsService implements ApprovalSubjectHandler<LeaveRequest
     private readonly attendance: AttendanceProcessor,
     private readonly audit: TenantAuditService,
     private readonly notifications: NotificationsService,
+    private readonly policy: PolicyService,
   ) {}
 
   // ── Preview and apply ──────────────────────────────────────────────────────
@@ -142,8 +147,13 @@ export class LeaveRequestsService implements ApprovalSubjectHandler<LeaveRequest
     employee: EmployeeRow,
     input: LeavePreviewInput,
   ): Promise<LeavePreview> {
-    const [type] = await tx.select().from(leaveTypes).where(eq(leaveTypes.id, input.leaveTypeId));
-    if (!type) throw new NotFoundException('Leave type not found');
+    const [groupType] = await tx
+      .select()
+      .from(leaveTypes)
+      .where(eq(leaveTypes.id, input.leaveTypeId));
+    if (!groupType) throw new NotFoundException('Leave type not found');
+    // The most days per request as the employee's company gives this leave.
+    const type = await this.policy.leaveTypeFor(tx, employee.id, groupType, input.startDate);
     const problems: string[] = [];
     const calendar = await this.calendars.forEmployee(tx, employee.id, input.startDate);
     const counted = countLeaveDays(input.startDate, input.endDate, {
@@ -201,7 +211,7 @@ export class LeaveRequestsService implements ApprovalSubjectHandler<LeaveRequest
     const balance = await this.balances.balance(
       tx,
       employee,
-      type,
+      groupType,
       Number(input.startDate.slice(0, 4)),
       calendar,
     );
@@ -346,13 +356,14 @@ export class LeaveRequestsService implements ApprovalSubjectHandler<LeaveRequest
     });
   }
 
-  listAll(query: { status?: string; year?: number }): Promise<LeaveRequestView[]> {
-    return this.tenantDb.run((tx) =>
+  listAll(user: AuthUser, query: { status?: string; year?: number }): Promise<LeaveRequestView[]> {
+    return this.tenantDb.run(async (tx) =>
       loadRequests(
         tx,
         and(
           query.status ? eq(leaveRequests.status, query.status as 'pending') : undefined,
           yearFilter(query.year),
+          await entityScope(tx, user, leaveRequests.employeeId),
         ),
       ),
     );
@@ -513,13 +524,13 @@ export class LeaveRequestsService implements ApprovalSubjectHandler<LeaveRequest
     return row ?? null;
   }
 
-  ownedBy(tx: Tx, employeeId: string): SQL {
+  ownedBy(tx: Tx, who: Whose): SQL {
     return inArray(
       approvalSteps.subjectId,
       tx
         .select({ id: leaveRequests.id })
         .from(leaveRequests)
-        .where(eq(leaveRequests.employeeId, employeeId)),
+        .where(whose(leaveRequests.employeeId, who)),
     );
   }
 

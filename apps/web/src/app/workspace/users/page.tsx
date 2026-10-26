@@ -3,24 +3,37 @@ import {
   MFA_REQUIRED_ROLES,
   TENANT_ROLES,
   type AccountView,
-  type WorkspaceUserView,
+  type LegalEntityView,
+  type TenantAccessView,
+  type WorkspaceUserListItem,
 } from '@gp/shared';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { CreateUserForm, UserActions } from '@/components/account/account-forms';
+import { UserCompanies } from '@/components/access-scopes/user-companies';
 import { Badge, Card } from '@/components/ui';
 import { currentTenantUser, load } from '@/lib/api';
+
+/** HR logins can be limited to some companies; a workspace admin always sees every one. */
+const limitable = (u: WorkspaceUserListItem) =>
+  u.role !== 'tenant_admin' && can(u.role, 'employees.read');
 
 export default async function UsersPage() {
   const user = await currentTenantUser();
   if (!can(user?.role, 'users.manage')) notFound();
   const t = await getTranslations('users');
   const th = await getTranslations('hr');
+  const ts = await getTranslations('accessScopes');
   const format = await getFormatter();
-  const [users, me] = await Promise.all([
-    load<WorkspaceUserView[]>('tenant', '/tenant/users'),
+  const [users, me, { access }] = await Promise.all([
+    load<WorkspaceUserListItem[]>('tenant', '/tenant/users'),
     load<AccountView>('tenant', '/account'),
+    load<TenantAccessView>('tenant', '/tenant/access'),
   ]);
+  const companies = access.features.includes('multi_entity')
+    ? await load<LegalEntityView[]>('tenant', '/tenant/legal-entities')
+    : null;
+  const companyName = new Map(companies?.map((c) => [c.id, c.name]));
   const admins = users.filter((u) => !u.disabled && MFA_REQUIRED_ROLES.includes(u.role));
   const unsecured = admins.filter((u) => !u.mfaEnabled).length;
 
@@ -41,6 +54,7 @@ export default async function UsersPage() {
                 <th className="px-5 py-2 font-medium">{t('signsInWith')}</th>
                 <th className="px-5 py-2 font-medium">{t('role')}</th>
                 <th className="px-5 py-2 font-medium">{t('employee')}</th>
+                {companies && <th className="px-5 py-2 font-medium">{ts('companies')}</th>}
                 <th className="px-5 py-2 font-medium">{t('lastSignIn')}</th>
                 <th className="px-5 py-2 font-medium" />
               </tr>
@@ -63,6 +77,30 @@ export default async function UsersPage() {
                   <td className="px-5 py-3">
                     {u.employee ? `${u.employee.employeeCode} · ${u.employee.fullName}` : '—'}
                   </td>
+                  {companies && (
+                    <td className="min-w-40 px-5 py-3">
+                      {!can(u.role, 'employees.read') ? (
+                        '—'
+                      ) : u.legalEntityIds.length > 0 ? (
+                        <span className="flex flex-wrap gap-1">
+                          {u.legalEntityIds.map((id) => (
+                            <Badge key={id} tone="slate">
+                              {companyName.get(id) ?? '—'}
+                            </Badge>
+                          ))}
+                        </span>
+                      ) : (
+                        <span className="text-slate-500">{ts('allCompanies')}</span>
+                      )}
+                      {limitable(u) && (
+                        <UserCompanies
+                          userId={u.id}
+                          companies={companies}
+                          chosen={u.legalEntityIds}
+                        />
+                      )}
+                    </td>
+                  )}
                   <td className="whitespace-nowrap px-5 py-3 text-slate-500">
                     {u.lastSignInAt
                       ? format.dateTime(new Date(u.lastSignInAt), {

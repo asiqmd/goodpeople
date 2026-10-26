@@ -69,6 +69,7 @@ import { loadSteps } from '../approvals/approval-views.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
 import { WorkCalendarService } from '../calendar/work-calendar.service.js';
 import { employeeOfUser } from '../employees/employee.queries.js';
+import { PolicyService } from '../group/policy.service.js';
 import { PdfService } from '../letters/pdf.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { componentsOf, payrollSettingsOf } from './payroll-setup.service.js';
@@ -167,6 +168,7 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
     private readonly pdf: PdfService,
     private readonly settlements: SettlementsService,
     private readonly wppf: WppfService,
+    private readonly policy: PolicyService,
     @Inject(FIELD_CIPHER) private readonly cipher: FieldCipher,
   ) {}
 
@@ -393,7 +395,13 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
     const components = await componentsOf(tx);
     const previous = await this.previousNets(tx, run);
     const settings = await payrollSettingsOf(tx);
-    const pf = await pfRatesFor(tx, settings, ids, { start: run.periodStart, end: run.periodEnd });
+    const pf = await pfRatesFor(
+      tx,
+      settings,
+      ids,
+      { start: run.periodStart, end: run.periodEnd },
+      this.policy,
+    );
     const loans = await loansFor(tx, this.cipher, ids, run.periodStart.slice(0, 7));
     const tax = await taxContextsFor(tx, this.cipher, settings, run, members, components);
     const extra = await extraVariablesOf(tx, ids, run, tenant, {
@@ -492,10 +500,13 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
       }
     }
     const settings = await payrollSettingsOf(tx);
-    const pf = await pfRatesFor(tx, settings, scope, {
-      start: run.periodStart,
-      end: run.periodEnd,
-    });
+    const pf = await pfRatesFor(
+      tx,
+      settings,
+      scope,
+      { start: run.periodStart, end: run.periodEnd },
+      this.policy,
+    );
     const extra = await extraVariablesOf(tx, scope, run, tenant, {
       production: true,
       unionDues: true,

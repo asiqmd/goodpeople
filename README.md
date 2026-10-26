@@ -66,6 +66,13 @@ A multi-tenant HR and payroll platform, built for Bangladesh first and ready to 
     safety and complaint committees and trade unions with check-off; an anonymous grievance
     channel with a QR poster; worker kiosks with ID-card QR codes and PINs set by SMS; and a
     buyer audit report in English and Bangla.
+  - **Phase 3 M4 (NGO & group packs):** donors and projects with their FD-6 approvals; each
+    person's salary split across projects, planned and then by approved monthly
+    timesheets (offline in the app for field staff), in the journal, the cost reports and
+    a donor personnel cost schedule with the Foreign Donations Act's 20% administration
+    cap; a group dashboard across companies; group policy that a company may override
+    (leave, app punching, provident fund, overtime caps) above the law's floors; and HR
+    logins limited to some of the group's companies.
 - **Next:**
   - Our own organisations go live: [docs/ops/go-live.md](docs/ops/go-live.md).
   - Payroll goes live after three parallel months with a design partner:
@@ -75,7 +82,9 @@ A multi-tenant HR and payroll platform, built for Bangladesh first and ready to 
     ([docs/phases/phase-3.md](docs/phases/phase-3.md#m2-billing--invoicing)).
   - Before factories rely on the RMG pack: the labour lawyer's sign-off on the rules marked
     for review ([docs/phases/phase-3.md](docs/phases/phase-3.md#m3-rmg-pack)).
-  - Phase 3 M4: NGO and group packs. The plan is in
+  - Before an NGO relies on the pack: counsel's sign-off on the Foreign Donations Act rules
+    marked for review ([docs/phases/phase-3.md](docs/phases/phase-3.md#m4-ngo--group-packs)).
+  - Phase 3 M5: support and launch hardening. The plan is in
     [docs/phases/phase-3.md](docs/phases/phase-3.md).
 
 ## Repository layout
@@ -130,16 +139,19 @@ pnpm --filter @gp/web dev
 
 **Seeded test accounts** (local only; the password is `SEED_PASSWORD` in `.env`):
 
-| Who                                                        | Sign in at        | Workspace       | Email                      |
-| ---------------------------------------------------------- | ----------------- | --------------- | -------------------------- |
-| Super Admin                                                | `/platform/login` | –               | `SEED_SUPER_ADMIN_EMAIL`   |
-| Internal tenant (2 legal entities)                         | `/login`          | `my-group`      | `admin@my-group.test`      |
-| Employee self-service (Rahima)                             | `/login`          | `my-group`      | `rahima@my-group.test`     |
-| Line supervisor, approves leave and attendance corrections | `/login`          | `my-group`      | `shirin@my-group.test`     |
-| Finance officer, approves pay changes                      | `/login`          | `my-group`      | `finance@my-group.test`    |
-| Complimentary tenant                                       | `/login`          | `sponsored-ngo` | `admin@sponsored-ngo.test` |
-| Paid, payment overdue → read-only                          | `/login`          | `acme-garments` | `admin@acme-garments.test` |
-| Trial on the Starter plan                                  | `/login`          | `trial-co`      | `admin@trial-co.test`      |
+| Who                                                        | Sign in at        | Workspace       | Email                        |
+| ---------------------------------------------------------- | ----------------- | --------------- | ---------------------------- |
+| Super Admin                                                | `/platform/login` | –               | `SEED_SUPER_ADMIN_EMAIL`     |
+| Internal tenant (2 legal entities)                         | `/login`          | `my-group`      | `admin@my-group.test`        |
+| Employee self-service (Rahima)                             | `/login`          | `my-group`      | `rahima@my-group.test`       |
+| Line supervisor, approves leave and attendance corrections | `/login`          | `my-group`      | `shirin@my-group.test`       |
+| Finance officer, approves pay changes                      | `/login`          | `my-group`      | `finance@my-group.test`      |
+| Complimentary tenant, an NGO with two donor projects       | `/login`          | `sponsored-ngo` | `admin@sponsored-ngo.test`   |
+| NGO field facilitator, fills in her timesheet              | `/login`          | `sponsored-ngo` | `nasrin@sponsored-ngo.test`  |
+| NGO programme coordinator, approves timesheets             | `/login`          | `sponsored-ngo` | `karim@sponsored-ngo.test`   |
+| NGO finance officer, approves payroll                      | `/login`          | `sponsored-ngo` | `finance@sponsored-ngo.test` |
+| Paid, payment overdue → read-only                          | `/login`          | `acme-garments` | `admin@acme-garments.test`   |
+| Trial on the Starter plan                                  | `/login`          | `trial-co`      | `admin@trial-co.test`        |
 
 In development, email, SMS and push are written to the API's log (`EMAIL_DRIVER=log` and so
 on), so a sign-in code for an employee login with a mobile number shows up there.
@@ -147,6 +159,8 @@ on), so a sign-in code for an employee login with a mobile number shows up there
 The seed tracks attendance from 1 October 2026, with device punches for 1–23 October:
 the Gazipur factory on the day shift, Narayanganj on a day/night roster, the head office
 punching from the web. Device user 1010 is left unmatched on purpose, to try claiming it.
+The NGO has seven people at its head office and Kurigram field office, planned shares in
+two projects, and an approved September timesheet whose hours differ from the plan.
 
 After pulling changes that add country-pack defaults (Phase 2 payroll, for example), bring an
 existing dev database up to date with `pnpm db:migrate && pnpm --filter @gp/db provision`, then

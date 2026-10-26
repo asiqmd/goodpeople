@@ -17,6 +17,10 @@ import { MaternityModule } from './modules/maternity/maternity.module.js';
 import { RelationsModule } from './modules/relations/relations.module.js';
 import { GrievancesModule } from './modules/grievances/grievances.module.js';
 import { KioskModule } from './modules/kiosk/kiosk.module.js';
+import { ProjectsModule } from './modules/projects/projects.module.js';
+import { TimesheetsModule } from './modules/timesheets/timesheets.module.js';
+import { GroupModule } from './modules/group/group.module.js';
+import { AccessScopesModule } from './modules/access-scopes/access-scopes.module.js';
 import { DocumentsModule } from './modules/documents/documents.module.js';
 import { ImportsModule } from './modules/imports/imports.module.js';
 import { LettersModule } from './modules/letters/letters.module.js';
@@ -71,6 +75,10 @@ export class AppModule {
         GrievancesModule,
         KioskModule,
         AuditReportModule,
+        ProjectsModule,
+        TimesheetsModule,
+        GroupModule,
+        AccessScopesModule,
       ],
       providers: [
         { provide: APP_CONFIG, useValue: config },

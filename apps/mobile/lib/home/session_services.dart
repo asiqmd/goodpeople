@@ -11,13 +11,15 @@ import '../notifications/notification_providers.dart';
 import '../notifications/notification_routes.dart';
 import '../notifications/push_service.dart';
 import '../settings/locale_controller.dart';
+import '../timesheets/offline_timesheet_queue.dart';
 
 /// Work that runs while someone is signed in, around [child] (the home
 /// screen). AuthGate keys it by the login, so each session starts afresh.
 ///
-/// - Sends punches waiting in the offline queue: now, whenever the app
-///   comes back to the foreground, and every [sendInterval] while it is
-///   open. (The queue also sends after any call that went through.)
+/// - Sends punches and timesheet hours waiting in the offline queues: now,
+///   whenever the app comes back to the foreground, and every
+///   [sendInterval] while it is open. (The queues also send after any call
+///   that went through.)
 /// - Reloads the notification inbox when the app comes back to the
 ///   foreground and when a push arrives.
 /// - Registers the phone for push, if the build has it, and opens what a
@@ -47,14 +49,14 @@ class _SessionServicesState extends ConsumerState<SessionServices> {
     _lifecycle = AppLifecycleListener(onResume: _onResume);
     _ticker = Timer.periodic(
       SessionServices.sendInterval,
-      (_) => _sendWaitingPunches(),
+      (_) => _sendWaiting(),
     );
     _locale = ref.listenManual(localeProvider, (previous, next) {
       if (next != null) _tellLanguage(next);
     });
     // A language picked on the login screen counts too.
     if (ref.read(localeProvider) case final chosen?) _tellLanguage(chosen);
-    _sendWaitingPunches();
+    _sendWaiting();
     unawaited(_startPush());
   }
 
@@ -70,12 +72,14 @@ class _SessionServicesState extends ConsumerState<SessionServices> {
   }
 
   void _onResume() {
-    _sendWaitingPunches();
+    _sendWaiting();
     ref.invalidate(notificationInboxProvider);
   }
 
-  void _sendWaitingPunches() =>
-      unawaited(ref.read(offlinePunchQueueProvider.notifier).send());
+  void _sendWaiting() {
+    unawaited(ref.read(offlinePunchQueueProvider.notifier).send());
+    unawaited(ref.read(offlineTimesheetQueueProvider.notifier).send());
+  }
 
   void _tellLanguage(Locale locale) {
     final language = UserLanguage.fromWire(locale.languageCode);

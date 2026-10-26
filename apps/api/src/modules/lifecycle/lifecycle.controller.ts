@@ -42,8 +42,8 @@ export class LifecycleController {
 
   @Get('lifecycle')
   @Permits('lifecycle.manage')
-  overview(): Promise<LifecycleOverview> {
-    return this.lifecycle.overview();
+  overview(@CurrentUser() user: AuthUser): Promise<LifecycleOverview> {
+    return this.lifecycle.overview(user);
   }
 
   @Post('employees/:id/probation/extend')
@@ -60,15 +60,19 @@ export class LifecycleController {
   @Get('separations')
   @Permits('lifecycle.manage')
   list(
+    @CurrentUser() user: AuthUser,
     @Query(zod(separationListQuerySchema)) query: z.infer<typeof separationListQuerySchema>,
   ): Promise<SeparationView[]> {
-    return this.separations.list(query);
+    return this.separations.list(user, query);
   }
 
   @Get('employees/:id/separations')
   @Permits('lifecycle.manage')
-  forEmployee(@Param('id', ParseUUIDPipe) id: string): Promise<SeparationView[]> {
-    return this.separations.forEmployee(id);
+  forEmployee(
+    @CurrentUser() user: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<SeparationView[]> {
+    return this.separations.forEmployee(user, id);
   }
 
   /** HR records a separation; it stands approved and completes after the last working day. */

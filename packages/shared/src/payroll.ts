@@ -232,5 +232,5 @@ export const RECONCILE_TOTALS = [
 export type ReconcileTotal = (typeof RECONCILE_TOTALS)[number];
 
 /** How the cost summary groups people. */
-export const COST_DIMENSIONS = ['unit', 'entity', 'location', 'group'] as const;
+export const COST_DIMENSIONS = ['unit', 'entity', 'location', 'group', 'project'] as const;
 export type CostDimension = (typeof COST_DIMENSIONS)[number];

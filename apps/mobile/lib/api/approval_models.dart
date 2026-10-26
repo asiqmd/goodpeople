@@ -4,14 +4,16 @@ part of 'api_models.dart';
 //
 // One inbox for everything waiting on the signed-in user. Each item says
 // what it approves in `subjectType`: a leave request, an attendance
-// correction (regularization) or a resignation (separation). The approve
-// and reject calls are the same for all of them.
+// correction (regularization), a resignation (separation) or a month's
+// project timesheet. The approve and reject calls are the same for all of
+// them.
 
 /// What an approval step decides.
 enum ApprovalSubjectType implements WireValue {
   leaveRequest('leave_request'),
   regularization('regularization'),
   separation('separation'),
+  timesheet('timesheet'),
   unknown('unknown');
 
   const ApprovalSubjectType(this.wire);
@@ -41,6 +43,7 @@ sealed class ApprovalItem {
         json,
       ),
       ApprovalSubjectType.separation => SeparationApprovalItem.fromJson(json),
+      ApprovalSubjectType.timesheet => TimesheetApprovalItem.fromJson(json),
       ApprovalSubjectType.unknown => UnknownApprovalItem(
         stepId: _read<String>(json, 'stepId'),
         kind: ApprovalStepKind.fromWire(_read<String>(json, 'kind')),
@@ -120,6 +123,26 @@ final class SeparationApprovalItem extends ApprovalItem {
   );
 
   final Separation separation;
+}
+
+/// A month's project timesheet waiting for the signed-in user, usually the
+/// employee's manager. Approved, its shares split the month's salary across
+/// projects; rejected, it goes back to the employee to correct and submit
+/// again.
+final class TimesheetApprovalItem extends ApprovalItem {
+  const TimesheetApprovalItem({
+    required super.stepId,
+    required super.kind,
+    required this.timesheet,
+  });
+
+  factory TimesheetApprovalItem.fromJson(Json json) => TimesheetApprovalItem(
+    stepId: _read<String>(json, 'stepId'),
+    kind: ApprovalStepKind.fromWire(_read<String>(json, 'kind')),
+    timesheet: TimesheetSummary.fromJson(_read<Json>(json, 'timesheet')),
+  );
+
+  final TimesheetSummary timesheet;
 }
 
 /// An item whose `subjectType` this app does not know yet. It can be shown,

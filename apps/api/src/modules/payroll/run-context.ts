@@ -51,6 +51,7 @@ import {
 import { and, asc, eq, gte, inArray, isNull, lt, lte, ne, or, sql } from 'drizzle-orm';
 import { currentTenantId } from '../../common/request-context.js';
 import type { WorkCalendarService } from '../calendar/work-calendar.service.js';
+import type { PolicyService } from '../group/policy.service.js';
 import type {
   computePay,
   EngineComponent,
@@ -81,12 +82,16 @@ export interface StoredResult {
   loans?: { loanId: string; amount: string }[];
 }
 
-/** Contribution rates for the fund's members in a period; none when the fund is off. */
+/**
+ * Contribution rates for the fund's members in a period; none when the fund is off. Each
+ * member pays the rates of the company they work for at the period's end.
+ */
 export async function pfRatesFor(
   tx: Tx,
   settings: Settings,
   ids: string[],
   period: { start: string; end: string },
+  policy: PolicyService,
 ) {
   const out = new Map<string, { employeeRate: string; employerRate: string }>();
   if (!settings.pfEnabled || ids.length === 0) return out;
@@ -100,11 +105,15 @@ export async function pfRatesFor(
         or(isNull(pfMembers.leftOn), gte(pfMembers.leftOn, period.start)),
       ),
     );
-  for (const m of members) {
-    out.set(m.employeeId, {
-      employeeRate: settings.pfEmployeeRate,
-      employerRate: settings.pfEmployerRate,
-    });
+  const rates = await policy.forEmployees(
+    tx,
+    'provident_fund',
+    { pfEmployeeRate: settings.pfEmployeeRate, pfEmployerRate: settings.pfEmployerRate },
+    members.map((m) => m.employeeId),
+    period.end,
+  );
+  for (const [employeeId, r] of rates) {
+    out.set(employeeId, { employeeRate: r.pfEmployeeRate, employerRate: r.pfEmployerRate });
   }
   return out;
 }

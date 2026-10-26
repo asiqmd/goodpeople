@@ -57,8 +57,8 @@ export class ComplianceController {
   ) {}
 
   @Get('overview')
-  overview(): Promise<ComplianceOverview> {
-    return this.compliance.overview();
+  overview(@CurrentUser() user: AuthUser): Promise<ComplianceOverview> {
+    return this.compliance.overview(user);
   }
 
   @Get('settings')
@@ -87,9 +87,10 @@ export class ComplianceController {
 
   @Get('alerts')
   alerts(
+    @CurrentUser() user: AuthUser,
     @Query(zod(complianceAlertQuerySchema)) query: ComplianceAlertQuery,
   ): Promise<ComplianceAlertPage> {
-    return this.compliance.alerts(query);
+    return this.compliance.alerts(user, query);
   }
 
   @Post('alerts/:id/acknowledge')
@@ -104,19 +105,25 @@ export class ComplianceController {
 
   @Get('hours')
   @RequireFeature('attendance')
-  hours(@Query(zod(hoursBoardQuerySchema)) query: HoursBoardQuery): Promise<HoursBoardView> {
-    return this.boards.hours(query);
+  hours(
+    @CurrentUser() user: AuthUser,
+    @Query(zod(hoursBoardQuerySchema)) query: HoursBoardQuery,
+  ): Promise<HoursBoardView> {
+    return this.boards.hours(user, query);
   }
 
   @Get('adolescents')
-  adolescents(): Promise<AdolescentsView> {
-    return this.boards.adolescents();
+  adolescents(@CurrentUser() user: AuthUser): Promise<AdolescentsView> {
+    return this.boards.adolescents(user);
   }
 
   @Get('night-work')
   @RequireFeature('attendance')
-  nightWork(@Query(zod(nightWorkQuerySchema)) query: NightWorkQuery): Promise<NightWorkView> {
-    return this.boards.nightWork(query);
+  nightWork(
+    @CurrentUser() user: AuthUser,
+    @Query(zod(nightWorkQuerySchema)) query: NightWorkQuery,
+  ): Promise<NightWorkView> {
+    return this.boards.nightWork(user, query);
   }
 
   @Put('night-work/:employeeId')

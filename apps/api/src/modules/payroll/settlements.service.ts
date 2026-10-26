@@ -29,6 +29,7 @@ import { FIELD_CIPHER, TenantDb } from '../../db/db.module.js';
 import { employeeRef } from '../attendance/attendance-views.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
 import { WorkCalendarService } from '../calendar/work-calendar.service.js';
+import { PolicyService } from '../group/policy.service.js';
 import { BalancesService } from '../leave/balances.service.js';
 import { workOutPay } from './pay-calc.js';
 import { componentsOf, payrollSettingsOf } from './payroll-setup.service.js';
@@ -94,6 +95,7 @@ export class SettlementsService {
     private readonly audit: TenantAuditService,
     private readonly calendars: WorkCalendarService,
     private readonly balances: BalancesService,
+    private readonly policy: PolicyService,
     @Inject(FIELD_CIPHER) private readonly cipher: FieldCipher,
   ) {}
 
@@ -308,10 +310,13 @@ export class SettlementsService {
       ],
       components,
     );
-    const pf = await pfRatesFor(tx, settings, [person.id], {
-      start: run.periodStart,
-      end: run.periodEnd,
-    });
+    const pf = await pfRatesFor(
+      tx,
+      settings,
+      [person.id],
+      { start: run.periodStart, end: run.periodEnd },
+      this.policy,
+    );
     // Pieces made in the last month are paid; a leaver's union dues are not deducted.
     const extra = await extraVariablesOf(tx, [person.id], run, tenant, {
       production: true,

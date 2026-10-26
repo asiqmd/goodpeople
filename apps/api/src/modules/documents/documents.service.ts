@@ -25,6 +25,8 @@ import type { FileStore } from '../../storage/file-store.js';
 import { FILE_STORE } from '../../storage/storage.module.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
 import { userCan } from '../../common/roles.js';
+import { mustChangeEmployee } from '../access-scopes/employee-scope.js';
+import { entityScope } from '../access-scopes/entity-scope.js';
 import { employeeOfUser } from '../employees/employee.queries.js';
 
 export type DocumentRow = typeof documents.$inferSelect;
@@ -138,6 +140,7 @@ export class DocumentsService {
         .from(employees)
         .where(eq(employees.id, employeeId));
       if (!employee) throw new NotFoundException('Employee not found');
+      await mustChangeEmployee(tx, actor, employeeId);
       const row = await this.save(tx, {
         ...input,
         category: input.category as DocumentCategory,
@@ -185,11 +188,15 @@ export class DocumentsService {
   }
 
   /** An employee's documents for HR, without the punch selfies (those show with punches). */
-  forEmployee(employeeId: string): Promise<DocumentView[]> {
-    return this.tenantDb.run((tx) =>
+  forEmployee(user: AuthUser, employeeId: string): Promise<DocumentView[]> {
+    return this.tenantDb.run(async (tx) =>
       this.load(
         tx,
-        and(eq(documents.employeeId, employeeId), ne(documents.category, 'punch_selfie')),
+        and(
+          eq(documents.employeeId, employeeId),
+          ne(documents.category, 'punch_selfie'),
+          await entityScope(tx, user, documents.employeeId),
+        ),
       ),
     );
   }
@@ -211,26 +218,39 @@ export class DocumentsService {
   }
 
   /** Expired and soon-to-expire documents, soonest first. */
-  expiring(days: number): Promise<DocumentView[]> {
+  expiring(user: AuthUser, days: number): Promise<DocumentView[]> {
     return this.tenantDb.run(async (tx) =>
-      (await this.load(tx, lte(documents.expiresOn, addDays(todayIn(), days)))).toSorted((a, b) =>
-        (a.expiresOn ?? '').localeCompare(b.expiresOn ?? ''),
-      ),
+      (
+        await this.load(
+          tx,
+          and(
+            lte(documents.expiresOn, addDays(todayIn(), days)),
+            await entityScope(tx, user, documents.employeeId),
+          ),
+        )
+      ).toSorted((a, b) => (a.expiresOn ?? '').localeCompare(b.expiresOn ?? '')),
     );
   }
 
   /**
-   * The file, decrypted. HR may read any; an employee only their own documents that are
-   * shared with them.
+   * The file, decrypted. HR may read any of the companies it looks after; an employee only
+   * their own documents that are shared with them.
    */
   async read(user: AuthUser, id: string): Promise<{ document: DocumentRow; bytes: Buffer }> {
     const document = await this.tenantDb.run(async (tx) => {
+      const hr = userCan(user, 'documents.manage');
       const [row] = await tx
         .select()
         .from(documents)
-        .where(and(eq(documents.id, id), isNull(documents.deletedAt)));
+        .where(
+          and(
+            eq(documents.id, id),
+            isNull(documents.deletedAt),
+            hr ? await entityScope(tx, user, documents.employeeId) : undefined,
+          ),
+        );
       if (!row) throw new NotFoundException('Document not found');
-      if (!userCan(user, 'documents.manage')) {
+      if (!hr) {
         const me = await employeeOfUser(tx, user.id);
         if (me?.id !== row.employeeId || !row.visibleToEmployee) {
           throw new ForbiddenException('This document is not shared with you');
@@ -253,7 +273,13 @@ export class DocumentsService {
       const [row] = await tx
         .update(documents)
         .set({ ...input, category: input.category as DocumentCategory | undefined })
-        .where(and(eq(documents.id, id), isNull(documents.deletedAt)))
+        .where(
+          and(
+            eq(documents.id, id),
+            isNull(documents.deletedAt),
+            await entityScope(tx, actor, documents.employeeId),
+          ),
+        )
         .returning();
       if (!row) throw new NotFoundException('Document not found');
       await this.audit.record(tx, {
@@ -273,7 +299,13 @@ export class DocumentsService {
       const [row] = await tx
         .update(documents)
         .set({ deletedAt: new Date(), deletedBy: actor.id })
-        .where(and(eq(documents.id, id), isNull(documents.deletedAt)))
+        .where(
+          and(
+            eq(documents.id, id),
+            isNull(documents.deletedAt),
+            await entityScope(tx, actor, documents.employeeId),
+          ),
+        )
         .returning();
       if (!row) throw new NotFoundException('Document not found');
       await this.audit.record(tx, {

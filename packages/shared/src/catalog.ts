@@ -32,6 +32,8 @@ export const FEATURE_KEYS = [
   'production',
   /** Shared tablets where workers sign in with their ID card. */
   'kiosk',
+  /** Donors, projects, salary split across them, timesheets and donor reports (NGOs). */
+  'projects',
   'recruitment',
   'performance',
   'lms',
@@ -91,7 +93,7 @@ export interface PlanDefinition {
 }
 
 const STARTER: FeatureKey[] = ['core_hr', 'leave', 'attendance'];
-const GROWTH: FeatureKey[] = [...STARTER, 'payroll', 'bd_tax', 'production'];
+const GROWTH: FeatureKey[] = [...STARTER, 'payroll', 'bd_tax', 'production', 'projects'];
 const BUSINESS: FeatureKey[] = [
   ...GROWTH,
   'kiosk',

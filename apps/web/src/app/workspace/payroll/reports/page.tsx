@@ -8,6 +8,7 @@ import {
   type CostSummary,
   type CostSummaryRow,
   type CostTrendPoint,
+  type TenantAccessView,
 } from '@gp/shared';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
@@ -33,7 +34,12 @@ export default async function ReportsPage({
   const month = isMonth(query.month)
     ? query.month
     : addDays(`${todayIn().slice(0, 7)}-01`, -1).slice(0, 7);
-  const by: CostDimension = (COST_DIMENSIONS as readonly string[]).includes(query.by as string)
+  // Salaries split by project only where the plan has projects.
+  const { access } = await load<TenantAccessView>('tenant', '/tenant/access');
+  const dimensions = COST_DIMENSIONS.filter(
+    (d) => d !== 'project' || access.features.includes('projects'),
+  );
+  const by: CostDimension = (dimensions as readonly string[]).includes(query.by as string)
     ? (query.by as CostDimension)
     : 'unit';
   const [summary, trend] = await Promise.all([
@@ -100,7 +106,7 @@ export default async function ReportsPage({
         }
       >
         <nav className="mb-4 flex flex-wrap gap-2 text-sm">
-          {COST_DIMENSIONS.map((d) => (
+          {dimensions.map((d) => (
             <Link
               key={d}
               href={`/workspace/payroll/reports?month=${month}&by=${d}`}
@@ -150,7 +156,9 @@ export default async function ReportsPage({
               <tbody className="divide-y divide-slate-100">
                 {summary.rows.map((row) => (
                   <tr key={row.key}>
-                    <td className="px-5 py-2">{row.label}</td>
+                    <td className="px-5 py-2">
+                      {by === 'project' && row.key === 'none' ? tr('noProject') : row.label}
+                    </td>
                     {cells(row)}
                   </tr>
                 ))}

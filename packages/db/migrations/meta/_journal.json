@@ -190,6 +190,20 @@
       "when": 1792939319365,
       "tag": "0026_rmg_pack_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1793043999967,
+      "tag": "0027_ngo_group",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1793044003253,
+      "tag": "0028_ngo_group_rls",
+      "breakpoints": true
     }
   ]
 }

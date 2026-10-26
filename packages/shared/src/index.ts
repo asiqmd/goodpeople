@@ -36,3 +36,7 @@ export * from './relations.js';
 export * from './grievances.js';
 export * from './kiosk.js';
 export * from './audit-report.js';
+export * from './projects.js';
+export * from './group.js';
+export * from './timesheets.js';
+export * from './access-scopes.js';

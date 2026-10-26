@@ -52,9 +52,10 @@ export class EmployeesController {
   @Get()
   @Permits('employees.read')
   list(
+    @CurrentUser() user: AuthUser,
     @Query(zod(employeeListQuerySchema)) query: EmployeeListQuery,
   ): Promise<Page<EmployeeListItem>> {
-    return this.employees.list(query);
+    return this.employees.list(user, query);
   }
 
   @Post()
@@ -74,7 +75,7 @@ export class EmployeesController {
     @CurrentUser() user: AuthUser,
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<EmployeeDetail> {
-    return this.employees.get(id, userCan(user, 'employees.identity'));
+    return this.employees.get(id, userCan(user, 'employees.identity'), user);
   }
 
   @Patch(':id')
@@ -90,8 +91,11 @@ export class EmployeesController {
 
   @Get(':id/job-history')
   @Permits('employees.read')
-  history(@Param('id', ParseUUIDPipe) id: string): Promise<JobAssignmentView[]> {
-    return this.employees.history(id);
+  history(
+    @CurrentUser() user: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<JobAssignmentView[]> {
+    return this.employees.history(user, id);
   }
 
   /** Confirmation, transfer, promotion, increment, redesignation or another change, from a date. */

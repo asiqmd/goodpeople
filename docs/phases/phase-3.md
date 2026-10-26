@@ -12,7 +12,7 @@ its tests pass and it has been walked through in the browser.
 | **M1 Sign-up & onboarding**       | Public site in English and Bangla, self-serve sign-up with a verified email, 30-day trials, industry templates (RMG, corporate, NGO, group), a first-steps guide, the sign-up funnel for us            | Phase 2    | Done   |
 | **M2 Billing & invoicing**        | Prices per employee with a worker seat, monthly metering, VAT invoices (Mushak 6.3) with VDS and TDS, coupons, card and bKash payments, bank and cheque reconciliation, dunning to read-only, partners | M1         | Done   |
 | **M3 RMG pack**                   | Piece rate and production incentives, overtime caps and alerts, adolescent workers, maternity benefit, participation committee and union records, anonymous grievances, buyer-audit reports, kiosk     | M1         | Done   |
-| **M4 NGO & group packs**          | Projects and grants, salary split across projects, timesheets, donor reports, field staff offline; group dashboards, group policy with company overrides, shared-service HR roles                      | M1         |        |
+| **M4 NGO & group packs**          | Projects and grants, salary split across projects, timesheets, donor reports, field staff offline; group dashboards, group policy with company overrides, shared-service HR roles                      | M1         | Done   |
 | **M5 Support & launch hardening** | Help centre in English and Bangla, support tickets, status page, penetration-test fixes, a disaster-recovery drill, verified backups, the launch runbook                                               | M2–M4      |        |
 
 **Exit test:** a company signs up, imports its people and runs a parallel payroll on a trial
@@ -504,13 +504,181 @@ How these fit together and why is in [ADR 015](../adr/015-rmg-pack.md).
 - **Overtime for piece-rated workers** at a time rate near their average earnings (s.108(2))
   is set by the workspace's formula; no rate is worked out from their earnings.
 
+## M4: NGO & group packs
+
+Two packs on the same records. NGOs charge salaries to donor projects by the work actually
+done. Groups of companies see their companies side by side, let a company differ from the
+group's policy where it has to, and give shared-service HR a login for some of the companies.
+Projects come with the Growth plan and up, the group pack (`multi_entity`) with Business. How
+these fit together and why is in [ADR 016](../adr/016-ngo-and-group-packs.md).
+
+### Projects and grants
+
+- **Donors and projects.** A project belongs to one company and records:
+  - its donor (none for the organisation's own funds) and the grant reference;
+  - the NGO Affairs Bureau's FD-6 approval (number and date);
+  - its period;
+  - the approved expenditure, and the staff budget within it.
+
+  Closing a project ends the shares still running on it.
+
+- **Salary shares.** HR plans a person's split: a percent of their salary for a project from
+  a date, as programme or administration cost. A day's shares add up to at most 100%; the
+  rest stays with the person's unit. Shares cannot be added or ended over days whose pay is
+  already locked, because the journal has posted them.
+
+### Timesheets
+
+- **The month:** days down, projects across. Weekends, holidays, leave and days off are
+  marked, and the attendance hours are shown beside each day. Prefill splits each day's
+  worked hours by the plan.
+- **Submitting:** the person submits with a declaration that the hours are the work actually
+  done.
+- **Approving:** their line manager approves in the Approvals inbox, on the web or in the
+  app. A rejection sends the timesheet back to be corrected.
+- **Reopening:** HR may reopen a timesheet until the month's pay is locked. After that, a
+  timesheet can no longer be submitted, approved or reopened.
+- **Reminders:** people charged to a project are reminded on the 1st to 5th of the month until
+  last month's timesheet is in.
+- **Field staff without a connection:** the app keeps the month on the phone and stores each
+  entry with its own id. It sends the entries in one batch when a connection returns, and each
+  counts once however often it is sent.
+- **PDF:** a monthly timesheet per person for donors, in English and Bangla, with the
+  declaration and the approval.
+
+### Salaries charged to projects
+
+- **The month's shares:** from the person's approved timesheet (hours on each project over
+  all their hours), else from the plan weighted by the days each share is in force. Each
+  month says which.
+- **The journal** gains a Project column. Expense lines are split per person by the shares,
+  each part rounded to the paisa so the parts add up exactly. What is owed (net pay, tax,
+  provident fund) is not split. Payroll's own figures never change.
+- **Cost reports:**
+  - The cost summary gains a project view.
+  - Each project shows, month by month: people, full-time equivalents, gross pay, employer
+    cost, programme and administration, and the basis.
+  - The staff budget is shown against what has been charged so far.
+  - Administration is shown against 20% of the approved expenditure (FDVA s.6), as a warning
+    and never a block.
+- **Donor reports:** a personnel cost schedule (one row per person and month) as CSV and as
+  an English or Bangla PDF with a certification for the finance signatory, and the approved
+  timesheets of the project's people.
+
+### Groups of companies
+
+- **Dashboard:** for a month, per company and for the group:
+  - headcount, joiners, leavers and 12-month attrition;
+  - women's share and average service;
+  - overtime and absence from processed attendance;
+  - open compliance alerts;
+  - payroll cost, for those who may see pay;
+  - a 12-month headcount trend, with its table.
+- **Group policy, company overrides:** a company may override what the group sets in four
+  areas:
+  - each leave type's days a year, carry-forward and days per request;
+  - punching from the app (where from, and whether a selfie is needed);
+  - provident fund rates;
+  - overtime caps.
+
+  Anything not overridden follows the group. Statutory leave cannot go below the Labour Act,
+  and caps cannot go above it. Leave balances, punching, payroll and the working-time checks
+  each read the employee's company's values.
+
+- **Shared-service HR:** a login can be limited to some of the group's companies; the
+  workspace admin never is.
+  - **What is limited:** people, team views, HR's pages for one person, leave and correction
+    lists, rosters, documents, letters and ID cards, probation and separations, compliance,
+    the dashboard, and the approvals HR decides.
+  - **Records outside the limit** are not found.
+  - **Payroll stays workspace-wide**, because pay groups can span companies.
+
+### Research (27 Oct 2026; for counsel to sign off)
+
+| Rule               | What it says                                                                                                          | Source                                                            |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Approved projects  | Foreign-funded voluntary activities only in projects the NGO Affairs Bureau approved (FD-6)                           | Foreign Donations (Voluntary Activities) Regulation Act 2016, s.6 |
+| Administration     | Administrative spending at most 20% of a project's approved expenditure                                               | FDVA 2016, s.6                                                    |
+| Records            | Accounts kept, and vouchers kept five years                                                                           | FDVA 2016, s.12                                                   |
+| Annual declaration | A yearly statement of foreign donations received, their source and their use                                          | FDVA 2016, s.13                                                   |
+| Salaries on grants | Charges must reflect the work actually performed; budget estimates only as interim figures, adjusted to actual effort | 2 CFR 200.430(i) (US federal awards)                              |
+| Timesheets         | Staff working partly on a project keep monthly timesheets signed by them and their supervisor                         | EU grants (Horizon Europe practice)                               |
+
+### Done when
+
+- **Unit tests:**
+  - planned and timesheet shares, and splitting an amount to the paisa;
+  - timesheet hours;
+  - the dashboard's figures;
+  - policy merges and the override schemas;
+  - timesheet inputs;
+  - the Foreign Donations Act rules.
+- **API end-to-end tests:**
+  - projects: donors, projects, refused shares, the journal split, the project view, the
+    timesheet basis, budgets and the cap, donor files, locked pay;
+  - timesheets: entries once per client id, the 24-hour day, prefill, the manager's
+    approval and rejection, HR's list, reopening, locked pay, PDFs, reminders;
+  - groups: the dashboard per company and limited, overrides with their floors, and each
+    consumer against a person in the other company;
+  - limited logins: people, team lists, documents, separations, compliance, HR's pages for
+    one person, leave lists and the HR approvals.
+- **Web:** Projects and a project's page, Timesheets and their review, timesheets in
+  Approvals, the Group dashboard and policies, and companies on the Users page, in English
+  and Bangla.
+- **App:** the Timesheet screen offline, and timesheets in Approvals.
+
+**Checked:**
+
+- **Automated tests:**
+  - API: 416 tests in 51 files (48 new: projects 15, timesheets 9, groups 15, limited logins
+    9). The suite also passed eight shuffled runs with different seeds.
+  - Shared 107 (12 new), country pack 53, Edge Agent 64.
+  - Flutter: 241 tests (20 new), and analyze is clean.
+- **The browser, in English and Bangla:**
+  - **Sponsored NGO:** September's payroll was computed, sent, approved by the finance
+    officer and locked. The journal split each person's pay by project. Tahmina Rahman's
+    approved timesheet put 62.5% of her pay on water instead of the planned 50%.
+  - **Water project:** ৳193,325 charged in September, 3.73 FTE, ৳29,000 of it
+    administration against a ৳3,700,000 cap. Its Bangla personnel cost schedule and Tahmina's
+    timesheet PDF were checked by eye.
+  - **Timesheets:** Nasrin Sultana filled in 30.5 hours of October and submitted them with
+    the declaration, and Abdul Karim approved them from his inbox.
+  - **My Group:** the dashboard for October showed both companies and the trend. My Group
+    Foods was refused 8 days of casual leave (s.115) and then given at most 2 days per request.
+  - **Limited login:** an HR officer limited to My Group Foods saw only its one person, and
+    only that company on the dashboard, without payroll cost.
+- **Fixed on the way:**
+  - The plan feature had no name on the home and pricing pages.
+  - Timesheet times in Bangla showed a Latin AM.
+  - Shares and timesheets could still change after a month's pay was locked.
+  - The HR approvals inbox and several HR lists and per-person pages ignored a login's
+    companies.
+  - The app showed timesheets in Approvals as unknown items.
+  - Test runs side by side shared one folder of uploaded files.
+  - Older tests assumed things that new data broke:
+    - an empty NGO;
+    - unique pay group names;
+    - a short email queue;
+    - a payroll test that only passed after 5 am, Dhaka time.
+
+**Carried into later milestones from M4:**
+
+- **Counsel's review** of the Foreign Donations Act rules marked for review: the 20% cap and how
+  "approved expenditure" is read for multi-year projects.
+- **Donors' own formats** (USAID, EU, UN agencies) and the NGO Affairs Bureau's annual forms
+  are not produced; the personnel cost schedule is generic.
+- **Payroll by company:** a limited login still sees all payroll; limiting payroll needs pay
+  groups per company.
+- **The employees page's company filter** lists every company to a limited login (picking one
+  outside its limit shows nobody).
+- **Statutory floors in Bangla:** the rule under the field stays in English, as on the leave
+  settings page.
+- **Overrides and balances:** a company's leave override applies from the next accrual or
+  request; balances already granted are not recomputed.
+- **The app's timesheet card** shows no approval trail, because the inbox data has none.
+
 ## Later milestones (outline; detailed when each starts)
 
-- **M4 NGO & group packs:**
-  - Projects and grants, with salary split across them in the journal.
-  - Project timesheets, donor-format reports, and field staff working offline.
-  - Group dashboards across companies, group policy with company overrides, and HR roles for
-    shared services.
 - **M5 Support & launch hardening:**
   - A help centre in English and Bangla, support tickets and a status page.
   - Fixes from a third-party penetration test.
@@ -555,3 +723,14 @@ Added as each milestone's research is done.
 - RMG minimum wage and the 2026 wage board:
   https://www.tbsnews.net/economy/rmg/rmg-workers-minimum-wage-set-tk12500-746694 and
   https://textiletoday.com.bd/government-begins-new-wage-board-process-ahead-of-2026-wage-review
+
+**M4 NGO & group packs:**
+
+- Foreign Donations (Voluntary Activities) Regulation Act 2016, English translation:
+  https://www.icnl.org/wp-content/uploads/Bangladesh_FDVA.pdf
+- NGO Affairs Bureau, laws and forms:
+  https://ngoab.portal.gov.bd/pages/static-pages/6922dd98933eb65569e1590e
+- 2 CFR 200.430, compensation for personal services: https://www.ecfr.gov/current/title-2/section-200.430
+- Staff costs and timesheets on EU grants:
+  https://www.research-services.admin.cam.ac.uk/manage-project/manage-ec-project/staff-costs-and-timesheets-ec-grants
+  and https://www.emdesk.com/horizon-2020-horizon-europe-basics-guide/a-comprehensive-guide-on-time-tracking-in-horizon-europe

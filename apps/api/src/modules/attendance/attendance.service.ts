@@ -47,6 +47,8 @@ import {
 } from './attendance-views.js';
 import { AttendanceProcessor, settingsOf, type ComputedDay } from './processor.service.js';
 import { ShiftsService } from './shifts.service.js';
+import { PolicyService } from '../group/policy.service.js';
+import { entityScope } from '../access-scopes/entity-scope.js';
 
 type EmployeeRow = typeof employees.$inferSelect;
 
@@ -130,6 +132,7 @@ export class AttendanceService {
     private readonly processor: AttendanceProcessor,
     private readonly shifts: ShiftsService,
     private readonly audit: TenantAuditService,
+    private readonly policy: PolicyService,
   ) {}
 
   private async me(tx: Tx, user: AuthUser): Promise<EmployeeRow> {
@@ -180,7 +183,14 @@ export class AttendanceService {
     return this.tenantDb.run(async (tx) => {
       const me = await this.me(tx, user);
       const { day, timeZone } = await this.currentDay(tx, me);
-      const settings = await settingsOf(tx);
+      // The punch follows the person's company's rule, so the screen shows that one.
+      const settings = await this.policy.forEmployee(
+        tx,
+        'attendance',
+        await settingsOf(tx),
+        me.id,
+        day.plan.date,
+      );
       const marks = await regularizationMarks(tx, [me.id], day.plan.date, day.plan.date);
       const punches = await punchesOf(tx, me.id, day.opensAt, day.closesAt);
       const geofence = await this.geofenceOf(tx, day.plan.locationId);
@@ -304,7 +314,10 @@ export class AttendanceService {
    * A month's totals per employee, from the processed days (what payroll will use), with the
    * weeks that went over the Labour Act's weekly limit.
    */
-  monthSummary(query: { month: string; orgUnitId?: string }): Promise<MonthSummaryView> {
+  monthSummary(
+    user: AuthUser,
+    query: { month: string; orgUnitId?: string },
+  ): Promise<MonthSummaryView> {
     return this.tenantDb.run(async (tx) => {
       const from = `${query.month}-01`;
       const nextMonth = new Date(`${from}T00:00:00Z`);
@@ -317,6 +330,7 @@ export class AttendanceService {
         .where(
           and(
             units ? inArray(employees.id, employeesInUnits(tx, units, to)) : undefined,
+            await entityScope(tx, user, employees.id),
             lte(employees.joinedOn, to),
             or(isNull(employees.separatedOn), gte(employees.separatedOn, from)),
           ),

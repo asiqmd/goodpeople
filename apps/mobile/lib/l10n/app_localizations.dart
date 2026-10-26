@@ -3049,6 +3049,366 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Password changed. You stay signed in here; other phones and browsers were signed out.'**
   String get passwordChanged;
+
+  /// No description provided for @timesheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Timesheet'**
+  String get timesheetTitle;
+
+  /// Under "Timesheet" on the home screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Your hours on each project, even offline'**
+  String get timesheetSubtitle;
+
+  /// No description provided for @timesheetPreviousMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous month'**
+  String get timesheetPreviousMonth;
+
+  /// No description provided for @timesheetNextMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Next month'**
+  String get timesheetNextMonth;
+
+  /// No description provided for @timesheetNoEmployeeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Timesheets belong to an employee record, but none is linked to your login. If you think you should have one, ask your HR team.'**
+  String get timesheetNoEmployeeBody;
+
+  /// No description provided for @timesheetLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load your timesheet.'**
+  String get timesheetLoadFailed;
+
+  /// No description provided for @timesheetOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'You are offline. This is the copy saved on your phone; hours you type are sent when you are back online.'**
+  String get timesheetOffline;
+
+  /// No description provided for @timesheetStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'{status, select, draft{Draft} submitted{Submitted} approved{Approved} rejected{Returned} other{Unknown}}'**
+  String timesheetStatus(String status);
+
+  /// No description provided for @timesheetDue.
+  ///
+  /// In en, this message translates to:
+  /// **'You are allocated to a project this month. Fill in your hours and submit them at the end of the month.'**
+  String get timesheetDue;
+
+  /// No description provided for @timesheetSubmittedNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitted on {date}. Waiting for approval.'**
+  String timesheetSubmittedNotice(String date);
+
+  /// No description provided for @timesheetApprovedNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Approved by {name} on {date}.'**
+  String timesheetApprovedNotice(String name, String date);
+
+  /// No description provided for @timesheetRejectedNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Returned for correction. Change your hours and submit again.'**
+  String get timesheetRejectedNotice;
+
+  /// No description provided for @timesheetReopenedNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'HR reopened it: {note}'**
+  String timesheetReopenedNotice(String note);
+
+  /// No description provided for @timesheetWeekend.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly holiday'**
+  String get timesheetWeekend;
+
+  /// No description provided for @timesheetOffDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Day off'**
+  String get timesheetOffDay;
+
+  /// No description provided for @timesheetLeave.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave: {name}'**
+  String timesheetLeave(String name);
+
+  /// The hours attendance recorded on a day, a hint for what to enter.
+  ///
+  /// In en, this message translates to:
+  /// **'Attendance {hours} h'**
+  String timesheetWorked(String hours);
+
+  /// No description provided for @timesheetHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} h'**
+  String timesheetHours(String hours);
+
+  /// After an hours field, as in "7.5 h".
+  ///
+  /// In en, this message translates to:
+  /// **'h'**
+  String get timesheetHoursUnit;
+
+  /// Work not charged to any project.
+  ///
+  /// In en, this message translates to:
+  /// **'Other work'**
+  String get timesheetOtherWork;
+
+  /// No description provided for @timesheetPlanned.
+  ///
+  /// In en, this message translates to:
+  /// **'Planned {percent}%'**
+  String timesheetPlanned(String percent);
+
+  /// No description provided for @timesheetShare.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} h · {percent}%'**
+  String timesheetShare(String hours, String percent);
+
+  /// No description provided for @timesheetTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total {hours} h'**
+  String timesheetTotal(String hours);
+
+  /// No description provided for @timesheetNoHours.
+  ///
+  /// In en, this message translates to:
+  /// **'No hours'**
+  String get timesheetNoHours;
+
+  /// No description provided for @timesheetEditDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Hours on {date}'**
+  String timesheetEditDay(String date);
+
+  /// No description provided for @timesheetHoursInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter hours from 0 to 24, like 7.5'**
+  String get timesheetHoursInvalid;
+
+  /// No description provided for @timesheetDayTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'A day cannot have more than 24 hours'**
+  String get timesheetDayTooLong;
+
+  /// No description provided for @timesheetSaveDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get timesheetSaveDay;
+
+  /// No description provided for @timesheetCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get timesheetCancel;
+
+  /// No description provided for @timesheetAddProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a project'**
+  String get timesheetAddProject;
+
+  /// No description provided for @timesheetUnsent.
+  ///
+  /// In en, this message translates to:
+  /// **'Not sent yet'**
+  String get timesheetUnsent;
+
+  /// No description provided for @timesheetWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} change waiting to be sent} other{{count} changes waiting to be sent}}'**
+  String timesheetWaiting(num count);
+
+  /// No description provided for @timesheetSendNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Send now'**
+  String get timesheetSendNow;
+
+  /// No description provided for @timesheetSent.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} change sent} other{{count} changes sent}}'**
+  String timesheetSent(num count);
+
+  /// No description provided for @timesheetSavedOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on your phone. It will be sent when you are online.'**
+  String get timesheetSavedOffline;
+
+  /// No description provided for @timesheetRefusedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your hours for {project} on {date} were not saved'**
+  String timesheetRefusedTitle(String project, String date);
+
+  /// No description provided for @timesheetPrefill.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill from attendance'**
+  String get timesheetPrefill;
+
+  /// No description provided for @timesheetPrefilled.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No day needed filling} one{{count} day filled from attendance} other{{count} days filled from attendance}}'**
+  String timesheetPrefilled(num count);
+
+  /// No description provided for @timesheetSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit'**
+  String get timesheetSubmit;
+
+  /// No description provided for @timesheetSubmitTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit your timesheet'**
+  String get timesheetSubmitTitle;
+
+  /// The employee's declaration on submitting; the same words as on the web and the PDF.
+  ///
+  /// In en, this message translates to:
+  /// **'I certify that the hours in this timesheet are the work I actually did in this month, on the projects shown.'**
+  String get timesheetDeclaration;
+
+  /// No description provided for @timesheetDeclarationConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'I make this declaration'**
+  String get timesheetDeclarationConfirm;
+
+  /// No description provided for @timesheetSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Timesheet submitted'**
+  String get timesheetSubmitted;
+
+  /// No description provided for @timesheetSendFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Your changes have not reached the server yet. Send them before submitting.'**
+  String get timesheetSendFirst;
+
+  /// No description provided for @timesheetNoProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no projects to charge hours to this month.'**
+  String get timesheetNoProjects;
+
+  /// No description provided for @timesheetErrorLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'This timesheet is submitted or approved, so it cannot change.'**
+  String get timesheetErrorLocked;
+
+  /// No description provided for @timesheetErrorEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your hours before submitting.'**
+  String get timesheetErrorEmpty;
+
+  /// No description provided for @timesheetErrorMonthNotStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'A month can be submitted once it has started.'**
+  String get timesheetErrorMonthNotStarted;
+
+  /// No description provided for @timesheetErrorOutsideMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'That day is not in this month.'**
+  String get timesheetErrorOutsideMonth;
+
+  /// No description provided for @timesheetErrorProjectUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'That project does not exist.'**
+  String get timesheetErrorProjectUnknown;
+
+  /// No description provided for @timesheetErrorProjectClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'The project is closed.'**
+  String get timesheetErrorProjectClosed;
+
+  /// No description provided for @timesheetErrorOtherCompany.
+  ///
+  /// In en, this message translates to:
+  /// **'The project belongs to another company.'**
+  String get timesheetErrorOtherCompany;
+
+  /// No description provided for @timesheetErrorOutsidePeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'The project was not running that day.'**
+  String get timesheetErrorOutsidePeriod;
+
+  /// No description provided for @timesheetErrorDayOver24.
+  ///
+  /// In en, this message translates to:
+  /// **'A day cannot have more than 24 hours.'**
+  String get timesheetErrorDayOver24;
+
+  /// No description provided for @timesheetErrorClientIdTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'This entry belongs to someone else.'**
+  String get timesheetErrorClientIdTaken;
+
+  /// A month's timesheet in the approvals inbox, followed by the month, as in "Project timesheet · October 2026".
+  ///
+  /// In en, this message translates to:
+  /// **'Project timesheet'**
+  String get approvalTimesheetTitle;
+
+  /// No description provided for @approveTimesheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve this timesheet?'**
+  String get approveTimesheetTitle;
+
+  /// No description provided for @rejectTimesheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject this timesheet?'**
+  String get rejectTimesheetTitle;
+
+  /// No description provided for @timesheetApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Timesheet approved'**
+  String get timesheetApproved;
+
+  /// After a manager rejects a timesheet: it goes back to the employee to correct and submit again.
+  ///
+  /// In en, this message translates to:
+  /// **'Timesheet returned for correction'**
+  String get timesheetRejected;
 }
 
 class _AppLocalizationsDelegate

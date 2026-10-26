@@ -6,6 +6,11 @@ export * from './passwords.js';
 export * from './field-cipher.js';
 export * from './seed.js';
 export { SEED_EMPLOYEE_EMAIL } from './seed-hr.js';
+export {
+  SEED_NGO_FIELD_EMAIL,
+  SEED_NGO_FINANCE_EMAIL,
+  SEED_NGO_MANAGER_EMAIL,
+} from './seed-ngo.js';
 export { SEED_MANAGER_EMAIL } from './seed-leave.js';
 export { SEED_FINANCE_EMAIL } from './seed-payroll.js';
 export * from './provision.js';

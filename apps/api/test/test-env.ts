@@ -6,6 +6,9 @@ import request from 'supertest';
 import { createApp } from '../src/app.js';
 import { loadConfig, type AppConfig } from '../src/config.js';
 
+/** TEST_DB_SUFFIX, cleaned for a database or folder name. */
+const runSuffix = () => process.env.TEST_DB_SUFFIX?.replace(/[^a-z0-9_]/gi, '').toLowerCase();
+
 /**
  * The same server and roles as development, against `<name>_test`, or `<name>_test_<suffix>`
  * with TEST_DB_SUFFIX set, so test runs side by side never share a database.
@@ -13,7 +16,7 @@ import { loadConfig, type AppConfig } from '../src/config.js';
 export function testEnv() {
   loadRootEnv();
   const owner = requireEnv('DATABASE_OWNER_URL');
-  const suffix = process.env.TEST_DB_SUFFIX?.replace(/[^a-z0-9_]/gi, '').toLowerCase();
+  const suffix = runSuffix();
   const name = `${databaseName(owner)}_test${suffix ? `_${suffix}` : ''}`;
   return {
     adminUrl: process.env.DATABASE_ADMIN_URL,
@@ -25,8 +28,14 @@ export function testEnv() {
   };
 }
 
-/** Documents written by the tests, wiped by the global setup before each run. */
-export const testStorageDir = join(tmpdir(), 'good-people-test-storage');
+/**
+ * Documents written by the tests, wiped by the global setup before each run; one folder per
+ * TEST_DB_SUFFIX, like the database, so runs side by side keep their files.
+ */
+export const testStorageDir = join(
+  tmpdir(),
+  `good-people-test-storage${runSuffix() ? `-${runSuffix()}` : ''}`,
+);
 
 export async function bootApp(
   overrides: Partial<Record<keyof AppConfig, string>> = {},

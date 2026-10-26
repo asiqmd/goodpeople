@@ -56,7 +56,7 @@ On a physical phone, use your computer's LAN address, for example
 | `lib/profile/` | My profile screen and `myEmployeeProvider` |
 | `lib/leave/` | Leave screen, one file per tab, and the leave providers |
 | `lib/attendance/` | Attendance screen, its tabs, the correction form, the providers, `LocationService` and `CameraService` |
-| `lib/approvals/` | The approvals inbox tab (leave, corrections and resignations) and `approvalsProvider`, shared by Leave and Attendance, and `ApprovalsScreen` for notifications |
+| `lib/approvals/` | The approvals inbox tab (leave, corrections, resignations and project timesheets) and `approvalsProvider`, shared by Leave and Attendance, and `ApprovalsScreen` for notifications |
 | `lib/notifications/` | The inbox screen and `notificationInboxProvider`, which screen each notification opens, and `PushService` (Firebase, or off) |
 | `lib/team/` | The Team screen and its providers |
 | `lib/account/` | Account and the change-password form |
@@ -117,7 +117,7 @@ has the `attendance` module. The screen has three tabs, plus Approvals:
 | Today | `GET /tenant/me/attendance/today`, `POST /tenant/me/attendance/punch` | The shift, the day's status, first in, last out, hours worked and the punches (with where each came from). One large Punch in / Punch out button, following `nextDirection`. When `selfPunch.blockedReason` is set (punching from the app is off, or the location has no geofence) the tab says why instead. The punch answers with the whole day, which replaces the shown one. |
 | This month | `GET /tenant/me/attendance?from=&to=` | The 1st of this month to today, newest day first, with the totals on top. Status chips, late, left-early and overtime badges, a "Correction: Pending" mark; weekly offs and holidays are muted. Tapping a day opens the correction form for it. |
 | Corrections | `GET /tenant/me/attendance/regularizations`, `POST` to the same path, `POST /tenant/attendance/regularizations/{id}/cancel` | The user's corrections with status, times and approval trail; Cancel (with a confirmation) for pending ones. **Request correction** opens a form: the day, a missed punch (in time, out time or both) or an on-duty day (no times), and a reason (3 to 500 characters). |
-| Approvals | as on Leave | The same inbox. A correction shows who asks, the day, the times asked for, the reason and the day as recorded now. A resignation shows who, the notice date and last working day, how many days the notice is short (when it is) and the reason. An item of a kind this app does not know is listed without buttons, with a note to decide it on the web. |
+| Approvals | as on Leave | The same inbox. A correction shows who asks, the day, the times asked for, the reason and the day as recorded now. A resignation shows who, the notice date and last working day, how many days the notice is short (when it is) and the reason. A project timesheet shows who, the month, the total hours and each project's hours and share of the month, with the planned share where there is one; rejecting it returns it to the employee to correct. An item of a kind this app does not know is listed without buttons, with a note to decide it on the web. |
 
 Times (`firstIn`, `lastOut`, punches) are shown in the response's
 `timeZone`. Only fixed-offset zones are known without a time zone database

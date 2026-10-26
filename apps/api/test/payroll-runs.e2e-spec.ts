@@ -20,6 +20,7 @@ import type {
   PayslipSummary,
   SalaryStructureView,
 } from '@gp/shared';
+import { todayIn } from '@gp/shared';
 import type { INestApplication } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import type { Test } from 'supertest';
@@ -537,7 +538,9 @@ describe('payroll runs', () => {
     expect(lines.OVERTIME).toBe(`${Math.round((8500 * 2 * item.variables.otHours) / 208)}.00`);
     const codes = item.problems.map((p) => p.code);
     expect(codes).toContain('period_not_over');
-    expect(codes).not.toContain('not_processed');
+    // Until 05:00 yesterday is still open for punches, so it may be waiting to be processed.
+    const waiting = range.days.filter((d) => d.status === 'pending' && d.date < todayIn());
+    expect(codes.includes('not_processed')).toBe(waiting.length > 0);
     expect(codes.includes('missing_punches')).toBe(count('missing_punch') > 0);
   });
 

@@ -99,6 +99,9 @@ enum NotificationEvent implements WireValue {
 
   /// A payroll run was locked and the user's payslip published.
   payslipPublished('payslip.published'),
+
+  /// Last month's project timesheet is not yet submitted.
+  timesheetDue('timesheet.due'),
   unknown('unknown');
 
   const NotificationEvent(this.wire);

@@ -13,16 +13,19 @@ import 'package:good_people/attendance/location_service.dart';
 import 'package:good_people/attendance/offline_punch_queue.dart';
 import 'package:good_people/documents/file_opener.dart';
 import 'package:good_people/notifications/push_service.dart';
+import 'package:good_people/timesheets/offline_timesheet_queue.dart';
 
 import 'attendance_fixtures.dart';
 import 'leave_fixtures.dart';
 import 'lifecycle_fixtures.dart';
 import 'payroll_fixtures.dart';
+import 'timesheet_fixtures.dart';
 
 export 'attendance_fixtures.dart';
 export 'leave_fixtures.dart';
 export 'lifecycle_fixtures.dart';
 export 'payroll_fixtures.dart';
+export 'timesheet_fixtures.dart';
 
 /// `POST /auth/login` 200 body, exactly as the API contract shapes it.
 const loginJson = <String, Object?>{
@@ -1179,6 +1182,154 @@ class FakeGoodPeopleApi implements GoodPeopleApi {
     loansCalls++;
     return [for (final json in loans) LoanView.fromJson(json)];
   }
+
+  // ── Timesheets ────────────────────────────────────────────────────────────
+
+  /// Each month's timesheet by `YYYY-MM`, as JSON so saving can change it;
+  /// a month not here answers [timesheetJson] for it.
+  final timesheets = <String, Json>{};
+
+  /// Thrown, one per call, by [fetchMyTimesheet] before it answers.
+  final timesheetErrors = <Exception>[];
+  final timesheetMonths = <String>[];
+
+  /// Thrown, one per call, by [saveTimesheetEntries] before it saves.
+  final saveTimesheetErrors = <Exception>[];
+
+  /// Each batch sent to [saveTimesheetEntries], as JSON.
+  final timesheetBatches = <List<Json>>[];
+
+  /// Entries on these projects are refused with the code given.
+  final refusedTimesheetProjects = <String, String>{};
+
+  /// Client ids already saved: a resend is accepted without a change.
+  final savedTimesheetClientIds = <String>{};
+
+  /// Days [prefillTimesheet] says it filled.
+  var prefillDays = 3;
+  final prefilledMonths = <String>[];
+
+  /// Thrown by [submitTimesheet] instead of submitting.
+  Exception? submitTimesheetError;
+  final submittedTimesheetMonths = <String>[];
+
+  Json _timesheet(String month) => timesheets[month] ??= timesheetJson(month);
+
+  @override
+  Future<Timesheet> fetchMyTimesheet(
+    String accessToken, {
+    required DateTime month,
+  }) async {
+    final key = toWireMonth(month);
+    timesheetMonths.add(key);
+    if (timesheetErrors.isNotEmpty) throw timesheetErrors.removeAt(0);
+    return Timesheet.fromJson(_timesheet(key));
+  }
+
+  @override
+  Future<TimesheetSaveResult> saveTimesheetEntries(
+    String accessToken, {
+    required DateTime month,
+    required List<TimesheetEntryDraft> entries,
+  }) async {
+    final key = toWireMonth(month);
+    timesheetBatches.add([for (final entry in entries) entry.toJson()]);
+    if (saveTimesheetErrors.isNotEmpty) throw saveTimesheetErrors.removeAt(0);
+    final sheet = _timesheet(key);
+    final cells = [
+      for (final entry in (sheet['entries']! as List<Object?>).cast<Json>())
+        {
+          'date': entry['date'],
+          'projectId': entry['projectId'],
+          'hours': entry['hours'],
+        },
+    ];
+    final accepted = <Json>[];
+    final refused = <Json>[];
+    for (final draft in entries) {
+      final json = draft.toJson();
+      if (refusedTimesheetProjects[draft.projectId] case final code?) {
+        refused.add({...json, 'code': code, 'message': 'Refused: $code'});
+        continue;
+      }
+      accepted.add({...json, 'outcome': 'saved'});
+      if (!savedTimesheetClientIds.add(draft.clientId)) continue;
+      cells.removeWhere(
+        (c) => c['date'] == json['date'] && c['projectId'] == draft.projectId,
+      );
+      if (double.parse(draft.hours) > 0) {
+        cells.add({
+          'date': json['date'],
+          'projectId': draft.projectId,
+          'hours': double.parse(draft.hours).toStringAsFixed(2),
+        });
+      }
+    }
+    final saved = timesheets[key] = withTimesheetEntries(sheet, cells);
+    return TimesheetSaveResult.fromJson({
+      'accepted': accepted,
+      'refused': refused,
+      'timesheet': saved,
+    });
+  }
+
+  @override
+  Future<TimesheetPrefillResult> prefillTimesheet(
+    String accessToken, {
+    required DateTime month,
+  }) async {
+    final key = toWireMonth(month);
+    prefilledMonths.add(key);
+    return TimesheetPrefillResult.fromJson({
+      'days': prefillDays,
+      'timesheet': _timesheet(key),
+    });
+  }
+
+  @override
+  Future<Timesheet> submitTimesheet(
+    String accessToken, {
+    required DateTime month,
+  }) async {
+    final key = toWireMonth(month);
+    if (submitTimesheetError case final error?) throw error;
+    submittedTimesheetMonths.add(key);
+    final sheet = timesheets[key] = {
+      ..._timesheet(key),
+      'status': 'submitted',
+      'editable': false,
+      'submittedAt': '2026-11-02T04:00:00.000Z',
+    };
+    return Timesheet.fromJson(sheet);
+  }
+}
+
+/// A [TimesheetQueueStore] in memory, which keeps JSON as the files do.
+class MemoryTimesheetQueueStore implements TimesheetQueueStore {
+  TimesheetQueue saved = const TimesheetQueue();
+  final months = <String, Json>{};
+  var saves = 0;
+
+  @override
+  Future<TimesheetQueue> load() async => saved;
+
+  @override
+  Future<void> save(TimesheetQueue queue) async {
+    saves++;
+    saved = TimesheetQueue.fromJson(
+      jsonDecode(jsonEncode(queue.toJson())) as Map<String, Object?>,
+    );
+  }
+
+  @override
+  Future<Json?> loadMonth(String userId, String month) async =>
+      months['$userId|$month'];
+
+  @override
+  Future<void> saveMonth(String userId, String month, Json timesheet) async {
+    months['$userId|$month'] =
+        jsonDecode(jsonEncode(timesheet)) as Map<String, Object?>;
+  }
 }
 
 /// A [CameraService] with no camera: answers [result] and records calls.
@@ -1321,17 +1472,21 @@ class FakePushService implements PushService {
   Future<PushMessage?> initialMessage() async => launchedBy;
 }
 
-/// The real app with [api] in place of the HTTP client, a punch queue in
-/// memory and no push.
+/// The real app with [api] in place of the HTTP client, the punch and
+/// timesheet queues in memory and no push.
 Widget appWith(
   FakeGoodPeopleApi api, {
   PunchQueueStore? punchQueue,
+  TimesheetQueueStore? timesheetQueue,
   PushService push = const NoPushService(),
 }) => ProviderScope(
   overrides: [
     goodPeopleApiProvider.overrideWithValue(api),
     punchQueueStoreProvider.overrideWithValue(
       punchQueue ?? MemoryPunchQueueStore(),
+    ),
+    timesheetQueueStoreProvider.overrideWithValue(
+      timesheetQueue ?? MemoryTimesheetQueueStore(),
     ),
     pushServiceProvider.overrideWithValue(push),
   ],

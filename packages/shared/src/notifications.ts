@@ -40,6 +40,8 @@ export const NOTIFICATION_EVENTS = [
   'grievance.received',
   /** A maternity benefit payment falls due within three working days. */
   'maternity.payment_due',
+  /** Your timesheet for last month is not yet submitted (staff charged to projects). */
+  'timesheet.due',
   /** A sign-in code: SMS only, always sent. */
   'auth.otp',
 ] as const;
@@ -67,6 +69,7 @@ export const DEFAULT_EVENT_CHANNELS: Record<NotificationEvent, readonly Delivery
   'compliance.alert': ['email', 'push'],
   'grievance.received': ['email', 'push'],
   'maternity.payment_due': ['email'],
+  'timesheet.due': ['email', 'push'],
   'auth.otp': ['sms'],
 };
 

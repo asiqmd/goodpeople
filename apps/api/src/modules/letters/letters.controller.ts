@@ -33,6 +33,7 @@ import { fileResponse } from '../documents/documents.controller.js';
 import { employeeOfUser } from '../employees/employee.queries.js';
 import { AccessStateGuard, FeatureGuard, RequireFeature } from '../entitlements/guards.js';
 import { LettersService } from './letters.service.js';
+import { EmployeeScopeGuard } from '../access-scopes/employee-scope.guard.js';
 
 const languageOf = (value: string | undefined): LetterLanguage => (value === 'bn' ? 'bn' : 'en');
 
@@ -76,6 +77,7 @@ export class LettersController {
 
   @Post('employees/:id/letters/preview')
   @Permits('documents.manage')
+  @UseGuards(EmployeeScopeGuard)
   @HttpCode(200)
   @ApiBody(openApiBody(letterGenerateSchema))
   preview(
@@ -88,6 +90,7 @@ export class LettersController {
   /** Issues a numbered letter as a PDF in the employee's documents. */
   @Post('employees/:id/letters')
   @Permits('documents.manage')
+  @UseGuards(EmployeeScopeGuard)
   @ApiBody(openApiBody(letterGenerateSchema))
   generate(
     @CurrentUser() user: AuthUser,
@@ -102,8 +105,11 @@ export class LettersController {
   @Permits('documents.manage')
   @HttpCode(200)
   @ApiBody(openApiBody(idCardsSchema))
-  async idCards(@Body(zod(idCardsSchema)) body: IdCardsInput): Promise<StreamableFile> {
-    const bytes = await this.letters.idCards(body);
+  async idCards(
+    @CurrentUser() user: AuthUser,
+    @Body(zod(idCardsSchema)) body: IdCardsInput,
+  ): Promise<StreamableFile> {
+    const bytes = await this.letters.idCards(user, body);
     return fileResponse(bytes, {
       contentType: 'application/pdf',
       fileName: 'id-cards.pdf',
@@ -113,6 +119,7 @@ export class LettersController {
 
   @Get('employees/:id/service-book')
   @Permits('documents.manage')
+  @UseGuards(EmployeeScopeGuard)
   async serviceBook(
     @Param('id', ParseUUIDPipe) id: string,
     @Query('language') language?: string,

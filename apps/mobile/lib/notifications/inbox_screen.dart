@@ -180,6 +180,7 @@ class _InboxTile extends ConsumerWidget {
     NotificationEvent.missingPunch => Icons.fingerprint,
     NotificationEvent.payslipPublished => Icons.receipt_long_outlined,
     NotificationEvent.probationEnding => Icons.badge_outlined,
+    NotificationEvent.timesheetDue => Icons.timer_outlined,
     NotificationEvent.unknown => Icons.notifications_none,
   };
 }

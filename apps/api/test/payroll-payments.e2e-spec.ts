@@ -171,18 +171,18 @@ describe('paying a locked run', () => {
         .set(bearer(admin))
         .expect(200)
     ).text;
-    const rows = journal
-      .trim()
-      .split('\n')
-      .slice(1)
-      .map((r) => r.split(','));
-    const debit = rows.reduce((s, r) => s + Number(r[4] || 0), 0);
-    const credit = rows.reduce((s, r) => s + Number(r[5] || 0), 0);
+    const [heading, ...lines] = journal.trim().split('\n');
+    expect(heading).toBe('Date,Account,Cost centre,Project,Description,Debit,Credit,Reference');
+    const rows = lines.map((r) => r.split(','));
+    const debit = rows.reduce((s, r) => s + Number(r[5] || 0), 0);
+    const credit = rows.reduce((s, r) => s + Number(r[6] || 0), 0);
     expect(debit).toBeGreaterThan(0);
     expect(debit).toBeCloseTo(credit, 2);
     const accounts = new Set(rows.map((r) => r[1]));
     // Salary expense, net pay owed, tax owed (the staff member pays tax), the advance recovered.
     expect([...accounts]).toEqual(expect.arrayContaining(['5100', '2100', '2110', '1410']));
     expect(rows.every((r) => r[2] === 'MGT-L1')).toBe(true);
+    // Nobody here is on a project, so nothing is charged to one.
+    expect(rows.every((r) => r[3] === '')).toBe(true);
   });
 });

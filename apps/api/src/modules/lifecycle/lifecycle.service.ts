@@ -12,6 +12,8 @@ import {
 import { and, eq, inArray, lte } from 'drizzle-orm';
 import type { AuthUser } from '../../common/auth-user.js';
 import { TenantDb } from '../../db/db.module.js';
+import { mustChangeEmployee } from '../access-scopes/employee-scope.js';
+import { entityScope } from '../access-scopes/entity-scope.js';
 import { employeeRef } from '../attendance/attendance-views.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
 import { DocumentsService } from '../documents/documents.service.js';
@@ -34,9 +36,12 @@ export class LifecycleService {
     private readonly audit: TenantAuditService,
   ) {}
 
-  overview(): Promise<LifecycleOverview> {
+  /** For the companies the user looks after. */
+  overview(user: AuthUser): Promise<LifecycleOverview> {
     return this.tenantDb.run(async (tx) => {
       const today = todayIn();
+      // Every query below reads from or joins employees, so one condition limits them all.
+      const scope = await entityScope(tx, user, employees.id);
       const people = await tx
         .select({ e: employees, job: jobAssignments })
         .from(employees)
@@ -44,7 +49,7 @@ export class LifecycleService {
           jobAssignments,
           and(eq(jobAssignments.employeeId, employees.id), inForceOn(today)),
         )
-        .where(eq(employees.status, 'active'));
+        .where(and(eq(employees.status, 'active'), scope));
       const probations: ProbationItem[] = [];
       for (const { e, job } of people) {
         if (e.confirmedOn || job?.employmentType !== 'probationer') continue;
@@ -70,7 +75,7 @@ export class LifecycleService {
         .toSorted((a, b) => a.retiresOn.localeCompare(b.retiresOn));
       const open = await this.leaving.load(
         tx,
-        inArray(separations.status, ['pending', 'approved']),
+        and(inArray(separations.status, ['pending', 'approved']), scope),
       );
       return {
         probations: probations.toSorted((a, b) =>
@@ -79,7 +84,7 @@ export class LifecycleService {
         separations: open.toSorted((a, b) => a.lastWorkingDay.localeCompare(b.lastWorkingDay)),
         retirements,
         expiringDocuments: (
-          await this.vault.load(tx, lte(documents.expiresOn, addDays(today, 60)))
+          await this.vault.load(tx, and(lte(documents.expiresOn, addDays(today, 60)), scope))
         ).toSorted((a, b) => (a.expiresOn ?? '').localeCompare(b.expiresOn ?? '')),
       };
     });
@@ -91,6 +96,7 @@ export class LifecycleService {
    */
   extendProbation(actor: AuthUser, employeeId: string, input: ProbationExtensionInput) {
     return this.tenantDb.run(async (tx) => {
+      await mustChangeEmployee(tx, actor, employeeId);
       const today = todayIn();
       const [row] = await tx
         .select({ e: employees, job: jobAssignments })

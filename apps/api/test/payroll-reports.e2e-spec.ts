@@ -155,7 +155,7 @@ describe('payroll reports and parallel runs', () => {
         .set(bearer(admin))
         .expect(200)
     ).body as CostSummary;
-    expect(before.rows.find((r) => r.label === g.name)).toBeUndefined();
+    expect(before.rows.find((r) => r.key === g.id)).toBeUndefined();
     expect(before.unlocked).toBeGreaterThan(0);
     await kit.lock(run.id);
     const summary = (
@@ -164,7 +164,8 @@ describe('payroll reports and parallel runs', () => {
         .set(bearer(admin))
         .expect(200)
     ).body as CostSummary;
-    const row = summary.rows.find((r) => r.label === g.name)!;
+    // By id: other tests' pay groups may share the name.
+    const row = summary.rows.find((r) => r.key === g.id)!;
     expect(row).toMatchObject({ headcount: 2, previousCost: null });
     expect(Number(row.cost)).toBeCloseTo(Number(row.earnings) + Number(row.employerCost), 2);
     expect(Number(row.gross)).toBe(112500);

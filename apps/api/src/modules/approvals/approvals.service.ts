@@ -21,12 +21,15 @@ import { PayBatchesService } from '../payroll/pay-batches.service.js';
 import { PayrollRunsService } from '../payroll/payroll-runs.service.js';
 import { forbidden } from '../../common/errors.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
+import { TimesheetsService } from '../timesheets/timesheets.service.js';
 import { noticeDecided, noticeRequested } from './approval-notices.js';
 import { cancelOpenSteps, type ApprovalSubjectHandler } from './approval-steps.js';
+import { entityScopeOf, employeesOfEntities } from '../access-scopes/entity-scope.js';
+import { inScope } from '../access-scopes/employee-scope.js';
 
 /**
  * Deciding approval steps, whatever they approve (leave, attendance corrections,
- * resignations). Manager steps belong to one employee; HR
+ * resignations, timesheets). Manager steps belong to one employee; HR
  * steps to any HR admin. Nobody decides their own request, and the first rejection ends the
  * chain.
  */
@@ -45,6 +48,7 @@ export class ApprovalsService {
     runs: PayrollRunsService,
     loans: LoansService,
     batches: PayBatchesService,
+    timesheets: TimesheetsService,
   ) {
     this.handlers = {
       leave_request: leave,
@@ -54,6 +58,7 @@ export class ApprovalsService {
       payroll_run: runs,
       loan: loans,
       pay_batch: batches,
+      timesheet: timesheets,
     };
   }
 
@@ -66,7 +71,7 @@ export class ApprovalsService {
     const mine = me
       ? and(eq(approvalSteps.kind, 'manager'), eq(approvalSteps.approverEmployeeId, me.id))
       : undefined;
-    const hr = userCan(user, 'approvals.hr') ? eq(approvalSteps.kind, 'hr') : undefined;
+    const hr = userCan(user, 'approvals.hr') ? await this.hrSteps(tx, user) : undefined;
     const payroll = userCan(user, 'payroll.approve')
       ? eq(approvalSteps.kind, 'payroll')
       : undefined;
@@ -81,6 +86,17 @@ export class ApprovalsService {
       or(mine, hr, payroll),
       me ? not(or(...Object.values(this.handlers).map((h) => h.ownedBy(tx, me.id)))!) : undefined,
       made.length ? not(or(...made)!) : undefined,
+    )!;
+  }
+
+  /** HR steps, of the people in the companies the login looks after when it is limited. */
+  private async hrSteps(tx: Tx, user: AuthUser): Promise<SQL> {
+    const entities = await entityScopeOf(tx, user.id);
+    if (!entities) return eq(approvalSteps.kind, 'hr');
+    const people = employeesOfEntities(tx, entities);
+    return and(
+      eq(approvalSteps.kind, 'hr'),
+      or(...Object.values(this.handlers).map((h) => h.ownedBy(tx, people))),
     )!;
   }
 
@@ -138,7 +154,7 @@ export class ApprovalsService {
       }
       const allowed =
         step.kind === 'hr'
-          ? userCan(user, 'approvals.hr')
+          ? userCan(user, 'approvals.hr') && (await inScope(tx, user, subject.employeeId))
           : step.kind === 'payroll'
             ? userCan(user, 'payroll.approve')
             : me !== null && me.id === step.approverEmployeeId;

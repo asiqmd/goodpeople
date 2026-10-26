@@ -83,6 +83,7 @@ import { EdgeAgentGuard } from './edge-agent.guard.js';
 import { PunchesService } from './punches.service.js';
 import { RegularizationsService } from './regularizations.service.js';
 import { ShiftsService } from './shifts.service.js';
+import { EmployeeScopeGuard } from '../access-scopes/employee-scope.guard.js';
 
 type Range = z.infer<typeof attendanceRangeQuerySchema>;
 
@@ -171,18 +172,20 @@ export class AttendanceController {
   @Get('attendance/summary')
   @Permits('attendance.manage')
   summary(
+    @CurrentUser() user: AuthUser,
     @Query(zod(attendanceMonthQuerySchema)) query: z.infer<typeof attendanceMonthQuerySchema>,
   ): Promise<MonthSummaryView> {
-    return this.attendance.monthSummary(query);
+    return this.attendance.monthSummary(user, query);
   }
 
   @Get('attendance/regularizations')
   @Permits('attendance.manage')
   allRegularizations(
+    @CurrentUser() user: AuthUser,
     @Query(zod(regularizationListQuerySchema))
     query: z.infer<typeof regularizationListQuerySchema>,
   ): Promise<RegularizationView[]> {
-    return this.regularizations.listAll(query);
+    return this.regularizations.listAll(user, query);
   }
 
   @Post('attendance/process')
@@ -245,9 +248,10 @@ export class AttendanceController {
   @Get('attendance/roster')
   @Permits('attendance.manage')
   roster(
+    @CurrentUser() user: AuthUser,
     @Query(zod(rosterQuerySchema)) query: z.infer<typeof rosterQuerySchema>,
   ): Promise<RosterView> {
-    return this.shifts.roster(query);
+    return this.shifts.roster(user, query);
   }
 
   @Post('attendance/roster')
@@ -334,6 +338,7 @@ export class AttendanceController {
 
   @Get('employees/:id/attendance')
   @Permits('attendance.manage')
+  @UseGuards(EmployeeScopeGuard)
   employee(
     @Param('id', ParseUUIDPipe) id: string,
     @Query(zod(attendanceRangeQuerySchema)) query: Range,
@@ -343,6 +348,7 @@ export class AttendanceController {
 
   @Patch('employees/:id/attendance-profile')
   @Permits('attendance.manage')
+  @UseGuards(EmployeeScopeGuard)
   @ApiBody(openApiBody(attendanceProfileSchema))
   setProfile(
     @CurrentUser() user: AuthUser,
@@ -353,6 +359,7 @@ export class AttendanceController {
   }
 
   @Post('employees/:id/attendance/punches')
+  @UseGuards(EmployeeScopeGuard)
   @Permits('attendance.manage')
   @ApiBody(openApiBody(manualPunchSchema))
   manualPunch(

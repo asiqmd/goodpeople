@@ -5,6 +5,7 @@ import { addDays, todayIn, type LeaveBalanceView } from '@gp/shared';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { currentTenantId } from '../../common/request-context.js';
 import { WorkCalendarService, type WorkCalendar } from '../calendar/work-calendar.service.js';
+import { PolicyService } from '../group/policy.service.js';
 
 type Employee = Pick<typeof employees.$inferSelect, 'id' | 'joinedOn' | 'separatedOn'>;
 export type LeaveTypeRow = typeof leaveTypes.$inferSelect;
@@ -21,7 +22,10 @@ const daysInclusive = (from: string, to: string) =>
  */
 @Injectable()
 export class BalancesService {
-  constructor(private readonly calendars: WorkCalendarService) {}
+  constructor(
+    private readonly calendars: WorkCalendarService,
+    private readonly policy: PolicyService,
+  ) {}
 
   async forEmployee(
     tx: Tx,
@@ -39,11 +43,13 @@ export class BalancesService {
   async balance(
     tx: Tx,
     employee: Employee,
-    type: LeaveTypeRow,
+    groupType: LeaveTypeRow,
     year: number,
     calendar?: WorkCalendar,
   ): Promise<LeaveBalanceView> {
     const cal = calendar ?? (await this.calendars.forEmployee(tx, employee.id, todayIn()));
+    // Days a year and carry-forward as the employee's company gives this leave.
+    const type = await this.policy.leaveTypeFor(tx, employee.id, groupType, todayIn());
     const eligibleFrom =
       type.minServiceDays > 0 ? addDays(employee.joinedOn, type.minServiceDays) : null;
     const leaveType = {

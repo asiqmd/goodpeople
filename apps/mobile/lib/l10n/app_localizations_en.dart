@@ -2059,4 +2059,265 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get passwordChanged =>
       'Password changed. You stay signed in here; other phones and browsers were signed out.';
+
+  @override
+  String get timesheetTitle => 'Timesheet';
+
+  @override
+  String get timesheetSubtitle => 'Your hours on each project, even offline';
+
+  @override
+  String get timesheetPreviousMonth => 'Previous month';
+
+  @override
+  String get timesheetNextMonth => 'Next month';
+
+  @override
+  String get timesheetNoEmployeeBody =>
+      'Timesheets belong to an employee record, but none is linked to your login. If you think you should have one, ask your HR team.';
+
+  @override
+  String get timesheetLoadFailed => 'We could not load your timesheet.';
+
+  @override
+  String get timesheetOffline =>
+      'You are offline. This is the copy saved on your phone; hours you type are sent when you are back online.';
+
+  @override
+  String timesheetStatus(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'draft': 'Draft',
+      'submitted': 'Submitted',
+      'approved': 'Approved',
+      'rejected': 'Returned',
+      'other': 'Unknown',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get timesheetDue =>
+      'You are allocated to a project this month. Fill in your hours and submit them at the end of the month.';
+
+  @override
+  String timesheetSubmittedNotice(String date) {
+    return 'Submitted on $date. Waiting for approval.';
+  }
+
+  @override
+  String timesheetApprovedNotice(String name, String date) {
+    return 'Approved by $name on $date.';
+  }
+
+  @override
+  String get timesheetRejectedNotice =>
+      'Returned for correction. Change your hours and submit again.';
+
+  @override
+  String timesheetReopenedNotice(String note) {
+    return 'HR reopened it: $note';
+  }
+
+  @override
+  String get timesheetWeekend => 'Weekly holiday';
+
+  @override
+  String get timesheetOffDay => 'Day off';
+
+  @override
+  String timesheetLeave(String name) {
+    return 'Leave: $name';
+  }
+
+  @override
+  String timesheetWorked(String hours) {
+    return 'Attendance $hours h';
+  }
+
+  @override
+  String timesheetHours(String hours) {
+    return '$hours h';
+  }
+
+  @override
+  String get timesheetHoursUnit => 'h';
+
+  @override
+  String get timesheetOtherWork => 'Other work';
+
+  @override
+  String timesheetPlanned(String percent) {
+    return 'Planned $percent%';
+  }
+
+  @override
+  String timesheetShare(String hours, String percent) {
+    return '$hours h · $percent%';
+  }
+
+  @override
+  String timesheetTotal(String hours) {
+    return 'Total $hours h';
+  }
+
+  @override
+  String get timesheetNoHours => 'No hours';
+
+  @override
+  String timesheetEditDay(String date) {
+    return 'Hours on $date';
+  }
+
+  @override
+  String get timesheetHoursInvalid => 'Enter hours from 0 to 24, like 7.5';
+
+  @override
+  String get timesheetDayTooLong => 'A day cannot have more than 24 hours';
+
+  @override
+  String get timesheetSaveDay => 'Save';
+
+  @override
+  String get timesheetCancel => 'Cancel';
+
+  @override
+  String get timesheetAddProject => 'Add a project';
+
+  @override
+  String get timesheetUnsent => 'Not sent yet';
+
+  @override
+  String timesheetWaiting(num count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString changes waiting to be sent',
+      one: '$countString change waiting to be sent',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get timesheetSendNow => 'Send now';
+
+  @override
+  String timesheetSent(num count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString changes sent',
+      one: '$countString change sent',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get timesheetSavedOffline =>
+      'Saved on your phone. It will be sent when you are online.';
+
+  @override
+  String timesheetRefusedTitle(String project, String date) {
+    return 'Your hours for $project on $date were not saved';
+  }
+
+  @override
+  String get timesheetPrefill => 'Fill from attendance';
+
+  @override
+  String timesheetPrefilled(num count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString days filled from attendance',
+      one: '$countString day filled from attendance',
+      zero: 'No day needed filling',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get timesheetSubmit => 'Submit';
+
+  @override
+  String get timesheetSubmitTitle => 'Submit your timesheet';
+
+  @override
+  String get timesheetDeclaration =>
+      'I certify that the hours in this timesheet are the work I actually did in this month, on the projects shown.';
+
+  @override
+  String get timesheetDeclarationConfirm => 'I make this declaration';
+
+  @override
+  String get timesheetSubmitted => 'Timesheet submitted';
+
+  @override
+  String get timesheetSendFirst =>
+      'Your changes have not reached the server yet. Send them before submitting.';
+
+  @override
+  String get timesheetNoProjects =>
+      'There are no projects to charge hours to this month.';
+
+  @override
+  String get timesheetErrorLocked =>
+      'This timesheet is submitted or approved, so it cannot change.';
+
+  @override
+  String get timesheetErrorEmpty => 'Enter your hours before submitting.';
+
+  @override
+  String get timesheetErrorMonthNotStarted =>
+      'A month can be submitted once it has started.';
+
+  @override
+  String get timesheetErrorOutsideMonth => 'That day is not in this month.';
+
+  @override
+  String get timesheetErrorProjectUnknown => 'That project does not exist.';
+
+  @override
+  String get timesheetErrorProjectClosed => 'The project is closed.';
+
+  @override
+  String get timesheetErrorOtherCompany =>
+      'The project belongs to another company.';
+
+  @override
+  String get timesheetErrorOutsidePeriod =>
+      'The project was not running that day.';
+
+  @override
+  String get timesheetErrorDayOver24 => 'A day cannot have more than 24 hours.';
+
+  @override
+  String get timesheetErrorClientIdTaken =>
+      'This entry belongs to someone else.';
+
+  @override
+  String get approvalTimesheetTitle => 'Project timesheet';
+
+  @override
+  String get approveTimesheetTitle => 'Approve this timesheet?';
+
+  @override
+  String get rejectTimesheetTitle => 'Reject this timesheet?';
+
+  @override
+  String get timesheetApproved => 'Timesheet approved';
+
+  @override
+  String get timesheetRejected => 'Timesheet returned for correction';
 }

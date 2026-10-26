@@ -1530,5 +1530,219 @@
   "newPasswordTooShort": "Use at least 10 characters",
   "newPasswordSame": "Choose a password you have not been using",
   "newPasswordMismatch": "The two new passwords are not the same",
-  "passwordChanged": "Password changed. You stay signed in here; other phones and browsers were signed out."
+  "passwordChanged": "Password changed. You stay signed in here; other phones and browsers were signed out.",
+  "timesheetTitle": "Timesheet",
+  "timesheetSubtitle": "Your hours on each project, even offline",
+  "@timesheetSubtitle": {
+    "description": "Under \"Timesheet\" on the home screen."
+  },
+  "timesheetPreviousMonth": "Previous month",
+  "timesheetNextMonth": "Next month",
+  "timesheetNoEmployeeBody": "Timesheets belong to an employee record, but none is linked to your login. If you think you should have one, ask your HR team.",
+  "timesheetLoadFailed": "We could not load your timesheet.",
+  "timesheetOffline": "You are offline. This is the copy saved on your phone; hours you type are sent when you are back online.",
+  "timesheetStatus": "{status, select, draft{Draft} submitted{Submitted} approved{Approved} rejected{Returned} other{Unknown}}",
+  "@timesheetStatus": {
+    "placeholders": {
+      "status": {
+        "type": "String",
+        "example": "draft"
+      }
+    }
+  },
+  "timesheetDue": "You are allocated to a project this month. Fill in your hours and submit them at the end of the month.",
+  "timesheetSubmittedNotice": "Submitted on {date}. Waiting for approval.",
+  "@timesheetSubmittedNotice": {
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "x"
+      }
+    }
+  },
+  "timesheetApprovedNotice": "Approved by {name} on {date}.",
+  "@timesheetApprovedNotice": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "x"
+      },
+      "date": {
+        "type": "String",
+        "example": "x"
+      }
+    }
+  },
+  "timesheetRejectedNotice": "Returned for correction. Change your hours and submit again.",
+  "timesheetReopenedNotice": "HR reopened it: {note}",
+  "@timesheetReopenedNotice": {
+    "placeholders": {
+      "note": {
+        "type": "String",
+        "example": "x"
+      }
+    }
+  },
+  "timesheetWeekend": "Weekly holiday",
+  "timesheetOffDay": "Day off",
+  "timesheetLeave": "Leave: {name}",
+  "@timesheetLeave": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "x"
+      }
+    }
+  },
+  "timesheetWorked": "Attendance {hours} h",
+  "@timesheetWorked": {
+    "description": "The hours attendance recorded on a day, a hint for what to enter.",
+    "placeholders": {
+      "hours": {
+        "type": "String",
+        "example": "x"
+      }
+    }
+  },
+  "timesheetHours": "{hours} h",
+  "@timesheetHours": {
+    "placeholders": {
+      "hours": {
+        "type": "String",
+        "example": "x"
+      }
+    }
+  },
+  "timesheetHoursUnit": "h",
+  "@timesheetHoursUnit": {
+    "description": "After an hours field, as in \"7.5 h\"."
+  },
+  "timesheetOtherWork": "Other work",
+  "@timesheetOtherWork": {
+    "description": "Work not charged to any project."
+  },
+  "timesheetPlanned": "Planned {percent}%",
+  "@timesheetPlanned": {
+    "placeholders": {
+      "percent": {
+        "type": "String",
+        "example": "x"
+      }
+    }
+  },
+  "timesheetShare": "{hours} h · {percent}%",
+  "@timesheetShare": {
+    "placeholders": {
+      "hours": {
+        "type": "String",
+        "example": "x"
+      },
+      "percent": {
+        "type": "String",
+        "example": "x"
+      }
+    }
+  },
+  "timesheetTotal": "Total {hours} h",
+  "@timesheetTotal": {
+    "placeholders": {
+      "hours": {
+        "type": "String",
+        "example": "x"
+      }
+    }
+  },
+  "timesheetNoHours": "No hours",
+  "timesheetEditDay": "Hours on {date}",
+  "@timesheetEditDay": {
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "x"
+      }
+    }
+  },
+  "timesheetHoursInvalid": "Enter hours from 0 to 24, like 7.5",
+  "timesheetDayTooLong": "A day cannot have more than 24 hours",
+  "timesheetSaveDay": "Save",
+  "timesheetCancel": "Cancel",
+  "timesheetAddProject": "Add a project",
+  "timesheetUnsent": "Not sent yet",
+  "timesheetWaiting": "{count, plural, one{{count} change waiting to be sent} other{{count} changes waiting to be sent}}",
+  "@timesheetWaiting": {
+    "placeholders": {
+      "count": {
+        "type": "num",
+        "format": "decimalPattern",
+        "example": "2"
+      }
+    }
+  },
+  "timesheetSendNow": "Send now",
+  "timesheetSent": "{count, plural, one{{count} change sent} other{{count} changes sent}}",
+  "@timesheetSent": {
+    "placeholders": {
+      "count": {
+        "type": "num",
+        "format": "decimalPattern",
+        "example": "2"
+      }
+    }
+  },
+  "timesheetSavedOffline": "Saved on your phone. It will be sent when you are online.",
+  "timesheetRefusedTitle": "Your hours for {project} on {date} were not saved",
+  "@timesheetRefusedTitle": {
+    "placeholders": {
+      "project": {
+        "type": "String",
+        "example": "x"
+      },
+      "date": {
+        "type": "String",
+        "example": "x"
+      }
+    }
+  },
+  "timesheetPrefill": "Fill from attendance",
+  "timesheetPrefilled": "{count, plural, =0{No day needed filling} one{{count} day filled from attendance} other{{count} days filled from attendance}}",
+  "@timesheetPrefilled": {
+    "placeholders": {
+      "count": {
+        "type": "num",
+        "format": "decimalPattern",
+        "example": "3"
+      }
+    }
+  },
+  "timesheetSubmit": "Submit",
+  "timesheetSubmitTitle": "Submit your timesheet",
+  "timesheetDeclaration": "I certify that the hours in this timesheet are the work I actually did in this month, on the projects shown.",
+  "@timesheetDeclaration": {
+    "description": "The employee's declaration on submitting; the same words as on the web and the PDF."
+  },
+  "timesheetDeclarationConfirm": "I make this declaration",
+  "timesheetSubmitted": "Timesheet submitted",
+  "timesheetSendFirst": "Your changes have not reached the server yet. Send them before submitting.",
+  "timesheetNoProjects": "There are no projects to charge hours to this month.",
+  "timesheetErrorLocked": "This timesheet is submitted or approved, so it cannot change.",
+  "timesheetErrorEmpty": "Enter your hours before submitting.",
+  "timesheetErrorMonthNotStarted": "A month can be submitted once it has started.",
+  "timesheetErrorOutsideMonth": "That day is not in this month.",
+  "timesheetErrorProjectUnknown": "That project does not exist.",
+  "timesheetErrorProjectClosed": "The project is closed.",
+  "timesheetErrorOtherCompany": "The project belongs to another company.",
+  "timesheetErrorOutsidePeriod": "The project was not running that day.",
+  "timesheetErrorDayOver24": "A day cannot have more than 24 hours.",
+  "timesheetErrorClientIdTaken": "This entry belongs to someone else.",
+  "approvalTimesheetTitle": "Project timesheet",
+  "@approvalTimesheetTitle": {
+    "description": "A month's timesheet in the approvals inbox, followed by the month, as in \"Project timesheet · October 2026\"."
+  },
+  "approveTimesheetTitle": "Approve this timesheet?",
+  "rejectTimesheetTitle": "Reject this timesheet?",
+  "timesheetApproved": "Timesheet approved",
+  "timesheetRejected": "Timesheet returned for correction",
+  "@timesheetRejected": {
+    "description": "After a manager rejects a timesheet: it goes back to the employee to correct and submit again."
+  }
 }

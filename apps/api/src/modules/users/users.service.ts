@@ -1,11 +1,12 @@
 import { randomBytes } from 'node:crypto';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { employees, hashPassword, tenantUsers, type Tx } from '@gp/db';
+import { employees, hashPassword, tenantUsers, userEntityScopes, type Tx } from '@gp/db';
 import type {
   TenantRole,
   UserCreateInput,
   UserUpdateInput,
   WorkspaceUserCreated,
+  WorkspaceUserListItem,
   WorkspaceUserView,
 } from '@gp/shared';
 import { and, asc, eq, isNull, ne } from 'drizzle-orm';
@@ -34,7 +35,7 @@ export class UsersService {
     private readonly mfa: MfaService,
   ) {}
 
-  list(): Promise<WorkspaceUserView[]> {
+  list(): Promise<WorkspaceUserListItem[]> {
     return this.tenantDb.run(async (tx) => {
       const rows = await tx
         .select({
@@ -49,7 +50,11 @@ export class UsersService {
         .from(tenantUsers)
         .leftJoin(employees, eq(employees.userId, tenantUsers.id))
         .orderBy(asc(tenantUsers.name));
-      return rows.map((r) => this.toView(r.user, r.employee));
+      const scopes = await tx.select().from(userEntityScopes);
+      return rows.map((r) => ({
+        ...this.toView(r.user, r.employee),
+        legalEntityIds: scopes.filter((s) => s.userId === r.user.id).map((s) => s.legalEntityId),
+      }));
     });
   }
 
@@ -125,6 +130,10 @@ export class UsersService {
         .update(tenantUsers)
         .set({ name: input.name ?? before.name, email, phone, role, disabledAt })
         .where(eq(tenantUsers.id, id));
+      // A workspace admin sees every company, so a limit set for an earlier role goes.
+      if (role === 'tenant_admin') {
+        await tx.delete(userEntityScopes).where(eq(userEntityScopes.userId, id));
+      }
       await this.audit.record(tx, {
         actorUserId: actor.id,
         action: 'user.update',

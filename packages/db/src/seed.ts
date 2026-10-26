@@ -13,6 +13,7 @@ import { provisionCountryDefaults, provisionPayroll } from './provision.js';
 import { seedBilling } from './seed-billing.js';
 import { seedGroupBenefits, seedGroupPayroll } from './seed-payroll.js';
 import { seedGroupHr } from './seed-hr.js';
+import { seedNgo } from './seed-ngo.js';
 import { seedGroupAttendance } from './seed-attendance.js';
 import { seedGroupLeave } from './seed-leave.js';
 import {
@@ -202,6 +203,18 @@ export async function seed(db: Database, opts: SeedOptions) {
         passwordHash,
       });
       await seedGroupBenefits(tx, { tenantId: group.id, cipher: createFieldCipher(opts.fieldKey) });
+    });
+  }
+  const [ngo] = await db.select().from(tenants).where(eq(tenants.slug, 'sponsored-ngo'));
+  if (ngo) {
+    await db.transaction(async (tx) => {
+      await scopeToTenant(tx, ngo.id);
+      await provisionPayroll(tx, ngo.id);
+      await seedNgo(tx, {
+        tenantId: ngo.id,
+        cipher: createFieldCipher(opts.fieldKey),
+        passwordHash,
+      });
     });
   }
   return { created };

@@ -1,10 +1,19 @@
 import { approvalSteps, employees, jobAssignments, type Tx } from '@gp/db';
 import type { ApprovalItem, ApprovalStepKind, ApprovalSubject } from '@gp/shared';
 import { and, eq, inArray, type SQL } from 'drizzle-orm';
+import type { AnyPgColumn } from 'drizzle-orm/pg-core';
+import type { employeesOfEntities } from '../access-scopes/entity-scope.js';
 import { inForceOn } from '../employees/employee.queries.js';
 import type { ApprovalSummary } from './approval-notices.js';
 
 export type ApprovalStepRow = typeof approvalSteps.$inferSelect;
+
+/** One employee, or the people of some companies (what a limited HR login looks after). */
+export type Whose = string | ReturnType<typeof employeesOfEntities>;
+
+/** A condition on a subject's employee column for `Whose`. */
+export const whose = (column: AnyPgColumn, who: Whose): SQL =>
+  typeof who === 'string' ? eq(column, who) : inArray(column, who);
 
 /**
  * Builds a subject's approval steps from a chain. A manager step goes to the employee's
@@ -84,8 +93,11 @@ export interface ApprovalSubjectHandler<View = unknown> {
     tx: Tx,
     subjectId: string,
   ): Promise<{ employeeId: string; madeBy?: string | null } | null>;
-  /** A condition on approval_steps.subject_id: the subject is this employee's own request. */
-  ownedBy(tx: Tx, employeeId: string): SQL;
+  /**
+   * A condition on approval_steps.subject_id: the subject is this employee's own request (or
+   * a request of one of these people).
+   */
+  ownedBy(tx: Tx, who: Whose): SQL;
   /** Maker-checker subjects: a condition matching the subjects this login proposed. */
   madeBy?(tx: Tx, userId: string): SQL;
   finalize(

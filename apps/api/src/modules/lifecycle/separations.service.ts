@@ -33,6 +33,8 @@ import {
   createApprovalSteps,
   type ApprovalStepRow,
   type ApprovalSubjectHandler,
+  whose,
+  type Whose,
 } from '../approvals/approval-steps.js';
 import {
   noticeRequested,
@@ -45,6 +47,8 @@ import { employeeRef } from '../attendance/attendance-views.js';
 import { AttendanceProcessor } from '../attendance/processor.service.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
 import { userCan } from '../../common/roles.js';
+import { inScope, mustChangeEmployee } from '../access-scopes/employee-scope.js';
+import { entityScope } from '../access-scopes/entity-scope.js';
 import { employeeOfUser, inForceOn } from '../employees/employee.queries.js';
 
 type SeparationRow = typeof separations.$inferSelect;
@@ -95,6 +99,7 @@ export class SeparationsService implements ApprovalSubjectHandler<SeparationView
     input: SeparationInput,
   ): Promise<SeparationView> {
     const id = await this.tenantDb.run(async (tx) => {
+      await mustChangeEmployee(tx, actor, employeeId);
       const employee = await this.activeEmployee(tx, employeeId);
       const [row] = await tx
         .insert(separations)
@@ -187,6 +192,9 @@ export class SeparationsService implements ApprovalSubjectHandler<SeparationView
         (me?.id !== row.employeeId || row.status !== 'pending')
       ) {
         throw new ForbiddenException('Only HR can call off an approved separation');
+      }
+      if (me?.id !== row.employeeId && !(await inScope(tx, user, row.employeeId))) {
+        throw new NotFoundException('Separation not found');
       }
       if (row.status !== 'pending' && row.status !== 'approved') {
         throw conflict('not_open', `This separation is ${row.status}`);
@@ -366,14 +374,29 @@ export class SeparationsService implements ApprovalSubjectHandler<SeparationView
     return view;
   }
 
-  list(query: { status?: SeparationStatus }): Promise<SeparationView[]> {
-    return this.tenantDb.run((tx) =>
-      this.load(tx, query.status ? eq(separations.status, query.status) : undefined),
+  /** For the companies the user looks after. */
+  list(user: AuthUser, query: { status?: SeparationStatus }): Promise<SeparationView[]> {
+    return this.tenantDb.run(async (tx) =>
+      this.load(
+        tx,
+        and(
+          query.status ? eq(separations.status, query.status) : undefined,
+          await entityScope(tx, user, separations.employeeId),
+        ),
+      ),
     );
   }
 
-  forEmployee(employeeId: string): Promise<SeparationView[]> {
-    return this.tenantDb.run((tx) => this.load(tx, eq(separations.employeeId, employeeId)));
+  forEmployee(user: AuthUser, employeeId: string): Promise<SeparationView[]> {
+    return this.tenantDb.run(async (tx) =>
+      this.load(
+        tx,
+        and(
+          eq(separations.employeeId, employeeId),
+          await entityScope(tx, user, separations.employeeId),
+        ),
+      ),
+    );
   }
 
   mine(user: AuthUser): Promise<SeparationView[]> {
@@ -409,13 +432,10 @@ export class SeparationsService implements ApprovalSubjectHandler<SeparationView
     return row ?? null;
   }
 
-  ownedBy(tx: Tx, employeeId: string): SQL {
+  ownedBy(tx: Tx, who: Whose): SQL {
     return inArray(
       approvalSteps.subjectId,
-      tx
-        .select({ id: separations.id })
-        .from(separations)
-        .where(eq(separations.employeeId, employeeId)),
+      tx.select({ id: separations.id }).from(separations).where(whose(separations.employeeId, who)),
     );
   }
 

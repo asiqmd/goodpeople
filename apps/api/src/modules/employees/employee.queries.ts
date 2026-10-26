@@ -14,6 +14,7 @@ import { and, desc, eq, gte, inArray, isNull, lte, or, type SQL } from 'drizzle-
 import type { AuthUser } from '../../common/auth-user.js';
 import { userCan } from '../../common/roles.js';
 import { alias, type AnyPgColumn } from 'drizzle-orm/pg-core';
+import { entityScope } from '../access-scopes/entity-scope.js';
 
 /** The job assignment in force on a date: started on or before it and not ended before it. */
 export const inForceOn = (date: string) =>
@@ -107,8 +108,9 @@ export const employeesInUnits = (tx: Tx, units: string[], onDate: string) =>
 
 /**
  * Whose team-level data a user may see, as a condition on an employee id column. Anyone who
- * may read every employee sees everyone (or one unit and below); others see themselves, their direct reports and
- * colleagues in their own unit. null: the user has no employee record and is not HR.
+ * may read every employee sees everyone in the companies they look after (or one unit and
+ * below); others see themselves, their direct reports and colleagues in their own unit.
+ * null: the user has no employee record and is not HR.
  */
 export async function teamScope(
   tx: Tx,
@@ -117,9 +119,10 @@ export async function teamScope(
   options: { onDate: string; orgUnitId?: string },
 ): Promise<SQL | undefined | null> {
   if (userCan(user, 'employees.read')) {
-    if (!options.orgUnitId) return undefined;
+    const companies = await entityScope(tx, user, employeeId);
+    if (!options.orgUnitId) return companies;
     const units = await unitAndBelow(tx, options.orgUnitId);
-    return inArray(employeeId, employeesInUnits(tx, units, options.onDate));
+    return and(companies, inArray(employeeId, employeesInUnits(tx, units, options.onDate)));
   }
   const me = await employeeOfUser(tx, user.id);
   if (!me) return null;

@@ -56,6 +56,7 @@ import { EmployeeLeaveService, type EmployeeLeaveSummary } from './employee-leav
 import { HolidaysService } from './holidays.service.js';
 import { LeaveRequestsService } from './leave-requests.service.js';
 import { LeaveTypesService } from './leave-types.service.js';
+import { EmployeeScopeGuard } from '../access-scopes/employee-scope.guard.js';
 
 const thisYear = () => Number(todayIn().slice(0, 4));
 
@@ -156,9 +157,10 @@ export class LeaveController {
   @Get('leave/requests')
   @Permits('leave.manage')
   allRequests(
+    @CurrentUser() user: AuthUser,
     @Query(zod(leaveListQuerySchema)) query: z.infer<typeof leaveListQuerySchema>,
   ): Promise<LeaveRequestView[]> {
-    return this.requests.listAll(query);
+    return this.requests.listAll(user, query);
   }
 
   @Get('leave/calendar')
@@ -173,6 +175,7 @@ export class LeaveController {
 
   @Get('employees/:id/leave')
   @Permits('leave.manage')
+  @UseGuards(EmployeeScopeGuard)
   employeeSummary(
     @Param('id', ParseUUIDPipe) id: string,
     @Query(zod(leaveYearQuerySchema)) query: z.infer<typeof leaveYearQuerySchema>,
@@ -182,6 +185,7 @@ export class LeaveController {
 
   @Post('employees/:id/leave/preview')
   @Permits('leave.manage')
+  @UseGuards(EmployeeScopeGuard)
   @ApiBody(openApiBody(leavePreviewSchema))
   previewFor(
     @CurrentUser() user: AuthUser,
@@ -193,6 +197,7 @@ export class LeaveController {
 
   @Post('employees/:id/leave/requests')
   @Permits('leave.manage')
+  @UseGuards(EmployeeScopeGuard)
   @ApiBody(openApiBody(leaveRequestInputSchema))
   applyFor(
     @CurrentUser() user: AuthUser,
@@ -204,6 +209,7 @@ export class LeaveController {
 
   @Post('employees/:id/leave/adjustments')
   @Permits('leave.manage')
+  @UseGuards(EmployeeScopeGuard)
   @ApiBody(openApiBody(leaveAdjustmentSchema))
   adjust(
     @CurrentUser() user: AuthUser,

@@ -1,0 +1,19 @@
+-- Tenant isolation for the Phase 3 M4 tables (same policy as 0001_rls.sql).
+DO $$
+DECLARE
+  t text;
+BEGIN
+  FOREACH t IN ARRAY ARRAY[
+    'donors', 'projects', 'employee_allocations', 'timesheets', 'timesheet_entries',
+    'entity_policy_overrides', 'user_entity_scopes'
+  ] LOOP
+    EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', t);
+    EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', t);
+    EXECUTE format(
+      'CREATE POLICY "tenant_isolation" ON %I
+         USING ("tenant_id" = nullif(current_setting(''app.tenant_id'', true), '''')::uuid)
+         WITH CHECK ("tenant_id" = nullif(current_setting(''app.tenant_id'', true), '''')::uuid)',
+      t);
+  END LOOP;
+END
+$$;

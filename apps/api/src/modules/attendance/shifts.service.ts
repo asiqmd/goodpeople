@@ -31,6 +31,7 @@ import { employeesInUnits, inForceOn, unitAndBelow } from '../employees/employee
 import { employeeRef, toShiftRef, toShiftView } from './attendance-views.js';
 import { AttendanceProcessor } from './processor.service.js';
 import { ScheduleService, hhmm, type ShiftRow } from './schedule.service.js';
+import { entityScope } from '../access-scopes/entity-scope.js';
 
 /** Refuses a shift the Labour Act does not allow, quoting the section. */
 function checkStatute(shift: Pick<ShiftRow, 'startTime' | 'endTime' | 'breakMinutes'>) {
@@ -252,12 +253,15 @@ export class ShiftsService {
   }
 
   /** Who works what, day by day, for the people at a unit or location. */
-  roster(query: {
-    from: string;
-    to: string;
-    orgUnitId?: string;
-    locationId?: string;
-  }): Promise<RosterView> {
+  roster(
+    user: AuthUser,
+    query: {
+      from: string;
+      to: string;
+      orgUnitId?: string;
+      locationId?: string;
+    },
+  ): Promise<RosterView> {
     return this.tenantDb.run(async (tx) => {
       const units = query.orgUnitId ? await unitAndBelow(tx, query.orgUnitId) : null;
       const people = await tx
@@ -267,6 +271,7 @@ export class ShiftsService {
           and(
             eq(employees.status, 'active'),
             units ? inArray(employees.id, employeesInUnits(tx, units, query.from)) : undefined,
+            await entityScope(tx, user, employees.id),
             query.locationId
               ? inArray(
                   employees.id,
