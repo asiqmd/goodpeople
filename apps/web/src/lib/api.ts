@@ -1,5 +1,6 @@
 import 'server-only';
 import type { ApiError, TenantRole } from '@gp/shared';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { cookieNames, type SessionKind } from './session';
@@ -40,11 +41,38 @@ async function toResult<T>(res: Response): Promise<ApiResult<T>> {
   if (res.status === 204) return { ok: true, data: undefined as T };
   const json = await res.json().catch(() => ({}));
   if (res.ok) return { ok: true, data: json as T };
-  return {
-    ok: false,
-    status: res.status,
-    error: { statusCode: res.status, error: res.statusText, message: 'Request failed', ...json },
+  // The header too, for errors whose body is not the API's (a proxy's 502, say).
+  const requestId = res.headers.get('x-request-id') ?? undefined;
+  const error: ApiError = {
+    statusCode: res.status,
+    error: res.statusText,
+    message: 'Request failed',
+    requestId,
+    ...json,
   };
+  if (error.issues?.some((i) => i.code)) error.issues = await translateIssues(error.issues);
+  return { ok: false, status: res.status, error };
+}
+
+/** Field issues the API coded (a statutory floor, say), in the page's language. */
+async function translateIssues(issues: NonNullable<ApiError['issues']>) {
+  const [t, locale] = await Promise.all([getTranslations('errors.issues'), getLocale()]);
+  // Text values such as a section number keep Latin digits unless changed here.
+  const digits = (v: string | number) =>
+    typeof v === 'string' && locale === 'bn'
+      ? v.replace(/[0-9]/g, (d) => '০১২৩৪৫৬৭৮৯'[Number(d)]!)
+      : v;
+  return issues.map((i) =>
+    i.code && t.has(i.code)
+      ? {
+          ...i,
+          message: t(
+            i.code,
+            Object.fromEntries(Object.entries(i.params ?? {}).map(([k, v]) => [k, digits(v)])),
+          ),
+        }
+      : i,
+  );
 }
 
 const LOGIN = { platform: '/platform/login', tenant: '/login' } as const;
@@ -62,10 +90,16 @@ export async function authedFetch<T>(
   return result;
 }
 
-/** For pages: the data, or throw so the error boundary shows. */
+/**
+ * For pages: the data, or throw so the error boundary shows. The API's reference goes into
+ * the message, so this server's log ties the boundary's digest to the API's log.
+ */
 export async function load<T>(kind: SessionKind, path: string): Promise<T> {
   const result = await authedFetch<T>(kind, path);
-  if (!result.ok) throw new Error(`${path}: ${result.error.message}`);
+  if (!result.ok) {
+    const { message, requestId } = result.error;
+    throw new Error(`${path}: ${message}${requestId ? ` (request ${requestId})` : ''}`);
+  }
   return result.data;
 }
 

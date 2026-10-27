@@ -12,6 +12,7 @@ import { runInTenantContext } from '../../common/request-context.js';
 import { APP_CONFIG, type AppConfig } from '../../config.js';
 import { TenantDb } from '../../db/db.module.js';
 import { EntitlementsService } from '../entitlements/entitlements.service.js';
+import { JobHeartbeats } from '../status/job-heartbeats.js';
 import { inForceOn } from '../employees/employee.queries.js';
 import { NotificationDispatcher } from './notification-dispatcher.service.js';
 import {
@@ -52,7 +53,7 @@ export class NotificationJobs implements OnApplicationBootstrap, OnApplicationSh
   private readonly logger = new Logger(NotificationJobs.name);
   private timers: NodeJS.Timeout[] = [];
   private sweeping: Promise<void> | undefined;
-  private reminding: Promise<void> | undefined;
+  private reminding: Promise<unknown> | undefined;
 
   constructor(
     @Inject(APP_CONFIG) private readonly config: AppConfig,
@@ -60,14 +61,24 @@ export class NotificationJobs implements OnApplicationBootstrap, OnApplicationSh
     private readonly tenantDb: TenantDb,
     private readonly dispatcher: NotificationDispatcher,
     private readonly notifications: NotificationsService,
+    private readonly heartbeats: JobHeartbeats,
   ) {}
 
   onApplicationBootstrap() {
     if (!this.config.BACKGROUND_JOBS) return;
+    // Each sweep's outcome feeds the status page's notifications check.
     const sweep = () => {
       this.sweeping ??= this.forEachTenant('Sending notifications', (id) =>
         this.dispatcher.runFor(id).then(() => undefined),
-      ).finally(() => (this.sweeping = undefined));
+      )
+        .then(
+          (failed) => this.heartbeats.beat('notifications', failed === 0),
+          (error: Error) => {
+            this.heartbeats.beat('notifications', false);
+            this.logger.error('Sending notifications failed', error);
+          },
+        )
+        .finally(() => (this.sweeping = undefined));
     };
     const remind = () => {
       this.reminding ??= this.forEachTenant('Reminders', async () => {
@@ -87,15 +98,19 @@ export class NotificationJobs implements OnApplicationBootstrap, OnApplicationSh
     await Promise.allSettled([this.sweeping, this.reminding]);
   }
 
+  /** Returns how many workspaces failed. */
   private async forEachTenant(what: string, fn: (tenantId: string) => Promise<void>) {
+    let failed = 0;
     for (const tenant of await this.entitlements.all()) {
       if (tenant.access.accessState === 'suspended') continue;
       try {
         await runInTenantContext(tenant.id, () => fn(tenant.id));
       } catch (error) {
+        failed++;
         this.logger.error(`${what} failed for ${tenant.slug}`, error as Error);
       }
     }
+    return failed;
   }
 
   /** Every reminder for the current workspace. Returns how many people were told. */

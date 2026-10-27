@@ -2,6 +2,7 @@ import { can, todayIn, type PayGroupView, type PayrollRunView } from '@gp/shared
 import { getFormatter, getLocale, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { HelpLink } from '@/components/help/help-link';
 import { day } from '@/components/leave/leave-views';
 import { BonusRunForm } from '@/components/payroll/benefit-forms';
 import { PayrollTabs, RunStatusBadge, runTitle, taka } from '@/components/payroll/payroll-views';
@@ -34,7 +35,10 @@ export default async function PayrollRunsPage() {
 
   return (
     <>
-      <h1 className="text-2xl font-semibold">{t('title')}</h1>
+      <h1 className="text-2xl font-semibold">
+        {t('title')}
+        <HelpLink slug="run-payroll" />
+      </h1>
       <PayrollTabs current="runs" />
       {can(role, 'payroll.manage') && (
         <Card title={tr('new')}>

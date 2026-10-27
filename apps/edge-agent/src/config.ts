@@ -1,5 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { isAddressOrRange } from './device-allow.js';
+import { SERIAL } from './devices.js';
 import { LOG_LEVELS, type LogLevel } from './log.js';
 import { assertTimeZone } from './time.js';
 
@@ -18,6 +20,10 @@ export interface AgentConfig {
   /** Hikvision access-control sub-event types that count as a punch. */
   hikvisionEventTypes: number[];
   logLevel: LogLevel;
+  /** Device addresses or ranges allowed to push; empty lets any address push. */
+  deviceAllow: string[];
+  /** Device serial numbers allowed to push; empty lets any serial push. */
+  deviceSerials: string[];
 }
 
 export class ConfigError extends Error {
@@ -38,6 +44,8 @@ const KEYS = {
   heartbeatIntervalMs: 'GP_HEARTBEAT_INTERVAL_MS',
   hikvisionEventTypes: 'GP_HIKVISION_EVENT_TYPES',
   logLevel: 'GP_LOG_LEVEL',
+  deviceAllow: 'GP_DEVICE_ALLOW',
+  deviceSerials: 'GP_DEVICE_SERIALS',
 } as const;
 type Key = keyof typeof KEYS;
 
@@ -148,6 +156,24 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AgentConfig {
     problems.push(`GP_LOG_LEVEL must be one of ${LOG_LEVELS.join(', ')}, got "${logLevel}"`);
   }
 
+  const list = (key: Key) =>
+    (get(key) ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+  const deviceAllow = list('deviceAllow');
+  const badAddresses = deviceAllow.filter((entry) => !isAddressOrRange(entry));
+  if (badAddresses.length > 0) {
+    problems.push(
+      `GP_DEVICE_ALLOW must list IP addresses or ranges such as 192.168.1.0/24, got "${badAddresses.join(', ')}"`,
+    );
+  }
+  const deviceSerials = list('deviceSerials');
+  const badSerials = deviceSerials.filter((serial) => !SERIAL.test(serial));
+  if (badSerials.length > 0) {
+    problems.push(`GP_DEVICE_SERIALS must list serial numbers, got "${badSerials.join(', ')}"`);
+  }
+
   const config: AgentConfig = {
     apiUrl,
     token,
@@ -165,6 +191,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AgentConfig {
     ),
     hikvisionEventTypes,
     logLevel,
+    deviceAllow,
+    deviceSerials,
   };
   if (problems.length > 0) throw new ConfigError(problems);
   return config;

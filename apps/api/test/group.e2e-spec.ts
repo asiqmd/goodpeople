@@ -494,7 +494,15 @@ describe('group', () => {
     }).expect(400);
     expect(low.body).toMatchObject({
       code: 'below_statutory_minimum',
-      issues: [{ path: 'daysPerYear', message: expect.stringContaining('s.115') }],
+      issues: [
+        {
+          path: 'daysPerYear',
+          message: expect.stringContaining('s.115'),
+          // The web says it in the page's language from the rule and the law's figure.
+          code: 'leave.casual.days_per_year',
+          params: { limit: 10, section: '115' },
+        },
+      ],
     });
     const short = await putPolicy('MGF', 'leave_type', {
       subjectId: maternity.id,

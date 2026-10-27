@@ -78,8 +78,8 @@ export function clockOf(row: GrievanceRow, deadline: GrievanceDeadline, now = ne
 /**
  * Logins that open harassment cases: current members of a current complaint committee
  * (s.332A) with an active login, whatever their role, since workers sit on the committee.
- * Without any, everyone who handles grievances sees them, with a warning, so no case is
- * left where nobody can read it.
+ * Without any, the workspace admin sees them, with a warning, so no case is left where nobody
+ * can read it.
  */
 export async function complaintCommitteeLogins(tx: Tx, today = todayIn()): Promise<string[]> {
   const rows = await tx
@@ -102,16 +102,23 @@ export async function complaintCommitteeLogins(tx: Tx, today = todayIn()): Promi
 }
 
 /**
+ * Who reads harassment cases while there is no complaint committee: the workspace admin
+ * (users.manage), who alone forms the committee, never HR, who could otherwise empty it to
+ * read them, nor Good People's support login.
+ */
+const readsWithoutCommittee = (role: TenantRole) => role !== 'support' && can(role, 'users.manage');
+
+/**
  * What a login may open: every grievance but harassment when it handles grievances, and
- * harassment when it sits on the complaint committee (or handles grievances where there is
- * no committee to send them to).
+ * harassment when it sits on the complaint committee (or is the workspace admin where there
+ * is no committee to send them to).
  */
 export async function grievanceAccessOf(tx: Tx, user: { id: string; role: TenantRole }) {
   const members = await complaintCommitteeLogins(tx);
-  const handles = can(user.role, 'grievances.manage');
   return {
-    all: handles,
+    all: can(user.role, 'grievances.manage'),
     committeeMissing: members.length === 0,
-    canSeeRestricted: members.includes(user.id) || (members.length === 0 && handles),
+    canSeeRestricted:
+      members.includes(user.id) || (members.length === 0 && readsWithoutCommittee(user.role)),
   };
 }

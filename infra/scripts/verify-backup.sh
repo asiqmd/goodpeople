@@ -13,6 +13,10 @@
 # loads the whole database, so prefer a server other than production; on the production server,
 # run it outside working hours. VERIFY_MIN_TENANTS (default 1) is the fewest workspaces a good
 # backup may have.
+#
+# Every drill, passed or failed, is recorded in the backup_runs table of the live database, through
+# BACKUP_REPORT_DATABASE_URL, else BACKUP_DATABASE_URL; with neither set it is not recorded. A
+# drill that cannot be recorded says so and carries on.
 set -euo pipefail
 
 here=$(cd "$(dirname "$0")" && pwd)
@@ -38,27 +42,59 @@ done
 require_var RESTORE_ADMIN_URL
 need pg_restore psql
 min_tenants=${VERIFY_MIN_TENANTS:-1}
-dir=$(resolve_backup "${backup_arg:-latest}")
-log "verifying $dir"
-check_dump "$dir"
 
-owner=$(owner_role)
-check_roles_exist "$RESTORE_ADMIN_URL" "$owner" "$(app_role)"
-scratch=gp_verify_$(date -u +%Y%m%d%H%M%S)
-check_identifier "$scratch"
+# What the drill's record says; filled in as it goes.
+report_url=${BACKUP_REPORT_DATABASE_URL:-${BACKUP_DATABASE_URL:-}}
+if [[ -z $report_url ]]; then
+  log "note: no BACKUP_REPORT_DATABASE_URL or BACKUP_DATABASE_URL; this drill is not recorded"
+fi
+started_at=$(utc_now)
+step=resolve
+label=''
+dump_bytes=''
+scratch=''
+tenants='' super_admins='' migrations='' employees='' attendance_days='' live_documents=''
+missing=''
+key_check=not_checked
 
 drop_scratch() {
+  [[ -n $scratch ]] || return 0
   if [[ $keep == true ]]; then
     log "kept scratch database $scratch"
   else
     psql_value "$RESTORE_ADMIN_URL" -c "DROP DATABASE IF EXISTS \"$scratch\"" || true
   fi
 }
-trap drop_scratch EXIT
+finish() {
+  local status=$? ok=false failed_step='' exit_code=''
+  drop_scratch
+  [[ -n $report_url ]] || return 0
+  if [[ $status == 0 ]]; then ok=true; else failed_step=$step exit_code=$status; fi
+  record_run "$report_url" verify "$ok" "$label" "$started_at" "$dump_bytes" "$(json_object \
+    "tenants=$tenants" "superAdmins=$super_admins" "migrations=$migrations" \
+    "employees=$employees" "attendanceDays=$attendance_days" "liveDocuments=$live_documents" \
+    "missingFiles=$missing" "fieldKey=$key_check" \
+    "failedStep=$failed_step" "exitCode=$exit_code")"
+}
+trap finish EXIT
+
+dir=$(resolve_backup "${backup_arg:-latest}")
+label=$(basename "$dir")
+log "verifying $dir"
+step=checksum
+check_dump "$dir"
+dump_bytes=$(wc -c <"$dir/database.dump" | tr -d ' ')
+
+step=restore
+owner=$(owner_role)
+check_roles_exist "$RESTORE_ADMIN_URL" "$owner" "$(app_role)"
+scratch=gp_verify_$(date -u +%Y%m%d%H%M%S)
+check_identifier "$scratch"
 
 restore_into "$RESTORE_ADMIN_URL" "$scratch" "$owner" "$dir/database.dump"
 url=$(url_with_database "$RESTORE_ADMIN_URL" "$scratch")
 count() { psql_value "$url" -c "select count(*) from $1"; }
+step=checks
 
 # As a superuser these counts see every workspace's rows.
 tenants=$(count tenants)
@@ -112,8 +148,10 @@ backup_fp=$(manifest_value "$dir" field_key_fingerprint)
 if [[ -n $backup_fp && -n ${FIELD_ENCRYPTION_KEY:-} ]]; then
   if [[ $(key_fingerprint "$FIELD_ENCRYPTION_KEY") == "$backup_fp" ]]; then
     log "FIELD_ENCRYPTION_KEY matches the key the backup was taken with"
+    key_check=match
   else
     log "FAIL: FIELD_ENCRYPTION_KEY here is not the key the backup was taken with"
+    key_check=mismatch
     failed=true
   fi
 else

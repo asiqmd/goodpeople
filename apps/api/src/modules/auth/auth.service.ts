@@ -1,4 +1,4 @@
-import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import {
@@ -11,6 +11,7 @@ import {
   tenantUsers,
   verifyPassword,
   type Database,
+  type Tx,
 } from '@gp/db';
 import {
   MFA_REQUIRED_ROLES,
@@ -38,6 +39,11 @@ import { runInTenantContext } from '../../common/request-context.js';
 import { APP_CONFIG, type AppConfig } from '../../config.js';
 import { DB } from '../../db/db.module.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
+import {
+  endSupportSessionOf,
+  followRefresh,
+  openSupportSession,
+} from '../support-access/support-sessions.js';
 import type { AccessTokenPayload } from './jwt-auth.guard.js';
 import { MfaService, type Subject } from './mfa.service.js';
 import { hashCode, numericCode } from './totp.js';
@@ -47,6 +53,7 @@ const MINUTE_MS = 60_000;
 const sha256 = (token: string) => createHash('sha256').update(token).digest('hex');
 const BAD_LOGIN = 'Wrong workspace, email or password';
 const BAD_CODE = 'Wrong or expired code';
+const stepExpired = () => new UnauthorizedException('Sign in again: this step has expired');
 /** How long the step between the password and the second factor may take. */
 const MFA_TOKEN_SECONDS = 5 * 60;
 /** Sign-in codes per number per day, on top of the per-15-minute limit. */
@@ -58,11 +65,19 @@ interface MfaTokenPayload {
   kind: 'platform' | 'tenant';
   tid?: string;
   typ: 'mfa' | 'mfa-setup';
+  /** Each token finishes one sign-in: a used one is refused. */
+  jti: string;
 }
 
 type TenantRow = typeof tenants.$inferSelect;
 type TenantUserRow = typeof tenantUsers.$inferSelect;
 type PlatformUserRow = typeof platformUsers.$inferSelect;
+
+/** A refresh-token session that ends by a set time, recorded with it (support access). */
+export interface CappedSession {
+  expiresAt: Date;
+  onIssued: (tx: Tx, authSessionId: string) => Promise<unknown>;
+}
 
 export type TenantLoginResult = TenantSession | MfaChallenge | MfaSetupRequired;
 export type PlatformLoginResult = PlatformSession | MfaChallenge | MfaSetupRequired;
@@ -70,6 +85,8 @@ export type PlatformLoginResult = PlatformSession | MfaChallenge | MfaSetupRequi
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
+  /** Second-step tokens that finished a sign-in, until they would have expired anyway. */
+  private readonly usedMfaTokens = new Map<string, number>();
   /** Compared against when the user does not exist, so both paths take similar time. */
   private dummyHash?: Promise<string>;
 
@@ -136,6 +153,7 @@ export class AuthService {
     if (!(await this.mfa.check(subject, input.code))) {
       throw new UnauthorizedException(BAD_CODE);
     }
+    this.useMfaToken(payload);
     this.limiter.reset(`mfa:${payload.sub}`);
     return this.sessionFor(subject);
   }
@@ -153,6 +171,7 @@ export class AuthService {
     this.limiter.hit(`mfa:${payload.sub}`, 5, 15 * MINUTE_MS);
     const subject = this.subjectOf(payload);
     const recoveryCodes = await this.mfa.confirm(subject, input.code);
+    this.useMfaToken(payload);
     return { ...(await this.sessionFor(subject)), recoveryCodes };
   }
 
@@ -285,14 +304,43 @@ export class AuthService {
       session.subjectKind === 'tenant'
         ? { kind: 'tenant', id: session.subjectId, tenantId: session.tenantId! }
         : { kind: 'platform', id: session.subjectId };
+    if (payload.kind === 'tenant' && payload.role === 'support') {
+      // Support access lasts only while its session and the workspace's grant do, and a
+      // refresh never moves its end.
+      if (!(await openSupportSession(this.db, { authSessionId: session.id }))) {
+        throw new UnauthorizedException('Support access to this workspace has ended');
+      }
+      return this.issue(subject, payload, session.id, {
+        expiresAt: session.expiresAt,
+        onIssued: (tx, id) => followRefresh(tx, session.id, id),
+      });
+    }
     return this.issue(subject, payload, session.id);
   }
 
+  /**
+   * Signs Good People support into a workspace as its read-only `support` login, until
+   * `capped.expiresAt` at the latest.
+   */
+  issueSupportSession(
+    login: { id: string; tenantId: string },
+    capped: CappedSession,
+  ): Promise<TokenPair> {
+    return this.issue(
+      { kind: 'tenant', id: login.id, tenantId: login.tenantId },
+      { sub: login.id, kind: 'tenant', role: 'support', tid: login.tenantId },
+      undefined,
+      capped,
+    );
+  }
+
   async logout(refreshToken: string): Promise<void> {
-    await this.db
+    const [ended] = await this.db
       .update(authSessions)
       .set({ revokedAt: new Date() })
-      .where(and(eq(authSessions.tokenHash, sha256(refreshToken)), isNull(authSessions.revokedAt)));
+      .where(and(eq(authSessions.tokenHash, sha256(refreshToken)), isNull(authSessions.revokedAt)))
+      .returning({ id: authSessions.id });
+    if (ended) await endSupportSessionOf(this.db, ended.id);
   }
 
   /**
@@ -327,6 +375,8 @@ export class AuthService {
     if (user.disabledAt) {
       throw forbidden('login_disabled', 'This login is no longer active');
     }
+    // Support's read-only login is opened from the console only, never signed in to.
+    if (user.role === 'support') throw new UnauthorizedException(BAD_LOGIN);
   }
 
   /** After a right password: a second step if the login has one or must set one up. */
@@ -349,8 +399,17 @@ export class AuthService {
       kind: subject.kind,
       ...(subject.kind === 'tenant' ? { tid: subject.tenantId } : {}),
       typ,
+      jti: randomUUID(),
     };
     return this.jwt.signAsync(payload, { secret: this.mfaSecret(), expiresIn: MFA_TOKEN_SECONDS });
+  }
+
+  /** Marks a second-step token used; a replay (even one racing this call) is refused. */
+  private useMfaToken(payload: MfaTokenPayload): void {
+    const now = Date.now();
+    for (const [jti, until] of this.usedMfaTokens) if (until <= now) this.usedMfaTokens.delete(jti);
+    if (this.usedMfaTokens.has(payload.jti)) throw stepExpired();
+    this.usedMfaTokens.set(payload.jti, now + MFA_TOKEN_SECONDS * 1000);
   }
 
   private async readMfaToken(token: string, typ: MfaTokenPayload['typ']): Promise<MfaTokenPayload> {
@@ -358,11 +417,13 @@ export class AuthService {
       const payload = await this.jwt.verifyAsync<MfaTokenPayload>(token, {
         secret: this.mfaSecret(),
       });
-      if (payload.typ === typ) return payload;
+      if (payload.typ === typ && payload.jti && !this.usedMfaTokens.has(payload.jti)) {
+        return payload;
+      }
     } catch {
       // Falls through to the same answer as a wrong type.
     }
-    throw new UnauthorizedException('Sign in again: this step has expired');
+    throw stepExpired();
   }
 
   /** A key of its own, so a second-step token can never pass as an access token. */
@@ -459,9 +520,11 @@ export class AuthService {
     subject: Subject,
     payload: AccessTokenPayload,
     replaces?: string,
+    capped?: CappedSession,
   ): Promise<TokenPair> {
     const refreshToken = randomBytes(32).toString('base64url');
-    const expiresAt = new Date(Date.now() + this.config.REFRESH_TOKEN_TTL_DAYS * DAY_MS);
+    const expiresAt =
+      capped?.expiresAt ?? new Date(Date.now() + this.config.REFRESH_TOKEN_TTL_DAYS * DAY_MS);
     await this.db.transaction(async (tx) => {
       const [created] = await tx
         .insert(authSessions)
@@ -474,11 +537,17 @@ export class AuthService {
         })
         .returning({ id: authSessions.id });
       if (replaces) {
-        await tx
+        // Only one refresh can rotate a token: a second one at the same moment waits for the
+        // row, finds it rotated and is refused (the new session rolls back). A later reuse
+        // is caught as a leak by refresh().
+        const [rotated] = await tx
           .update(authSessions)
           .set({ revokedAt: new Date(), replacedBy: created!.id })
-          .where(eq(authSessions.id, replaces));
+          .where(and(eq(authSessions.id, replaces), isNull(authSessions.revokedAt)))
+          .returning({ id: authSessions.id });
+        if (!rotated) throw new UnauthorizedException('This session was just renewed');
       }
+      await capped?.onIssued(tx, created!.id);
     });
     const accessToken = await this.jwt.signAsync(payload, {
       expiresIn: this.config.ACCESS_TOKEN_TTL_SECONDS,

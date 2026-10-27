@@ -41,6 +41,7 @@ import { employeeRef } from '../attendance/attendance-views.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
 import { employeeOfUser } from '../employees/employee.queries.js';
 import { PdfService } from '../letters/pdf.service.js';
+import { csvField } from './disbursement.js';
 import { componentsOf } from './payroll-setup.service.js';
 import { salaryIn, sealed, type DeclarationItem, type StoredResult } from './run-context.js';
 import { certificateHtml } from './tax-certificate.js';
@@ -677,5 +678,4 @@ export class TaxService {
 
 const thisYear = () => fiscalYearOf(todayIn());
 
-/** A CSV field, quoted when it holds a comma, quote or line break. */
-const csv = (v: string) => (/[",\n]/.test(v) ? `"${v.replaceAll('"', '""')}"` : v);
+const csv = csvField;

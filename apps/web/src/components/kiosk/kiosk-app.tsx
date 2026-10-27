@@ -43,6 +43,8 @@ function useRefusal() {
           return t('pin.wrong');
         case 'kiosk_locked':
           return t('pin.locked', { minutes: Math.ceil((reply.retryAfterSeconds ?? 900) / 60) });
+        case 'kiosk_paused':
+          return t('pin.paused', { minutes: Math.ceil((reply.retryAfterSeconds ?? 300) / 60) });
         case 'kiosk_code_wrong':
           return t('newPin.wrongCode');
         case 'kiosk_session_ended':

@@ -13,7 +13,15 @@
     "unlimited": "Unlimited",
     "never": "Never",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "errorTitle": "Something went wrong",
+    "errorBody": "This page could not be shown. Try again in a moment. If it keeps happening, contact support and give them the reference.",
+    "errorReference": "Reference: {id}",
+    "contactSupport": "Contact support",
+    "tryAgain": "Try again",
+    "goHome": "Go to the home page",
+    "notFoundTitle": "Page not found",
+    "notFoundBody": "The page you asked for does not exist or has moved. Check the address, or start again from the home page."
   },
   "home": {
     "title": "One HR platform for every kind of organization",
@@ -119,12 +127,14 @@
       "grievances": "Grievances",
       "timesheets": "Timesheets",
       "projects": "Projects",
-      "group": "Group"
+      "group": "Group",
+      "support": "Support"
     },
     "trial": "Free trial: {days, plural, one {# day} other {# days}} left.",
     "gettingStarted": "Getting started",
     "plans": "Plans",
-    "payToRestore": "Open Billing to pay."
+    "payToRestore": "Open Billing to pay.",
+    "backToConsole": "Back to the console"
   },
   "platform": {
     "tenants": "Tenants",
@@ -183,7 +193,8 @@
         "code_sent": "Code sent",
         "workspace_created": "Workspace created",
         "expired": "Code expired"
-      }
+      },
+      "terms": "Terms {version} accepted"
     },
     "billing": {
       "tabs": {
@@ -320,7 +331,10 @@
         "save": "Save settings"
       }
     },
-    "billingNav": "Billing"
+    "billingNav": "Billing",
+    "supportNav": "Support",
+    "statusNav": "Status",
+    "operationsNav": "Operations"
   },
   "billingModes": {
     "paid": "Paid",
@@ -629,7 +643,8 @@
       "attendance_officer": "Attendance officer",
       "auditor": "Auditor",
       "payroll_officer": "Payroll officer",
-      "finance_officer": "Finance officer"
+      "finance_officer": "Finance officer",
+      "support": "Good People support"
     }
   },
   "leave": {
@@ -1431,7 +1446,42 @@
     "timesheet_draft": "This timesheet is already a draft.",
     "timesheet_month_locked": "Pay for this month is locked in payroll, so its timesheet cannot change.",
     "month_not_started": "A month can be submitted once it has started.",
-    "allocation_pay_locked": "Pay for these days is locked in payroll, so their project shares cannot change."
+    "allocation_pay_locked": "Pay for these days is locked in payroll, so their project shares cannot change.",
+    "internal_error": "Something went wrong on our side. Try again in a moment.",
+    "pdf_unavailable": "PDFs cannot be made right now. Try again later, or contact support.",
+    "support_read_only": "Good People support can look but not change anything in this workspace.",
+    "support_access_ended": "Support access to this workspace has ended.",
+    "no_support_access": "This workspace has not let support in, or its access has ended.",
+    "unknown_ticket": "That ticket is not one of this workspace’s.",
+    "issues": {
+      "leave": {
+        "casual": {
+          "days_per_year": "Casual leave must be at least {limit, number} days a year (Bangladesh Labour Act 2006, s.{section})"
+        },
+        "sick": {
+          "days_per_year": "Sick leave must be at least {limit, number} days a year (Bangladesh Labour Act 2006, s.{section})"
+        },
+        "annual": {
+          "min_service_days": "Annual leave cannot require more than {limit, number} days of service (Bangladesh Labour Act 2006, s.{section})",
+          "carry_forward_max_days": "Unused annual leave must be allowed to accumulate to at least {limit, number} days (Bangladesh Labour Act 2006, s.{section})"
+        },
+        "maternity": {
+          "days": "Maternity leave must be at least {limit, number} days (Bangladesh Labour Act 2006, s.{section})",
+          "min_service_days": "Maternity leave cannot require more than {limit, number} days of service (Bangladesh Labour Act 2006, s.{section})"
+        }
+      }
+    },
+    "ticket_closed": "This ticket is closed. Open a new ticket for a new problem.",
+    "attachment_type": "Attach a PNG, JPEG or WebP picture, a PDF, an Excel workbook (.xlsx), or a CSV or text file.",
+    "attachment_too_large": "Each file can be up to 10 MB.",
+    "too_many_attachments": "Attach up to 5 files.",
+    "assignee_not_support": "Assign the ticket to someone in support.",
+    "support_identity_hidden": "Good People support cannot see identity numbers or identity documents.",
+    "maintenance_window": "The maintenance must end after it starts.",
+    "status_kind_mismatch": "That status does not fit this kind of post.",
+    "platform_role": "Your platform role cannot see or do this.",
+    "spreadsheet_too_large": "This spreadsheet unpacks to more than can be read. Save it with fewer rows or sheets, then upload it again.",
+    "kiosk_paused": "Too many wrong PINs on this kiosk. Try again in a few minutes."
   },
   "platformRoles": {
     "super_admin": "Super admin",
@@ -1496,7 +1546,8 @@
       "auditor": "Reads the employee list (identity numbers hidden) and the audit log. Changes nothing.",
       "employee": "Self-service: their own profile, leave, attendance, documents and their team's approvals.",
       "payroll_officer": "Payroll: sees salaries and proposes pay changes, which someone else approves. Reads the employee list.",
-      "finance_officer": "Approves pay changes made by others, sees salaries and the audit log. Changes nothing else."
+      "finance_officer": "Approves pay changes made by others, sees salaries and the audit log. Changes nothing else.",
+      "support": "Read-only, while the workspace lets support in."
     },
     "created": "Login created for {name}.",
     "temporaryPassword": "One-time password, shown only now:",
@@ -1546,7 +1597,8 @@
       "compliance_alert": "A working-time limit was passed, or a committee fell behind",
       "grievance_received": "A worker raised a grievance",
       "maternity_payment_due": "A maternity benefit payment falls due",
-      "timesheet_due": "Your timesheet for last month is not yet submitted"
+      "timesheet_due": "Your timesheet for last month is not yet submitted",
+      "payment_account_changed": "The account a salary is paid to was changed"
     },
     "languages": {
       "en": "English",
@@ -1589,7 +1641,8 @@
     "smsLength": "{characters} characters: {messages, plural, one {# SMS} other {# SMS}} per person",
     "placeholders": "You can use:",
     "reset": "Back to the built-in wording",
-    "retry": "Send again"
+    "retry": "Send again",
+    "paymentAccountFixed": "The employee gets this notice whenever the account their salary is paid to changes. Its wording cannot be changed and it cannot be switched off."
   },
   "setup": {
     "title": "Go-live checklist",
@@ -2004,7 +2057,8 @@
       "taxHow": "How the tax of {amount} was worked out",
       "paymentDueBonus": "A festival bonus is paid before the festival.",
       "paymentDueSettlement": "A leaver's dues are paid within 30 working days of the last day (Labour Act s.30).",
-      "paymentDueWppf": "The fund is paid within nine months of the year end (Labour Act s.234)."
+      "paymentDueWppf": "The fund is paid within nine months of the year end (Labour Act s.234).",
+      "accountChanged": "Pay account changed {date}"
     },
     "payslips": {
       "title": "Payslips",
@@ -2603,7 +2657,10 @@
     "noCode": "No code?",
     "startAgain": "Start again",
     "haveWorkspace": "Already have a workspace?",
-    "signIn": "Sign in"
+    "signIn": "Sign in",
+    "acceptTerms": "I accept the <terms>Terms of Service</terms> and the <privacy>Privacy Policy</privacy>.",
+    "acceptTermsRequired": "Accept the Terms of Service and the Privacy Policy to start the trial.",
+    "opensInNewTab": "(opens in a new tab)"
   },
   "welcome": {
     "title": "Welcome, {name}",
@@ -3153,7 +3210,8 @@
       "restricted": "Committee only",
       "anonymous": "Anonymous",
       "named": "Named",
-      "empty": "No grievances here."
+      "empty": "No grievances here.",
+      "committeeMissingAdmin": "No member of a complaint committee can open grievances here, so harassment cases are shown only to the workspace admin. The Labour Act requires a complaint committee on harassment (s.332A): the workspace admin forms it and links its members to their logins."
     },
     "detail": {
       "back": "All grievances",
@@ -3225,7 +3283,8 @@
       "ok": "OK",
       "delete": "Delete",
       "wrong": "The card number or PIN is wrong. Try again.",
-      "locked": "Too many wrong PINs. Try again in {minutes, plural, one {# minute} other {# minutes}}."
+      "locked": "Too many wrong PINs. Try again in {minutes, plural, one {# minute} other {# minutes}}.",
+      "paused": "Too many wrong PINs on this kiosk. Try again in {minutes, plural, one {# minute} other {# minutes}}."
     },
     "newPin": {
       "title": "Set your PIN",
@@ -4273,5 +4332,424 @@
       "summary": "{month}: {hours} hours",
       "pdf": "Open the timesheet (PDF)"
     }
+  },
+  "supportAccess": {
+    "title": "Support access",
+    "intro": "Let Good People support look inside your workspace for a few days, so they can see the problem for themselves. You choose how long, and you can take it back at any time.",
+    "canTitle": "Support can",
+    "can": "See what a workspace admin sees: people, attendance, leave, payroll, settings and reports.",
+    "cannotTitle": "Support cannot",
+    "cannot": "Change, add or delete anything, or see identity numbers (NID, birth registration, passport, TIN) or scans of identity documents.",
+    "loggedTitle": "Everything is recorded",
+    "logged": "Every page support opens is written to the list at the bottom of this page, and the admin who let them in gets an email each time someone comes in.",
+    "notAllowed": "Only a workspace admin can let Good People support in.",
+    "grant": {
+      "title": "Let support in",
+      "days": "For how long",
+      "daysOption": "{count, plural, one {# day} other {# days}}",
+      "ticket": "About ticket (optional)",
+      "noTicket": "No ticket",
+      "note": "Note for support (optional)",
+      "noteHint": "What should they look at?",
+      "submit": "Let support in",
+      "granted": "Support can now look inside your workspace, read-only."
+    },
+    "grants": {
+      "title": "Access you have given",
+      "none": "You have not let support in yet.",
+      "given": "Given",
+      "givenBy": "{when} by {name}",
+      "until": "Until",
+      "about": "About",
+      "usedBy": "Used by",
+      "notUsed": "Not used yet",
+      "status": "Status",
+      "active": "Active",
+      "ended": "Ended",
+      "revoked": "Revoked",
+      "revoke": "Revoke",
+      "revokeConfirm": "Take support’s access back now? Anyone from support who is inside is signed out at once."
+    },
+    "activity": {
+      "title": "What support opened",
+      "intro": "The latest {count, number} pages and requests, newest first.",
+      "none": "Support has not opened anything here yet.",
+      "when": "When",
+      "who": "Who",
+      "what": "Page"
+    },
+    "banner": {
+      "text": "You are in {workspace} as Good People support. Read-only, until {until}.",
+      "end": "End session"
+    },
+    "console": {
+      "title": "Support access",
+      "intro": "Workspaces that have let support in right now. Opening one signs you in to it read-only: every page you open is recorded in its audit log, and the admin who let you in gets an email.",
+      "none": "No workspace has let support in right now.",
+      "notAllowed": "Your platform role cannot see support access.",
+      "workspace": "Workspace",
+      "grantedBy": "Granted by",
+      "until": "Until",
+      "about": "About",
+      "sessions": "Open sessions",
+      "session": "{name} since {since}",
+      "open": "Open workspace (read-only)",
+      "end": "End",
+      "mfaRequired": "Set up two-step sign-in on your account before opening a workspace.",
+      "cardTitle": "Support access",
+      "cardNone": "This workspace has not let support in.",
+      "cardGrant": "Granted by {name} until {until}"
+    }
+  },
+  "support": {
+    "statuses": {
+      "open": "Open",
+      "waiting_on_customer": "Waiting for you",
+      "resolved": "Solved",
+      "closed": "Closed"
+    },
+    "priorities": {
+      "normal": "Normal",
+      "urgent": "Urgent"
+    },
+    "categories": {
+      "account": "Account and sign-in",
+      "billing": "Billing",
+      "people": "People and records",
+      "attendance": "Attendance",
+      "leave": "Leave",
+      "payroll": "Payroll",
+      "import": "Importing data",
+      "bug": "Something is broken",
+      "other": "Something else"
+    },
+    "thread": {
+      "fromSupport": "{name}, Good People support",
+      "internal": "Internal note",
+      "kb": "{size, number} KB",
+      "mb": "{size, number} MB"
+    },
+    "files": {
+      "label": "Attachments",
+      "hint": "Up to {count, number} files, {size, number} MB each: pictures (PNG, JPEG, WebP), PDF, Excel (.xlsx), CSV or text.",
+      "tooMany": "Attach up to {count, number} files.",
+      "tooLarge": "Each file can be up to {size, number} MB."
+    },
+    "list": {
+      "title": "Support",
+      "intro": "Ask Good People for help when something is wrong or unclear.",
+      "help": "Many answers are already in the help centre.",
+      "new": "New ticket",
+      "access": "Support access",
+      "mine": "My tickets",
+      "all": "All the workspace's tickets",
+      "empty": "No tickets yet.",
+      "ticket": "Ticket",
+      "subject": "Subject",
+      "status": "Status",
+      "updated": "Last update",
+      "openedBy": "Opened by {name}"
+    },
+    "targets": {
+      "title": "How soon we answer",
+      "intro": "On the {plan} plan, our first answer comes within:",
+      "hours": "{hours, plural, one {# support hour} other {# support hours}}",
+      "supportHours": "Support hours are {from} to {to}, {start} to {end}, Bangladesh time.",
+      "clock": "Outside these hours the clock stops: a ticket opened on Thursday evening is answered on Sunday."
+    },
+    "new": {
+      "back": "All tickets",
+      "title": "New ticket",
+      "intro": "Tell us what went wrong. The more we know, the sooner we can help.",
+      "category": "What is it about?",
+      "chooseCategory": "Choose one",
+      "priority": "How urgent is it?",
+      "normalHint": "Something is wrong or you have a question, but work goes on.",
+      "urgentHint": "Payroll cannot run, nobody can sign in, or attendance has stopped arriving.",
+      "subject": "Subject",
+      "description": "What happened?",
+      "descriptionHint": "What you did, what you expected, and what happened instead.",
+      "requestId": "Error reference",
+      "requestIdHint": "If an error message showed a reference, it goes here.",
+      "page": "Page",
+      "pageHint": "Where in Good People it happened, if you know.",
+      "submit": "Send to support"
+    },
+    "detail": {
+      "back": "All tickets",
+      "openedBy": "Opened by {name} on {date}",
+      "waitingOnYou": "Support has answered and is waiting for your reply.",
+      "resolvedNote": "Marked as solved. If it is not, reply and we will pick it up again; otherwise the ticket closes by itself after {days, plural, one {# day} other {# days}}.",
+      "thread": "Conversation",
+      "closedNote": "This ticket is closed. If something else is wrong, open a new ticket.",
+      "newTicket": "Open a new ticket",
+      "category": "Category",
+      "priority": "Priority",
+      "response": "First answer",
+      "answeredAt": "Answered on {date}",
+      "answerBy": "We aim to answer by {date}",
+      "requestId": "Error reference",
+      "page": "Page",
+      "reply": "Your reply",
+      "send": "Send reply",
+      "solvedHint": "Is the problem fixed? Let us know and we will close the ticket.",
+      "solved": "This is solved"
+    }
+  },
+  "supportConsole": {
+    "title": "Support queue",
+    "intro": "Urgent and overdue tickets first, then the soonest due.",
+    "notForYou": "The support queue is for support and operations staff.",
+    "statuses": {
+      "open": "Open",
+      "waiting_on_customer": "Waiting on customer",
+      "resolved": "Resolved",
+      "closed": "Closed"
+    },
+    "status": "Status",
+    "active": "Active (open or waiting)",
+    "assignee": "Assignee",
+    "anyone": "Anyone",
+    "me": "Me",
+    "nobody": "Nobody",
+    "search": "Search",
+    "searchHint": "GP-1001 or words in the subject",
+    "filter": "Filter",
+    "empty": "No tickets match.",
+    "ticket": "Ticket",
+    "subject": "Subject",
+    "due": "First answer due",
+    "answered": "Answered",
+    "overdue": "Overdue",
+    "detail": {
+      "back": "Support queue",
+      "closedNote": "This ticket is closed and takes no more replies.",
+      "ticket": "Ticket",
+      "answeredAt": "Answered on {date}",
+      "settings": "Settings",
+      "save": "Save",
+      "saved": "Saved.",
+      "workspace": "Workspace",
+      "openTenant": "Open the workspace's page",
+      "access": "Support access",
+      "accessUntil": "Granted by {name}, until {date}.",
+      "noAccess": "The workspace has not granted support access.",
+      "internal": "Internal note",
+      "internalHint": "Only Good People staff see an internal note. Nobody is emailed.",
+      "publicHint": "The workspace sees this reply, and the person who opened the ticket is emailed.",
+      "reply": "Reply",
+      "note": "Note",
+      "nextStatus": "Then",
+      "defaultStatus": "Wait on the customer",
+      "keepStatus": "Keep the status",
+      "send": "Send reply",
+      "addNote": "Add note",
+      "assignMe": "Assign to me",
+      "unassign": "Unassign"
+    }
+  },
+  "status": {
+    "title": "Service status",
+    "metaTitle": "Service status · Good People",
+    "intro": "How Good People is working now and over the last {days, number} days. Times are Dhaka time.",
+    "unavailable": "The status cannot be loaded right now. Try again in a minute.",
+    "updated": "Updated {time}. This page refreshes every minute.",
+    "signIn": "Sign in",
+    "overall": {
+      "operational": "All systems working",
+      "maintenance": "Maintenance under way",
+      "degraded": "Some systems are having problems",
+      "partial_outage": "Part of the service is down",
+      "major_outage": "Major outage"
+    },
+    "states": {
+      "operational": "Working",
+      "maintenance": "Maintenance",
+      "degraded": "Degraded",
+      "partial_outage": "Partial outage",
+      "major_outage": "Major outage",
+      "no_data": "No data"
+    },
+    "components": {
+      "web": "Web app",
+      "api": "API and mobile app",
+      "attendance": "Attendance",
+      "documents": "Documents and PDFs",
+      "notifications": "Notifications",
+      "payments": "Online payments"
+    },
+    "componentHints": {
+      "web": "Signing in and working in the browser",
+      "api": "The mobile app, Edge Agents and other connections",
+      "attendance": "Turning punches into attendance",
+      "documents": "Uploading documents and making PDFs",
+      "notifications": "Email, SMS and push notifications",
+      "payments": "Paying invoices online"
+    },
+    "systems": "Systems",
+    "legendNote": "Each bar is one day. Its colour shows the worst of that day's incidents and our checks.",
+    "uptime": "{uptime} uptime",
+    "incidentsOnly": "From posted incidents only",
+    "daysAgo": "{count, number} days ago",
+    "today": "Today",
+    "bar": "{date}: {uptime} uptime, {state}",
+    "barNoChecks": "{date}: {state}",
+    "history": "{name}, last {count, number} days",
+    "showTable": "Show the days as a table",
+    "tableDate": "Date",
+    "tableUptime": "Uptime",
+    "tableState": "State",
+    "active": "Current incidents",
+    "upcoming": "Planned maintenance",
+    "recent": "Past {days, number} days",
+    "noRecent": "Nothing to report in the past {days, number} days.",
+    "affects": "Affects: {list}",
+    "started": "Started {time}",
+    "window": "{from} to {to}",
+    "resolved": "Resolved {time}",
+    "ended": "Ended {time}",
+    "incidentStatuses": {
+      "investigating": "Investigating",
+      "identified": "Cause found",
+      "monitoring": "Monitoring a fix",
+      "resolved": "Resolved",
+      "scheduled": "Scheduled",
+      "in_progress": "In progress",
+      "completed": "Completed"
+    },
+    "banner": {
+      "incident": "{state}: {title}",
+      "maintenanceNow": "Maintenance under way: {title}",
+      "maintenanceSoon": "Planned maintenance from {from}: {title}",
+      "link": "See the status page"
+    }
+  },
+  "statusConsole": {
+    "title": "Status page",
+    "intro": "What you post here appears on the public status page and in a banner in every workspace, in English and Bangla.",
+    "publicLink": "Open the status page",
+    "new": "Post an incident or maintenance",
+    "kind": "Kind",
+    "kinds": {
+      "incident": "Incident",
+      "maintenance": "Planned maintenance"
+    },
+    "titleEn": "Title in English",
+    "titleBn": "Title in Bangla",
+    "components": "What is affected",
+    "impact": "How bad it is",
+    "status": "Status",
+    "startsAt": "Starts (Dhaka time)",
+    "startsAtHint": "Leave empty to start it now.",
+    "endsAt": "Ends (Dhaka time)",
+    "bodyEn": "Message in English",
+    "bodyBn": "Message in Bangla",
+    "bodyHint": "Say what people will notice and what they can do. Everyone can read it.",
+    "post": "Post",
+    "posted": "Posted. It is on the status page now.",
+    "open": "Open and planned",
+    "noneOpen": "Nothing open or planned.",
+    "finished": "Finished",
+    "noneFinished": "Nothing finished yet.",
+    "updates": "Updates",
+    "update": "Post an update",
+    "updateHint": "Choose Resolved or Completed to close it.",
+    "postUpdate": "Post update",
+    "updated": "Update posted.",
+    "english": "English",
+    "bangla": "Bangla"
+  },
+  "operations": {
+    "title": "Operations",
+    "intro": "Backups, the automated checks behind the status page, and readiness.",
+    "backups": "Backups",
+    "lastBackup": "Newest successful backup",
+    "lastDrill": "Last passed restore drill",
+    "none": "None recorded",
+    "staleBackup": "No backup has succeeded in the last {hours, number} hours. Check the backup cron and its log.",
+    "staleDrill": "No restore drill has passed in the last {days, number} days. Run verify-backup.sh (see the runbook).",
+    "runs": "Recent runs",
+    "noRuns": "No runs recorded yet. backup.sh and verify-backup.sh record each run once their database login may write to backup_runs (see the runbook).",
+    "kinds": {
+      "backup": "Backup",
+      "verify": "Restore drill"
+    },
+    "columns": {
+      "kind": "Kind",
+      "result": "Result",
+      "name": "Backup",
+      "host": "Host",
+      "finished": "Finished",
+      "took": "Took",
+      "size": "Size",
+      "detail": "Detail",
+      "component": "Part",
+      "checkedAt": "Checked",
+      "latency": "Time"
+    },
+    "ok": "OK",
+    "failed": "Failed",
+    "megabytes": "{size, number} MB",
+    "seconds": "{count, number} s",
+    "minutes": "{count, number} min",
+    "milliseconds": "{ms, number} ms",
+    "checks": "Checks",
+    "checksIntro": "The latest automated check of each part. Why a check failed is shown only here, never on the public page.",
+    "notChecked": "Not checked",
+    "jobsOff": "Background jobs are off in this API, so notifications and attendance are not checked.",
+    "paymentsNoCheck": "Payments have no automated check. Post an incident when a gateway is down.",
+    "readiness": "Readiness",
+    "readinessIntro": "What GET /ready answers right now.",
+    "ready": "Ready",
+    "notReady": "Not ready",
+    "parts": {
+      "database": "Database",
+      "documents": "Document store",
+      "chromium": "Chromium for PDFs"
+    }
+  },
+  "help": {
+    "link": "Help",
+    "linkTitle": "Opens the help article in a new tab",
+    "title": "Help centre",
+    "intro": "How Good People works, in short articles. Search, or pick a topic.",
+    "searchLabel": "Search the help centre",
+    "searchPlaceholder": "For example: payslip, two-step sign-in, bKash",
+    "search": "Search",
+    "results": "{count, plural, one {# article} other {# articles}} for “{query}”",
+    "nothingFound": "Nothing matches “{query}”.",
+    "nothingFoundHint": "Try other words, or <link>contact support</link> and tell us what you were looking for.",
+    "allTopics": "All topics",
+    "categories": {
+      "start": "Getting started",
+      "time": "Attendance and leave",
+      "payroll": "Payroll",
+      "billing": "Plans and billing",
+      "packs": "Factories, NGOs and groups",
+      "support": "Support and status"
+    },
+    "breadcrumb": "Breadcrumb",
+    "updated": "Updated {date}",
+    "moreIn": "More in {category}",
+    "inApp": "In Good People",
+    "stuckTitle": "Still stuck?",
+    "stuckBody": "Contact support from your workspace and tell us what happened. Include the error reference if a page showed one.",
+    "contactSupport": "Contact support",
+    "footer": {
+      "label": "Site",
+      "help": "Help",
+      "status": "Status",
+      "pricing": "Pricing",
+      "terms": "Terms",
+      "privacy": "Privacy",
+      "refunds": "Refunds",
+      "dpa": "Data processing",
+      "contact": "Write to us at"
+    }
+  },
+  "legal": {
+    "draft": "Draft for review by counsel — version {version}",
+    "version": "Version {version} · Updated {date}",
+    "documents": "Legal"
   }
 }

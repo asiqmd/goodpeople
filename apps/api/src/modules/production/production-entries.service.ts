@@ -15,7 +15,7 @@ import { and, asc, eq, gte, inArray, isNull, lte, or, sql } from 'drizzle-orm';
 import type { AuthUser } from '../../common/auth-user.js';
 import { badRequest, conflict } from '../../common/errors.js';
 import { currentTenantId } from '../../common/request-context.js';
-import { readSheet } from '../../common/sheets.js';
+import { readSheet, unreadableSheet } from '../../common/sheets.js';
 import { TenantDb } from '../../db/db.module.js';
 import { employeeRef } from '../attendance/attendance-views.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
@@ -250,9 +250,7 @@ export class ProductionEntriesService {
     if (!/\.(xlsx|csv)$/i.test(file.originalname)) {
       throw badRequest('sheet_type', 'Upload the sheet as .xlsx or .csv');
     }
-    const sheet = await readSheet(file, isProductionHeading).catch(() => {
-      throw badRequest('sheet_unreadable', 'This file could not be read as a spreadsheet');
-    });
+    const sheet = await readSheet(file, isProductionHeading).catch(unreadableSheet);
     const at = productionColumns(sheet.headers);
     if (Object.values(at).some((i) => i < 0)) {
       throw badRequest(

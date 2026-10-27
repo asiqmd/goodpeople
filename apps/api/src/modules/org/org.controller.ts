@@ -52,8 +52,8 @@ export class OrgController {
   /** Every org list in one call, for the org screens and employee forms. */
   @Get('org')
   @Permits('employees.read')
-  snapshot(): Promise<OrgSnapshot> {
-    return this.org.snapshot();
+  snapshot(@CurrentUser() user: AuthUser): Promise<OrgSnapshot> {
+    return this.org.snapshot(user);
   }
 
   @Get('legal-entities')

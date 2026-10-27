@@ -2,7 +2,7 @@
 
 import { INDUSTRY_TEMPLATES, type SlugCheck } from '@gp/shared';
 import { useTranslations } from 'next-intl';
-import { useActionState, useEffect, useState } from 'react';
+import { useActionState, useEffect, useState, type ReactNode } from 'react';
 import { checkSlug, startSignup, verifySignup, type SignupState } from '@/app/actions/signup';
 import { ErrorText, Form, issueFor, SubmitButton } from './forms';
 import { Banner, Field, inputClass } from './ui';
@@ -15,6 +15,22 @@ function Errors({ state }: { state: SignupState }) {
     </Banner>
   );
 }
+
+/** A legal page in a new tab, so the half-filled form stays where it is. */
+function LegalLink({ href, children }: { href: string; children: ReactNode }) {
+  const t = useTranslations('signup');
+  return (
+    <a href={href} target="_blank" rel="noopener" className="font-medium text-brand-700 underline">
+      {children}
+      <span className="sr-only"> {t('opensInNewTab')}</span>
+    </a>
+  );
+}
+
+const LEGAL_LINKS = {
+  terms: (chunks: ReactNode) => <LegalLink href="/legal/terms">{chunks}</LegalLink>,
+  privacy: (chunks: ReactNode) => <LegalLink href="/legal/privacy">{chunks}</LegalLink>,
+};
 
 /** Sign-up in two steps: who you are (a code is emailed), then the code, an address and a password. */
 export function SignupForm() {
@@ -52,6 +68,20 @@ export function SignupForm() {
             Website
             <input name="website" tabIndex={-1} autoComplete="off" />
           </label>
+        </div>
+        <div className="text-sm">
+          <label className="flex items-start gap-2 text-slate-700">
+            <input
+              type="checkbox"
+              name="acceptTerms"
+              required
+              className="mt-0.5 size-4 rounded border-slate-300 text-brand-600 focus:ring-brand-600"
+            />
+            <span>{t.rich('acceptTerms', LEGAL_LINKS)}</span>
+          </label>
+          {issueFor(started, 'acceptTerms') && (
+            <span className="mt-1 block text-xs text-red-600">{t('acceptTermsRequired')}</span>
+          )}
         </div>
         <SubmitButton>{t('sendCode')}</SubmitButton>
         <p className="text-xs text-slate-500">{t('trialNote')}</p>

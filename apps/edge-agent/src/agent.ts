@@ -4,6 +4,7 @@ import type { AddressInfo } from 'node:net';
 import { join } from 'node:path';
 import { CloudClient, type FetchLike } from './cloud.js';
 import type { AgentConfig } from './config.js';
+import { deviceAllowList } from './device-allow.js';
 import { DeviceRegistry } from './devices.js';
 import { createLogger, errorMessage, type Logger } from './log.js';
 import { PunchQueue } from './queue.js';
@@ -76,9 +77,16 @@ export async function startAgent(
     agentVersion: AGENT_VERSION,
     intervalMs: config.heartbeatIntervalMs,
   });
+  if (config.deviceAllow.length === 0 && config.deviceSerials.length === 0) {
+    log.warn(
+      'Any device on this network can push punches. Set GP_DEVICE_ALLOW (device addresses) ' +
+        'or GP_DEVICE_SERIALS (serial numbers) to accept only your devices.',
+    );
+  }
   const server = createAgentServer({
     queue,
     devices,
+    allow: deviceAllowList(config.deviceAllow, config.deviceSerials),
     log,
     timeZone: config.timeZone,
     hikvisionEventTypes: config.hikvisionEventTypes,

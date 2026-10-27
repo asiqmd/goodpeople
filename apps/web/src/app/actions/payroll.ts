@@ -86,7 +86,7 @@ export async function previewStructure(
       body: { basis, amount, lines },
     },
   );
-  return result.ok ? result.data : { error: result.error.message };
+  return result.ok ? result.data : fail(result);
 }
 
 export async function saveStructure(
@@ -179,7 +179,7 @@ export async function previewPay(
     `/tenant/employees/${employeeId}/pay/preview`,
     { method: 'POST', body },
   );
-  return result.ok ? result.data : { error: result.error.message };
+  return result.ok ? result.data : fail(result);
 }
 
 export async function proposePay(

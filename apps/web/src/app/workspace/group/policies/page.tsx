@@ -2,6 +2,7 @@ import { can, type GroupPoliciesView, type PolicyView } from '@gp/shared';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import { GroupTabs } from '@/components/group/group-tabs';
+import { HelpLink } from '@/components/help/help-link';
 import { PolicyTable } from '@/components/group/policy-table';
 import { Badge, Card } from '@/components/ui';
 import { authedFetch, currentTenantUser } from '@/lib/api';
@@ -13,7 +14,10 @@ export default async function GroupPoliciesPage() {
   const result = await authedFetch<GroupPoliciesView>('tenant', '/tenant/group/policies');
   const header = (
     <div>
-      <h1 className="text-2xl font-semibold">{t('title')}</h1>
+      <h1 className="text-2xl font-semibold">
+        {t('title')}
+        <HelpLink slug="group-companies" />
+      </h1>
       <p className="mt-1 max-w-3xl text-sm text-slate-600">{t('policies.intro')}</p>
     </div>
   );

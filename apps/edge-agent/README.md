@@ -45,6 +45,8 @@ Set environment variables, or put the same keys in camelCase in a JSON file and 
 | `GP_HEARTBEAT_INTERVAL_MS` | `heartbeatIntervalMs` | `60000`      | How often the agent reports its version, queue size and the devices it hears from.                                                                    |
 | `GP_HIKVISION_EVENT_TYPES` | `hikvisionEventTypes` | `1,38,75`    | Hikvision access-control sub-event types that count as a punch: 1 card, 38 fingerprint, 75 face. Other types (door, alarm, failed match) are ignored. |
 | `GP_LOG_LEVEL`             | `logLevel`            | `info`       | `debug` also logs every device request and why an event was ignored.                                                                                  |
+| `GP_DEVICE_ALLOW`          | `deviceAllow`         | (any)        | Comma-separated device IP addresses or ranges, e.g. `192.168.1.20,192.168.10.0/24`. Pushes from other addresses are refused. See below.               |
+| `GP_DEVICE_SERIALS`        | `deviceSerials`       | (any)        | Comma-separated serial numbers of your devices (Hikvision: the MAC address). Pushes from other devices are refused. See below.                        |
 
 The agent checks the configuration when it starts. If the URL or token is missing or malformed, it
 prints what is wrong and exits with code 1.
@@ -112,6 +114,22 @@ access-control events.
 
 Within a minute or two, the device should appear under `devices` in `/health` and in the next
 heartbeat.
+
+### Accepting only your devices
+
+The devices do not authenticate themselves, so anything on the site LAN that can reach port 8081
+could send punches. Set one or both lists so the agent takes punches only from your devices:
+
+- `GP_DEVICE_ALLOW`: the devices' IP addresses or ranges. Give each device a fixed address (a DHCP
+  reservation is fine) and list them, or the subnet they are on.
+- `GP_DEVICE_SERIALS`: the serial numbers the devices send, as `/health` lists them under
+  `devices`. ZKTeco sends its serial number; Hikvision is identified by its MAC address. Case does
+  not matter.
+
+A refused device gets `403` and its punches are not kept. The agent logs a warning naming it (at most
+every 10 minutes per device), so a device that was missed shows up in the log. With neither list
+set, every device is accepted, and the agent warns about it when it starts. Also allow inbound port
+8081 only from the device network in the PC's firewall.
 
 ## How punches are read
 

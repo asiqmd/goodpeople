@@ -24,10 +24,21 @@
 	request_body {
 		max_size 20MB
 	}
+	# JSON access logs without query strings (tokens, payment and kiosk codes travel there) or
+	# credentials. Field filters need Caddy 2.8 or later.
 	log {
 		output stdout
-		format json
+		format filter {
+			wrap json
+			request>uri regexp [?].*
+			request>headers>Authorization delete
+			request>headers>Cookie delete
+			request>headers>Referer delete
+		}
 	}
+	# Speak-up is anonymous: no access log line (address, time, page) may point at a worker.
+	@speakup path /speak-up /speak-up/*
+	log_skip @speakup
 }
 
 {$GP_DOMAIN} {

@@ -38,7 +38,35 @@ describe('configuration', () => {
       heartbeatIntervalMs: 60_000,
       hikvisionEventTypes: [1, 38, 75],
       logLevel: 'info',
+      deviceAllow: [],
+      deviceSerials: [],
     });
+  });
+
+  it('reads the device allow lists and refuses malformed entries', () => {
+    const base = { GP_API_URL: 'http://localhost:4000', GP_AGENT_TOKEN: TOKEN };
+    expect(
+      loadConfig({
+        ...base,
+        GP_DEVICE_ALLOW: ' 192.168.1.0/24, 10.0.0.7 ,fd00::/8',
+        GP_DEVICE_SERIALS: 'CQZ7224460246,44:19:b6:aa:bb:cc',
+      }),
+    ).toMatchObject({
+      deviceAllow: ['192.168.1.0/24', '10.0.0.7', 'fd00::/8'],
+      deviceSerials: ['CQZ7224460246', '44:19:b6:aa:bb:cc'],
+    });
+    expect(
+      problems({
+        ...base,
+        GP_DEVICE_ALLOW: '192.168.1.0/33,printer,10.0.0.1/8/1',
+        GP_DEVICE_SERIALS: 'ok-1,bad serial',
+      }),
+    ).toEqual([
+      expect.stringMatching(
+        /GP_DEVICE_ALLOW .* got "192\.168\.1\.0\/33, printer, 10\.0\.0\.1\/8\/1"/,
+      ),
+      expect.stringMatching(/GP_DEVICE_SERIALS .* got "bad serial"/),
+    ]);
   });
 
   it('reports every problem at once and never echoes the token', () => {

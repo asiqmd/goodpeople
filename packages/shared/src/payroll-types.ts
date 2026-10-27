@@ -356,6 +356,8 @@ export interface PayrollRunItemView {
   variance: 'new' | 'up' | 'down' | 'same' | null;
   /** Change in net since last month, in percent, when there was a last month. */
   variancePercent: number | null;
+  /** When the account net pay goes to last changed, if since the last run (or this period). */
+  accountChangedAt: string | null;
   flagged: boolean;
 }
 

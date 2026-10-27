@@ -63,8 +63,8 @@ export const PLATFORM_ROLES = [
 ] as const;
 export type PlatformRole = (typeof PLATFORM_ROLES)[number];
 
-/** Role templates: each is a named set of permissions (see permissions.ts). */
-export const TENANT_ROLES = [
+/** Role templates a workspace gives its logins: each is a named set of permissions (permissions.ts). */
+export const ASSIGNABLE_TENANT_ROLES = [
   'tenant_admin',
   'hr_admin',
   'hr_officer',
@@ -74,6 +74,13 @@ export const TENANT_ROLES = [
   'auditor',
   'employee',
 ] as const;
+export type AssignableTenantRole = (typeof ASSIGNABLE_TENANT_ROLES)[number];
+
+/**
+ * Every role a login can have: the assignable ones, and `support`, the read-only login Good
+ * People support uses while a workspace grants it access (Phase 3 M5). Nobody can be given it.
+ */
+export const TENANT_ROLES = [...ASSIGNABLE_TENANT_ROLES, 'support'] as const;
 export type TenantRole = (typeof TENANT_ROLES)[number];
 
 export const INDUSTRY_TEMPLATES = ['group', 'rmg', 'corporate', 'ngo', 'other'] as const;

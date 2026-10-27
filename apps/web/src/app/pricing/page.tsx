@@ -2,6 +2,7 @@ import { PLAN_CATALOG, TRIAL_DAYS, type PlanPriceView } from '@gp/shared';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { LanguageToggle } from '@/components/forms';
+import { SiteFooter } from '@/components/help/site-footer';
 import { buttonClass, Logo } from '@/components/ui';
 import { apiFetch } from '@/lib/api';
 
@@ -10,6 +11,7 @@ export default async function Pricing() {
   const tf = await getTranslations('features');
   const tl = await getTranslations('limits');
   const tc = await getTranslations('common');
+  const th = await getTranslations('help');
   const format = await getFormatter();
   const result = await apiFetch<PlanPriceView[]>('/billing/prices');
   const prices = new Map(result.ok ? result.data.map((p) => [p.planCode, p]) : []);
@@ -20,7 +22,12 @@ export default async function Pricing() {
         <Link href="/">
           <Logo />
         </Link>
-        <LanguageToggle />
+        <nav className="flex items-center gap-4 text-sm">
+          <Link href="/help" className="font-medium text-slate-600 hover:text-slate-900">
+            {th('link')}
+          </Link>
+          <LanguageToggle />
+        </nav>
       </header>
       <section className="max-w-2xl py-12">
         <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
@@ -82,6 +89,7 @@ export default async function Pricing() {
         ))}
       </section>
       <p className="mt-8 text-sm text-slate-500">{t('vatNote')}</p>
+      <SiteFooter />
     </main>
   );
 }

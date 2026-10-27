@@ -11,12 +11,12 @@ export default async function ConsoleLayout({ children }: LayoutProps<'/platform
     <>
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
-          <div className="flex items-center gap-6">
-            <Link href="/platform" className="flex items-center gap-3">
+          <div className="flex min-w-0 items-center gap-6">
+            <Link href="/platform" className="flex shrink-0 items-center gap-3 whitespace-nowrap">
               <Logo />
               <Badge tone="slate">{t('staffOnly')}</Badge>
             </Link>
-            <nav className="flex gap-4 text-sm font-medium text-slate-600">
+            <nav className="flex flex-wrap gap-x-4 gap-y-1 text-sm font-medium whitespace-nowrap text-slate-600">
               <Link href="/platform" className="hover:text-slate-900">
                 {t('tenants')}
               </Link>
@@ -26,6 +26,15 @@ export default async function ConsoleLayout({ children }: LayoutProps<'/platform
               <Link href="/platform/billing" className="hover:text-slate-900">
                 {t('billingNav')}
               </Link>
+              <Link href="/platform/support" className="hover:text-slate-900">
+                {t('supportNav')}
+              </Link>
+              <Link href="/platform/status" className="hover:text-slate-900">
+                {t('statusNav')}
+              </Link>
+              <Link href="/platform/operations" className="hover:text-slate-900">
+                {t('operationsNav')}
+              </Link>
               <Link href="/platform/audit" className="hover:text-slate-900">
                 {t('audit')}
               </Link>
@@ -34,7 +43,7 @@ export default async function ConsoleLayout({ children }: LayoutProps<'/platform
               </Link>
             </nav>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex shrink-0 items-center gap-4">
             <LanguageToggle />
             <form action={signOut.bind(null, 'platform')}>
               <button className={buttonClass.ghost}>{tc('signOut')}</button>

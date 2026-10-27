@@ -11,7 +11,7 @@ import { PayrollModule } from '../payroll/payroll.module.js';
 import { KioskAuthService } from './kiosk-auth.service.js';
 import { KioskDeviceController, KiosksController } from './kiosk.controller.js';
 import { KioskGuard, KioskSessionGuard } from './kiosk.guard.js';
-import { EndedSessions, PinLockout } from './kiosk-state.js';
+import { EndedSessions, KioskPause, PinLockout } from './kiosk-state.js';
 import { KioskWorkerService } from './kiosk-worker.service.js';
 import { KiosksService } from './kiosks.service.js';
 
@@ -37,6 +37,7 @@ import { KiosksService } from './kiosks.service.js';
     KioskGuard,
     KioskSessionGuard,
     PinLockout,
+    KioskPause,
     EndedSessions,
     RateLimiter,
     TenantRolesGuard,

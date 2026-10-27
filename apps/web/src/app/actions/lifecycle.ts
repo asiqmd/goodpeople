@@ -72,7 +72,7 @@ export async function previewLetter(
     `/tenant/employees/${employeeId}/letters/preview`,
     { method: 'POST', body: letterBody(form) },
   );
-  return result.ok ? result.data : { error: result.error.message };
+  return result.ok ? result.data : fail(result);
 }
 
 export async function issueLetter(

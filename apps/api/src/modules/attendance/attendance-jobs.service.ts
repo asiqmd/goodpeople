@@ -11,6 +11,7 @@ import { runInTenantContext } from '../../common/request-context.js';
 import { APP_CONFIG, type AppConfig } from '../../config.js';
 import { TenantDb } from '../../db/db.module.js';
 import { EntitlementsService } from '../entitlements/entitlements.service.js';
+import { JobHeartbeats } from '../status/job-heartbeats.js';
 import { AttendanceProcessor, settingsOf } from './processor.service.js';
 
 /** How far back the background run catches up after downtime. */
@@ -32,13 +33,23 @@ export class AttendanceJobs implements OnApplicationBootstrap, OnApplicationShut
     private readonly entitlements: EntitlementsService,
     private readonly tenantDb: TenantDb,
     private readonly processor: AttendanceProcessor,
+    private readonly heartbeats: JobHeartbeats,
   ) {}
 
   onApplicationBootstrap() {
     if (!this.config.BACKGROUND_JOBS) return;
     const minutes = this.config.ATTENDANCE_JOB_INTERVAL_MINUTES;
+    // Each run's outcome feeds the status page's attendance check.
     const tick = () => {
-      this.running ??= this.runAll().finally(() => (this.running = undefined));
+      this.running ??= this.runAll()
+        .then(
+          (failed) => this.heartbeats.beat('attendance', failed === 0),
+          (error: Error) => {
+            this.heartbeats.beat('attendance', false);
+            this.logger.error('Attendance processing failed', error);
+          },
+        )
+        .finally(() => (this.running = undefined));
     };
     setTimeout(tick, 5_000).unref();
     this.timer = setInterval(tick, minutes * 60_000);
@@ -50,16 +61,20 @@ export class AttendanceJobs implements OnApplicationBootstrap, OnApplicationShut
     await this.running;
   }
 
-  async runAll(): Promise<void> {
+  /** Processes every workspace that tracks attendance. Returns how many failed. */
+  async runAll(): Promise<number> {
+    let failed = 0;
     for (const tenant of await this.entitlements.all()) {
       const { accessState, features } = tenant.access;
       if (accessState === 'suspended' || !features.includes('attendance')) continue;
       try {
         await runInTenantContext(tenant.id, () => this.runTenant());
       } catch (error) {
+        failed++;
         this.logger.error(`Attendance processing failed for ${tenant.slug}`, error as Error);
       }
     }
+    return failed;
   }
 
   /** Processes one workspace (the current tenant context). Returns the days written. */

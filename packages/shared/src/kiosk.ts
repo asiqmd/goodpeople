@@ -12,7 +12,7 @@ import type { Money, RunKind } from './payroll.js';
 export const KIOSK_CODE_LENGTH = 6;
 export const KIOSK_CODE_TTL_MINUTES = 10;
 export const KIOSK_CODE_MAX_ATTEMPTS = 5;
-/** Wrong PINs in a row before the worker is locked out of every kiosk for a while. */
+/** Wrong PINs in a row before the worker is locked out of that kiosk for a while. */
 export const KIOSK_PIN_MAX_FAILURES = 5;
 export const KIOSK_LOCK_MINUTES = 15;
 /** How long a signed-in worker's session lasts; the screen also signs out when left idle. */

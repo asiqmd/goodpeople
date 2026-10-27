@@ -2,6 +2,7 @@ import { can, type SetupChecklist, type SetupStepKey, type TenantAccessView } fr
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { HelpLink } from '@/components/help/help-link';
 import { Badge, Card } from '@/components/ui';
 import { currentTenantUser, load } from '@/lib/api';
 
@@ -31,7 +32,10 @@ export default async function WelcomePage() {
 
   return (
     <>
-      <h1 className="text-2xl font-semibold">{t('title', { name: access.tenant.name })}</h1>
+      <h1 className="text-2xl font-semibold">
+        {t('title', { name: access.tenant.name })}
+        <HelpLink slug="getting-started" />
+      </h1>
       <p className="text-sm text-slate-600">
         {t('intro', { industry: ti(access.tenant.industryTemplate) })}
       </p>

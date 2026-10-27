@@ -20,7 +20,7 @@ export async function previewLeave(
     ? `/tenant/employees/${employeeId}/leave/preview`
     : '/tenant/me/leave/preview';
   const result = await authedFetch<LeavePreview>('tenant', path, { method: 'POST', body });
-  return result.ok ? result.data : { error: result.error.message };
+  return result.ok ? result.data : fail(result);
 }
 
 export async function applyLeave(

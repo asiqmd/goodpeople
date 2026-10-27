@@ -1,6 +1,7 @@
 import { can, todayIn, type TimesheetView } from '@gp/shared';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
+import { HelpLink } from '@/components/help/help-link';
 import { PrefillForm, SubmitTimesheetForm } from '@/components/timesheets/timesheet-forms';
 import { TimesheetGrid } from '@/components/timesheets/timesheet-grid';
 import { STATUS_TONE } from '@/components/timesheets/labels';
@@ -44,7 +45,10 @@ export default async function MyTimesheetPage({
     <>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">{t('title')}</h1>
+          <h1 className="text-2xl font-semibold">
+            {t('title')}
+            <HelpLink slug="ngo-timesheets" />
+          </h1>
           <p className="text-sm text-slate-600">{t('intro')}</p>
         </div>
         {can(user?.role, 'projects.manage') && (

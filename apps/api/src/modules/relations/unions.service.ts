@@ -34,11 +34,13 @@ import {
   type UnionMemberUpdate,
   type UnionSkipReason,
 } from '@gp/shared';
-import { and, asc, eq, gte, inArray, isNull, lte, ne, or, sql } from 'drizzle-orm';
+import { and, asc, eq, gte, inArray, isNull, lte, ne, or, sql, type SQL } from 'drizzle-orm';
 import type { AuthUser } from '../../common/auth-user.js';
 import { badRequest, conflict } from '../../common/errors.js';
 import { currentTenantId } from '../../common/request-context.js';
 import { FIELD_CIPHER, TenantDb } from '../../db/db.module.js';
+import { mustUseCompany } from '../access-scopes/employee-scope.js';
+import { entityScopeOf } from '../access-scopes/entity-scope.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
 import { inForceOn } from '../employees/employee.queries.js';
 import { csv } from '../payroll/disbursement.js';
@@ -60,6 +62,16 @@ const consents = (m: MembershipRow, on: string) =>
  * members' wages (check-off, s.204): what payroll deducted in a month and when it is due to
  * the union.
  */
+/**
+ * A login limited to some companies sees only their unions, with their members and check-off
+ * (Phase 3 M4 access scopes); another company's union is not found.
+ */
+async function unionScope(tx: Tx, user: AuthUser): Promise<SQL | undefined> {
+  if (user.kind !== 'tenant') return undefined;
+  const entities = await entityScopeOf(tx, user.id);
+  return entities ? inArray(tradeUnions.legalEntityId, entities) : undefined;
+}
+
 @Injectable()
 export class UnionsService {
   constructor(
@@ -68,10 +80,10 @@ export class UnionsService {
     @Inject(FIELD_CIPHER) private readonly cipher: FieldCipher,
   ) {}
 
-  list(): Promise<UnionListView> {
+  list(user: AuthUser): Promise<UnionListView> {
     const today = todayIn();
     return this.tenantDb.run(async (tx) => {
-      const unions = await this.summaries(tx, today);
+      const unions = await this.summaries(tx, today, await unionScope(tx, user));
       const limit = unionLimitOn(today);
       const byEntity = groupBy(unions, (u) => u.legalEntity.id);
       return {
@@ -88,12 +100,16 @@ export class UnionsService {
     });
   }
 
-  get(id: string): Promise<TradeUnionView> {
-    return this.tenantDb.run((tx) => this.viewIn(tx, id));
+  get(user: AuthUser, id: string): Promise<TradeUnionView> {
+    return this.tenantDb.run(async (tx) => {
+      await this.unionOrThrow(tx, user, id);
+      return this.viewIn(tx, id);
+    });
   }
 
   create(actor: AuthUser, input: TradeUnionInput): Promise<TradeUnionView> {
     return this.tenantDb.run(async (tx) => {
+      await mustUseCompany(tx, actor, input.legalEntityId);
       if (input.isCba) await this.onlyCba(tx, input.legalEntityId, null);
       const [row] = await tx
         .insert(tradeUnions)
@@ -117,7 +133,7 @@ export class UnionsService {
 
   update(actor: AuthUser, id: string, input: TradeUnionUpdate): Promise<TradeUnionView> {
     return this.tenantDb.run(async (tx) => {
-      const current = await this.unionOrThrow(tx, id);
+      const current = await this.unionOrThrow(tx, actor, id);
       const next = {
         name: input.name ?? current.name,
         registrationNo: pick(input.registrationNo, current.registrationNo),
@@ -144,7 +160,7 @@ export class UnionsService {
   /** Only a union with no members: memberships and check-off consents are records to keep. */
   remove(actor: AuthUser, id: string): Promise<void> {
     return this.tenantDb.run(async (tx) => {
-      const current = await this.unionOrThrow(tx, id);
+      const current = await this.unionOrThrow(tx, actor, id);
       const [member] = await tx
         .select({ id: unionMemberships.id })
         .from(unionMemberships)
@@ -158,7 +174,7 @@ export class UnionsService {
 
   addMember(actor: AuthUser, id: string, input: UnionMemberInput): Promise<TradeUnionView> {
     return this.tenantDb.run(async (tx) => {
-      const union = await this.unionOrThrow(tx, id);
+      const union = await this.unionOrThrow(tx, actor, id);
       const employee = await employeeByRef(tx, input);
       const reason = (await this.reasonsNotToAdd(tx, union, [employee.id], input.joinedOn)).get(
         employee.id,
@@ -192,7 +208,7 @@ export class UnionsService {
   /** Members from a list of employee codes; codes that cannot join are reported, not added. */
   addMembers(actor: AuthUser, id: string, input: UnionMembersBulkInput): Promise<UnionBulkResult> {
     return this.tenantDb.run(async (tx) => {
-      const union = await this.unionOrThrow(tx, id);
+      const union = await this.unionOrThrow(tx, actor, id);
       const codes = [...new Set(input.employeeCodes.map((c) => c.trim()).filter(Boolean))];
       const found = await tx
         .select({ id: employees.id, code: employees.employeeCode })
@@ -247,6 +263,7 @@ export class UnionsService {
     input: UnionMemberUpdate,
   ): Promise<TradeUnionView> {
     return this.tenantDb.run(async (tx) => {
+      await this.unionOrThrow(tx, actor, id);
       const current = await this.membershipOrThrow(tx, id, memberId);
       const next = {
         role: input.role ?? current.role,
@@ -265,6 +282,7 @@ export class UnionsService {
     input: UnionMemberEnd,
   ): Promise<TradeUnionView> {
     return this.tenantDb.run(async (tx) => {
+      await this.unionOrThrow(tx, actor, id);
       const current = await this.membershipOrThrow(tx, id, memberId);
       if (input.leftOn < current.joinedOn) {
         throw badRequest('ends_before_start', 'Cannot leave before joining');
@@ -283,14 +301,18 @@ export class UnionsService {
    * joined and consented by the month's end, not left before it), the subscription, what the
    * month's locked regular run deducted as UNION_SUB, and when it is due to the union (s.204).
    */
-  checkOff(month: string, unionId?: string): Promise<CheckOffReport> {
+  checkOff(user: AuthUser, month: string, unionId?: string): Promise<CheckOffReport> {
     const { start, end } = monthBounds(month);
     return this.tenantDb.run(async (tx) => {
       const unions = await tx
         .select()
         .from(tradeUnions)
         .where(
-          and(eq(tradeUnions.checkOff, true), unionId ? eq(tradeUnions.id, unionId) : undefined),
+          and(
+            eq(tradeUnions.checkOff, true),
+            unionId ? eq(tradeUnions.id, unionId) : undefined,
+            await unionScope(tx, user),
+          ),
         )
         .orderBy(asc(tradeUnions.name));
       const memberships = unions.length
@@ -403,8 +425,12 @@ export class UnionsService {
     });
   }
 
-  async checkOffCsv(month: string, unionId?: string): Promise<{ text: string; fileName: string }> {
-    const report = await this.checkOff(month, unionId);
+  async checkOffCsv(
+    user: AuthUser,
+    month: string,
+    unionId?: string,
+  ): Promise<{ text: string; fileName: string }> {
+    const report = await this.checkOff(user, month, unionId);
     const union = new Map(report.unions.map((u) => [u.union.id, u.union]));
     return {
       text: csv([
@@ -490,12 +516,12 @@ export class UnionsService {
     if (other) throw conflict('cba_exists', 'This company already has a bargaining agent');
   }
 
-  private async summaries(tx: Tx, today: string, id?: string): Promise<TradeUnionSummaryView[]> {
+  private async summaries(tx: Tx, today: string, where?: SQL): Promise<TradeUnionSummaryView[]> {
     const unions = await tx
       .select({ union: tradeUnions, entity: { id: legalEntities.id, name: legalEntities.name } })
       .from(tradeUnions)
       .innerJoin(legalEntities, eq(legalEntities.id, tradeUnions.legalEntityId))
-      .where(id ? eq(tradeUnions.id, id) : undefined)
+      .where(where)
       .orderBy(asc(legalEntities.name), asc(tradeUnions.name));
     if (unions.length === 0) return [];
     const memberships = await tx
@@ -538,7 +564,7 @@ export class UnionsService {
 
   private async viewIn(tx: Tx, id: string): Promise<TradeUnionView> {
     const today = todayIn();
-    const [summary] = await this.summaries(tx, today, id);
+    const [summary] = await this.summaries(tx, today, eq(tradeUnions.id, id));
     if (!summary) throw new NotFoundException('Trade union not found');
     const members = await tx
       .select({ m: unionMemberships, employee: employees })
@@ -565,8 +591,11 @@ export class UnionsService {
     };
   }
 
-  private async unionOrThrow(tx: Tx, id: string) {
-    const [row] = await tx.select().from(tradeUnions).where(eq(tradeUnions.id, id));
+  private async unionOrThrow(tx: Tx, user: AuthUser, id: string) {
+    const [row] = await tx
+      .select()
+      .from(tradeUnions)
+      .where(and(eq(tradeUnions.id, id), await unionScope(tx, user)));
     if (!row) throw new NotFoundException('Trade union not found');
     return row;
   }

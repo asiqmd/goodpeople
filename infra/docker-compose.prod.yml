@@ -131,6 +131,7 @@ services:
       - SMTP_URL
       - EMAIL_FROM
       - SMS_DRIVER
+      - ALLOW_LOG_SENDERS
       - SSLWIRELESS_URL
       - SSLWIRELESS_API_TOKEN
       - SSLWIRELESS_SID
@@ -138,6 +139,11 @@ services:
       - FCM_PROJECT_ID
       - FCM_CLIENT_EMAIL
       - FCM_PRIVATE_KEY
+      - LOG_FORMAT
+      - LOG_LEVEL
+      - API_DOCS
+      - SUPPORT_INBOX_EMAIL
+      - STATUS_WEB_URL
     volumes:
       # The local document store (STORAGE_DRIVER=local). The directory must exist and belong
       # to uid 1000, the image's `node` user.
@@ -156,6 +162,8 @@ services:
     environment:
       # Server-to-server over the internal network; the browser never calls the API.
       API_URL: http://api:4000
+      # Shown in the public pages' footer, as the payment gateways require.
+      GP_SUPPORT_EMAIL: ${GP_SUPPORT_EMAIL:-}
     depends_on: [api]
     security_opt: ['no-new-privileges:true']
     cap_drop: [ALL]

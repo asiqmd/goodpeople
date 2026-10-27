@@ -40,6 +40,12 @@ const securityHeaders = [
 // Every page here is per-user and dynamic, so Cache Components stays off for Phase 0.
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Uploads go through server actions: a support ticket may carry five files of 10 MB
+  // (SUPPORT_ATTACHMENT_MAX_BYTES); the API checks each file's own limit.
+  experimental: {
+    serverActions: { bodySizeLimit: '52mb' },
+    proxyClientMaxBodySize: '52mb',
+  },
   turbopack: {
     rules: {
       '*.css': {

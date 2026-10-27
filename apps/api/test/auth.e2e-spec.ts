@@ -1,4 +1,5 @@
 import type { INestApplication } from '@nestjs/common';
+import { AuthService } from '../src/modules/auth/auth.service.js';
 import { api, bearer, bootApp, tenantLogin, testEnv } from './test-env.js';
 
 describe('auth', () => {
@@ -76,6 +77,38 @@ describe('auth', () => {
       .post('/auth/refresh')
       .send({ refreshToken: rotated.body.refreshToken })
       .expect(401);
+  });
+
+  it('lets only one of two refreshes at the same moment rotate a token', async () => {
+    const { refreshToken } = await tenantLogin(app, 'my-group');
+    // Both refreshes read the session before either rotates it.
+    const auth = app.get(AuthService) as unknown as Record<
+      'currentPayload',
+      (...args: unknown[]) => Promise<unknown>
+    >;
+    const read = auth.currentPayload.bind(auth);
+    let arrived = 0;
+    let bothRead!: () => void;
+    const together = new Promise<void>((resolve) => (bothRead = resolve));
+    const spy = vi.spyOn(auth, 'currentPayload').mockImplementation(async (...args) => {
+      if (++arrived === 2) bothRead();
+      await together;
+      return read(...args);
+    });
+    try {
+      const results = await Promise.all(
+        [1, 2].map(() => api(app).post('/auth/refresh').send({ refreshToken })),
+      );
+      expect(results.map((r) => r.status).toSorted()).toEqual([200, 401]);
+      // The one that lost is not taken for a thief: the winner's session carries on.
+      const winner = results.find((r) => r.status === 200)!;
+      await api(app)
+        .post('/auth/refresh')
+        .send({ refreshToken: winner.body.refreshToken })
+        .expect(200);
+    } finally {
+      spy.mockRestore();
+    }
   });
 
   it('revokes the refresh token on logout', async () => {

@@ -38,7 +38,7 @@ export default async function GrievancesPage({ searchParams }: PageProps<'/works
           {t('list.poster')}
         </Link>
       </div>
-      {list.committeeMissing && <Banner tone="amber">{t('list.committeeMissing')}</Banner>}
+      {list.committeeMissing && <Banner tone="amber">{t('list.committeeMissingAdmin')}</Banner>}
       <Card>
         <form className="mb-4 flex flex-wrap items-end gap-3 text-sm">
           <label className="block">

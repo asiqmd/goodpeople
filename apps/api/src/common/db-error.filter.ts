@@ -1,6 +1,6 @@
 import { BadRequestException, Catch, ConflictException, type ArgumentsHost } from '@nestjs/common';
-import { BaseExceptionFilter } from '@nestjs/core';
 import type { ApiError } from '@gp/shared';
+import { ApiExceptionFilter } from './exception.filter.js';
 
 interface PgError {
   code?: string;
@@ -22,10 +22,10 @@ const UNIQUE_MESSAGES: Record<string, string> = {
 /**
  * Turns database constraint violations into 4xx responses instead of 500s. A foreign-key
  * violation here usually means an id from another workspace: the composite (tenant_id, id)
- * keys reject it.
+ * keys reject it. Everything else gets the API's error response (ApiExceptionFilter).
  */
 @Catch()
-export class DbErrorFilter extends BaseExceptionFilter {
+export class DbErrorFilter extends ApiExceptionFilter {
   override catch(exception: unknown, host: ArgumentsHost) {
     const pg = pgErrorOf(exception);
     if (pg?.code === '23505') {

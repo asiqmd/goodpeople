@@ -1,7 +1,7 @@
 import {
   can,
   MFA_REQUIRED_ROLES,
-  TENANT_ROLES,
+  ASSIGNABLE_TENANT_ROLES,
   type AccountView,
   type LegalEntityView,
   type TenantAccessView,
@@ -123,7 +123,7 @@ export default async function UsersPage() {
       </Card>
       <Card title={t('rolesTitle')}>
         <dl className="grid gap-3 text-sm sm:grid-cols-2">
-          {TENANT_ROLES.map((r) => (
+          {ASSIGNABLE_TENANT_ROLES.map((r) => (
             <div key={r}>
               <dt className="font-medium">{th(`roles.${r}`)}</dt>
               <dd className="text-slate-600">{t(`roleDescriptions.${r}`)}</dd>

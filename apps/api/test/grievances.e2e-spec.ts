@@ -450,8 +450,10 @@ describe('grievances', () => {
     expect(told.map((n) => n.userId)).toEqual([workerUser[0]!.userId]);
   });
 
-  it('shows harassment to everyone who handles grievances when there is no committee', async () => {
+  it('shows harassment only to the workspace admin when there is no committee', async () => {
     const ws = await workspace();
+    // HR handles grievances but could empty the committee (s.332A), so it does not read them.
+    const hr = await staff(ws, 'hr_admin');
     const reference = (
       await raise(ws.slug, { category: 'harassment', text: 'I was shouted at and pushed.' }).expect(
         201,
@@ -466,6 +468,12 @@ describe('grievances', () => {
       await api(app).get(`/tenant/grievances/${row.id}`).set(bearer(ws.token)).expect(200)
     ).body as GrievanceDetail;
     expect(detail).toMatchObject({ restricted: true, committeeMissing: true });
+
+    const hrView = await list(hr.token);
+    expect(hrView.committeeMissing).toBe(true);
+    expect(hrView.items.map((g) => g.reference)).not.toContain(reference);
+    await api(app).get(`/tenant/grievances/${row.id}`).set(bearer(hr.token)).expect(404);
+    // Only the admin is told.
     expect((await toldAbout(ws.id, row.id)).length).toBe(1);
   });
 

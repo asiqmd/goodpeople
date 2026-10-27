@@ -9,7 +9,9 @@
 #
 # then deletes backups older than BACKUP_RETENTION_DAYS (always keeping the newest
 # BACKUP_KEEP_MIN), and copies BACKUP_DIR off the server if BACKUP_OFFSITE_RSYNC is set.
-# Exits non-zero if any step fails; a failed run leaves no partial backup behind.
+# Exits non-zero if any step fails; a failed run leaves no partial backup behind. Every run,
+# good or bad, is recorded in the backup_runs table through BACKUP_DATABASE_URL, for the console
+# and the API's stale-backup alert; a run that cannot be recorded says so and carries on.
 #
 # Settings come from the environment, else from infra/.env (GP_ENV_FILE=path to use another):
 #   BACKUP_DIR, BACKUP_DATABASE_URL, BACKUP_RETENTION_DAYS (14), BACKUP_KEEP_MIN (3)
@@ -38,6 +40,27 @@ driver=${STORAGE_DRIVER:-local}
 [[ $retention =~ ^[0-9]+$ ]] || die "BACKUP_RETENTION_DAYS must be a number of days"
 [[ $keep_min =~ ^[1-9][0-9]*$ ]] || die "BACKUP_KEEP_MIN must be 1 or more"
 
+# What the run's record says; filled in as the run goes.
+started_at=$(utc_now)
+step=lock
+stamp=''
+dump_bytes=''
+tenants=''
+document_files=''
+offsite=false
+record_backup() {
+  local status=$1
+  if [[ $status == 0 ]]; then
+    record_run "$BACKUP_DATABASE_URL" backup true "$stamp" "$started_at" "$dump_bytes" \
+      "$(json_object "tenants=$tenants" "documentFiles=$document_files" \
+        "storageDriver=$driver" "offsite=$offsite")"
+  else
+    record_run "$BACKUP_DATABASE_URL" backup false "$stamp" "$started_at" "$dump_bytes" \
+      "$(json_object "failedStep=$step" "exitCode=$status" "storageDriver=$driver")"
+  fi
+}
+trap 'record_backup $?' EXIT
+
 umask 077
 mkdir -p "$BACKUP_DIR"
 chmod 700 "$BACKUP_DIR"
@@ -54,7 +77,12 @@ cleanup() {
   rm -rf "$work"
   rmdir "$lock" 2>/dev/null || true
 }
-trap cleanup EXIT
+finish() {
+  local status=$?
+  cleanup
+  record_backup "$status"
+}
+trap finish EXIT
 mkdir "$work"
 
 # The newest complete backup, for hard-linking unchanged documents.
@@ -66,6 +94,7 @@ fi
 # ── Database ───────────────────────────────────────────────────────────────────────────────
 # Every tenant table has FORCE ROW LEVEL SECURITY, so only a superuser or a BYPASSRLS role sees
 # all rows. pg_dump fails loudly for any other role; check first for a clearer message.
+step=database
 bypass=$(psql_value "$BACKUP_DATABASE_URL" \
   -c "select rolsuper or rolbypassrls from pg_roles where rolname = current_user")
 [[ $bypass == t ]] ||
@@ -73,13 +102,15 @@ bypass=$(psql_value "$BACKUP_DATABASE_URL" \
 
 database=$(url_database "$BACKUP_DATABASE_URL")
 log "dumping database $database"
-pg_dump --format=custom --no-password --file="$work/database.dump" --dbname="$BACKUP_DATABASE_URL"
+pg_run "$BACKUP_DATABASE_URL" pg_dump --format=custom --no-password --file="$work/database.dump"
 pg_restore --list "$work/database.dump" >/dev/null
+dump_bytes=$(wc -c <"$work/database.dump" | tr -d ' ')
 (cd "$work" && printf '%s  database.dump\n' "$(sha256_of database.dump)" >database.dump.sha256)
 server_version=$(psql_value "$BACKUP_DATABASE_URL" -c 'show server_version')
 tenants=$(psql_value "$BACKUP_DATABASE_URL" -c 'select count(*) from tenants')
 
 # ── Documents ──────────────────────────────────────────────────────────────────────────────
+step=documents
 snapshot_documents() {
   local from=$1
   local args=(-a)
@@ -110,11 +141,13 @@ case $driver in
       AWS_ACCESS_KEY_ID=$S3_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$S3_SECRET_ACCESS_KEY \
         AWS_DEFAULT_REGION=${S3_REGION:-ap-south-1} aws "${aws_args[@]}"
     elif command -v mc >/dev/null 2>&1; then
-      [[ -n $endpoint ]] || die "mc needs BACKUP_S3_ENDPOINT or S3_ENDPOINT"
+      [[ $endpoint == http://* || $endpoint == https://* ]] ||
+        die "mc needs BACKUP_S3_ENDPOINT or S3_ENDPOINT, starting with http:// or https://"
+      # The keys reach mc through its environment (MC_HOST_<alias>), not its command line.
       mc_config=$work/.mc
-      mc --config-dir "$mc_config" alias set gpbackup "$endpoint" \
-        "$S3_ACCESS_KEY_ID" "$S3_SECRET_ACCESS_KEY" >/dev/null
-      mc --config-dir "$mc_config" mirror --quiet --overwrite "gpbackup/$S3_BUCKET" "$mirror"
+      MC_HOST_gpbackup="${endpoint%%://*}://$(url_encode "$S3_ACCESS_KEY_ID"):$(url_encode \
+        "$S3_SECRET_ACCESS_KEY")@${endpoint#*://}" \
+        mc --config-dir "$mc_config" mirror --quiet --overwrite "gpbackup/$S3_BUCKET" "$mirror"
       rm -rf "$mc_config"
     else
       die "STORAGE_DRIVER=s3 needs the aws CLI or mc to copy the bucket"
@@ -128,6 +161,7 @@ esac
 document_files=$(find "$work/documents" -type f | wc -l | tr -d ' ')
 
 # ── Manifest ───────────────────────────────────────────────────────────────────────────────
+step=manifest
 {
   echo "created_at=$stamp"
   echo "database=$database"
@@ -148,6 +182,7 @@ log "backup complete: $BACKUP_DIR/$stamp ($tenants workspaces, $document_files d
 
 # ── Retention ──────────────────────────────────────────────────────────────────────────────
 # Names sort by time; the newest keep_min are kept whatever their age.
+step=retention
 shopt -s nullglob
 backups=("$BACKUP_DIR"/[0-9]*T[0-9]*Z)
 shopt -u nullglob
@@ -166,6 +201,8 @@ done
 # Without --delete: a damaged or emptied BACKUP_DIR must never wipe the off-site copy. Prune
 # that side with its own retention.
 if [[ -n ${BACKUP_OFFSITE_RSYNC:-} ]]; then
+  step=offsite
   log "copying $BACKUP_DIR to $BACKUP_OFFSITE_RSYNC"
   rsync -aH --exclude=.lock --exclude='*.partial' "$BACKUP_DIR/" "$BACKUP_OFFSITE_RSYNC"
+  offsite=true
 fi

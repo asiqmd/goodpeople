@@ -41,6 +41,8 @@ export const PERMISSIONS = [
   'production.manage',
   /** Donors, projects, salary splits, everyone's timesheets and donor reports. */
   'projects.manage',
+  /** Every support ticket the workspace has raised, and letting Good People support in. */
+  'support.manage',
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
@@ -48,7 +50,9 @@ const ALL = [...PERMISSIONS];
 
 export const ROLE_PERMISSIONS: Record<TenantRole, readonly Permission[]> = {
   tenant_admin: ALL,
-  hr_admin: ALL.filter((p) => p !== 'users.manage' && p !== 'billing.manage'),
+  hr_admin: ALL.filter(
+    (p) => p !== 'users.manage' && p !== 'billing.manage' && p !== 'support.manage',
+  ),
   hr_officer: [
     'employees.read',
     'employees.write',
@@ -79,6 +83,9 @@ export const ROLE_PERMISSIONS: Record<TenantRole, readonly Permission[]> = {
   ],
   auditor: ['employees.read', 'audit.read'],
   employee: [],
+  // Sees what the workspace admin sees, except identity numbers in clear, and can change
+  // nothing: a support session refuses every write (Phase 3 M5).
+  support: ALL.filter((p) => p !== 'employees.identity' && p !== 'support.manage'),
 };
 
 export function can(role: TenantRole | undefined, permission: Permission): boolean {

@@ -3,6 +3,7 @@ import {
   createDb,
   notifications,
   runAsTenant,
+  tenantAuditLog,
   tenants,
   type Database,
 } from '@gp/db';
@@ -22,7 +23,7 @@ import {
   type UnionListView,
 } from '@gp/shared';
 import type { INestApplication } from '@nestjs/common';
-import { eq, like } from 'drizzle-orm';
+import { and, eq, like } from 'drizzle-orm';
 import { line, payrollKit } from './payroll-helpers.js';
 import { api, bearer, bootApp, testEnv } from './test-env.js';
 
@@ -30,6 +31,8 @@ const address = { line: 'Ashulia', district: 'Dhaka', division: 'dhaka' };
 
 const requirement = (e: EstablishmentStatusView, kind: string) =>
   e.requirements.find((r) => r.kind === kind)!;
+const refused = (res: { body: { code?: string } }) =>
+  expect(res.body.code).toBe('role_not_allowed');
 
 // Each test makes its own company (or union and pay group), so the tests pass in any order.
 describe('committees and trade unions', () => {
@@ -237,6 +240,81 @@ describe('committees and trade unions', () => {
       min: 5,
       max: 5,
     });
+  });
+
+  it('leaves the complaint committee to the workspace admin, and records each change', async () => {
+    // HR (compliance.manage, no users.manage) could otherwise sit on it, or empty it, and read
+    // the harassment cases that only the committee hears (s.332A).
+    const email = `relations-hr-${kit.unique().toLowerCase()}@example.test`;
+    await api(app)
+      .post('/tenant/users')
+      .set(as())
+      .send({ name: 'Relations HR', email, role: 'hr_admin', password: testEnv().password })
+      .expect(201);
+    const hr = bearer(
+      (
+        await api(app)
+          .post('/auth/login')
+          .send({ tenant: 'my-group', email, password: testEnv().password })
+          .expect(200)
+      ).body.accessToken as string,
+    );
+    const asHr = (method: 'post' | 'patch' | 'delete', path: string, body: object = {}) =>
+      api(app)[method](`/tenant/relations${path}`).set(hr).send(body);
+
+    const entity = await company();
+    const woman = await hire(entity.id);
+    const kind = { legalEntityId: entity.id, formedOn: addDays(today, -10) };
+    refused(
+      await asHr('post', '/committees', {
+        ...kind,
+        kind: 'complaint',
+        name: `Complaint ${kit.unique()}`,
+      }).expect(403),
+    );
+    // Other committees stay with HR.
+    await asHr('post', '/committees', {
+      ...kind,
+      kind: 'other',
+      name: `Other ${kit.unique()}`,
+    }).expect(201);
+
+    const formed = await committee({ ...kind, kind: 'complaint' });
+    const member = { side: 'employer', selection: 'nominated', fromOn: formed.formedOn };
+    refused(
+      await asHr('post', `/committees/${formed.id}/members`, {
+        ...member,
+        employeeId: woman.id,
+      }).expect(403),
+    );
+    const view = (
+      await post(`/committees/${formed.id}/members`, { ...member, employeeId: woman.id }).expect(
+        201,
+      )
+    ).body as CommitteeView;
+    const memberId = view.memberList[0]!.id;
+    refused(
+      await asHr('post', `/committees/${formed.id}/members/${memberId}/end`, {
+        toOn: today,
+      }).expect(403),
+    );
+    refused(await asHr('patch', `/committees/${formed.id}`, { endsOn: today }).expect(403));
+    refused(await asHr('delete', `/committees/${formed.id}`).expect(403));
+    await post(`/committees/${formed.id}/members/${memberId}/end`, { toOn: today }).expect(200);
+
+    const changes = await runAsTenant(db, tenantId, (tx) =>
+      tx
+        .select({ action: tenantAuditLog.action })
+        .from(tenantAuditLog)
+        .where(
+          and(eq(tenantAuditLog.entityType, 'committee'), eq(tenantAuditLog.entityId, formed.id)),
+        ),
+    );
+    expect(changes.map((c) => c.action).toSorted()).toEqual([
+      'relations.committee.create',
+      'relations.committee.member_add',
+      'relations.committee.member_end',
+    ]);
   });
 
   it('flags a participation committee whose meeting is overdue and whose minutes are late', async () => {

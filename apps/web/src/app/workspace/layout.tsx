@@ -1,9 +1,17 @@
-import { can, type NotificationInbox, type Permission, type TenantAccessView } from '@gp/shared';
+import {
+  can,
+  isStaffRole,
+  type NotificationInbox,
+  type Permission,
+  type TenantAccessView,
+} from '@gp/shared';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { signOut } from '@/app/actions/auth';
 import { LanguageToggle } from '@/components/forms';
 import { NavLinks } from '@/components/nav-links';
+import { StatusBanner } from '@/components/status/status-banner';
+import { SupportSessionBanner } from '@/components/support/support-session-banner';
 import { Banner, buttonClass, Logo } from '@/components/ui';
 import { authedFetch, currentTenantUser } from '@/lib/api';
 
@@ -28,6 +36,7 @@ export default async function WorkspaceLayout({ children }: LayoutProps<'/worksp
   const ta = await getTranslations('attendance.nav');
   const tlc = await getTranslations('lifecycle.nav');
   const tw = await getTranslations('workspace.nav');
+  const te = await getTranslations('errors');
   const result = await authedFetch<TenantAccessView>('tenant', '/tenant/access');
   const user = await currentTenantUser();
   const may = (permission: Permission) => can(user?.role, permission);
@@ -117,6 +126,10 @@ export default async function WorkspaceLayout({ children }: LayoutProps<'/worksp
     ...(may('users.manage') ? [{ href: '/workspace/users', label: tw('users') }] : []),
     ...(may('billing.manage') ? [{ href: '/workspace/billing', label: tw('billing') }] : []),
     ...(may('org.manage') ? [{ href: '/workspace/setup', label: tw('setup') }] : []),
+    // Staff contact Good People; employees go to their own HR.
+    ...(isStaffRole(user?.role) && user?.role !== 'support'
+      ? [{ href: '/workspace/support', label: tw('support'), match: ['/workspace/support'] }]
+      : []),
     { href: '/workspace/profile', label: tn('profile') },
     { href: '/workspace/account', label: tw('account') },
   ];
@@ -175,7 +188,19 @@ export default async function WorkspaceLayout({ children }: LayoutProps<'/worksp
       {!result.ok ? (
         <main className="mx-auto max-w-6xl px-6 py-8">
           <Banner tone="red">
-            {result.error.code === 'tenant_suspended' ? t('suspended') : result.error.message}
+            {result.error.code === 'tenant_suspended'
+              ? t('suspended')
+              : result.error.code && te.has(result.error.code)
+                ? te(result.error.code)
+                : result.error.message}
+            {result.error.code === 'support_access_ended' && (
+              <>
+                {' '}
+                <Link href="/platform/support/access" className="font-medium underline">
+                  {t('backToConsole')}
+                </Link>
+              </>
+            )}
           </Banner>
         </main>
       ) : (
@@ -184,6 +209,8 @@ export default async function WorkspaceLayout({ children }: LayoutProps<'/worksp
             <NavLinks links={links} />
           </aside>
           <main className="min-w-0 flex-1 space-y-6">
+            {user?.role === 'support' && <SupportSessionBanner />}
+            <StatusBanner />
             {result.data.access.accessState === 'read_only' && (
               <Banner tone="amber">
                 {t('readOnly')} ({tr(result.data.access.reason)})

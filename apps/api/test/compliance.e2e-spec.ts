@@ -14,7 +14,7 @@ import {
   addDays,
   addMonths,
   ROLE_PERMISSIONS,
-  TENANT_ROLES,
+  ASSIGNABLE_TENANT_ROLES,
   todayIn,
   type AdolescentsView,
   type ComplianceAlertPage,
@@ -549,7 +549,9 @@ describe('compliance', () => {
     await check(day, day);
     const alert = await one(worker.id, 'daily_hours');
 
-    const roles = TENANT_ROLES.filter((r) => ROLE_PERMISSIONS[r].includes('compliance.manage'));
+    const roles = ASSIGNABLE_TENANT_ROLES.filter((r) =>
+      ROLE_PERMISSIONS[r].includes('compliance.manage'),
+    );
     const hrUsers = await runAsTenant(db, tenantId, (tx) =>
       tx
         .select({ id: tenantUsers.id })

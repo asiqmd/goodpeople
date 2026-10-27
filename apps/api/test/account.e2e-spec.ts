@@ -342,9 +342,10 @@ describe('accounts, sign-in and notifications', () => {
       .post('/auth/mfa/verify')
       .send({ mfaToken: step.mfaToken, code: '000000' })
       .expect(401);
+    // The next step's code: the one that confirmed the setup has been used.
     const session = await api(app)
       .post('/auth/mfa/verify')
-      .send({ mfaToken: step.mfaToken, code: totpAt(setup.secret, new Date()) })
+      .send({ mfaToken: step.mfaToken, code: totpAt(setup.secret, new Date(Date.now() + 30_000)) })
       .expect(200);
     expect(session.body.user.email).toBe(user.email);
 
@@ -365,6 +366,38 @@ describe('accounts, sign-in and notifications', () => {
     await api(app).post(`/tenant/users/${user.id}/reset-mfa`).set(bearer(admin)).expect(200);
     const plain = (await signIn(user.email!, testEnv().password).expect(200)).body;
     expect(plain.accessToken).toBeTruthy();
+  });
+
+  it('accepts each authenticator code and each second-step token once', async () => {
+    // Three steps are accepted at a time (the current one and its neighbours); start well
+    // inside one so all three stay valid while the test runs.
+    const into = Date.now() % 30_000;
+    if (into > 20_000) await new Promise((resolve) => setTimeout(resolve, 30_100 - into));
+    const now = Date.now();
+    const user = await createUser({
+      email: `mfa-once-${now}@example.test`,
+      role: 'hr_admin',
+      password: testEnv().password,
+    });
+    const token = (await signIn(user.email!, testEnv().password).expect(200)).body.accessToken;
+    const setup = (await api(app).post('/account/mfa/setup').set(bearer(token)).expect(200)).body;
+    const code = (steps: number) => totpAt(setup.secret, new Date(now + steps * 30_000));
+    await api(app)
+      .post('/account/mfa/confirm')
+      .set(bearer(token))
+      .send({ code: code(-1) })
+      .expect(200);
+    const verify = (mfaToken: string, value: string) =>
+      api(app).post('/auth/mfa/verify').send({ mfaToken, code: value });
+
+    const first = (await signIn(user.email!, testEnv().password).expect(200)).body.mfaToken;
+    await verify(first, code(-1)).expect(401);
+    await verify(first, code(0)).expect(200);
+    const second = (await signIn(user.email!, testEnv().password).expect(200)).body.mfaToken;
+    await verify(second, code(0)).expect(401);
+    // The first token finished a sign-in: even with a fresh code it is refused.
+    await verify(first, code(1)).expect(401);
+    await verify(second, code(1)).expect(200);
   });
 
   it('makes admins set up two-step sign-in when the server requires it', async () => {

@@ -2,6 +2,7 @@ import { can, type DonorView, type LegalEntityView, type ProjectListItem } from 
 import { getFormatter, getLocale, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { HelpLink } from '@/components/help/help-link';
 import { taka } from '@/components/payroll/payroll-views';
 import { DonorActiveToggle, DonorForm, ProjectForm } from '@/components/projects/project-forms';
 import {
@@ -22,7 +23,10 @@ export default async function ProjectsPage() {
   if (!projects.ok) {
     return (
       <>
-        <h1 className="text-2xl font-semibold">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">
+          {t('title')}
+          <HelpLink slug="ngo-timesheets" />
+        </h1>
         <Banner tone="amber">
           {projects.error.code === 'feature_not_in_plan' ? t('notInPlan') : projects.error.message}
         </Banner>
@@ -38,7 +42,10 @@ export default async function ProjectsPage() {
   return (
     <>
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">
+          {t('title')}
+          <HelpLink slug="ngo-timesheets" />
+        </h1>
         <p className="text-sm text-slate-600">{t('intro')}</p>
       </div>
 

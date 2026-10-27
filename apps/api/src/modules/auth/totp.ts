@@ -56,15 +56,22 @@ export function totpAt(secret: string, at: Date): string {
   return String(number).padStart(DIGITS, '0');
 }
 
-/** Accepts the current code and its neighbours, for clocks a little out of step. */
-export function verifyTotp(secret: string, code: string, now = new Date()): boolean {
+/**
+ * The time step a code belongs to: the current one or a neighbour, for clocks a little out of
+ * step. Undefined when the code is wrong.
+ */
+export function totpStep(secret: string, code: string, now = new Date()): number | undefined {
   const given = Buffer.from(code.trim());
-  return [-1, 0, 1].some((step) => {
-    const expected = Buffer.from(
-      totpAt(secret, new Date(now.getTime() + step * STEP_SECONDS * 1000)),
-    );
+  const current = Math.floor(now.getTime() / 1000 / STEP_SECONDS);
+  return [current - 1, current, current + 1].find((step) => {
+    const expected = Buffer.from(totpAt(secret, new Date(step * STEP_SECONDS * 1000)));
     return expected.length === given.length && timingSafeEqual(expected, given);
   });
+}
+
+/** Accepts the current code and its neighbours. */
+export function verifyTotp(secret: string, code: string, now = new Date()): boolean {
+  return totpStep(secret, code, now) !== undefined;
 }
 
 export function otpauthUrl(secret: string, account: string, issuer = 'Good People'): string {

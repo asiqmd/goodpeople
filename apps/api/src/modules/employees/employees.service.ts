@@ -49,12 +49,14 @@ import {
 import { and, asc, count, eq, ilike, inArray, or, type SQL } from 'drizzle-orm';
 import type { AuthUser } from '../../common/auth-user.js';
 import { forbidden } from '../../common/errors.js';
+import { userCan } from '../../common/roles.js';
 import { currentTenantId } from '../../common/request-context.js';
 import { FIELD_CIPHER, TenantDb } from '../../db/db.module.js';
 import { mustChangeEmployee, mustUseCompany } from '../access-scopes/employee-scope.js';
 import { entityScope } from '../access-scopes/entity-scope.js';
 import { AttendanceProcessor } from '../attendance/processor.service.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
+import { NotificationsService, type Localized } from '../notifications/notifications.service.js';
 import { currentOf, inForceOn, selectAssignments, toJobView } from './employee.queries.js';
 
 type EmployeeRow = typeof employees.$inferSelect;
@@ -70,6 +72,41 @@ const IDENTITY_FIELDS = {
 const blankToNull = (v: string | undefined) => (v === undefined ? undefined : v || null);
 const escapeLike = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);
 const digitsOnly = (s: string) => s.replace(/\D/g, '');
+
+/** The audit action for a change of the account net pay goes to; the payroll review reads it. */
+export const PRIMARY_ACCOUNT_CHANGED = 'employee.primary_account.change';
+
+const WALLETS: Record<string, Record<'en' | 'bn', string>> = {
+  bkash: { en: 'bKash', bn: 'বিকাশ' },
+  nagad: { en: 'Nagad', bn: 'নগদ' },
+  rocket: { en: 'Rocket', bn: 'রকেট' },
+  upay: { en: 'Upay', bn: 'উপায়' },
+};
+const BANGLA_DIGITS = '০১২৩৪৫৬৭৮৯';
+
+/** How the salary notice names an account: never more than its last four digits. */
+function accountLabel(
+  account:
+    { method: string; provider: string | null; accountNumberLast4: string | null } | undefined,
+): Localized {
+  if (!account) {
+    return {
+      en: 'with no account on record (ask HR how you will be paid)',
+      bn: 'কোনো অ্যাকাউন্ট ছাড়া (কীভাবে বেতন পাবেন, এইচআরকে জিজ্ঞেস করুন)',
+    };
+  }
+  // "হাতে নগদ": plain নগদ would read as the Nagad wallet.
+  if (account.method === 'cash') return { en: 'in cash', bn: 'হাতে নগদ টাকায়' };
+  const last4 = account.accountNumberLast4 ?? '';
+  const name =
+    account.method === 'bank'
+      ? { en: 'bank', bn: 'ব্যাংক' }
+      : (WALLETS[account.provider ?? ''] ?? { en: 'mobile wallet', bn: 'মোবাইল ওয়ালেট' });
+  return {
+    en: `into the ${name.en} account ending ${last4}`,
+    bn: `${name.bn} অ্যাকাউন্টে (শেষ চার অঙ্ক ${last4.replace(/\d/g, (d) => BANGLA_DIGITS[Number(d)]!)})`,
+  };
+}
 
 /** Personal columns from a hire or update body; keys the body left out stay out. */
 function personalColumns(input: PersonalInput): Partial<EmployeeRow> {
@@ -175,6 +212,7 @@ export class EmployeesService {
     private readonly audit: TenantAuditService,
     private readonly attendance: AttendanceProcessor,
     @Inject(FIELD_CIPHER) private readonly cipher: FieldCipher,
+    private readonly notifications: NotificationsService,
   ) {}
 
   /** People in the companies the user looks after, page by page. */
@@ -330,6 +368,13 @@ export class EmployeesService {
     passwordHash?: string,
   ): Promise<string> {
     const portal = input.portalAccess;
+    // Hiring gives a self-service login; any other role is a login change for users.manage.
+    if (portal && portal.role !== 'employee' && !userCan(actor, 'users.manage')) {
+      throw forbidden(
+        'role_needs_users_manage',
+        'Only someone who manages logins can give this role',
+      );
+    }
     await mustUseCompany(tx, actor, input.job.legalEntityId);
     await this.checkJobRefs(tx, input.job);
     const tenantId = currentTenantId();
@@ -651,18 +696,42 @@ export class EmployeesService {
             )
             .returning()
         : [];
+      const summary = (list: (typeof rows)[number][]) =>
+        list.map((r) => ({
+          method: r.method,
+          provider: r.provider,
+          last4: r.accountNumberLast4,
+          isPrimary: r.isPrimary,
+        }));
       await this.audit.record(tx, {
         actorUserId: actor.id,
         action: 'employee.payment_accounts.replace',
         entityType: 'employee',
         entityId: id,
-        after: rows.map((r) => ({
-          method: r.method,
-          provider: r.provider,
-          last4: r.accountNumberLast4,
-          isPrimary: r.isPrimary,
-        })),
+        before: summary([...existing.values()]),
+        after: summary(rows),
       });
+      // Net pay follows the primary account. A change is a way to steal a salary, so the
+      // employee is told (a notice HR cannot reword or switch off) and the run review shows it.
+      const primary = (list: (typeof rows)[number][]) => list.find((r) => r.isPrimary);
+      const before = primary([...existing.values()]);
+      const after = primary(rows);
+      if (this.destination(before) !== this.destination(after)) {
+        await this.audit.record(tx, {
+          actorUserId: actor.id,
+          action: PRIMARY_ACCOUNT_CHANGED,
+          entityType: 'employee',
+          entityId: id,
+          before: before ? summary([before])[0] : null,
+          after: after ? summary([after])[0] : null,
+        });
+        await this.notifications.notify(tx, {
+          event: 'payment_account.changed',
+          recipients: [{ employeeId: id }],
+          values: { 'account.new': accountLabel(after) },
+          link: '/workspace/profile',
+        });
+      }
       return rows.map(toPaymentAccountView);
     });
   }
@@ -806,6 +875,13 @@ export class EmployeesService {
       if (key === 'nid') columns.nidHash = value === null ? null : this.blindIndex(value, field);
     }
     return columns;
+  }
+
+  /** Where an account sends money, to tell whether the primary one really changed. */
+  private destination(account: typeof employeePaymentAccounts.$inferSelect | undefined) {
+    if (!account) return null;
+    const number = this.decrypt(account.accountNumberEnc, CIPHER_FIELDS.accountNumber);
+    return [account.method, account.provider, account.routingNumber, number].join('|');
   }
 
   private encrypt(value: string, field: CipherField) {

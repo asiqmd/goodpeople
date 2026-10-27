@@ -1,13 +1,17 @@
-import type {
-  OrgSnapshot,
-  ShiftView,
-  SignupStarted,
-  SignupView,
-  SlugCheck,
-  TenantAccessView,
-  TenantSession,
+import { signups, tenants, type Database } from '@gp/db';
+import {
+  TERMS_VERSION,
+  type OrgSnapshot,
+  type ShiftView,
+  type SignupStarted,
+  type SignupView,
+  type SlugCheck,
+  type TenantAccessView,
+  type TenantSession,
 } from '@gp/shared';
 import type { INestApplication } from '@nestjs/common';
+import { eq } from 'drizzle-orm';
+import { DB } from '../src/db/db.module.js';
 import {
   EMAIL_SENDER,
   type EmailMessage,
@@ -38,6 +42,7 @@ describe('self-serve sign-up', () => {
         company: 'Rupali Knit Wear Ltd',
         industryTemplate: 'rmg',
         language: 'en',
+        acceptTerms: true,
       }).expect(201)
     ).body as SignupStarted;
     expect(started).toMatchObject({ expiresInSeconds: 900, suggestedSlug: 'rupali-knit-wear' });
@@ -105,6 +110,7 @@ describe('self-serve sign-up', () => {
       email: owner,
       company: 'Rupali Again',
       industryTemplate: 'corporate',
+      acceptTerms: true,
     }).expect(201);
     const notice = email.sent.findLast((m) => m.to === owner)!;
     expect(notice.subject).toBe('Your Good People workspace');
@@ -139,14 +145,60 @@ describe('self-serve sign-up', () => {
       email: bot,
       company: 'Spam Co',
       industryTemplate: 'other',
+      acceptTerms: true,
       website: 'http://spam.example',
     }).expect(201);
     expect(email.sent.some((m) => m.to === bot)).toBe(false);
 
     const flood = `flood-${stamp}@example.test`;
-    const body = { name: 'Flood', email: flood, company: 'Flood Ltd', industryTemplate: 'other' };
+    const body = {
+      name: 'Flood',
+      email: flood,
+      company: 'Flood Ltd',
+      industryTemplate: 'other',
+      acceptTerms: true,
+    };
     for (let i = 0; i < 3; i++) await start(body).expect(201);
     expect((await start(body).expect(429)).body.code).toBe('too_many_attempts');
+  });
+
+  it('starts only with the terms accepted, and records the version on the workspace', async () => {
+    const person = `terms-${stamp}@example.test`;
+    const body = {
+      name: 'Shila Das',
+      email: person,
+      company: 'Shila Textiles',
+      industryTemplate: 'corporate',
+    };
+    for (const acceptTerms of [undefined, false, 'yes']) {
+      const refused = await start({ ...body, acceptTerms }).expect(400);
+      expect(refused.body.issues).toEqual([expect.objectContaining({ path: 'acceptTerms' })]);
+    }
+    expect(email.sent.some((m) => m.to === person)).toBe(false);
+
+    const before = Date.now();
+    const started = (await start({ ...body, acceptTerms: true }).expect(201)).body as SignupStarted;
+    const db = app.get<Database>(DB);
+    const [signup] = await db.select().from(signups).where(eq(signups.id, started.signupId));
+    expect(signup!.termsVersion).toBe(TERMS_VERSION);
+    expect(signup!.termsAcceptedAt!.getTime()).toBeGreaterThanOrEqual(before - 1000);
+
+    const slug = `shila-${stamp}`;
+    await api(app)
+      .post('/signup/verify')
+      .send({ signupId: started.signupId, code: codeIn(person), slug, password: 'Shila-Tex-2026!' })
+      .expect(200);
+    const [tenant] = await db.select().from(tenants).where(eq(tenants.slug, slug));
+    expect(tenant).toMatchObject({
+      termsVersion: TERMS_VERSION,
+      termsAcceptedAt: signup!.termsAcceptedAt,
+      termsAcceptedBy: person,
+    });
+
+    const platform = await platformToken(app);
+    const listed = (await api(app).get('/platform/signups').set(bearer(platform)).expect(200))
+      .body as SignupView[];
+    expect(listed.find((s) => s.id === started.signupId)?.termsVersion).toBe(TERMS_VERSION);
   });
 
   it('is closed where the server turns sign-up off', async () => {
@@ -154,7 +206,13 @@ describe('self-serve sign-up', () => {
     try {
       const res = await api(closed)
         .post('/signup')
-        .send({ name: 'X Y', email: 'x@example.test', company: 'X Ltd', industryTemplate: 'other' })
+        .send({
+          name: 'X Y',
+          email: 'x@example.test',
+          company: 'X Ltd',
+          industryTemplate: 'other',
+          acceptTerms: true,
+        })
         .expect(403);
       expect(res.body.code).toBe('signup_disabled');
     } finally {

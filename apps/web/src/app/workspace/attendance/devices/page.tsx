@@ -16,6 +16,7 @@ import {
   NewAgentForm,
   RevokeAgentButton,
 } from '@/components/attendance/setup-forms';
+import { HelpLink } from '@/components/help/help-link';
 import { Badge, Card } from '@/components/ui';
 import { currentTenantUser, load } from '@/lib/api';
 
@@ -36,7 +37,10 @@ export default async function DevicesPage() {
 
   return (
     <>
-      <h1 className="text-2xl font-semibold">{ts('title')}</h1>
+      <h1 className="text-2xl font-semibold">
+        {ts('title')}
+        <HelpLink slug="attendance-devices" />
+      </h1>
       <SetupTabs active="devices" />
       <Card title={t('agentsTitle')}>
         <p className="mb-4 text-sm text-slate-600">{t('agentsHint')}</p>

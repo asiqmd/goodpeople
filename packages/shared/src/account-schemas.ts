@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { TENANT_ROLES } from './catalog.js';
+import { ASSIGNABLE_TENANT_ROLES } from './catalog.js';
 import { bdMobileSchema } from './hr-schemas.js';
 import { slugSchema } from './schemas.js';
 import {
@@ -79,7 +79,7 @@ const contact = {
 export const userCreateSchema = z
   .object({
     name: z.string().trim().min(2).max(160),
-    role: z.enum(TENANT_ROLES),
+    role: z.enum(ASSIGNABLE_TENANT_ROLES),
     /** The employee this login belongs to, if any. */
     employeeId: z.uuid().optional(),
     password: newPassword.optional(),
@@ -98,7 +98,7 @@ export type UserCreateInput = z.infer<typeof userCreateSchema>;
 export const userUpdateSchema = z
   .object({
     name: z.string().trim().min(2).max(160),
-    role: z.enum(TENANT_ROLES),
+    role: z.enum(ASSIGNABLE_TENANT_ROLES),
     disabled: z.boolean(),
     ...contact,
   })

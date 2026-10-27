@@ -28,7 +28,7 @@ import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 import type { AuthUser } from '../../common/auth-user.js';
 import { badRequest, conflict } from '../../common/errors.js';
 import { currentTenantId } from '../../common/request-context.js';
-import { readSheet } from '../../common/sheets.js';
+import { readSheet, unreadableSheet } from '../../common/sheets.js';
 import { FIELD_CIPHER, TenantDb } from '../../db/db.module.js';
 import { employeeRef } from '../attendance/attendance-views.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
@@ -250,9 +250,7 @@ export class DisbursementService {
     if (!/\.(xlsx|csv)$/i.test(file.originalname)) {
       throw badRequest('sheet_type', 'Upload the report as .xlsx or .csv');
     }
-    const sheet = await readSheet(file, isReportHeading).catch(() => {
-      throw badRequest('sheet_unreadable', 'This file could not be read as a spreadsheet');
-    });
+    const sheet = await readSheet(file, isReportHeading).catch(unreadableSheet);
     if (!sheet.headers.some((h) => isReportHeading([h]))) {
       throw badRequest('report_no_account', 'The report has no account number column');
     }

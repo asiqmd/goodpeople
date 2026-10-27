@@ -89,5 +89,13 @@ export interface ApiError {
   message: string;
   /** Machine-readable reason, e.g. tenant_read_only, feature_not_in_plan, limit_reached. */
   code?: string;
-  issues?: { path: string; message: string }[];
+  /** A field's problem; `code` and `params` let the web say it in the page's language. */
+  issues?: {
+    path: string;
+    message: string;
+    code?: string;
+    params?: Record<string, string | number>;
+  }[];
+  /** The request's reference (also the x-request-id header), for people to give support. */
+  requestId?: string;
 }

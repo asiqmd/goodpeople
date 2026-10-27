@@ -24,6 +24,11 @@ const CHROME_CANDIDATES = [
   'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
 ];
 
+/** Chrome or Chromium: CHROME_PATH when set, else the first of the usual places that exists. */
+export function chromeExecutable(config: AppConfig): string | undefined {
+  return config.CHROME_PATH ?? CHROME_CANDIDATES.find((path) => existsSync(path));
+}
+
 /**
  * HTML to PDF in headless Chrome, which shapes Bangla conjuncts correctly where most PDF
  * libraries do not. One browser is shared; each document gets its own page with JavaScript
@@ -36,12 +41,8 @@ export class PdfService implements OnApplicationShutdown {
 
   constructor(@Inject(APP_CONFIG) private readonly config: AppConfig) {}
 
-  private executable(): string | undefined {
-    return this.config.CHROME_PATH ?? CHROME_CANDIDATES.find((path) => existsSync(path));
-  }
-
   private launch(): Promise<Browser> {
-    const executablePath = this.executable();
+    const executablePath = chromeExecutable(this.config);
     if (!executablePath) {
       throw new ServiceUnavailableException({
         statusCode: 503,

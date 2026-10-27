@@ -40,20 +40,40 @@ export interface Sender<M> {
   send(message: M): Promise<SendResult>;
 }
 
+const HIDDEN = '[hidden]';
+
+/**
+ * A message as a log driver prints it with codes hidden: every six-digit number (sign-in,
+ * sign-up and kiosk codes) and whatever follows the word "code", in English or Bangla.
+ */
+export function hideCodes(text: string): string {
+  return text
+    .replace(
+      /(?<![\p{L}\p{N}_])(codes?|কোড[\p{L}\p{M}]*)(?![\p{L}\p{N}_])([\s:="'\\[]*)[^\s"'\\,;.।]+/giu,
+      `$1$2${HIDDEN}`,
+    )
+    .replace(/(?<!\p{Nd})\p{Nd}{6}(?!\p{Nd})/gu, HIDDEN);
+}
+
 /** Keeps the last messages in memory and logs them; tests read `sent`. */
 export class LogSender<M> implements Sender<M> {
   readonly driver = 'log';
   readonly sent: M[] = [];
   private readonly logger: Logger;
 
-  constructor(channel: string) {
+  /** `showCodes` only in development, where sign-in codes are read from the log. */
+  constructor(
+    channel: string,
+    private readonly showCodes = false,
+  ) {
     this.logger = new Logger(`${channel}:log`);
   }
 
   async send(message: M): Promise<SendResult> {
     this.sent.push(message);
     if (this.sent.length > 200) this.sent.shift();
-    this.logger.log(JSON.stringify(message));
+    const text = JSON.stringify(message);
+    this.logger.log(this.showCodes ? text : hideCodes(text));
     return {};
   }
 }
@@ -215,11 +235,13 @@ export const SMS_SENDER = Symbol('SMS_SENDER');
 export const PUSH_SENDER = Symbol('PUSH_SENDER');
 
 export function createSenders(config: AppConfig) {
+  // A production server runs a log driver only with ALLOW_LOG_SENDERS=on, and hides codes.
+  const showCodes = process.env.NODE_ENV !== 'production';
   return {
     email:
       config.EMAIL_DRIVER === 'smtp'
         ? new SmtpSender(config.SMTP_URL!, config.EMAIL_FROM)
-        : new LogSender<EmailMessage>('email'),
+        : new LogSender<EmailMessage>('email', showCodes),
     sms:
       config.SMS_DRIVER === 'sslwireless'
         ? new SslWirelessSender(
@@ -227,7 +249,7 @@ export function createSenders(config: AppConfig) {
             config.SSLWIRELESS_API_TOKEN!,
             config.SSLWIRELESS_SID!,
           )
-        : new LogSender<SmsMessage>('sms'),
+        : new LogSender<SmsMessage>('sms', showCodes),
     push:
       config.PUSH_DRIVER === 'fcm'
         ? new FcmSender(
@@ -235,6 +257,6 @@ export function createSenders(config: AppConfig) {
             config.FCM_CLIENT_EMAIL!,
             config.FCM_PRIVATE_KEY!.replace(/\\n/g, '\n'),
           )
-        : new LogSender<PushMessage>('push'),
+        : new LogSender<PushMessage>('push', showCodes),
   };
 }

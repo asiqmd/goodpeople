@@ -2,6 +2,7 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { notificationDeliveries, notificationSettings, notificationTemplates } from '@gp/db';
 import {
   DEFAULT_EVENT_CHANNELS,
+  isFixedEvent,
   NOTIFICATION_EVENTS,
   USER_LANGUAGES,
   type DeliveryStatus,
@@ -148,8 +149,13 @@ export class NotificationAdminService {
     language: UserLanguage,
     input: NotificationTemplateInput,
   ): Promise<NotificationTemplateView> {
-    if (event === 'auth.otp') {
-      throw badRequest('template_fixed', 'The sign-in code message cannot be changed');
+    if (isFixedEvent(event)) {
+      throw badRequest(
+        'template_fixed',
+        event === 'auth.otp'
+          ? 'The sign-in code message cannot be changed'
+          : 'The salary account notice cannot be changed',
+      );
     }
     await this.tenantDb.run(async (tx) => {
       const [current] = await tx

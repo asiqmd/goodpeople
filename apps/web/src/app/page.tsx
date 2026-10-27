@@ -1,6 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { LanguageToggle } from '@/components/forms';
+import { SiteFooter } from '@/components/help/site-footer';
 import { buttonClass, Logo } from '@/components/ui';
 
 const SEGMENTS = ['rmg', 'corporate', 'ngo', 'group'] as const;
@@ -9,11 +10,15 @@ const POINTS = ['law', 'payroll', 'attendance', 'bangla'] as const;
 export default async function Home() {
   const t = await getTranslations('home');
   const tc = await getTranslations('common');
+  const th = await getTranslations('help');
   return (
     <main className="mx-auto flex min-h-screen max-w-5xl flex-col px-6 py-8">
       <header className="flex items-center justify-between gap-4">
         <Logo />
         <nav className="flex items-center gap-4 text-sm">
+          <Link href="/help" className="font-medium text-slate-600 hover:text-slate-900">
+            {th('link')}
+          </Link>
           <Link href="/pricing" className="font-medium text-slate-600 hover:text-slate-900">
             {t('pricing')}
           </Link>
@@ -55,12 +60,11 @@ export default async function Home() {
           </div>
         ))}
       </section>
-      <footer className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 text-sm text-slate-500">
-        <span>{tc('appName')}</span>
+      <SiteFooter>
         <Link href="/platform/login" className="hover:text-slate-700">
           {t('platformCta')}
         </Link>
-      </footer>
+      </SiteFooter>
     </main>
   );
 }

@@ -57,17 +57,19 @@ export class MaternityController {
 
   @Get('cases')
   list(
+    @CurrentUser() user: AuthUser,
     @Query(zod(maternityListQuerySchema)) query: MaternityListQuery,
   ): Promise<MaternityCaseSummary[]> {
-    return this.maternity.list(query.status);
+    return this.maternity.list(user, query.status);
   }
 
   /** Women in active employment, to open a case for. */
   @Get('candidates')
   candidates(
+    @CurrentUser() user: AuthUser,
     @Query(zod(maternityCandidateQuerySchema)) query: { search?: string },
   ): Promise<MaternityCandidate[]> {
-    return this.maternity.candidates(query.search);
+    return this.maternity.candidates(user, query.search);
   }
 
   @Post('cases')
@@ -80,8 +82,11 @@ export class MaternityController {
   }
 
   @Get('cases/:id')
-  view(@Param('id', ParseUUIDPipe) id: string): Promise<MaternityCaseView> {
-    return this.maternity.view(id);
+  view(
+    @CurrentUser() user: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<MaternityCaseView> {
+    return this.maternity.view(user, id);
   }
 
   @Patch('cases/:id/dates')
@@ -153,10 +158,11 @@ export class MaternityController {
   /** The case as a statement PDF, in English or Bangla. */
   @Get('cases/:id/statement')
   async statement(
+    @CurrentUser() user: AuthUser,
     @Param('id', ParseUUIDPipe) id: string,
     @Query(zod(payslipLanguageSchema)) query: z.infer<typeof payslipLanguageSchema>,
   ): Promise<StreamableFile> {
-    const file = await this.maternity.statement(id, query.language);
+    const file = await this.maternity.statement(user, id, query.language);
     return fileResponse(file.bytes, {
       contentType: 'application/pdf',
       fileName: file.fileName,

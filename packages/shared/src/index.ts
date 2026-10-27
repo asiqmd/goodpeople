@@ -40,3 +40,6 @@ export * from './projects.js';
 export * from './group.js';
 export * from './timesheets.js';
 export * from './access-scopes.js';
+export * from './support.js';
+export * from './status.js';
+export * from './legal.js';

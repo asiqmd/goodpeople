@@ -21,6 +21,8 @@ import { MfaService } from '../auth/mfa.service.js';
 type UserRow = typeof tenantUsers.$inferSelect;
 
 const temporaryPassword = () => randomBytes(12).toString('base64url');
+/** Good People support's read-only logins: never listed, edited or reset here. */
+const SUPPORT: TenantRole = 'support';
 
 /**
  * Workspace logins, for admins. Some rules keep a workspace from locking itself out: nobody
@@ -49,6 +51,7 @@ export class UsersService {
         })
         .from(tenantUsers)
         .leftJoin(employees, eq(employees.userId, tenantUsers.id))
+        .where(ne(tenantUsers.role, SUPPORT))
         .orderBy(asc(tenantUsers.name));
       const scopes = await tx.select().from(userEntityScopes);
       return rows.map((r) => ({
@@ -232,7 +235,10 @@ export class UsersService {
   }
 
   private async row(tx: Tx, id: string): Promise<UserRow> {
-    const [user] = await tx.select().from(tenantUsers).where(eq(tenantUsers.id, id));
+    const [user] = await tx
+      .select()
+      .from(tenantUsers)
+      .where(and(eq(tenantUsers.id, id), ne(tenantUsers.role, SUPPORT)));
     if (!user) throw new NotFoundException('Login not found');
     return user;
   }

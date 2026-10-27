@@ -27,6 +27,7 @@ import type { INestApplication } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { and, eq } from 'drizzle-orm';
 import { APP_CONFIG, type AppConfig } from '../src/config.js';
+import { KIOSK_WRONG_PIN_BUDGET } from '../src/modules/kiosk/kiosk-state.js';
 import {
   SMS_SENDER,
   type LogSender,
@@ -361,13 +362,32 @@ describe('kiosks', () => {
     }
     const fifth = await signIn(kiosk.token, code, '1357').expect(429);
     expect(fifth.body).toMatchObject({ code: 'kiosk_locked', retryAfterSeconds: 900 });
-    // Locked at every kiosk, even with the right PIN.
-    expect((await signIn(second.token, code, '2580').expect(429)).body.code).toBe('kiosk_locked');
+    // Locked at this kiosk, even with the right PIN; whoever typed the card cannot lock the
+    // worker out of the other kiosks.
+    expect((await signIn(kiosk.token, code, '2580').expect(429)).body.code).toBe('kiosk_locked');
+    await signedIn(second.token, code);
 
     // Proving the phone again with a new PIN lifts the lock.
-    await withPin(second.token, code, '9630');
-    await signedIn(second.token, code, '9630');
-    await signIn(second.token, code, '2580').expect(401);
+    await withPin(kiosk.token, code, '9630');
+    await signedIn(kiosk.token, code, '9630');
+    await signIn(kiosk.token, code, '2580').expect(401);
+  });
+
+  it('pauses a kiosk that sees too many wrong PINs, whoever’s card was typed', async () => {
+    const kiosk = await newKiosk();
+    const other = await newKiosk();
+    const { employee } = await hire();
+    await withPin(other.token, employee.employeeCode);
+    // One PIN tried against many card codes.
+    for (let i = 1; i < KIOSK_WRONG_PIN_BUDGET; i++) {
+      await signIn(kiosk.token, `SPRAY-${i}`, '1990').expect(401);
+    }
+    const last = await signIn(kiosk.token, `SPRAY-${KIOSK_WRONG_PIN_BUDGET}`, '1990').expect(429);
+    expect(last.body).toMatchObject({ code: 'kiosk_paused', retryAfterSeconds: 300 });
+    // Paused for everyone, right PINs too; other kiosks carry on.
+    const right = await signIn(kiosk.token, employee.employeeCode, '2580').expect(429);
+    expect(right.body.code).toBe('kiosk_paused');
+    await signedIn(other.token, employee.employeeCode);
   });
 
   // ── The worker's screen ────────────────────────────────────────────────────

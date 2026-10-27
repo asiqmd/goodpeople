@@ -190,7 +190,8 @@ Before a garment factory relies on the pack (HR, Compliance, IT):
 - [ ] **Grievances:** the Speak up poster printed in Bangla and English and put up where
       workers pass; at least one complaint committee member has a login.
 - [ ] **Kiosks:** each tablet registered and pinned to `/kiosk`; ID cards printed again with
-      their QR codes; SMS turned on for the workspace, with credits for PIN codes. Use a kiosk
+      their QR codes; the SMS gateway working for PIN codes, which are sent whatever the
+      workspace's SMS switch (each worker's mobile number on their record). Use a kiosk
       browser that shows PDFs on the page: Android's Chrome saves payslips to the tablet's
       downloads, where the next worker could open them (see phase-3.md).
 
@@ -222,6 +223,20 @@ Before a group runs shared-service HR (HR, IT):
 - [ ] **Limited logins:** each shared-service HR login limited to the companies it looks
       after on the Users page, then signed in once to check it sees only those people.
       Payroll is not limited by company: payroll logins see every company's pay.
+
+## 9. Support and status (Phase 3 M5)
+
+Before a customer's workspace relies on Good People (their admin, our Support):
+
+- [ ] The workspace admin and the HR and payroll leads know where **Support** is, what
+      counts as urgent, and that every error shows a reference to paste into a ticket.
+- [ ] They know the response targets for their plan, counted in support hours (Sunday to
+      Thursday, 9:00 to 18:00 Dhaka time), from the help centre's contact-support page.
+- [ ] The admin knows how to let support in (Support → Support access), read-only and for at
+      most seven days, and how to revoke it; and that we never look inside without it.
+- [ ] They have the status page (`/status`) bookmarked, and know that open incidents also show
+      as a banner in the workspace.
+- [ ] The billing contact's email is right, because invoices and support replies go there.
 
 ## If it goes wrong
 

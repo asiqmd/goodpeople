@@ -285,6 +285,22 @@ describe('access scopes', () => {
     );
   });
 
+  const entitiesOf = async (token: string) =>
+    (
+      (await api(app).get('/tenant/org').set(bearer(token)).expect(200)).body as OrgSnapshot
+    ).legalEntities
+      .map((e) => e.id)
+      .toSorted();
+
+  it('offers a limited login only its companies in the org lists', async () => {
+    const officer = await foodsOfficer();
+    expect(await entitiesOf(officer.token)).toEqual([company('MGF')]);
+    const unlimited = await login('hr_officer');
+    expect(await entitiesOf(unlimited.token)).toEqual(
+      expect.arrayContaining([company('MGF'), company('MGT')]),
+    );
+  });
+
   it('limits the attendance and leave team lists', async () => {
     const { foods, textiles } = await pair();
     const officer = await foodsOfficer();
@@ -607,5 +623,88 @@ describe('access scopes', () => {
     ).rows.map((r) => r.employee.id);
     expect(adolescents).toContain(minors.foods.id);
     expect(adolescents).not.toContain(minors.textiles.id);
+  });
+
+  it('limits maternity cases and trade unions to the companies looked after', async () => {
+    const { prefix, foods, textiles } = await pair();
+    const { token } = await foodsOfficer();
+    const as = bearer(token);
+    const caseFor = async (employeeId: string) =>
+      (
+        await api(app)
+          .post('/tenant/maternity/cases')
+          .set(bearer(admin))
+          .send({
+            employeeId,
+            noticeOn: today,
+            expectedDeliveryOn: addDays(today, 60),
+            survivingChildren: 0,
+            paymentOption: 'before_and_after',
+            averageDailyWage: '500',
+            averageReason: 'Joined recently',
+          })
+          .expect(201)
+      ).body as { id: string; employee: { id: string } };
+    const foodsCase = await caseFor(foods.id);
+    const textilesCase = await caseFor(textiles.id);
+
+    const cases = (
+      (await api(app).get('/tenant/maternity/cases').set(as).expect(200)).body as {
+        id: string;
+      }[]
+    ).map((c) => c.id);
+    expect(cases).toContain(foodsCase.id);
+    expect(cases).not.toContain(textilesCase.id);
+    await api(app).get(`/tenant/maternity/cases/${foodsCase.id}`).set(as).expect(200);
+    await api(app).get(`/tenant/maternity/cases/${textilesCase.id}`).set(as).expect(404);
+    await api(app)
+      .post(`/tenant/maternity/cases/${textilesCase.id}/cancel`)
+      .set(as)
+      .send({ reason: 'Not ours' })
+      .expect(404);
+    const candidates = (
+      (await api(app).get(`/tenant/maternity/candidates?search=${prefix}`).set(as).expect(200))
+        .body as { id: string }[]
+    ).map((c) => c.id);
+    expect(candidates).toEqual([foods.id]);
+
+    const union = async (code: 'MGT' | 'MGF', employeeId: string) => {
+      const created = (
+        await api(app)
+          .post('/tenant/relations/unions')
+          .set(bearer(admin))
+          .send({ legalEntityId: company(code), name: `Scope union ${unique()}`, isCba: false })
+          .expect(201)
+      ).body as { id: string };
+      await api(app)
+        .post(`/tenant/relations/unions/${created.id}/members`)
+        .set(bearer(admin))
+        .send({ employeeId, joinedOn: today })
+        .expect(201);
+      return created.id;
+    };
+    const foodsUnion = await union('MGF', foods.id);
+    const textilesUnion = await union('MGT', textiles.id);
+    const unions = (
+      (await api(app).get('/tenant/relations/unions').set(as).expect(200)).body as {
+        unions: { id: string }[];
+      }
+    ).unions.map((u) => u.id);
+    expect(unions).toContain(foodsUnion);
+    expect(unions).not.toContain(textilesUnion);
+    await api(app).get(`/tenant/relations/unions/${foodsUnion}`).set(as).expect(200);
+    await api(app).get(`/tenant/relations/unions/${textilesUnion}`).set(as).expect(404);
+    await api(app)
+      .patch(`/tenant/relations/unions/${textilesUnion}`)
+      .set(as)
+      .send({ note: 'Not ours' })
+      .expect(404);
+    outside(
+      await api(app)
+        .post('/tenant/relations/unions')
+        .set(as)
+        .send({ legalEntityId: company('MGT'), name: `Scope union ${unique()}`, isCba: false })
+        .expect(403),
+    );
   });
 });

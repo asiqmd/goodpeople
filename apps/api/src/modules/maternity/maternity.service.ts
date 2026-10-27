@@ -43,6 +43,8 @@ import type { AuthUser } from '../../common/auth-user.js';
 import { badRequest, conflict } from '../../common/errors.js';
 import { currentTenantId } from '../../common/request-context.js';
 import { FIELD_CIPHER, TenantDb } from '../../db/db.module.js';
+import { mustChangeEmployee } from '../access-scopes/employee-scope.js';
+import { entityScope } from '../access-scopes/entity-scope.js';
 import { employeeRef } from '../attendance/attendance-views.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
 import { WorkCalendarService } from '../calendar/work-calendar.service.js';
@@ -108,14 +110,20 @@ export class MaternityService {
   ) {}
 
   // ── Reads ──────────────────────────────────────────────────────────────────
+  // A login limited to some companies sees only their women's cases; others are not found.
 
-  list(status?: MaternityCaseStatus): Promise<MaternityCaseSummary[]> {
+  list(user: AuthUser, status?: MaternityCaseStatus): Promise<MaternityCaseSummary[]> {
     return this.tenantDb.run(async (tx) => {
       const rows = await tx
         .select({ c: maternityCases, e: employees })
         .from(maternityCases)
         .innerJoin(employees, eq(employees.id, maternityCases.employeeId))
-        .where(status ? eq(maternityCases.status, status) : undefined)
+        .where(
+          and(
+            status ? eq(maternityCases.status, status) : undefined,
+            await entityScope(tx, user, maternityCases.employeeId),
+          ),
+        )
         .orderBy(desc(maternityCases.expectedDeliveryOn));
       const payments = rows.length
         ? await tx
@@ -143,12 +151,12 @@ export class MaternityService {
     });
   }
 
-  view(id: string): Promise<MaternityCaseView> {
-    return this.tenantDb.run(async (tx) => this.viewOf(tx, await this.caseOf(tx, id)));
+  view(user: AuthUser, id: string): Promise<MaternityCaseView> {
+    return this.tenantDb.run(async (tx) => this.viewOf(tx, await this.caseOf(tx, user, id)));
   }
 
   /** Women in active employment, for opening a case. */
-  candidates(search?: string): Promise<MaternityCandidate[]> {
+  candidates(user: AuthUser, search?: string): Promise<MaternityCandidate[]> {
     return this.tenantDb.run(async (tx) => {
       const like = search ? `%${escapeLike(search)}%` : null;
       const rows = await tx
@@ -162,6 +170,7 @@ export class MaternityService {
           and(
             eq(employees.gender, 'female'),
             eq(employees.status, 'active'),
+            await entityScope(tx, user, employees.id),
             like
               ? or(
                   ilike(employees.fullName, like),
@@ -192,6 +201,7 @@ export class MaternityService {
         .where(eq(employees.id, input.employeeId))
         .for('update');
       if (!employee) throw new NotFoundException('Employee not found');
+      await mustChangeEmployee(tx, user, employee.id);
       if (employee.gender !== 'female') {
         throw badRequest('maternity_women_only', 'Maternity benefit is for women employees');
       }
@@ -268,7 +278,7 @@ export class MaternityService {
       });
       return row!.id;
     });
-    return this.view(id);
+    return this.view(user, id);
   }
 
   /** The delivery and proof of birth as they happen; due dates and lost parts follow. */
@@ -278,7 +288,7 @@ export class MaternityService {
     input: MaternityDatesInput,
   ): Promise<MaternityCaseView> {
     await this.tenantDb.run(async (tx) => {
-      const row = await this.openCase(tx, id);
+      const row = await this.openCase(tx, user, id);
       notInFuture(input.deliveredOn, input.proofOn);
       const dates = {
         noticeOn: row.noticeOn,
@@ -341,7 +351,7 @@ export class MaternityService {
         },
       });
     });
-    return this.view(id);
+    return this.view(user, id);
   }
 
   /** Works the average out again from locked pay, or takes HR's figure when there is none. */
@@ -351,7 +361,7 @@ export class MaternityService {
     input: MaternityAverageInput,
   ): Promise<MaternityCaseView> {
     await this.tenantDb.run(async (tx) => {
-      const row = await this.openCase(tx, id);
+      const row = await this.openCase(tx, user, id);
       if ((await this.paidParts(tx, row)).length) {
         throw conflict('maternity_part_paid', 'A part is already paid at this average');
       }
@@ -384,7 +394,7 @@ export class MaternityService {
         },
       });
     });
-    return this.view(id);
+    return this.view(user, id);
   }
 
   /** Links her maternity leave, whose days payroll then does not pay as wages, or unlinks it. */
@@ -394,7 +404,7 @@ export class MaternityService {
     leaveRequestId: string | null,
   ): Promise<MaternityCaseView> {
     await this.tenantDb.run(async (tx) => {
-      const row = await this.openCase(tx, id);
+      const row = await this.openCase(tx, user, id);
       if (leaveRequestId) await this.checkLeave(tx, row.employeeId, leaveRequestId, row.id);
       await tx
         .update(maternityCases)
@@ -409,7 +419,7 @@ export class MaternityService {
         after: { leaveRequestId },
       });
     });
-    return this.view(id);
+    return this.view(user, id);
   }
 
   /** Records a part as paid: when, how and the voucher or transaction reference. */
@@ -420,7 +430,7 @@ export class MaternityService {
     input: MaternityPaymentInput,
   ): Promise<MaternityCaseView> {
     await this.tenantDb.run(async (tx) => {
-      const row = await this.openCase(tx, id);
+      const row = await this.openCase(tx, user, id);
       const [payment] = await tx
         .select()
         .from(maternityPayments)
@@ -462,13 +472,13 @@ export class MaternityService {
         },
       });
     });
-    return this.view(id);
+    return this.view(user, id);
   }
 
   /** Closes a case once every part is paid or lost (or nothing was payable). */
   async close(user: AuthUser, id: string, note: string | null): Promise<MaternityCaseView> {
     await this.tenantDb.run(async (tx) => {
-      const row = await this.openCase(tx, id);
+      const row = await this.openCase(tx, user, id);
       const payments = await tx
         .select()
         .from(maternityPayments)
@@ -491,13 +501,13 @@ export class MaternityService {
         after: { status: 'closed', note },
       });
     });
-    return this.view(id);
+    return this.view(user, id);
   }
 
   /** Cancels a case opened in error, before anything is paid; its leave is paid as wages again. */
   async cancel(user: AuthUser, id: string, reason: string): Promise<MaternityCaseView> {
     await this.tenantDb.run(async (tx) => {
-      const row = await this.openCase(tx, id);
+      const row = await this.openCase(tx, user, id);
       if ((await this.paidParts(tx, row)).length) {
         throw conflict(
           'maternity_part_paid',
@@ -513,13 +523,13 @@ export class MaternityService {
         after: { status: 'cancelled', reason },
       });
     });
-    return this.view(id);
+    return this.view(user, id);
   }
 
   /** The case as a statement for her and the file, in English or Bangla. */
-  async statement(id: string, language: 'en' | 'bn') {
+  async statement(user: AuthUser, id: string, language: 'en' | 'bn') {
     const html = await this.tenantDb.run(async (tx) => {
-      const row = await this.caseOf(tx, id);
+      const row = await this.caseOf(tx, user, id);
       const view = await this.viewOf(tx, row);
       const [job] = await tx
         .select({
@@ -939,18 +949,24 @@ export class MaternityService {
       .where(eq(maternityCases.id, row.id));
   }
 
-  private async caseOf(tx: Tx, id: string): Promise<CaseRow> {
-    const [row] = await tx.select().from(maternityCases).where(eq(maternityCases.id, id));
+  /** The case, when the user's companies include hers. */
+  private async caseOf(tx: Tx, user: AuthUser, id: string): Promise<CaseRow> {
+    const [row] = await tx
+      .select()
+      .from(maternityCases)
+      .where(
+        and(eq(maternityCases.id, id), await entityScope(tx, user, maternityCases.employeeId)),
+      );
     if (!row) throw new NotFoundException('Maternity case not found');
     return row;
   }
 
   /** The case, locked for this change, which only an open case takes. */
-  private async openCase(tx: Tx, id: string): Promise<CaseRow> {
+  private async openCase(tx: Tx, user: AuthUser, id: string): Promise<CaseRow> {
     const [row] = await tx
       .select()
       .from(maternityCases)
-      .where(eq(maternityCases.id, id))
+      .where(and(eq(maternityCases.id, id), await entityScope(tx, user, maternityCases.employeeId)))
       .for('update');
     if (!row) throw new NotFoundException('Maternity case not found');
     if (row.status !== 'open')

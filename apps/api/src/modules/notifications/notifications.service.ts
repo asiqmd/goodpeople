@@ -15,7 +15,7 @@ import {
   OTP_TTL_MINUTES,
   ROLE_PERMISSIONS,
   smsSegments,
-  TENANT_ROLES,
+  ASSIGNABLE_TENANT_ROLES,
   type DeliveryChannel,
   type NotificationEvent,
   type NotificationInbox,
@@ -122,7 +122,7 @@ export async function templatesFor(
 
 /** Active logins whose role has the permission, e.g. everyone who handles documents. */
 export async function usersWith(tx: Tx, permission: Permission): Promise<Recipient[]> {
-  const roles = TENANT_ROLES.filter((r) => ROLE_PERMISSIONS[r].includes(permission));
+  const roles = ASSIGNABLE_TENANT_ROLES.filter((r) => ROLE_PERMISSIONS[r].includes(permission));
   const rows = await tx
     .select({ id: tenantUsers.id })
     .from(tenantUsers)

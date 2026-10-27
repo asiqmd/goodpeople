@@ -5,20 +5,31 @@ import type { NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
 import { DocumentBuilder, SwaggerModule, type OpenAPIObject } from '@nestjs/swagger';
 import { AppModule } from './app.module.js';
+import { AppLogger } from './common/logger.js';
+import { requestTracking } from './common/request-id.js';
 import type { AppConfig } from './config.js';
 
 export async function createApp(config: AppConfig): Promise<INestApplication> {
+  const logger = new AppLogger({ format: config.LOG_FORMAT, level: config.LOG_LEVEL });
   const app = await NestFactory.create(AppModule.forRoot(config), {
     cors: { origin: config.WEB_ORIGIN },
-    logger: process.env.NODE_ENV === 'test' ? ['error'] : undefined,
+    logger,
   });
   app.enableShutdownHooks();
+  app.use(requestTracking(logger));
+  // Headers for every response: no sniffing, no referrer, never framed, same-site reads only.
+  const always = {
+    xFrameOptions: { action: 'deny' },
+    referrerPolicy: { policy: 'no-referrer' },
+    crossOriginResourcePolicy: { policy: 'same-site' },
+  } as const;
   // The API serves JSON and files only, so the strictest policy fits; /docs needs its scripts.
   const strict = helmet({
+    ...always,
     contentSecurityPolicy: { directives: { defaultSrc: ["'none'"], frameAncestors: ["'none'"] } },
-    crossOriginResourcePolicy: { policy: 'same-site' },
   });
   const docs = helmet({
+    ...always,
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
@@ -34,7 +45,8 @@ export async function createApp(config: AppConfig): Promise<INestApplication> {
   if (config.TRUST_PROXY > 0) {
     app.getHttpAdapter().getInstance().set('trust proxy', config.TRUST_PROXY);
   }
-  SwaggerModule.setup('docs', app, buildOpenApi(app));
+  // The map of every route: for developers, so production serves it only with API_DOCS=on.
+  if (config.API_DOCS) SwaggerModule.setup('docs', app, buildOpenApi(app));
   return app;
 }
 

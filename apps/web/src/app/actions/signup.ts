@@ -32,6 +32,7 @@ export async function startSignup(_: SignupState, form: FormData): Promise<Signu
       company: text(form, 'company'),
       industryTemplate: text(form, 'industryTemplate'),
       language: (await getLocale()) === 'bn' ? 'bn' : 'en',
+      acceptTerms: form.get('acceptTerms') === 'on',
       website: text(form, 'website') || undefined,
     },
   });

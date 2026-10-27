@@ -105,6 +105,8 @@ export class LeaveTypesService {
           issues: violations.map((v) => ({
             path: v.field,
             message: `${v.message} (${v.reference.act}, s.${v.reference.section})`,
+            code: v.rule,
+            params: { limit: v.limit, section: v.reference.section },
           })),
         };
         throw new BadRequestException(body);

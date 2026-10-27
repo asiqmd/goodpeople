@@ -27,11 +27,12 @@ import type {
   OrgUnitView,
   TenantWithAccess,
 } from '@gp/shared';
-import { asc, count, eq } from 'drizzle-orm';
+import { asc, count, eq, inArray } from 'drizzle-orm';
 import type { AuthUser } from '../../common/auth-user.js';
 import { forbidden } from '../../common/errors.js';
 import { currentTenantId } from '../../common/request-context.js';
 import { TenantDb } from '../../db/db.module.js';
+import { entityScopeOf } from '../access-scopes/entity-scope.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
 
 type Row<T extends { $inferSelect: unknown }> = T['$inferSelect'];
@@ -110,11 +111,19 @@ export class OrgService {
     private readonly audit: TenantAuditService,
   ) {}
 
-  snapshot(): Promise<OrgSnapshot> {
+  /** A login limited to some companies sees only those (Phase 3 M4 access scopes). */
+  snapshot(user: AuthUser): Promise<OrgSnapshot> {
     return this.tenantDb.run(async (tx) => ({
-      legalEntities: (
-        await tx.select().from(legalEntities).orderBy(asc(legalEntities.createdAt))
-      ).map(toLegalEntityView),
+      legalEntities: await (async () => {
+        const scope = await entityScopeOf(tx, user.id);
+        return (
+          await tx
+            .select()
+            .from(legalEntities)
+            .where(scope ? inArray(legalEntities.id, scope) : undefined)
+            .orderBy(asc(legalEntities.createdAt))
+        ).map(toLegalEntityView);
+      })(),
       locations: (await tx.select().from(locations).orderBy(asc(locations.name))).map(
         toLocationView,
       ),

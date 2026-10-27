@@ -317,6 +317,11 @@ async function ItemRow({
                   })}
             </Badge>
           )}
+          {item.accountChangedAt && (
+            <Badge tone="amber">
+              {t('accountChanged', { date: format.dateTime(new Date(item.accountChangedAt)) })}
+            </Badge>
+          )}
           {errors.length > 0 && (
             <Badge tone="red">{t('problemCount', { count: errors.length })}</Badge>
           )}

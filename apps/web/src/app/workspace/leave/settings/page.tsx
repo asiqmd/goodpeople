@@ -21,6 +21,7 @@ import {
   NewCalendarForm,
   NewLeaveTypeForm,
 } from '@/components/leave/settings-forms';
+import { HelpLink } from '@/components/help/help-link';
 import { Badge, Banner, buttonClass, Card } from '@/components/ui';
 import { currentTenantUser, load } from '@/lib/api';
 
@@ -70,7 +71,10 @@ export default async function LeaveSettingsPage({
 
   return (
     <>
-      <h1 className="text-2xl font-semibold">{t('title')}</h1>
+      <h1 className="text-2xl font-semibold">
+        {t('title')}
+        <HelpLink slug="leave-policies" />
+      </h1>
 
       <Card
         title={t('types')}

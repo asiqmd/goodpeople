@@ -42,15 +42,26 @@ export const NOTIFICATION_EVENTS = [
   'maternity.payment_due',
   /** Your timesheet for last month is not yet submitted (staff charged to projects). */
   'timesheet.due',
+  /** The account your salary is paid to was changed (a security notice to the employee). */
+  'payment_account.changed',
   /** A sign-in code: SMS only, always sent. */
   'auth.otp',
 ] as const;
 export type NotificationEvent = (typeof NOTIFICATION_EVENTS)[number];
 
-/** Events HR may switch channels for and edit; the sign-in code is fixed. */
-export const CONFIGURABLE_EVENTS = NOTIFICATION_EVENTS.filter((e) => e !== 'auth.otp') as Exclude<
+/**
+ * Events whose channels and wording HR cannot change: the sign-in code, and the salary
+ * account notice, which must reach the employee even when HR made the change.
+ */
+export const FIXED_EVENTS = ['auth.otp', 'payment_account.changed'] as const;
+export type FixedEvent = (typeof FIXED_EVENTS)[number];
+export const isFixedEvent = (event: NotificationEvent): event is FixedEvent =>
+  (FIXED_EVENTS as readonly string[]).includes(event);
+
+/** Events HR may switch channels for and edit. */
+export const CONFIGURABLE_EVENTS = NOTIFICATION_EVENTS.filter((e) => !isFixedEvent(e)) as Exclude<
   NotificationEvent,
-  'auth.otp'
+  FixedEvent
 >[];
 
 /** Where each event goes unless HR changes it. SMS costs money, so it is off by default. */
@@ -70,6 +81,7 @@ export const DEFAULT_EVENT_CHANNELS: Record<NotificationEvent, readonly Delivery
   'grievance.received': ['email', 'push'],
   'maternity.payment_due': ['email'],
   'timesheet.due': ['email', 'push'],
+  'payment_account.changed': ['email', 'sms', 'push'],
   'auth.otp': ['sms'],
 };
 

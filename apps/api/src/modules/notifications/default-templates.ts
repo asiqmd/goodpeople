@@ -196,6 +196,18 @@ export const DEFAULT_TEMPLATES: Record<NotificationEvent, Record<UserLanguage, T
       sms: 'Good People: অনুগ্রহ করে {{timesheet.month}}-এর টাইমশিট জমা দিন।',
     },
   },
+  'payment_account.changed': {
+    en: {
+      title: 'The account your salary is paid to was changed',
+      body: 'From now on your salary is paid {{account.new}}. If you did not ask for this, tell HR or your manager straight away.',
+      sms: 'Good People: your salary is now paid {{account.new}}. If you did not ask for this, tell HR at once.',
+    },
+    bn: {
+      title: 'আপনার বেতনের অ্যাকাউন্ট বদলানো হয়েছে',
+      body: 'এখন থেকে আপনার বেতন দেওয়া হবে {{account.new}}। আপনি এটি না চেয়ে থাকলে এখনই এইচআর বা আপনার ম্যানেজারকে জানান।',
+      sms: 'Good People: আপনার বেতন এখন দেওয়া হবে {{account.new}}। আপনি না চেয়ে থাকলে এখনই এইচআরকে জানান।',
+    },
+  },
   'auth.otp': {
     en: {
       title: 'Your sign-in code',
@@ -227,5 +239,6 @@ export const TEMPLATE_PLACEHOLDERS: Record<NotificationEvent, string[]> = {
   'grievance.received': ['grievance.reference', 'grievance.category'],
   'maternity.payment_due': ['person.name', 'maternity.part', 'maternity.amount', 'maternity.due'],
   'timesheet.due': ['timesheet.month'],
+  'payment_account.changed': ['account.new'],
   'auth.otp': ['otp.code', 'otp.minutes', 'workspace.name'],
 };

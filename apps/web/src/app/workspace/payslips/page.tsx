@@ -7,6 +7,7 @@ import {
 } from '@gp/shared';
 import { getFormatter, getLocale, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
+import { HelpLink } from '@/components/help/help-link';
 import { day } from '@/components/leave/leave-views';
 import { DeclarationForm } from '@/components/payroll/benefit-forms';
 import {
@@ -30,7 +31,10 @@ export default async function MyPayPage({ searchParams }: PageProps<'/workspace/
   const tab: Tab = TABS.includes(query.tab as Tab) ? (query.tab as Tab) : 'payslips';
   return (
     <>
-      <h1 className="text-2xl font-semibold">{t('title')}</h1>
+      <h1 className="text-2xl font-semibold">
+        {t('title')}
+        <HelpLink slug="payslips" />
+      </h1>
       <nav className="flex flex-wrap gap-2 text-sm">
         {TABS.map((key) => (
           <Link

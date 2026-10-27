@@ -58,6 +58,15 @@ export function allocate(net: string, accounts: PayableAccount[]): Payment[] {
   return out;
 }
 
-/** A CSV field, quoted when it holds a comma, quote or line break. */
-const field = (v: string) => (/[",\n]/.test(v) ? `"${v.replaceAll('"', '""')}"` : v);
-export const csv = (rows: string[][]) => `${rows.map((r) => r.map(field).join(',')).join('\n')}\n`;
+/**
+ * A CSV field, quoted when it holds a comma, quote or line break. Text a spreadsheet would
+ * run as a formula (a leading = + - @, tab or carriage return) gets a leading apostrophe;
+ * signed numbers such as -1250.00 stay numbers.
+ */
+export function csvField(value: string): string {
+  const formula = /^[=+\-@\t\r]/.test(value) && !/^[+-]?\d[\d,]*(\.\d+)?$/.test(value);
+  const v = formula ? `'${value}` : value;
+  return /[",\n\r]/.test(v) ? `"${v.replaceAll('"', '""')}"` : v;
+}
+export const csv = (rows: string[][]) =>
+  `${rows.map((r) => r.map(csvField).join(',')).join('\n')}\n`;

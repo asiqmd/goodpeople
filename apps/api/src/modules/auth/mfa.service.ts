@@ -11,7 +11,7 @@ import type { MfaSetup } from '@gp/shared';
 import { eq } from 'drizzle-orm';
 import { badRequest } from '../../common/errors.js';
 import { DB, FIELD_CIPHER } from '../../db/db.module.js';
-import { hashCode, newRecoveryCodes, newTotpSecret, otpauthUrl, verifyTotp } from './totp.js';
+import { hashCode, newRecoveryCodes, newTotpSecret, otpauthUrl, totpStep } from './totp.js';
 
 /** A tenant login or a platform login: they live in different tables. */
 export type Subject =
@@ -31,12 +31,21 @@ const mfaColumns = (table: typeof platformUsers | typeof tenantUsers) => ({
   mfaRecoveryCodes: table.mfaRecoveryCodes,
 });
 
+/** How long a used authenticator step is remembered: the three steps a code is accepted in. */
+const STEP_MEMORY_MS = 90_000;
+
 /**
  * Two-step sign-in with an authenticator app. The shared secret is field-encrypted; recovery
- * codes are stored hashed and each works once.
+ * codes are stored hashed and each works once, and so does each authenticator code.
  */
 @Injectable()
 export class MfaService {
+  /**
+   * The last authenticator step each login used. In this process's memory, like the rate
+   * limits: several API instances need it in the database.
+   */
+  private readonly lastSteps = new Map<string, { step: number; until: number }>();
+
   constructor(
     @Inject(DB) private readonly db: Database,
     @Inject(FIELD_CIPHER) private readonly cipher: FieldCipher,
@@ -61,7 +70,7 @@ export class MfaService {
     }
     if (!user.mfaSecretEnc) throw badRequest('mfa_not_started', 'Start the setup first');
     const secret = this.cipher.decrypt(user.mfaSecretEnc, this.context(subject));
-    if (!verifyTotp(secret, code)) {
+    if (!this.use(subject, totpStep(secret, code))) {
       throw badRequest('mfa_wrong_code', 'That code does not match. Check the time on your phone.');
     }
     const codes = newRecoveryCodes();
@@ -75,11 +84,24 @@ export class MfaService {
     if (!user.mfaEnabledAt || !user.mfaSecretEnc) return false;
     const trimmed = code.trim();
     if (/^\d{6}$/.test(trimmed)) {
-      return verifyTotp(this.cipher.decrypt(user.mfaSecretEnc, this.context(subject)), trimmed);
+      const secret = this.cipher.decrypt(user.mfaSecretEnc, this.context(subject));
+      return this.use(subject, totpStep(secret, trimmed));
     }
     const hash = hashCode(trimmed);
     if (!user.mfaRecoveryCodes.includes(hash)) return false;
     await this.save(subject, { mfaRecoveryCodes: user.mfaRecoveryCodes.filter((h) => h !== hash) });
+    return true;
+  }
+
+  /** Takes a right code's step unless this login already used it (or a later one). */
+  private use(subject: Subject, step: number | undefined): boolean {
+    if (step === undefined) return false;
+    const now = Date.now();
+    for (const [key, last] of this.lastSteps) if (last.until <= now) this.lastSteps.delete(key);
+    const key = `${subject.kind}:${subject.id}`;
+    const last = this.lastSteps.get(key);
+    if (last && step <= last.step) return false;
+    this.lastSteps.set(key, { step, until: now + STEP_MEMORY_MS });
     return true;
   }
 

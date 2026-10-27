@@ -6,7 +6,7 @@ import {
   GENDERS,
   MARITAL_STATUSES,
   RELIGIONS,
-  TENANT_ROLES,
+  ASSIGNABLE_TENANT_ROLES,
   WORKER_CATEGORIES,
   type EmployeeDetail,
   type HireResult,
@@ -359,7 +359,7 @@ export function EmployeeForm(
               <Field label={t('portalRole')}>
                 <EnumSelect
                   name="portalAccess.role"
-                  values={TENANT_ROLES}
+                  values={ASSIGNABLE_TENANT_ROLES}
                   labels={(v) => th(`roles.${v}`)}
                   defaultValue="employee"
                   placeholder={choose}

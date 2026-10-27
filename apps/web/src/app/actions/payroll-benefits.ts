@@ -306,7 +306,7 @@ export async function previewIncrement(
       body: incrementBody(form),
     },
   );
-  return result.ok ? result.data : { error: result.error.message };
+  return result.ok ? result.data : fail(result);
 }
 
 export async function createIncrement(

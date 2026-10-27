@@ -123,6 +123,9 @@ export default async function NotificationsPage({
               ))}
           </div>
           {event === 'auth.otp' && <p className="mt-4 text-sm text-slate-500">{t('otpFixed')}</p>}
+          {event === 'payment_account.changed' && (
+            <p className="mt-4 text-sm text-slate-500">{t('paymentAccountFixed')}</p>
+          )}
         </Card>
       </>
     );

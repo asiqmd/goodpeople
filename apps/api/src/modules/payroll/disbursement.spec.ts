@@ -55,4 +55,20 @@ describe('splitting net pay across accounts', () => {
       ]),
     ).toBe('Name,Amount\n"Khatun, Rahima",10200.00\n"A ""nick""",1\n');
   });
+
+  it('keeps formulas out of CSV text cells but leaves signed numbers alone', () => {
+    expect(
+      csv([
+        ['=HYPERLINK("http://x.example","Pay")', '-1250.00'],
+        ["+cmd|' /C calc'!A0", '+8801712345678'],
+        ['-2+3', '@SUM(A1)'],
+        ['\tTabbed', '\rReturn'],
+      ]),
+    ).toBe(
+      `"'=HYPERLINK(""http://x.example"",""Pay"")",-1250.00\n` +
+        `'+cmd|' /C calc'!A0,+8801712345678\n` +
+        `'-2+3,'@SUM(A1)\n` +
+        `'\tTabbed,"'\rReturn"\n`,
+    );
+  });
 });

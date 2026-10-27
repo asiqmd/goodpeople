@@ -20,6 +20,10 @@ import {
 } from './test-env.js';
 
 const address = { line: 'Konabari', district: 'Gazipur', division: 'dhaka' };
+const portalAccess = (role: string) => ({
+  email: `${uniqueSlug('new-login')}@my-group.test`,
+  role,
+});
 
 describe('employees', () => {
   let app: INestApplication;
@@ -124,6 +128,38 @@ describe('employees', () => {
     expect(me.body.id).toBe(created.id);
     expect(me.body.identity.nid).toBe(created.identity.nid);
     await api(app).get('/tenant/employees').set(bearer(login.body.accessToken)).expect(403);
+  });
+
+  it('gives a role other than employee at hire only to those who manage logins', async () => {
+    const email = `${uniqueSlug('hr-officer')}@my-group.test`;
+    await api(app)
+      .post('/tenant/users')
+      .set(bearer(hr))
+      .send({ name: 'Hiring officer', email, role: 'hr_officer', password: testEnv().password })
+      .expect(201);
+    const officer = (
+      await api(app)
+        .post('/auth/login')
+        .send({ tenant: 'my-group', email, password: testEnv().password })
+        .expect(200)
+    ).body.accessToken as string;
+    const refused = await api(app)
+      .post('/tenant/employees')
+      .set(bearer(officer))
+      .send(newHire({ portalAccess: portalAccess('tenant_admin') }))
+      .expect(403);
+    expect(refused.body.code).toBe('role_needs_users_manage');
+    await api(app)
+      .post('/tenant/employees')
+      .set(bearer(officer))
+      .send(newHire({ portalAccess: portalAccess('employee') }))
+      .expect(201);
+    const byAdmin = await api(app)
+      .post('/tenant/employees')
+      .set(bearer(hr))
+      .send(newHire({ portalAccess: portalAccess('hr_officer') }))
+      .expect(201);
+    expect(byAdmin.body.employee.portalUser).toMatchObject({ role: 'hr_officer' });
   });
 
   it('stores identity numbers encrypted and keeps them out of the audit log', async () => {

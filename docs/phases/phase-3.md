@@ -13,7 +13,7 @@ its tests pass and it has been walked through in the browser.
 | **M2 Billing & invoicing**        | Prices per employee with a worker seat, monthly metering, VAT invoices (Mushak 6.3) with VDS and TDS, coupons, card and bKash payments, bank and cheque reconciliation, dunning to read-only, partners | M1         | Done   |
 | **M3 RMG pack**                   | Piece rate and production incentives, overtime caps and alerts, adolescent workers, maternity benefit, participation committee and union records, anonymous grievances, buyer-audit reports, kiosk     | M1         | Done   |
 | **M4 NGO & group packs**          | Projects and grants, salary split across projects, timesheets, donor reports, field staff offline; group dashboards, group policy with company overrides, shared-service HR roles                      | M1         | Done   |
-| **M5 Support & launch hardening** | Help centre in English and Bangla, support tickets, status page, penetration-test fixes, a disaster-recovery drill, verified backups, the launch runbook                                               | M2–M4      |        |
+| **M5 Support & launch hardening** | Help centre in English and Bangla, support tickets, status page, penetration-test fixes, a disaster-recovery drill, verified backups, the launch runbook                                               | M2–M4      | Done   |
 
 **Exit test:** a company signs up, imports its people and runs a parallel payroll on a trial
 without our help, then pays its first invoice by card, bKash or bank transfer and receives a
@@ -677,13 +677,183 @@ these fit together and why is in [ADR 016](../adr/016-ngo-and-group-packs.md).
   request; balances already granted are not recomputed.
 - **The app's timesheet card** shows no approval trail, because the inbox data has none.
 
-## Later milestones (outline; detailed when each starts)
+## M5: Support & launch hardening
 
-- **M5 Support & launch hardening:**
-  - A help centre in English and Bangla, support tickets and a status page.
-  - Fixes from a third-party penetration test.
-  - A disaster-recovery drill and verified backups.
-  - The launch runbook.
+What a paying customer needs from us once they rely on Good People: a way to ask for help and
+to see when something is wrong, help pages in their language, and a service that has been
+tested by an attacker and restored from its backups. How support works and why is in
+[ADR 017](../adr/017-support-and-launch.md); taking the service live is in
+[launch.md](../ops/launch.md).
+
+### Support tickets
+
+- **Opening:** any staff login opens a ticket from **Support**:
+  - a category, normal or urgent (payroll cannot run, nobody can sign in, attendance has
+    stopped);
+  - a subject and a description;
+  - the error reference and the page, filled in when it comes from an error;
+  - up to five files.
+
+  Employees ask their own HR. A read-only workspace can still open and answer tickets.
+
+- **Seeing tickets:** each login sees its own tickets; the workspace admin (`support.manage`)
+  sees all of them.
+- **First answer:** due within a target by plan, from 16 hours for Starter to 1 hour for an
+  urgent Enterprise ticket. Targets count support hours only: Sunday to Thursday, 9:00 to 18:00
+  Dhaka time.
+- **The console:** a queue across workspaces with urgent and overdue tickets first. On a
+  ticket, support can:
+  - reply, or add an internal note the workspace never sees;
+  - assign it;
+  - change its priority, category or status.
+- **Status:** a reply from the customer reopens a ticket. A solved ticket closes after seven
+  days without one. Closed is final.
+- **Email:** new tickets and customer replies go to the support inbox, and our replies to the
+  person who opened the ticket, in their language.
+- **Files:** attachments are checked by their bytes, encrypted like documents and always
+  downloaded as files.
+
+### Support access
+
+- **The grant:** the workspace admin lets support in, read-only, for one to seven days, for a
+  ticket or in general, and can revoke it at any time.
+- **Opening a workspace:** support staff open it from the console, as a login of the
+  workspace's own made for the purpose. It:
+  - refuses every change;
+  - never shows identity numbers or identity documents;
+  - ends at once when the grant does.
+- **What the workspace sees:** every page support opens is written to its audit log and listed
+  on the access page. The admin who granted access gets an email each time it is used.
+
+### Status page
+
+- **`/status`, in English and Bangla:** each part of the service (the web app, the API and
+  mobile app, attendance, documents and PDFs, notifications, payments) with its state and 90
+  days of history, open incidents with their updates, and planned maintenance.
+- **Automated checks:** our own checks every minute set the state. Incidents and maintenance
+  are posted from the console in both languages.
+- **Banners:** open incidents and imminent maintenance show on every workspace page and on the
+  sign-in page.
+- **`/ready`:** for monitors; it answers 503 when the database, the document store or
+  Chromium is missing.
+- **Operations page** in the console:
+  - each backup and restore drill, as the scripts record them;
+  - a warning when the last backup is over 26 hours old;
+  - the latest result of each check.
+
+### Help centre and legal pages
+
+- **`/help`:** 17 articles in English and Bangla, by topic, with search that works in Bangla.
+  Linked from the matching pages of the app.
+- **Legal pages:** `/legal/terms`, `privacy`, `refunds` and `dpa`, drafts for counsel.
+  - Sign-up records which version of the terms was accepted, when and by whom.
+  - The footer of every public page links them, with a contact address, as the payment
+    gateways require.
+
+### Hardening
+
+- **Request references:** every API response carries a request reference. Errors show it with
+  a link to contact support.
+- **Errors and logs:** 5xx errors answer a generic message, never a stack or SQL. Logs are one
+  JSON line per request, with no tokens, codes, query strings or identity numbers, and no
+  addresses for the anonymous speak-up pages.
+- **CI:** a `security` job (`pnpm audit`) and CodeQL.
+- **Production refuses to start** with the example secrets, the pretend payment gateway, or
+  email and SMS that only write to the log.
+- **Our own review** before the external penetration test:
+  [review-2026-10.md](../security/review-2026-10.md).
+- **The test's scope:** [pentest-scope.md](../security/pentest-scope.md).
+
+### Restore drill
+
+[dr-drill-2026-10.md](../ops/dr-drill-2026-10.md): a backup of a database holding a
+20,000-person workspace, restored on a fresh database and signed into, against the four-hour
+recovery target.
+
+### Done when
+
+- **Unit tests:**
+  - support hours and first-response targets;
+  - attachment types from their bytes;
+  - support sessions;
+  - status states and uptime;
+  - request IDs and log redaction;
+  - spreadsheet size limits;
+  - kiosk PIN budgets;
+  - the production config guards;
+  - the help renderer, content and search (web).
+- **API end-to-end tests:**
+  - **tickets:** both sides, internal notes kept from the workspace, targets by plan,
+    reopening, closing, the emails, attachments, roles;
+  - **support access:** granting, revoking and ending, read-only, identity numbers hidden, the
+    audit entries, the sign-in refusals;
+  - **status:** incidents, maintenance, checks, `/ready`, backup runs;
+  - **hardening:** request IDs, error bodies, headers, `/docs`;
+  - a test for each security fix;
+  - the terms recorded at sign-up.
+- **Web:**
+  - Support and a ticket in the workspace, and the queue and a ticket in the console;
+  - support access, and the session banner;
+  - the status page and its banner, and the console's Status and Operations;
+  - the help centre and the legal pages;
+  - in English and Bangla.
+- **The drill:** a backup restores, decrypts its documents and serves within the target.
+
+### Checked
+
+- **Automated tests:**
+  - API: 532 tests in 65 files (116 new). The suite also passed three shuffled runs with
+    different seeds.
+  - Shared 107, country pack 53, Edge Agent 70 (6 new), web 12 (new).
+  - Flutter: 241 tests, and analyze is clean.
+  - `pnpm audit --prod` passes at "high".
+- **The restore drill:** 20,017 people and 858,359 punches.
+  - Backed up in 2.5 s, verified in 6.9 s.
+  - Restored, signed into and serving a decrypted document 7.4 s after the restore began.
+- **The browser, in English and Bangla:**
+  - **The incident:** posted from the console; it showed on the public status page, as a
+    banner on the sign-in page and in the workspace, and was resolved.
+  - **The ticket:** My Group's admin opened GP-1001 from an error reference, with the
+    reference and the page filled in. The first answer was due two support hours later
+    (Enterprise, normal). The inbox email went out.
+  - **The answer:** an internal note and a public reply from the console. Only the reply was
+    emailed, and the ticket moved to waiting on the customer.
+  - **Support access:**
+    - the admin let support in for a day for GP-1001;
+    - the console opened the workspace read-only, with the session banner;
+    - the NID showed masked, and a write was refused with its translated message and a
+      reference;
+    - the admin was emailed;
+    - the access page listed every page support opened;
+    - the admin revoked it.
+  - **Operations:** a backup and a restore drill of the development database, both recorded.
+  - **Help centre:** search in English and Bangla, and the legal pages with their draft notice.
+- **Fixed on the way:**
+  - Times in Bangla on the new pages showed a Latin AM or PM.
+  - The console's header broke words once it had three more links.
+  - Both high findings of the security review, and eight of its mediums.
+  - The company filter on the employees page offered every company to a limited login (from
+    M4).
+  - The legal minimums under leave fields stayed in English in Bangla (from M4).
+  - `pnpm --filter … setup` runs pnpm's own command: use `run setup`.
+
+**Carried into later milestones from M5:**
+
+- **Before launch:** the gates in [launch.md](../ops/launch.md), above all:
+  - counsel's sign-off on the legal pages;
+  - the third-party penetration test;
+  - a restore drill on the production backups.
+- **The status page runs on the same server** as the service; an external uptime monitor is
+  part of the launch.
+- **Security findings left:**
+  - M7 (Chromium's sandbox), and L4 and L7, accepted with reasons;
+  - L9 (sign-up verification races) open;
+  - committee lists not yet limited by company.
+- **No whole-workspace export:** a copy on request after a contract ends is made by hand.
+- **Refunds are paid by hand.** No gateway refund is built.
+- **Help articles need a release to change.**
+- **The error message's support link** also shows to support staff inside a workspace, where
+  it points back at our own queue.
 
 ## Sources (checked 25 Oct 2026)
 
@@ -734,3 +904,11 @@ Added as each milestone's research is done.
 - Staff costs and timesheets on EU grants:
   https://www.research-services.admin.cam.ac.uk/manage-project/manage-ec-project/staff-costs-and-timesheets-ec-grants
   and https://www.emdesk.com/horizon-2020-horizon-europe-basics-guide/a-comprehensive-guide-on-time-tracking-in-horizon-europe
+
+**M5 support & launch hardening:**
+
+- OWASP Application Security Verification Standard 4.0.3:
+  https://owasp.org/www-project-application-security-verification-standard/
+- Caddy's `log_skip` directive and log filters:
+  https://caddyserver.com/docs/caddyfile/directives/log_skip and
+  https://caddyserver.com/docs/caddyfile/directives/log

@@ -3,6 +3,7 @@ import { getFormatter, getTranslations } from 'next-intl/server';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { SetupTabs } from '@/components/attendance/setup-tabs';
+import { HelpLink } from '@/components/help/help-link';
 import { NewKioskForm, RevokeKioskButton } from '@/components/kiosk/kiosk-staff';
 import { Badge, Banner, Card } from '@/components/ui';
 import { authedFetch, currentTenantUser, load } from '@/lib/api';
@@ -18,7 +19,10 @@ export default async function KiosksPage() {
   if (!kiosks.ok) {
     return (
       <>
-        <h1 className="text-2xl font-semibold">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">
+          {t('title')}
+          <HelpLink slug="kiosks" />
+        </h1>
         <SetupTabs active="kiosks" />
         <Banner tone="amber">
           {kiosks.error.code === 'feature_not_in_plan' ? t('notInPlan') : kiosks.error.message}
@@ -34,7 +38,10 @@ export default async function KiosksPage() {
 
   return (
     <>
-      <h1 className="text-2xl font-semibold">{t('title')}</h1>
+      <h1 className="text-2xl font-semibold">
+        {t('title')}
+        <HelpLink slug="kiosks" />
+      </h1>
       <SetupTabs active="kiosks" />
       <Card>
         <p className="mb-4 text-sm text-slate-600">{t('intro')}</p>

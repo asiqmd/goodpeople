@@ -1,5 +1,20 @@
+import { createHash } from 'node:crypto';
 import { loadRootEnv } from '@gp/db';
 import { z } from 'zod';
+
+/**
+ * SHA-256 of the secrets `.env.example` publishes (infra/.env.prod.example leaves them empty).
+ * Anyone can sign tokens or decrypt data with those, so production refuses them.
+ */
+const EXAMPLE_SECRETS = new Set([
+  '3cc6d54d23f26e3db1261b9f9b4fb81c66a5be906f02ec1a50e9606e60545b3e',
+  '72e262b345cb412df5ed8d560346107dcda05562cebe464924ee98c2e0fd7b42',
+]);
+
+const isExampleSecret = (value: string) =>
+  EXAMPLE_SECRETS.has(createHash('sha256').update(value).digest('hex'));
+
+const inProduction = () => process.env.NODE_ENV === 'production';
 
 const configSchema = z
   .object({
@@ -7,6 +22,17 @@ const configSchema = z
     WEB_ORIGIN: z.string().default('http://localhost:3000'),
     /** Proxies in front of the API (Caddy: 1), so rate limits see the visitor's address. */
     TRUST_PROXY: z.coerce.number().int().min(0).default(0),
+    /** The OpenAPI pages at /docs: on in development, off in production unless turned on. */
+    API_DOCS: z
+      .enum(['on', 'off'])
+      .default(() => (inProduction() ? 'off' : 'on'))
+      .transform((v) => v === 'on'),
+    /** JSON lines for a log collector (production), or Nest's readable lines. */
+    LOG_FORMAT: z.enum(['json', 'pretty']).default(() => (inProduction() ? 'json' : 'pretty')),
+    /** The quietest level logged. Health checks log at debug; tests log errors only. */
+    LOG_LEVEL: z
+      .enum(['debug', 'info', 'warn', 'error'])
+      .default(() => (process.env.NODE_ENV === 'test' ? 'error' : 'info')),
     DATABASE_URL: z.string().min(1),
     JWT_ACCESS_SECRET: z.string().min(32, 'JWT_ACCESS_SECRET must be at least 32 characters'),
     ACCESS_TOKEN_TTL_SECONDS: z.coerce.number().int().positive().default(900),
@@ -35,6 +61,8 @@ const configSchema = z
       .transform((v) => v === 'true'),
     /** Chrome or Chromium for PDFs; found in the usual places when not set. */
     CHROME_PATH: z.string().optional(),
+    /** What the status page's web check fetches; WEB_ORIGIN/login when not set. */
+    STATUS_WEB_URL: z.url().optional(),
     /**
      * Admin roles (workspace admin, HR admin, platform super admin) must use two-step sign-in.
      * On in production; off in development so seeded logins sign in with a password alone.
@@ -70,8 +98,15 @@ const configSchema = z
       .transform((v) => v === 'on'),
     /** Where notifications go. `log` writes them to the API log instead of sending them. */
     EMAIL_DRIVER: z.enum(['log', 'smtp']).default('log'),
+    /** Lets a production server (a staging box) keep the `log` e-mail and SMS drivers. */
+    ALLOW_LOG_SENDERS: z
+      .enum(['on', 'off'])
+      .default('off')
+      .transform((v) => v === 'on'),
     SMTP_URL: z.string().optional(),
     EMAIL_FROM: z.string().default('Good People <no-reply@goodpeople.local>'),
+    /** Good People's support team: told of every new ticket and every customer reply. */
+    SUPPORT_INBOX_EMAIL: z.email().default('support@goodpeople.example'),
     SMS_DRIVER: z.enum(['log', 'sslwireless']).default('log'),
     SSLWIRELESS_URL: z.url().default('https://smsplus.sslwireless.com/api/v3/send-sms'),
     SSLWIRELESS_API_TOKEN: z.string().optional(),
@@ -92,6 +127,28 @@ const configSchema = z
   })
   .refine((c) => c.SMS_DRIVER !== 'sslwireless' || (c.SSLWIRELESS_API_TOKEN && c.SSLWIRELESS_SID), {
     message: 'SMS_DRIVER=sslwireless needs SSLWIRELESS_API_TOKEN and SSLWIRELESS_SID',
+  })
+  .refine(
+    (c) =>
+      !inProduction() ||
+      c.ALLOW_LOG_SENDERS ||
+      (c.EMAIL_DRIVER !== 'log' && c.SMS_DRIVER !== 'log'),
+    {
+      message:
+        'In production, set EMAIL_DRIVER=smtp and SMS_DRIVER=sslwireless: the log drivers send ' +
+        'nothing (sign-in codes included). On a staging server, ALLOW_LOG_SENDERS=on keeps them.',
+    },
+  )
+  .refine((c) => !inProduction() || !isExampleSecret(c.JWT_ACCESS_SECRET), {
+    message:
+      'JWT_ACCESS_SECRET is the published example: generate one with openssl rand -base64 48',
+  })
+  .refine((c) => !inProduction() || !isExampleSecret(c.FIELD_ENCRYPTION_KEY), {
+    message:
+      'FIELD_ENCRYPTION_KEY is the published example: generate one with openssl rand -base64 32',
+  })
+  .refine((c) => !inProduction() || !c.BILLING_FAKE_GATEWAY, {
+    message: 'BILLING_FAKE_GATEWAY=on takes no money: never turn it on in production',
   })
   .refine(
     (c) => c.PUSH_DRIVER !== 'fcm' || (c.FCM_PROJECT_ID && c.FCM_CLIENT_EMAIL && c.FCM_PRIVATE_KEY),

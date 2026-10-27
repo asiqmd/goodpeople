@@ -1,5 +1,8 @@
 import type { Vendor } from './punch.js';
 
+/** What a device may call itself: ZKTeco serials, Hikvision MAC or IP addresses. */
+export const SERIAL = /^[A-Za-z0-9._:-]{1,64}$/;
+
 export interface SeenDevice {
   serialNumber: string;
   vendor: Vendor;

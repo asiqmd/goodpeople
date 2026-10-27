@@ -17,6 +17,10 @@ export const signupStartSchema = z.object({
   company: z.string().trim().min(2, 'Enter the company name').max(160),
   industryTemplate: z.enum(INDUSTRY_TEMPLATES),
   language: z.enum(['en', 'bn']).default('en'),
+  /** The Terms of Service and Privacy Policy at TERMS_VERSION, accepted by ticking the box. */
+  acceptTerms: z.literal(true, {
+    error: 'Accept the Terms of Service and the Privacy Policy to continue',
+  }),
   /** Left empty by people; filled by simple bots. */
   website: z.string().max(200).optional(),
 });
@@ -60,6 +64,8 @@ export interface SignupView {
   industryTemplate: IndustryTemplate;
   stage: SignupStage;
   tenant: { id: string; slug: string } | null;
+  /** The TERMS_VERSION accepted when it was started (none before terms were asked for). */
+  termsVersion: string | null;
   createdAt: string;
 }
 

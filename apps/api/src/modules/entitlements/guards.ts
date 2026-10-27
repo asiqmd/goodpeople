@@ -1,4 +1,5 @@
 import {
+  Inject,
   Injectable,
   SetMetadata,
   UnauthorizedException,
@@ -6,9 +7,12 @@ import {
   type ExecutionContext,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import type { Database } from '@gp/db';
 import type { FeatureKey } from '@gp/shared';
 import type { AuthedRequest } from '../../common/auth-user.js';
 import { forbidden } from '../../common/errors.js';
+import { DB } from '../../db/db.module.js';
+import { checkSupportRequest, supportSessionOf } from '../support-access/support-sessions.js';
 import { EntitlementsService } from './entitlements.service.js';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
@@ -30,6 +34,7 @@ export class AccessStateGuard implements CanActivate {
   constructor(
     private readonly entitlements: EntitlementsService,
     private readonly reflector: Reflector,
+    @Inject(DB) private readonly db: Database,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -44,6 +49,11 @@ export class AccessStateGuard implements CanActivate {
     const { accessState, reason } = tenant.access;
     if (accessState === 'suspended') {
       throw forbidden('tenant_suspended', 'This workspace is suspended');
+    }
+    // Good People support: only while the workspace's grant runs, and never a write, even
+    // on the routes below that stay writable for a read-only workspace.
+    if (req.user.role === 'support') {
+      checkSupportRequest(await supportSessionOf(this.db, req), req.method);
     }
     const writable = this.reflector.getAllAndOverride<boolean>(WRITABLE_WHEN_READ_ONLY, [
       context.getHandler(),

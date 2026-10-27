@@ -186,8 +186,8 @@ export class RelationsController {
   // ── Trade unions ───────────────────────────────────────────────────────────
 
   @Get('unions')
-  listUnions(): Promise<UnionListView> {
-    return this.unions.list();
+  listUnions(@CurrentUser() user: AuthUser): Promise<UnionListView> {
+    return this.unions.list(user);
   }
 
   @Post('unions')
@@ -201,15 +201,19 @@ export class RelationsController {
 
   /** A month's subscriptions deducted from wages, with when they are due to each union. */
   @Get('check-off')
-  checkOff(@Query(zod(checkOffQuerySchema)) query: CheckOffQuery): Promise<CheckOffReport> {
-    return this.unions.checkOff(query.month, query.unionId);
+  checkOff(
+    @CurrentUser() user: AuthUser,
+    @Query(zod(checkOffQuerySchema)) query: CheckOffQuery,
+  ): Promise<CheckOffReport> {
+    return this.unions.checkOff(user, query.month, query.unionId);
   }
 
   @Get('check-off/csv')
   async checkOffCsv(
+    @CurrentUser() user: AuthUser,
     @Query(zod(checkOffQuerySchema)) query: CheckOffQuery,
   ): Promise<StreamableFile> {
-    const file = await this.unions.checkOffCsv(query.month, query.unionId);
+    const file = await this.unions.checkOffCsv(user, query.month, query.unionId);
     return fileResponse(Buffer.from(file.text), {
       contentType: 'text/csv; charset=utf-8',
       fileName: file.fileName,
@@ -218,8 +222,11 @@ export class RelationsController {
   }
 
   @Get('unions/:id')
-  union(@Param('id', ParseUUIDPipe) id: string): Promise<TradeUnionView> {
-    return this.unions.get(id);
+  union(
+    @CurrentUser() user: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<TradeUnionView> {
+    return this.unions.get(user, id);
   }
 
   @Patch('unions/:id')

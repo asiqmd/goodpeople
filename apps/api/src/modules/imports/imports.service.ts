@@ -28,7 +28,7 @@ import {
   type TenantWithAccess,
 } from '@gp/shared';
 import ExcelJS from 'exceljs';
-import { cellText } from '../../common/sheets.js';
+import { cellText, checkXlsxSize } from '../../common/sheets.js';
 import { desc, eq, inArray, sql } from 'drizzle-orm';
 import type { AuthUser } from '../../common/auth-user.js';
 import { currentTenantId } from '../../common/request-context.js';
@@ -238,6 +238,7 @@ export class ImportsService {
     file: { originalname: string; buffer: Buffer } | undefined,
   ): Promise<ImportBatchView> {
     if (!file) throw new BadRequestException('Attach the filled-in template');
+    checkXlsxSize(file.buffer);
     const wb = new ExcelJS.Workbook();
     try {
       await wb.xlsx.load(file.buffer as unknown as ArrayBuffer);

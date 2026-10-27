@@ -91,6 +91,10 @@ export const tenants = pgTable('tenants', {
   /** For `partner` workspaces: who is billed for them. */
   partnerId: uuid('partner_id').references(() => partners.id),
   grantedBy: uuid('granted_by').references(() => platformUsers.id),
+  /** The terms (shared TERMS_VERSION) its owner accepted at sign-up, when and by whom. */
+  termsVersion: text('terms_version'),
+  termsAcceptedAt: timestamptz('terms_accepted_at'),
+  termsAcceptedBy: text('terms_accepted_by'),
   createdAt: createdAt(),
   updatedAt: timestamptz('updated_at').notNull().defaultNow(),
 });
@@ -195,6 +199,9 @@ export const signups = pgTable(
     tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'set null' }),
     /** The network it came from, for rate limits and abuse reports. */
     ip: text('ip'),
+    /** The terms version accepted when it was started. */
+    termsVersion: text('terms_version'),
+    termsAcceptedAt: timestamptz('terms_accepted_at'),
     createdAt: createdAt(),
   },
   (t) => [

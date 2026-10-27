@@ -23,7 +23,7 @@ import { and, asc, desc, eq, inArray, isNotNull, ne } from 'drizzle-orm';
 import type { AuthUser } from '../../common/auth-user.js';
 import { badRequest, conflict } from '../../common/errors.js';
 import { currentTenantId } from '../../common/request-context.js';
-import { readSheet } from '../../common/sheets.js';
+import { readSheet, unreadableSheet } from '../../common/sheets.js';
 import { FIELD_CIPHER, TenantDb } from '../../db/db.module.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
 import { csv } from './disbursement.js';
@@ -77,9 +77,7 @@ export class ReconciliationService {
     if (!/\.(xlsx|csv)$/i.test(file.originalname)) {
       throw badRequest('sheet_type', 'Upload the sheet as .xlsx or .csv');
     }
-    const sheet = await readSheet(file, isHeading).catch(() => {
-      throw badRequest('sheet_unreadable', 'This file could not be read as a spreadsheet');
-    });
+    const sheet = await readSheet(file, isHeading).catch(unreadableSheet);
     if (sheet.rows.length === 0)
       throw badRequest('sheet_empty', 'The sheet has no rows under its headings');
     const id = await this.tenantDb.run(async (tx) => {

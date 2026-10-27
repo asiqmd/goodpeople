@@ -44,7 +44,7 @@ export default async function GrievancePage({ params }: PageProps<'/workspace/gr
       </div>
       {g.restricted && (
         <Banner tone={g.committeeMissing ? 'amber' : 'violet'}>
-          {g.committeeMissing ? t('list.committeeMissing') : t('detail.restrictedNote')}
+          {g.committeeMissing ? t('list.committeeMissingAdmin') : t('detail.restrictedNote')}
         </Banner>
       )}
       <div className="grid gap-6 lg:grid-cols-3">

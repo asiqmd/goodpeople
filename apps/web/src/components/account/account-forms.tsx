@@ -2,8 +2,9 @@
 
 import {
   CONFIGURABLE_EVENTS,
+  isFixedEvent,
   DELIVERY_CHANNELS,
-  TENANT_ROLES,
+  ASSIGNABLE_TENANT_ROLES,
   smsSegments,
   type NotificationSettingsView,
   type NotificationTemplateView,
@@ -225,7 +226,7 @@ export function CreateUserForm() {
           </Field>
           <Field label={t('role')} hint={t('roleHint')}>
             <select name="role" defaultValue="employee" className={inputClass}>
-              {TENANT_ROLES.map((r) => (
+              {ASSIGNABLE_TENANT_ROLES.map((r) => (
                 <option key={r} value={r}>
                   {th(`roles.${r}`)}
                 </option>
@@ -335,7 +336,7 @@ export function UserActions({ user, self }: { user: WorkspaceUserView; self: boo
             </Field>
             <Field label={t('role')}>
               <select name="role" defaultValue={user.role} disabled={self} className={inputClass}>
-                {TENANT_ROLES.map((r) => (
+                {ASSIGNABLE_TENANT_ROLES.map((r) => (
                   <option key={r} value={r}>
                     {th(`roles.${r}`)}
                   </option>
@@ -447,7 +448,7 @@ export function TemplateForm({ template }: { template: NotificationTemplateView 
   );
   const [sms, setSms] = useState(template.sms);
   const [pending, start] = useTransition();
-  const fixed = template.event === 'auth.otp';
+  const fixed = isFixedEvent(template.event);
   return (
     <Form state={state} action={action} className="space-y-3">
       <Errors state={state} />

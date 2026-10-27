@@ -15,6 +15,7 @@ import {
   SIGNUP_CODE_MINUTES,
   slugFrom,
   slugSchema,
+  TERMS_VERSION,
   todayIn,
   TRIAL_DAYS,
   TRIAL_PLAN,
@@ -89,6 +90,9 @@ export class SignupService {
         codeHash: hashCode(code),
         expiresAt: new Date(Date.now() + SIGNUP_CODE_MINUTES * MINUTE_MS),
         ip,
+        // The schema only lets a sign-up start with the box ticked.
+        termsVersion: TERMS_VERSION,
+        termsAcceptedAt: new Date(),
       })
       .returning({ id: signups.id });
     // A filled hidden field is a bot: it gets the same answer and nothing is sent.
@@ -109,9 +113,11 @@ export class SignupService {
         : {
             to: email,
             subject: bn ? `${code}: Good People-এ আপনার কোড` : `${code} is your Good People code`,
+            // Nothing the form typed goes into the email: anyone can start a sign-up for any
+            // address, and a name or company could carry a link in our name.
             text: bn
-              ? `${input.name}, Good People-এ ${input.company}-এর ওয়ার্কস্পেস খুলতে এই কোডটি দিন: ${code}\n\nকোডটি ${SIGNUP_CODE_MINUTES} মিনিট কাজ করবে। আপনি না চাইলে এই ইমেইলটি উপেক্ষা করুন।`
-              : `${input.name}, enter this code to open ${input.company}'s workspace on Good People: ${code}\n\nIt works for ${SIGNUP_CODE_MINUTES} minutes. If you did not ask for it, ignore this email.`,
+              ? `Good People-এ আপনার ওয়ার্কস্পেস খুলতে এই কোডটি দিন: ${code}\n\nকোডটি ${SIGNUP_CODE_MINUTES} মিনিট কাজ করবে। আপনি না চাইলে এই ইমেইলটি উপেক্ষা করুন।`
+              : `Enter this code to open your workspace on Good People: ${code}\n\nIt works for ${SIGNUP_CODE_MINUTES} minutes. If you did not ask for it, ignore this email.`,
           },
     );
     return {
@@ -182,6 +188,10 @@ export class SignupService {
           billingMode: 'trial',
           planId: plan!.id,
           accessExpiresAt: new Date(Date.now() + TRIAL_DAYS * DAY_MS),
+          // Accepted by the owner whose email the code proved.
+          termsVersion: signup.termsVersion,
+          termsAcceptedAt: signup.termsAcceptedAt,
+          termsAcceptedBy: signup.email,
         })
         .returning({ id: tenants.id });
       await tx.update(signups).set({ tenantId: tenant!.id }).where(eq(signups.id, signup.id));
@@ -195,6 +205,7 @@ export class SignupService {
           industryTemplate: signup.industryTemplate,
           planCode: TRIAL_PLAN,
           trialDays: TRIAL_DAYS,
+          termsVersion: signup.termsVersion,
           ip,
         },
       });
@@ -255,6 +266,7 @@ export class SignupService {
           ? 'expired'
           : 'code_sent',
       tenant: signup.tenantId && slug ? { id: signup.tenantId, slug } : null,
+      termsVersion: signup.termsVersion,
       createdAt: signup.createdAt.toISOString(),
     }));
   }

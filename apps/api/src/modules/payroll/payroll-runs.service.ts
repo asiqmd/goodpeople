@@ -9,6 +9,7 @@ import {
   payrollRuns,
   pfMembers,
   separations,
+  tenantAuditLog,
   tenantUsers,
   type FieldCipher,
   type Tx,
@@ -49,6 +50,7 @@ import {
   isNotNull,
   isNull,
   lte,
+  max,
   ne,
   or,
   sql,
@@ -68,6 +70,7 @@ import {
 import { loadSteps } from '../approvals/approval-views.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
 import { WorkCalendarService } from '../calendar/work-calendar.service.js';
+import { PRIMARY_ACCOUNT_CHANGED } from '../employees/employees.service.js';
 import { employeeOfUser } from '../employees/employee.queries.js';
 import { PolicyService } from '../group/policy.service.js';
 import { PdfService } from '../letters/pdf.service.js';
@@ -223,6 +226,7 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
       const jobs = await this.jobsOn(tx, ids, run.periodEnd);
       const inputs = await this.inputsOf(tx, run.id, ids);
       const previous = run.kind === 'regular' ? await this.previousNets(tx, run, ids) : null;
+      const accountChanges = await this.accountChanges(tx, run, previous?.runId ?? null, ids);
       const items = rows.map(({ item, employee }): PayrollRunItemView => {
         const result = this.decrypt<ItemResult>(item.resultEnc, CIPHER_FIELDS.runResults);
         const prev = previous?.nets.get(employee.id) ?? null;
@@ -266,6 +270,7 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
                   .toDecimalPlaces(1)
                   .toNumber()
               : null,
+          accountChangedAt: accountChanges.get(employee.id) ?? null,
           flagged: item.flagged,
         };
       });
@@ -1244,6 +1249,39 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
   }
 
   /** Each person's net in the group's last locked regular run before this one. */
+  /**
+   * When each employee's net-pay account last changed since the previous run was locked (or
+   * since this period began): the reviewer checks those before approving.
+   */
+  private async accountChanges(
+    tx: Tx,
+    run: RunRow,
+    previousRunId: string | null,
+    ids: string[],
+  ): Promise<Map<string, string>> {
+    if (ids.length === 0) return new Map();
+    const [previous] = previousRunId
+      ? await tx
+          .select({ lockedAt: payrollRuns.lockedAt })
+          .from(payrollRuns)
+          .where(eq(payrollRuns.id, previousRunId))
+      : [];
+    const rows = await tx
+      .select({ employeeId: tenantAuditLog.entityId, at: max(tenantAuditLog.createdAt) })
+      .from(tenantAuditLog)
+      .where(
+        and(
+          eq(tenantAuditLog.action, PRIMARY_ACCOUNT_CHANGED),
+          inArray(tenantAuditLog.entityId, ids),
+          previous?.lockedAt
+            ? sql`${tenantAuditLog.createdAt} > ${previous.lockedAt}`
+            : sql`${tenantAuditLog.createdAt} >= ${run.periodStart}::date`,
+        ),
+      )
+      .groupBy(tenantAuditLog.entityId);
+    return new Map(rows.map((r) => [r.employeeId!, r.at!.toISOString()]));
+  }
+
   private async previousNets(
     tx: Tx,
     run: RunRow,

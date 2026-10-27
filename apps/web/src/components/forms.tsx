@@ -1,6 +1,8 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   useActionState,
   useEffect,
@@ -38,7 +40,7 @@ export function issueFor(
   return state?.issues?.find((i) => i.path === path)?.message;
 }
 
-type FormResult = { error?: string; code?: string } | null | undefined;
+type FormResult = { error?: string; code?: string; requestId?: string } | null | undefined;
 
 /**
  * Puts what was typed back into a form's fields. Files cannot be put back, and a refused
@@ -103,11 +105,42 @@ export function Form({
   );
 }
 
-/** The API's error in the reader's language when its code is known, else the API's text. */
+/**
+ * The API's error in the reader's language when its code is known, else the API's text, with
+ * the request's reference for support.
+ */
 export function ErrorText({ state }: { state: FormResult }) {
   const t = useTranslations('errors');
   if (!state?.error) return null;
-  return <>{state.code && t.has(state.code) ? t(state.code) : state.error}</>;
+  return (
+    <>
+      {state.code && t.has(state.code) ? t(state.code) : state.error}
+      {state.requestId && <ErrorReference id={state.requestId} />}
+    </>
+  );
+}
+
+/**
+ * The reference support asks for: the API's request ID or the web's error digest. In the
+ * workspace it comes with a link that opens a ticket carrying it and the page it happened on.
+ */
+export function ErrorReference({ id }: { id?: string }) {
+  const t = useTranslations('common');
+  const pathname = usePathname();
+  const inWorkspace = pathname.startsWith('/workspace');
+  if (!id && !inWorkspace) return null;
+  const ticket = new URLSearchParams({ ...(id && { ref: id }), from: pathname });
+  return (
+    <span className="mt-1 block text-xs opacity-80">
+      {id && t('errorReference', { id })}
+      {id && inWorkspace && ' · '}
+      {inWorkspace && (
+        <Link href={`/workspace/support/new?${ticket}`} className="font-medium underline">
+          {t('contactSupport')}
+        </Link>
+      )}
+    </span>
+  );
 }
 
 export function LanguageToggle() {

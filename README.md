@@ -73,6 +73,14 @@ A multi-tenant HR and payroll platform, built for Bangladesh first and ready to 
     cap; a group dashboard across companies; group policy that a company may override
     (leave, app punching, provident fund, overtime caps) above the law's floors; and HR
     logins limited to some of the group's companies.
+  - **Phase 3 M5 (support & launch hardening):** support tickets with response targets by
+    plan counted in support hours, and an error reference on every error; read-only support
+    access that a workspace admin grants for up to seven days, with every page opened in its
+    audit log; a status page with our own checks every minute, incidents and maintenance in
+    English and Bangla, and `/ready`; backups and restore drills recorded on an Operations
+    page; a help centre of 17 articles and draft legal pages in both languages, with the
+    accepted terms recorded at sign-up; request IDs and JSON logs; fixes from our own
+    security review; a restore drill of a 20,000-person workspace; and the launch runbook.
 - **Next:**
   - Our own organisations go live: [docs/ops/go-live.md](docs/ops/go-live.md).
   - Payroll goes live after three parallel months with a design partner:
@@ -84,8 +92,11 @@ A multi-tenant HR and payroll platform, built for Bangladesh first and ready to 
     for review ([docs/phases/phase-3.md](docs/phases/phase-3.md#m3-rmg-pack)).
   - Before an NGO relies on the pack: counsel's sign-off on the Foreign Donations Act rules
     marked for review ([docs/phases/phase-3.md](docs/phases/phase-3.md#m4-ngo--group-packs)).
-  - Phase 3 M5: support and launch hardening. The plan is in
-    [docs/phases/phase-3.md](docs/phases/phase-3.md).
+  - Launch: the gates in [docs/ops/launch.md](docs/ops/launch.md), above all counsel's
+    sign-off on the legal pages, the third-party penetration test
+    ([docs/security/pentest-scope.md](docs/security/pentest-scope.md)) and a restore drill on
+    the production backups.
+  - Phase 4: the talent suite (recruitment, performance, compensation, learning).
 
 ## Repository layout
 
@@ -94,8 +105,11 @@ apps/
   api/       NestJS 12 (ESM) modular monolith: auth, tenancy, entitlements, platform admin, org,
              employees, leave, attendance, approvals, documents, lifecycle, letters, imports,
              accounts and users, notifications, setup checklist, payroll, sign-up, billing,
-             production, compliance, maternity, relations, grievances, kiosk, audit report
-  web/       Next.js 16: Super Admin console (/platform) and workspace app (/workspace), en/bn
+             production, compliance, maternity, relations, grievances, kiosk, audit report,
+             projects, timesheets, group, access scopes, support, support access, status
+  web/       Next.js 16: Super Admin console (/platform) and workspace app (/workspace), en/bn;
+             public home, pricing, sign-up, /help, /legal and /status; help and legal texts in
+             content/
   mobile/    Flutter app: sign-in (password or SMS code), profile, documents, leave, attendance
              (location and selfie punching, offline queue), resignation, approvals, team view,
              notifications and push, my pay (payslips, tax, provident fund, loans), en/bn
@@ -106,7 +120,8 @@ packages/
   db/        Drizzle schema, SQL migrations (incl. RLS), setup/migrate/seed scripts
   config/    Shared TypeScript config
 docs/adr/    Architecture decisions
-docs/ops/    Production runbook and the go-live checklist
+docs/ops/    Production runbook, go-live checklist, launch runbook and restore drills
+docs/security/ Our security review and the penetration test's scope
 infra/       Docker Compose for local services, and the production stack (Caddy, backups)
 ```
 

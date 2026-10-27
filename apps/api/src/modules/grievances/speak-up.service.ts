@@ -128,13 +128,14 @@ export class SpeakUpService {
           restricted,
         })
         .returning();
-      // Harassment goes to the complaint committee only (s.332A).
+      // Harassment goes to the complaint committee only (s.332A), or without one to the
+      // workspace admin, who reads it then (readsWithoutCommittee).
       const committee = restricted ? await complaintCommitteeLogins(tx) : [];
       await this.notifications.notify(tx, {
         event: 'grievance.received',
         recipients: committee.length
           ? committee.map((userId) => ({ userId }))
-          : await usersWith(tx, 'grievances.manage'),
+          : await usersWith(tx, restricted ? 'users.manage' : 'grievances.manage'),
         values: {
           'grievance.reference': row!.reference,
           'grievance.category': CATEGORY_LABELS[row!.category],

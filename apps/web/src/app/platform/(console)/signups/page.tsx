@@ -44,6 +44,11 @@ export default async function SignupsPage() {
                       dateStyle: 'medium',
                       timeStyle: 'short',
                     })}
+                    {s.termsVersion && (
+                      <span className="block text-xs text-slate-500">
+                        {t('terms', { version: s.termsVersion })}
+                      </span>
+                    )}
                   </td>
                   <td className="px-5 py-2.5 font-medium">{s.company}</td>
                   <td className="px-5 py-2.5">

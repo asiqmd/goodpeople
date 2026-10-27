@@ -8,6 +8,7 @@ import { getFormatter, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { AuditTable } from '@/components/audit-table';
 import { BillingForm, GrantForm } from '@/components/platform-forms';
+import { SupportAccessCard } from '@/components/support/access-card';
 import { ACCESS_TONE, Badge, BILLING_TONE, Card } from '@/components/ui';
 import { load } from '@/lib/api';
 
@@ -75,6 +76,8 @@ export default async function TenantPage({ params }: PageProps<'/platform/tenant
           <GrantForm tenantId={tenant.id} />
         </Card>
       </div>
+
+      <SupportAccessCard tenantId={tenant.id} />
 
       <Card title={t('audit')}>
         <AuditTable entries={audit} showTenant={false} />

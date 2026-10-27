@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start --port 3000",
     "typecheck": "next typegen && tsc --noEmit",
-    "lint": "oxlint --react-plugin --nextjs-plugin src"
+    "lint": "oxlint --react-plugin --nextjs-plugin src",
+    "test": "vitest run"
   },
   "dependencies": {
     "@gp/shared": "workspace:*",
@@ -26,6 +27,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "tailwindcss": "^4",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.2"
   }
 }

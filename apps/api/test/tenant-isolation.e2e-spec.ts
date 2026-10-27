@@ -12,6 +12,8 @@ const PLATFORM_TABLES_WITH_TENANT_ID = [
   'platform_audit_log',
   'signups',
   'subscriptions',
+  'support_access_grants',
+  'support_tickets',
 ];
 
 describe('tenant isolation (row-level security)', () => {

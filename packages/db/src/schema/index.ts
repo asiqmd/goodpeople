@@ -12,4 +12,6 @@ export * from './billing.js';
 export * from './factory.js';
 export * from './projects.js';
 export * from './group.js';
+export * from './support.js';
+export * from './status.js';
 export * from './rls.js';

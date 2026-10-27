@@ -145,6 +145,8 @@ gp exec postgres psql -U postgres -d good_people
 ```sql
 CREATE ROLE gp_backup LOGIN BYPASSRLS;
 GRANT pg_read_all_data TO gp_backup;
+-- The backup scripts record each run here (see "Backups and the restore drill").
+GRANT INSERT ON backup_runs TO gp_backup;
 \password gp_backup
 -- Check the roles: gp_app and gp_owner must show f, f; gp_backup f, t.
 SELECT rolname, rolsuper, rolbypassrls FROM pg_roles WHERE rolname LIKE 'gp\_%';
@@ -244,32 +246,39 @@ means the value is fixed there, not in `infra/.env`.
 
 **API: notifications**
 
-| Variable                                                                    | Used by | Meaning                                                                                                |
-| --------------------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------ |
-| `EMAIL_DRIVER`, `SMTP_URL`, `EMAIL_FROM`                                    | api     | `log` (default) writes e-mails to the log. `smtp` sends them through `SMTP_URL`.                       |
-| `SMS_DRIVER`, `SSLWIRELESS_API_TOKEN`, `SSLWIRELESS_SID`, `SSLWIRELESS_URL` | api     | `log` (default) or `sslwireless`, for sign-in codes. The provider usually allow-lists the server's IP. |
-| `PUSH_DRIVER`, `FCM_PROJECT_ID`, `FCM_CLIENT_EMAIL`, `FCM_PRIVATE_KEY`      | api     | `log` (default) or `fcm`, for mobile push. Write the key's line breaks as `\n`, in single quotes.      |
+| Variable                                                                    | Used by | Meaning                                                                                                            |
+| --------------------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------ |
+| `EMAIL_DRIVER`, `SMTP_URL`, `EMAIL_FROM`                                    | api     | `smtp` sends through `SMTP_URL`. `log` (the development default) writes e-mails to the log; production refuses it. |
+| `SMS_DRIVER`, `SSLWIRELESS_API_TOKEN`, `SSLWIRELESS_SID`, `SSLWIRELESS_URL` | api     | `sslwireless`, for sign-in codes; the provider usually allow-lists the server's IP. `log` as for e-mail.           |
+| `ALLOW_LOG_SENDERS`                                                         | api     | `on` lets production start with the `log` drivers, for a staging box; codes are hidden in what it logs.            |
+| `SUPPORT_INBOX_EMAIL`                                                       | api     | Required in production: the shared inbox for new support tickets and customer replies.                             |
+| `PUSH_DRIVER`, `FCM_PROJECT_ID`, `FCM_CLIENT_EMAIL`, `FCM_PRIVATE_KEY`      | api     | `log` (default) or `fcm`, for mobile push. Write the key's line breaks as `\n`, in single quotes.                  |
 
 The optional API variables are passed only when `infra/.env` sets them, so the API's own
 defaults apply otherwise. An empty `S3_ENDPOINT` or `SSLWIRELESS_URL` would fail its URL check.
 
 **Web, stack and backups**
 
-| Variable                                                 | Used by         | Meaning                                                                                 |
-| -------------------------------------------------------- | --------------- | --------------------------------------------------------------------------------------- |
-| `API_URL`                                                | web (compose)   | `http://api:4000`. Server to server only.                                               |
-| `GP_DOMAIN`, `GP_API_DOMAIN`, `ACME_EMAIL`               | caddy, api      | Public names, and the Let's Encrypt contact.                                            |
-| `COMPOSE_PROFILES`                                       | compose         | `db` for bundled PostgreSQL; add `minio` for MinIO.                                     |
-| `GP_API_IMAGE`, `GP_WEB_IMAGE`                           | compose         | Image names.                                                                            |
-| `GP_VERSION`                                             | compose         | Image tag.                                                                              |
-| `POSTGRES_PASSWORD`                                      | postgres        | Bundled PostgreSQL's superuser password.                                                |
-| `BACKUP_DIR`, `BACKUP_RETENTION_DAYS`, `BACKUP_KEEP_MIN` | scripts         | Where backups go; delete after N days (14); always keep the newest M (3).               |
-| `BACKUP_DATABASE_URL`                                    | backup.sh       | `gp_backup` via `127.0.0.1`. Must bypass row-level security.                            |
-| `RESTORE_ADMIN_URL`                                      | restore, verify | Superuser via `127.0.0.1`.                                                              |
-| `BACKUP_OFFSITE_RSYNC`                                   | backup.sh       | Optional rsync destination off the server.                                              |
-| `BACKUP_S3_ENDPOINT`                                     | scripts         | Optional. The bucket's endpoint as seen from the host (MinIO: `http://127.0.0.1:9000`). |
-| `VERIFY_MIN_TENANTS`                                     | verify          | Fewest workspaces a good backup may have. Default 1.                                    |
-| `GP_ENV_FILE`                                            | scripts         | Another env file instead of `infra/.env`.                                               |
+| Variable                                                 | Used by         | Meaning                                                                                    |
+| -------------------------------------------------------- | --------------- | ------------------------------------------------------------------------------------------ |
+| `API_URL`                                                | web (compose)   | `http://api:4000`. Server to server only.                                                  |
+| `GP_SUPPORT_EMAIL`                                       | web             | The contact address in the public pages' footer.                                           |
+| `LOG_FORMAT`, `LOG_LEVEL`                                | api             | `json` (production default) or `pretty`; `debug`, `info` (default), `warn`, `error`.       |
+| `API_DOCS`                                               | api             | `on` serves the OpenAPI pages at `/docs`. Off in production by default.                    |
+| `STATUS_WEB_URL`                                         | api             | What the status checks fetch for the web app (compose: `http://web:3000/login`).           |
+| `GP_DOMAIN`, `GP_API_DOMAIN`, `ACME_EMAIL`               | caddy, api      | Public names, and the Let's Encrypt contact.                                               |
+| `COMPOSE_PROFILES`                                       | compose         | `db` for bundled PostgreSQL; add `minio` for MinIO.                                        |
+| `GP_API_IMAGE`, `GP_WEB_IMAGE`                           | compose         | Image names.                                                                               |
+| `GP_VERSION`                                             | compose         | Image tag.                                                                                 |
+| `POSTGRES_PASSWORD`                                      | postgres        | Bundled PostgreSQL's superuser password.                                                   |
+| `BACKUP_DIR`, `BACKUP_RETENTION_DAYS`, `BACKUP_KEEP_MIN` | scripts         | Where backups go; delete after N days (14); always keep the newest M (3).                  |
+| `BACKUP_DATABASE_URL`                                    | backup.sh       | `gp_backup` via `127.0.0.1`. Must bypass row-level security.                               |
+| `RESTORE_ADMIN_URL`                                      | restore, verify | Superuser via `127.0.0.1`.                                                                 |
+| `BACKUP_REPORT_DATABASE_URL`                             | verify          | Optional. Where a drill on another machine records itself (default `BACKUP_DATABASE_URL`). |
+| `BACKUP_OFFSITE_RSYNC`                                   | backup.sh       | Optional rsync destination off the server.                                                 |
+| `BACKUP_S3_ENDPOINT`                                     | scripts         | Optional. The bucket's endpoint as seen from the host (MinIO: `http://127.0.0.1:9000`).    |
+| `VERIFY_MIN_TENANTS`                                     | verify          | Fewest workspaces a good backup may have. Default 1.                                       |
+| `GP_ENV_FILE`                                            | scripts         | Another env file instead of `infra/.env`.                                                  |
 
 ## Upgrades
 
@@ -315,6 +324,34 @@ anything written since that backup is lost.
 
 **Failures.** The script exits non-zero if anything fails, and leaves no partial backup.
 
+**Secrets stay off command lines,** where any user on the host could read them. The scripts
+give `pg_dump`, `pg_restore` and `psql` each URL without its password, and the password in
+`PGPASSWORD` for that command only. The S3 keys reach `aws` and `mc` through their environment.
+
+**Every run is recorded.** `backup.sh` adds a row to the `backup_runs` table through
+`BACKUP_DATABASE_URL`, whether the run worked or not:
+
+- when it started and finished, the backup's name, the host and the dump's size
+- for a good run: the workspaces and document files, the storage driver, and whether the
+  off-site copy was made
+- for a failed run: the step that failed (`lock`, `database`, `documents`, `manifest`,
+  `retention` or `offsite`) and the exit code
+
+`verify-backup.sh` records each drill the same way, with its counts, missing files and the key
+check. It writes through `BACKUP_REPORT_DATABASE_URL`, else `BACKUP_DATABASE_URL`; with neither
+set, it logs that the drill is not recorded. On a drill machine that cannot reach the
+production database, leave both unset and note the result yourself.
+
+Recording never changes a run's result. If the database cannot be reached, or `gp_backup`
+lacks `INSERT ON backup_runs` (granted by migration 0030 where the role exists, and in step 3
+above), the script logs a warning and carries on. Values go to `psql` as variables, never as
+SQL text.
+
+The console's **Operations** page shows the last 30 runs. It warns when the newest successful
+backup is more than 26 hours old, or the last passed drill more than 35 days old. Once any run
+has been recorded, the API also logs an `ERROR` once an hour while no backup has succeeded for
+26 hours.
+
 **Not in the backup:**
 
 - **`FIELD_ENCRYPTION_KEY`, on purpose.** Keep it in a password manager or vault that at least
@@ -345,7 +382,8 @@ bundled setup has neither.
    - drops the scratch database
 2. Once a quarter, do a full restore into a staging stack with the production key. Sign in and
    open a document and a letter. That is the only test that the key decrypts real files.
-3. Record the date and the result.
+3. Check that the drill shows on the console's **Operations** page. If it was not recorded
+   (see above), note the date and the result yourself.
 
 **Restoring.**
 
@@ -395,11 +433,13 @@ in the workspace.
 
 The API runs these on timers inside its own process, when `BACKGROUND_JOBS=on`:
 
-| Job                                                                     | When                                                                |
-| ----------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| Attendance processing: stores `attendance_days`, catching up to 35 days | Every `ATTENDANCE_JOB_INTERVAL_MINUTES` (15), first 5 s after start |
-| Completing separations whose last working day has passed                | Hourly, first 10 s after start                                      |
-| Notifications (Phase 1 M5): sending the outbox, and reminders           | Every 30 s and hourly                                               |
+| Job                                                                       | When                                                                |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Attendance processing: stores `attendance_days`, catching up to 35 days   | Every `ATTENDANCE_JOB_INTERVAL_MINUTES` (15), first 5 s after start |
+| Completing separations whose last working day has passed                  | Hourly, first 10 s after start                                      |
+| Notifications (Phase 1 M5): sending the outbox, and reminders             | Every 30 s and hourly                                               |
+| Status checks (Phase 3 M5); pruning old checks and the stale-backup alert | Every minute, first 15 s after start; hourly                        |
+| Closing support tickets solved more than 7 days ago with no reply         | Hourly                                                              |
 
 **Exactly one process may have them on.** Nothing elects a leader: every process with
 `BACKGROUND_JOBS=on` starts the same timers.
@@ -491,12 +531,58 @@ See `apps/mobile/README.md`.
   image's Docker health check. Check it from outside too:
   `https://<GP_API_DOMAIN>/health`.
 - **Web.** The web image checks `/login`. Watch `https://<GP_DOMAIN>/login` from outside.
+- **Readiness.** `GET /ready` returns 200 with `{"status":"ready","checks":{...}}` when:
+  - the database answers
+  - the document store takes, returns and deletes a small probe file (under `status/probe/`)
+  - Chrome or Chromium is installed (it is not started)
+
+  Otherwise it returns 503 with `"status":"not_ready"` and `ok` or `failed` for each check:
+  never a host, a path or an error message. Results are cached for 5 seconds. Point an uptime
+  monitor or a load balancer at it. Keep `/health` as the container health check: a document
+  store outage should not restart the API.
+
 - **Containers.** `gp ps` shows the health of each container.
+
+**Status page.** `https://<GP_DOMAIN>/status` is public, in English and Bangla. Workspace pages
+and the sign-in page show a banner for open incidents and for maintenance under way or starting
+within 24 hours.
+
+- **Automated checks.** With `BACKGROUND_JOBS=on`, the API checks every minute:
+
+  | Part          | Check                                                                          |
+  | ------------- | ------------------------------------------------------------------------------ |
+  | API           | `select 1` and its time                                                        |
+  | Documents     | a probe file in the document store, and that Chromium is installed             |
+  | Web           | `GET STATUS_WEB_URL` (default `WEB_ORIGIN/login`) within 5 s; 2xx or 3xx is ok |
+  | Notifications | the outbox job swept successfully within the last 2 minutes                    |
+  | Attendance    | attendance processing ran successfully within twice its interval               |
+  | Payments      | none: post an incident when a gateway is down                                  |
+
+  The web check goes through Caddy, as customers do, unless `STATUS_WEB_URL` says otherwise.
+
+- **States.** One failed check makes a part _degraded_; three in a row, a _partial outage_. An
+  open incident sets its impact. Maintenance shows only inside its window, and as upcoming
+  before it. Each day's bar shows the share of checks that passed and the worst incident.
+- **History.** Checks are kept 7 days and daily totals 90 days. The details of a failure appear
+  only in the console, never on the public page.
+- **Incidents and maintenance.** Post them in the console under **Status**, in English and
+  Bangla, with the parts affected. Post updates as you go, and resolve or complete them there.
+  Staff with the `platform_ops` or `support` role can do this, as can the Super Admin.
+- **Operations.** The console's **Operations** page shows the latest check of each part, with
+  its time and why it failed, a fresh readiness result, and the backups.
 
 **Logs.** `gp logs -f api` (likewise `web` and `caddy`).
 
-- API logs are Nest's plain-text lines (colours off).
-- Caddy writes JSON access logs.
+- **API logs are JSON lines** (`LOG_FORMAT=json`, the production default): one line per request
+  with its `requestId`, method, route pattern, status, duration, workspace and client address,
+  and Nest's own messages in the same form. `LOG_FORMAT=pretty` gives readable lines.
+- **What is never logged:** request bodies, query strings, tokens, passwords, sign-in codes and
+  identity numbers. The anonymous speak-up pages are logged without the client's address, in
+  the API and in Caddy (ADR 015).
+- **Finding a request:** every error a person sees carries a reference, which is the
+  `requestId` of its log line (and the `x-request-id` response header).
+- Caddy writes JSON access logs without query strings or the Authorization, Cookie and Referer
+  headers.
 - Docker keeps 5 × 10 MB per container.
 
 Ship them to your log service if you have one.
@@ -504,13 +590,15 @@ Ship them to your log service if you have one.
 **Alert on:**
 
 - `/health` failing, or the containers `api` or `web` restarting or unhealthy
-- API log lines with `ERROR`, especially:
+- API log lines with `"level":"error"`, especially:
   - `Attendance processing failed for`
   - `Completing separations failed for`
   - `Sending notifications failed for`
 - 503 `pdf_unavailable`, or PDF errors
 - many 429 responses: sign-in rate limits are being hit
-- the backup cron exiting non-zero, or no new directory in `BACKUP_DIR` for 26 hours
+- `/ready` returning 503
+- the backup cron exiting non-zero, or no new directory in `BACKUP_DIR` for 26 hours, or the
+  API log line `No successful backup in 26 hours`
 - a failed monthly `verify-backup.sh`
 - disk use above 80% on the data volume: documents, backups, `pgdata` and Docker logs
 - certificate errors in Caddy's log, or a certificate within 14 days of expiry
@@ -544,14 +632,17 @@ worked around.
 
 - **`setup` always creates `<database>_test`** as well. It also does not create the backup
   role, which is done by hand above.
-- **No `/ready` endpoint.** `/health` checks only the database, not the document store or
-  Chromium.
-- **No structured logs.** Logs are plain text, with no request IDs and no metrics endpoint.
+- **`/ready` is shallow.** It checks the database, the document store and that Chromium is
+  installed. It does not start Chromium, send email or SMS, or reach the payment gateways.
+- **No metrics endpoint.** Logs are JSON lines with request IDs, but there is no Prometheus
+  endpoint; count from the logs.
 
 **Scaling**
 
 - **Background jobs and rate limits live in one process.** There is no leader election and no
   shared rate-limit store. So: one API process (see [Background jobs](#background-jobs)).
+  The kiosk PIN budgets and the record that each two-step code was used once live in its
+  memory too, so a restart forgets them.
 
 **Secrets and backups**
 
@@ -559,6 +650,9 @@ worked around.
   `JWT_ACCESS_SECRET` cannot overlap two secrets.
 - **Up to a day of data can be lost.** Backups are daily logical dumps, with no point-in-time
   recovery for the bundled database.
+- **Off-site copies are not encrypted by the scripts.** Documents and identity numbers inside
+  them are (with `FIELD_ENCRYPTION_KEY`), but the rest of the database is not: send them only
+  to an encrypted destination you control.
 
 **Images and deployment**
 

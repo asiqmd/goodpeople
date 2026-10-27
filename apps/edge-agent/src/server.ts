@@ -1,5 +1,11 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
-import type { DeviceRegistry } from './devices.js';
+import {
+  addressAllowed,
+  allowEveryDevice,
+  serialAllowed,
+  type DeviceAllowList,
+} from './device-allow.js';
+import { SERIAL, type DeviceRegistry } from './devices.js';
 import { extractEventJson, interpretHikvisionEvent } from './hikvision.js';
 import { errorMessage, silentLogger, type Logger } from './log.js';
 import type { Punch } from './punch.js';
@@ -11,6 +17,8 @@ export interface AgentServerOptions {
   devices: DeviceRegistry;
   timeZone: string;
   hikvisionEventTypes: readonly number[];
+  /** Which devices may push; every device when not given. */
+  allow?: DeviceAllowList;
   log?: Logger;
   /** Called after new punches are stored, to start a sync. */
   onPunches?: () => void;
@@ -19,8 +27,9 @@ export interface AgentServerOptions {
   maxBodyBytes?: number;
 }
 
-const SERIAL = /^[A-Za-z0-9._:-]{1,64}$/;
 const DEFAULT_MAX_BODY = 5 * 1024 * 1024;
+/** A refused device retries every few seconds: log it at most this often. */
+const REFUSAL_LOG_MS = 10 * 60_000;
 
 function reply(
   res: ServerResponse,
@@ -82,6 +91,21 @@ export function createAgentServer(options: AgentServerOptions): Server {
   const log = options.log ?? silentLogger;
   const maxBody = options.maxBodyBytes ?? DEFAULT_MAX_BODY;
   const eventTypes = new Set(options.hikvisionEventTypes);
+  const allow = options.allow ?? allowEveryDevice;
+  const refusedAt = new Map<string, number>();
+
+  /** Answers a device that is not on the allow lists; its punches are not kept. */
+  function refuse(res: ServerResponse, who: string) {
+    const now = Date.now();
+    if (now - (refusedAt.get(who) ?? -Infinity) >= REFUSAL_LOG_MS) {
+      if (refusedAt.size >= 1000) refusedAt.clear();
+      refusedAt.set(who, now);
+      log.warn(`Refused a push from ${who}: not in GP_DEVICE_ALLOW or GP_DEVICE_SERIALS`);
+    } else {
+      log.debug(`Refused a push from ${who}`);
+    }
+    reply(res, 403, 'ERROR: device not allowed');
+  }
 
   /** Stores before the device hears back; throws if the disk write fails so the device retries. */
   function store(punches: Punch[]): { inserted: number; duplicates: number } {
@@ -95,6 +119,10 @@ export function createAgentServer(options: AgentServerOptions): Server {
     if (serial && !SERIAL.test(serial)) {
       await readBody(req, 0);
       return reply(res, 400, 'ERROR: invalid SN');
+    }
+    if (!serialAllowed(allow, serial || undefined)) {
+      await readBody(req, 0);
+      return refuse(res, `ZKTeco ${serial || '(no serial)'} at ${clientIp(req)}`);
     }
     if (serial) devices.seen(serial, 'zkteco', clientIp(req));
 
@@ -139,6 +167,12 @@ export function createAgentServer(options: AgentServerOptions): Server {
       eventTypes,
       remoteIp: clientIp(req),
     });
+    if (!serialAllowed(allow, result.device?.serialNumber)) {
+      return refuse(
+        res,
+        `Hikvision ${result.device?.serialNumber ?? '(no serial)'} at ${clientIp(req)}`,
+      );
+    }
     if (result.device) devices.seen(result.device.serialNumber, 'hikvision', result.device.ip);
     if (result.kind === 'ignored') {
       (result.pass ? log.warn : log.debug)(
@@ -160,6 +194,11 @@ export function createAgentServer(options: AgentServerOptions): Server {
     const path = url.pathname.replace(/\.aspx$/i, '').replace(/\/+$/, '') || '/';
     log.debug(`${req.method} ${req.url} from ${clientIp(req)}`);
 
+    const fromDevice = path.toLowerCase().startsWith('/iclock/') || path === '/hikvision/events';
+    if (fromDevice && !addressAllowed(allow, clientIp(req))) {
+      await readBody(req, 0);
+      return refuse(res, `address ${clientIp(req)}`);
+    }
     if (path.toLowerCase().startsWith('/iclock/')) {
       return iclock(req, res, url, path.slice('/iclock/'.length).toLowerCase());
     }

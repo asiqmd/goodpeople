@@ -13,7 +13,7 @@ import {
   DEFAULT_GL_ACCOUNTS,
   money,
   ROLE_PERMISSIONS,
-  TENANT_ROLES,
+  ASSIGNABLE_TENANT_ROLES,
   todayIn,
   type ApiError,
   type LineProblem,
@@ -444,7 +444,9 @@ export class PayrollSetupService {
   settings(): Promise<PayrollSettingsView> {
     return this.tenantDb.run(async (tx) => {
       const settings = await payrollSettingsOf(tx);
-      const roles = TENANT_ROLES.filter((r) => ROLE_PERMISSIONS[r].includes('payroll.approve'));
+      const roles = ASSIGNABLE_TENANT_ROLES.filter((r) =>
+        ROLE_PERMISSIONS[r].includes('payroll.approve'),
+      );
       const [approvers] = await tx
         .select({ n: count() })
         .from(tenantUsers)

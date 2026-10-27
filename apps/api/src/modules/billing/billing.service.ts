@@ -50,6 +50,7 @@ import {
 import { and, asc, desc, eq, gte, inArray, isNull, lte, ne, or, sql, type SQL } from 'drizzle-orm';
 import type { AuthUser, PlatformUser } from '../../common/auth-user.js';
 import { badRequest, conflict } from '../../common/errors.js';
+import { RateLimiter } from '../../common/rate-limit.js';
 import { runInTenantContext } from '../../common/request-context.js';
 import { DB, TenantDb } from '../../db/db.module.js';
 import { AuditService } from '../audit/audit.service.js';
@@ -67,6 +68,8 @@ type SettingsRow = typeof billingSettings.$inferSelect;
 export const endOfDay = (date: string) => new Date(`${date}T23:59:59.999+06:00`);
 const planName = (code: PlanCode) => PLAN_CATALOG.find((p) => p.code === code)!.name;
 const monthOf = (date: string) => date.slice(0, 7);
+/** Coupon codes a workspace may try in an hour. */
+const COUPON_ATTEMPTS_PER_HOUR = 10;
 const previousMonth = (month: string) => monthOf(addDays(`${month}-01`, -1));
 
 /**
@@ -78,6 +81,8 @@ const previousMonth = (month: string) => monthOf(addDays(`${month}-01`, -1));
 @Injectable()
 export class BillingService {
   private readonly logger = new Logger(BillingService.name);
+  /** Coupon codes tried per workspace, so they cannot be guessed. */
+  private readonly couponAttempts = new RateLimiter();
 
   constructor(
     @Inject(DB) private readonly db: Database,
@@ -882,10 +887,13 @@ export class BillingService {
   // ── Internals ──────────────────────────────────────────────────────────────
 
   private async redeem(tx: Tx, tenantId: string, code: string, today: string) {
+    this.couponAttempts.hit(`coupon:${tenantId}`, COUPON_ATTEMPTS_PER_HOUR, 60 * 60_000);
+    // Locked until this transaction ends, so concurrent redemptions count one another.
     const [coupon] = await tx
       .select()
       .from(coupons)
-      .where(eq(coupons.code, code.trim().toUpperCase()));
+      .where(eq(coupons.code, code.trim().toUpperCase()))
+      .for('update');
     if (!coupon || !coupon.active || (coupon.validUntil && coupon.validUntil < today)) {
       throw badRequest('coupon_invalid', 'This coupon is not valid');
     }

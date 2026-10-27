@@ -1,0 +1,1 @@
+ALTER TYPE "public"."notification_event" ADD VALUE IF NOT EXISTS 'payment_account.changed' BEFORE 'auth.otp';

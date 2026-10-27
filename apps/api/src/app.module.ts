@@ -21,6 +21,9 @@ import { ProjectsModule } from './modules/projects/projects.module.js';
 import { TimesheetsModule } from './modules/timesheets/timesheets.module.js';
 import { GroupModule } from './modules/group/group.module.js';
 import { AccessScopesModule } from './modules/access-scopes/access-scopes.module.js';
+import { StatusModule } from './modules/status/status.module.js';
+import { SupportAccessModule } from './modules/support-access/support-access.module.js';
+import { SupportModule } from './modules/support/support.module.js';
 import { DocumentsModule } from './modules/documents/documents.module.js';
 import { ImportsModule } from './modules/imports/imports.module.js';
 import { LettersModule } from './modules/letters/letters.module.js';
@@ -79,6 +82,9 @@ export class AppModule {
         TimesheetsModule,
         GroupModule,
         AccessScopesModule,
+        SupportModule,
+        SupportAccessModule,
+        StatusModule,
       ],
       providers: [
         { provide: APP_CONFIG, useValue: config },

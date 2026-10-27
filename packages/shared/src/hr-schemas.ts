@@ -27,7 +27,7 @@ import {
   RELIGIONS,
   WORKER_CATEGORIES,
 } from './hr.js';
-import { TENANT_ROLES } from './catalog.js';
+import { ASSIGNABLE_TENANT_ROLES } from './catalog.js';
 import { withoutDefaults } from './zod-helpers.js';
 
 const isoDate = z.iso.date();
@@ -226,7 +226,7 @@ export const hireEmployeeSchema = z
         email: z.email().optional(),
         /** Lets the person sign in with a code sent by SMS to this number. */
         phone: bdMobileSchema.optional(),
-        role: z.enum(TENANT_ROLES).default('employee'),
+        role: z.enum(ASSIGNABLE_TENANT_ROLES).default('employee'),
         password: z.string().min(10).optional(),
       })
       .refine((p) => p.email || p.phone, {

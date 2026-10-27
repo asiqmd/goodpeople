@@ -59,6 +59,25 @@ function multipart(
   return Buffer.concat([...chunks, Buffer.from(`--${boundary}--\r\n`)]);
 }
 
+/** An ATTLOG upload from a ZKTeco device. */
+const pushAttlog = (base: string, serial: string) =>
+  fetch(`${base}/iclock/cdata?SN=${serial}&table=ATTLOG`, {
+    method: 'POST',
+    body: '1001\t2026-10-24 08:59:12\t0\n',
+  });
+/** A face-match punch from a Hikvision device. */
+const pushHikvision = (base: string, mac: string) =>
+  fetch(`${base}/hikvision/events`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      macAddress: mac,
+      dateTime: '2026-10-24T09:00:05+06:00',
+      eventType: 'AccessControllerEvent',
+      AccessControllerEvent: { majorEventType: 5, subEventType: 75, employeeNoString: '2001' },
+    }),
+  });
+
 let dataDir: string;
 let cloud: Awaited<ReturnType<typeof fakeCloud>>;
 let agent: AgentHandle | undefined;
@@ -75,6 +94,8 @@ const config = (apiUrl: string): AgentConfig => ({
   heartbeatIntervalMs: 60_000,
   hikvisionEventTypes: [1, 38, 75],
   logLevel: 'error',
+  deviceAllow: [],
+  deviceSerials: [],
 });
 
 beforeEach(async () => {
@@ -241,6 +262,40 @@ describe('edge agent end to end', () => {
       ],
     });
     await until(() => agent!.queue.counts().sent === 1);
+  });
+
+  it('takes punches only from allowed addresses and serial numbers, and warns when open', async () => {
+    const warnings: string[] = [];
+    const log = { ...silentLogger, warn: (message: string) => warnings.push(message) };
+    // Another subnet only: this test's 127.0.0.1 is refused, and nothing is queued.
+    agent = await startAgent({ ...config(cloud.url), deviceAllow: ['10.9.9.0/24'] }, { log });
+    let base = `http://127.0.0.1:${agent.port}`;
+    expect((await pushAttlog(base, 'CQZ1')).status).toBe(403);
+    expect((await pushHikvision(base, '44:19:b6:aa:bb:cc')).status).toBe(403);
+    expect((await fetch(`${base}/health`)).status).toBe(200);
+    expect(agent.queue.counts().queued).toBe(0);
+    expect(warnings).toEqual([expect.stringMatching(/Refused a push from address 127\.0\.0\.1/)]);
+    await agent.stop();
+
+    agent = await startAgent(
+      {
+        ...config(cloud.url),
+        deviceAllow: ['127.0.0.0/8'],
+        deviceSerials: ['CQZ1', '44:19:B6:AA:BB:CC'],
+      },
+      { log },
+    );
+    base = `http://127.0.0.1:${agent.port}`;
+    expect(await (await pushAttlog(base, 'CQZ1')).text()).toBe('OK: 1');
+    expect((await pushAttlog(base, 'ROGUE9')).status).toBe(403);
+    expect((await pushHikvision(base, '44:19:b6:aa:bb:cc')).status).toBe(200);
+    expect((await pushHikvision(base, '00:00:00:00:00:01')).status).toBe(403);
+    expect(agent.queue.counts().queued + agent.queue.counts().sent).toBe(2);
+    await agent.stop();
+
+    warnings.length = 0;
+    agent = await startAgent(config(cloud.url), { log });
+    expect(warnings).toEqual([expect.stringMatching(/Any device on this network can push/)]);
   });
 
   it('answers bad input without falling over', async () => {

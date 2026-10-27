@@ -8,6 +8,7 @@ import {
   type Tx,
 } from '@gp/db';
 import {
+  can,
   todayIn,
   type CommitteeInput,
   type CommitteeMeetingInput,
@@ -21,7 +22,7 @@ import {
 } from '@gp/shared';
 import { and, count, eq, gte, isNull, or, sql } from 'drizzle-orm';
 import type { AuthUser } from '../../common/auth-user.js';
-import { badRequest, conflict } from '../../common/errors.js';
+import { badRequest, conflict, forbidden } from '../../common/errors.js';
 import { currentTenantId } from '../../common/request-context.js';
 import { TenantDb } from '../../db/db.module.js';
 import { TenantAuditService } from '../audit/tenant-audit.service.js';
@@ -42,6 +43,19 @@ export async function employeeByRef(tx: Tx, ref: { employeeId?: string; employee
   const row = rows.find((e) => e.employeeCode === code) ?? rows[0];
   if (!row) throw badRequest('employee_not_found', 'No employee with this code');
   return row;
+}
+
+/**
+ * The complaint committee decides who reads harassment cases (s.332A), so only the workspace
+ * admin (users.manage) forms it, changes its term or members, or removes it; whoever handles
+ * compliance keeps the other committees and every committee's meetings.
+ */
+function mustAdministerComplaint(actor: AuthUser, kind: CommitteeInput['kind']) {
+  if (kind !== 'complaint' || (actor.kind === 'tenant' && can(actor.role, 'users.manage'))) return;
+  throw forbidden(
+    'role_not_allowed',
+    'Only the workspace admin can change the complaint committee (s.332A)',
+  );
 }
 
 /** The term the law sets, when the committee's own end date is not given. */
@@ -79,6 +93,7 @@ export class CommitteesService {
   }
 
   create(actor: AuthUser, input: CommitteeInput): Promise<CommitteeView> {
+    mustAdministerComplaint(actor, input.kind);
     return this.tenantDb.run(async (tx) => {
       if (input.locationId) {
         const [site] = await tx
@@ -110,6 +125,7 @@ export class CommitteesService {
   update(actor: AuthUser, id: string, input: CommitteeUpdate): Promise<CommitteeView> {
     return this.tenantDb.run(async (tx) => {
       const current = await this.committeeOrThrow(tx, id);
+      mustAdministerComplaint(actor, current.kind);
       const formedOn = input.formedOn ?? current.formedOn;
       // An end date left as the law's term moves with the formation date.
       const endsOn =
@@ -141,6 +157,7 @@ export class CommitteesService {
   remove(actor: AuthUser, id: string): Promise<void> {
     return this.tenantDb.run(async (tx) => {
       const current = await this.committeeOrThrow(tx, id);
+      mustAdministerComplaint(actor, current.kind);
       const [held] = await tx
         .select({ n: count() })
         .from(committeeMeetings)
@@ -155,7 +172,7 @@ export class CommitteesService {
 
   addMember(actor: AuthUser, id: string, input: CommitteeMemberInput): Promise<CommitteeView> {
     return this.tenantDb.run(async (tx) => {
-      await this.committeeOrThrow(tx, id);
+      mustAdministerComplaint(actor, (await this.committeeOrThrow(tx, id)).kind);
       const employee =
         input.employeeId || input.employeeCode ? await employeeByRef(tx, input) : null;
       if (employee) {
@@ -198,6 +215,7 @@ export class CommitteesService {
     input: CommitteeMemberEnd,
   ): Promise<CommitteeView> {
     return this.tenantDb.run(async (tx) => {
+      mustAdministerComplaint(actor, (await this.committeeOrThrow(tx, id)).kind);
       const [member] = await tx
         .select()
         .from(committeeMembers)

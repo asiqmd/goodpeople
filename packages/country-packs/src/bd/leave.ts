@@ -113,6 +113,9 @@ export interface FloorViolation {
   field: keyof LeavePolicy;
   message: string;
   reference: LegalReference;
+  /** The rule broken and the law's figure, so a page can say it in its own language. */
+  rule: string;
+  limit: number;
 }
 
 /**
@@ -129,7 +132,13 @@ export function bdLeaveFloorViolations(policy: LeavePolicy, on: IsoDate): FloorV
   ) => {
     const rule = ruleOn(BD_RULES, key, on);
     if (!ok(rule.value))
-      out.push({ field, message: message(rule.value), reference: rule.reference });
+      out.push({
+        field,
+        message: message(rule.value),
+        reference: rule.reference,
+        rule: key,
+        limit: rule.value as number,
+      });
   };
 
   switch (policy.statutoryKey) {

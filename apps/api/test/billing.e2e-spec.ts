@@ -184,6 +184,26 @@ describe('billing', () => {
     ).toBe('billing_bypassed');
   });
 
+  it('limits coupon guesses per workspace, and a single-use coupon goes to one workspace', async () => {
+    const guesser = await trial();
+    for (let i = 0; i < 10; i++) {
+      const res = await choose(guesser.token, { couponCode: `GUESS-${stamp}-${i}` }).expect(400);
+      expect(res.body.code).toBe('coupon_invalid');
+    }
+    const blocked = await choose(guesser.token, { couponCode: `GUESS-${stamp}-x` }).expect(429);
+    expect(blocked.body.code).toBe('too_many_attempts');
+
+    // Two workspaces redeem the last use at the same moment: the row lock lets one through.
+    const coupon = await newCoupon({ percentOff: 10, months: 1, maxRedemptions: 1 });
+    const [a, b] = await Promise.all([trial(), trial()]);
+    const results = await Promise.all([
+      choose(a.token, { couponCode: coupon }),
+      choose(b.token, { couponCode: coupon }),
+    ]);
+    expect(results.map((r) => r.status).toSorted()).toEqual([200, 400]);
+    expect(results.find((r) => r.status === 400)!.body.code).toBe('coupon_used_up');
+  });
+
   it('cancels at the end of the month, and choosing a plan again keeps it going', async () => {
     const { token } = await trial();
     await api(app).post('/tenant/billing/cancel').set(bearer(token)).expect(409);

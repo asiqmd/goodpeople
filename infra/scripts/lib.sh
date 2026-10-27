@@ -83,10 +83,67 @@ url_with_database() {
   printf '%s/%s%s\n' "${base%/*}" "$database" "$query"
 }
 
+# Database URLs carry passwords, and every user on the host can read a command line. So libpq
+# commands get the URL without its password, and the password in PGPASSWORD, which only that
+# command's own user and root can read.
+url_without_password() {
+  local url=$1 rest userinfo
+  rest=${url#*://}
+  userinfo=$(url_userinfo "$url")
+  if [[ $userinfo != *:* ]]; then
+    printf '%s\n' "$url"
+    return
+  fi
+  printf '%s://%s@%s\n' "${url%%://*}" "${userinfo%%:*}" "${rest:$((${#userinfo} + 1))}"
+}
+
+# postgres://user:pass@host:port/db?opts -> user:pass (nothing when there is none)
+url_userinfo() {
+  local rest=${1#*://} authority
+  authority=${rest%%/*}
+  [[ $1 == *://* && $authority == *@* ]] || return 0
+  printf '%s\n' "${authority%@*}"
+}
+
+# The URL's password, percent-decoded, or nothing.
+url_password() {
+  local userinfo value
+  userinfo=$(url_userinfo "$1")
+  [[ $userinfo == *:* ]] || return 0
+  value=${userinfo#*:}
+  value=${value//\\/\\\\}
+  printf '%b\n' "${value//%/\\x}"
+}
+
+# Percent-encodes a value for the user or password part of a URL.
+url_encode() {
+  local LC_ALL=C value=$1 out='' c i
+  for ((i = 0; i < ${#value}; i++)); do
+    c=${value:i:1}
+    case $c in
+      [A-Za-z0-9._~-]) out="$out$c" ;;
+      *) out="$out$(printf '%%%02X' "'$c")" ;;
+    esac
+  done
+  printf '%s\n' "$out"
+}
+
+# Runs a libpq command against URL: pg_run URL psql|pg_dump|pg_restore ARGS...
+pg_run() {
+  local url=$1 cmd=$2 password
+  shift 2
+  password=$(url_password "$url")
+  if [[ -n $password ]]; then
+    PGPASSWORD=$password "$cmd" --dbname="$(url_without_password "$url")" "$@"
+  else
+    "$cmd" --dbname="$url" "$@"
+  fi
+}
+
 psql_value() {
   local url=$1
   shift
-  psql -X -q -At -v ON_ERROR_STOP=1 --dbname="$url" "$@"
+  pg_run "$url" psql -X -q -At -v ON_ERROR_STOP=1 "$@"
 }
 
 # Resolves a backup argument (a directory, its database.dump, or "latest") to a directory.
@@ -131,8 +188,8 @@ manifest_value() {
 restore_into() {
   local admin_url=$1 database=$2 owner=$3 dump=$4
   psql_value "$admin_url" -c "CREATE DATABASE \"$database\" OWNER \"$owner\""
-  if ! pg_restore --exit-on-error --single-transaction --no-password \
-    --dbname="$(url_with_database "$admin_url" "$database")" "$dump"; then
+  if ! pg_run "$(url_with_database "$admin_url" "$database")" pg_restore --exit-on-error \
+    --single-transaction --no-password "$dump"; then
     log "restore failed; dropping the new, empty database $database"
     psql_value "$admin_url" -c "DROP DATABASE IF EXISTS \"$database\"" || true
     return 1
@@ -156,4 +213,46 @@ check_roles_exist() {
     [[ $found == 1 ]] ||
       die "role $role does not exist on this server; run the setup service first (see the runbook)"
   done
+}
+
+utc_now() { date -u +%Y-%m-%dT%H:%M:%SZ; }
+
+# KEY=VALUE arguments as a JSON object: whole numbers, true, false and null stay bare, anything
+# else becomes a string. Pairs with no value are left out.
+json_object() {
+  local pair key value out='' sep=''
+  for pair in "$@"; do
+    key=${pair%%=*}
+    value=${pair#*=}
+    [[ -n $value ]] || continue
+    if [[ ! $value =~ ^(-?(0|[1-9][0-9]*)|true|false|null)$ ]]; then
+      value=${value//\\/\\\\}
+      value=${value//\"/\\\"}
+      value="\"$value\""
+    fi
+    out="$out$sep\"$key\":$value"
+    sep=','
+  done
+  printf '{%s}\n' "$out"
+}
+
+# Records a backup or a restore drill in the backup_runs table, so the console and the status
+# checks can tell when backups stop. Best effort: a failure to record is logged and never fails
+# the run. Values reach SQL only as psql variables.
+#   record_run URL KIND OK LABEL STARTED_AT SIZE_BYTES DETAIL_JSON
+record_run() {
+  local url=$1 kind=$2 ok=$3 label=$4 started_at=$5 size_bytes=$6 detail=$7 host
+  host=$(hostname 2>/dev/null || echo unknown)
+  if PGCONNECT_TIMEOUT=10 pg_run "$url" psql -X -q -v ON_ERROR_STOP=1 \
+    -v kind="$kind" -v ok="$ok" -v label="$label" -v host="$host" \
+    -v started_at="$started_at" -v finished_at="$(utc_now)" -v size_bytes="$size_bytes" \
+    -v detail="$detail" >/dev/null <<'SQL'; then
+INSERT INTO backup_runs (kind, ok, label, host, started_at, finished_at, size_bytes, detail)
+VALUES (:'kind', :'ok', NULLIF(:'label', ''), :'host', :'started_at', :'finished_at',
+        NULLIF(:'size_bytes', '')::bigint, :'detail'::jsonb);
+SQL
+    log "recorded this run in backup_runs ($kind, ok=$ok)"
+  else
+    log "warning: could not record this run in backup_runs; the run itself is not affected"
+  fi
 }

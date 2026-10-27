@@ -2,6 +2,7 @@ import { can, MAX_IMPORT_ROWS } from '@gp/shared';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { HelpLink } from '@/components/help/help-link';
 import { ImportEmployeesForm } from '@/components/lifecycle/lifecycle-forms';
 import { buttonClass, Card } from '@/components/ui';
 import { currentTenantUser } from '@/lib/api';
@@ -14,7 +15,10 @@ export default async function ImportEmployeesPage() {
       <Link href="/workspace/employees" className="text-sm text-slate-500 hover:text-slate-900">
         ← {t('back')}
       </Link>
-      <h1 className="text-2xl font-semibold">{t('title')}</h1>
+      <h1 className="text-2xl font-semibold">
+        {t('title')}
+        <HelpLink slug="import-employees" />
+      </h1>
       <Card title={t('step1')}>
         <p className="mb-3 text-sm text-slate-600">{t('step1Hint', { max: MAX_IMPORT_ROWS })}</p>
         {/* A file from a route handler, not a page: a plain link downloads it. */}

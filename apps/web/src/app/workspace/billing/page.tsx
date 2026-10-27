@@ -6,6 +6,7 @@ import {
   DeductionForm,
   PayButtons,
 } from '@/components/billing-forms';
+import { HelpLink } from '@/components/help/help-link';
 import { Badge, Banner, BILLING_TONE, Card, type Tone } from '@/components/ui';
 import { currentTenantUser, load } from '@/lib/api';
 
@@ -83,7 +84,12 @@ export default async function BillingPage({ searchParams }: PageProps<'/workspac
       {pending !== undefined && <Banner tone="amber">{t('pending')}</Banner>}
 
       <Card
-        title={t('title')}
+        title={
+          <>
+            {t('title')}
+            <HelpLink slug="plans-and-billing" />
+          </>
+        }
         action={
           overview.billingMode === 'paid' && sub && !sub.cancelAt ? <CancelPlanButton /> : null
         }

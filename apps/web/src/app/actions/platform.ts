@@ -3,6 +3,7 @@
 import type { AssignCompanyResult, TenantWithAccess } from '@gp/shared';
 import { revalidatePath } from 'next/cache';
 import { authedFetch } from '@/lib/api';
+import { fail } from '@/lib/form';
 
 export type ActionState<T = undefined> =
   | {
@@ -54,7 +55,7 @@ export async function assignCompany(
       },
     },
   });
-  if (!result.ok) return { error: result.error.message, issues: result.error.issues };
+  if (!result.ok) return fail(result);
   revalidatePath('/platform');
   return { result: result.data };
 }
@@ -77,7 +78,7 @@ export async function updateBilling(
       },
     },
   );
-  if (!result.ok) return { error: result.error.message, issues: result.error.issues };
+  if (!result.ok) return fail(result);
   revalidatePath(`/platform/tenants/${tenantId}`);
   return { ok: true };
 }
@@ -100,7 +101,7 @@ export async function addGrant(
       },
     },
   );
-  if (!result.ok) return { error: result.error.message, issues: result.error.issues };
+  if (!result.ok) return fail(result);
   revalidatePath(`/platform/tenants/${tenantId}`);
   return { ok: true };
 }
