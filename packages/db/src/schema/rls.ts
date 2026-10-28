@@ -86,4 +86,13 @@ export const RLS_TABLES = [
   'timesheet_entries',
   'entity_policy_overrides',
   'user_entity_scopes',
+  // Phase 4 M1 (migration 0033)
+  'recruitment_settings',
+  'job_openings',
+  'candidates',
+  'applications',
+  'application_events',
+  'interviews',
+  'interview_panel',
+  'offers',
 ] as const;

@@ -10,6 +10,8 @@ import {
   WORKER_CATEGORIES,
   type EmployeeDetail,
   type HireResult,
+  type OfferHirePrefill,
+  type OfferHireResult,
   type OrgSnapshot,
   type Ref,
 } from '@gp/shared';
@@ -17,10 +19,12 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useActionState, useState, type ReactNode } from 'react';
 import { hireEmployee, updateEmployee } from '@/app/actions/hr';
+import { hireFromOffer } from '@/app/actions/offers';
 import type { ActionState } from '@/app/actions/platform';
 import { treeOrder } from '@/lib/org';
 import { ErrorText, Form, issueFor, SubmitButton } from '../forms';
 import { Banner, buttonClass, Card, Field, inputClass } from '../ui';
+import { OfferHireFields, OfferHireOutcome } from '../recruitment/offer-hire-fields';
 import { AddressFields } from './address-fields';
 
 type State = ActionState<HireResult>;
@@ -74,15 +78,21 @@ function EnumSelect({
  */
 export function EmployeeForm(
   props:
-    | { mode: 'hire'; org: OrgSnapshot; managers: Ref[] }
+    | { mode: 'hire'; org: OrgSnapshot; managers: Ref[]; offer?: OfferHirePrefill }
     | { mode: 'edit'; employee: EmployeeDetail },
 ) {
   const t = useTranslations('hr.form');
   const th = useTranslations('hr');
   const employee = props.mode === 'edit' ? props.employee : undefined;
+  // Hiring from an accepted offer: its name and contact details, job and joining date.
+  const offer = props.mode === 'hire' ? props.offer : undefined;
   // Both actions accept and return the same state shape; only hire ever sets `result`.
   const action = (
-    props.mode === 'hire' ? hireEmployee : updateEmployee.bind(null, props.employee.id)
+    props.mode === 'hire'
+      ? offer
+        ? hireFromOffer.bind(null, offer.offer.id)
+        : hireEmployee
+      : updateEmployee.bind(null, props.employee.id)
   ) as (state: State, form: FormData) => Promise<State>;
   const [state, formAction] = useActionState<State, FormData>(action, undefined);
   const [sameAddress, setSameAddress] = useState(props.mode === 'hire');
@@ -96,6 +106,7 @@ export function EmployeeForm(
       <Card>
         <div className="space-y-4">
           <Banner tone="green">{t('hired', { name: hired.fullName })}</Banner>
+          {offer && <OfferHireOutcome result={state.result as OfferHireResult} />}
           {temporaryPassword && hired.portalUser && (
             <div className="rounded-lg bg-slate-50 p-4 text-sm ring-1 ring-slate-200">
               <p>{t('tempPassword', { email: hired.portalUser.email ?? '' })}</p>
@@ -136,7 +147,8 @@ export function EmployeeForm(
           <input
             name="fullName"
             required
-            defaultValue={employee?.fullName}
+            defaultValue={employee?.fullName ?? offer?.offer.candidate.fullName}
+            readOnly={!!offer}
             className={inputClass}
           />
         </Field>
@@ -226,7 +238,7 @@ export function EmployeeForm(
             type="tel"
             required
             placeholder="01712345678"
-            defaultValue={employee?.mobilePhone}
+            defaultValue={employee?.mobilePhone ?? offer?.mobilePhone ?? undefined}
             className={inputClass}
           />
         </Field>
@@ -242,7 +254,7 @@ export function EmployeeForm(
           <input
             name="personalEmail"
             type="email"
-            defaultValue={employee?.personalEmail ?? ''}
+            defaultValue={employee?.personalEmail ?? offer?.email ?? ''}
             className={inputClass}
           />
         </Field>
@@ -310,7 +322,10 @@ export function EmployeeForm(
         )}
       </Card>
 
-      {props.mode === 'hire' && (
+      {props.mode === 'hire' && offer && (
+        <OfferHireFields prefill={offer} org={props.org} managers={props.managers} state={state} />
+      )}
+      {props.mode === 'hire' && !offer && (
         <JobFields org={props.org} managers={props.managers} state={state} />
       )}
 

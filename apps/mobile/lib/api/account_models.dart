@@ -102,6 +102,9 @@ enum NotificationEvent implements WireValue {
 
   /// Last month's project timesheet is not yet submitted.
   timesheetDue('timesheet.due'),
+
+  /// The user is on an interview's panel, or it changed or was cancelled.
+  recruitmentInterview('recruitment.interview'),
   unknown('unknown');
 
   const NotificationEvent(this.wire);

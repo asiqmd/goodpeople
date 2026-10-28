@@ -2320,4 +2320,310 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get timesheetRejected => 'Timesheet returned for correction';
+
+  @override
+  String get approvalOpeningTitle => 'Job opening';
+
+  @override
+  String approvalOpeningPositions(num count, String type) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString positions',
+      one: '$countString position',
+    );
+    return '$_temp0, $type';
+  }
+
+  @override
+  String get approvalOpeningNew => 'New position';
+
+  @override
+  String approvalOpeningReplaces(String name) {
+    return 'Replaces $name';
+  }
+
+  @override
+  String get approvalBudget => 'Monthly gross budget';
+
+  @override
+  String approvalBudgetUpTo(String amount) {
+    return 'Up to $amount';
+  }
+
+  @override
+  String approvalBudgetFrom(String amount) {
+    return 'From $amount';
+  }
+
+  @override
+  String get approvalHiringManager => 'Hiring manager';
+
+  @override
+  String get approvalJustification => 'Why it is needed';
+
+  @override
+  String get approveOpeningTitle => 'Approve this job opening?';
+
+  @override
+  String get rejectOpeningTitle => 'Reject this job opening?';
+
+  @override
+  String get openingApproved => 'Job opening approved';
+
+  @override
+  String get openingRejected => 'Job opening rejected';
+
+  @override
+  String get approvalOfferTitle => 'Offer above budget';
+
+  @override
+  String get approvalOfferPay => 'Monthly gross';
+
+  @override
+  String approvalOfferAgainstBudget(String amount, String budget) {
+    return '$amount · budget up to $budget';
+  }
+
+  @override
+  String get approvalOfferJoining => 'Joining';
+
+  @override
+  String approvalOfferDraftedBy(String name) {
+    return 'Drafted by $name';
+  }
+
+  @override
+  String get approveOfferTitle => 'Approve this offer?';
+
+  @override
+  String get rejectOfferTitle => 'Reject this offer?';
+
+  @override
+  String get offerApproved => 'Offer approved. HR can send it now.';
+
+  @override
+  String get offerRejected => 'Offer rejected';
+
+  @override
+  String get interviewsTitle => 'Interviews';
+
+  @override
+  String get interviewsSubtitle =>
+      'The candidates you interview, their CVs and your scorecards';
+
+  @override
+  String interviewsToDo(num count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString interviews need you',
+      one: '$countString interview needs you',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get myInterviewsTitle => 'My interviews';
+
+  @override
+  String get interviewsUpcoming => 'Coming up';
+
+  @override
+  String get interviewsPast => 'Past';
+
+  @override
+  String get interviewsNoUpcoming => 'No interviews coming up.';
+
+  @override
+  String get interviewsNoPast => 'None yet.';
+
+  @override
+  String get interviewsLoadFailed => 'We could not load your interviews.';
+
+  @override
+  String interviewKindName(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'in_person': 'In person',
+      'phone': 'By phone',
+      'video': 'By video',
+      'other': 'Interview',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String interviewStatusName(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'scheduled': 'Scheduled',
+      'completed': 'Completed',
+      'cancelled': 'Cancelled',
+      'other': 'Unknown',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get interviewScorecardIn => 'Scorecard in';
+
+  @override
+  String get interviewScorecardToDo => 'Scorecard to do';
+
+  @override
+  String interviewForOpening(String title) {
+    return 'For $title';
+  }
+
+  @override
+  String get interviewTitle => 'Interview';
+
+  @override
+  String get interviewLoadFailed => 'We could not load this interview.';
+
+  @override
+  String get interviewGone => 'You are no longer on this interview\'s panel.';
+
+  @override
+  String get interviewWhen => 'When (Bangladesh time)';
+
+  @override
+  String get interviewPlace => 'Place';
+
+  @override
+  String get interviewPhoneNote => 'Phone note';
+
+  @override
+  String get interviewMeetingLink => 'Meeting link';
+
+  @override
+  String get interviewJoinCall => 'Join the video call';
+
+  @override
+  String get interviewLinkFailed => 'The link could not be opened.';
+
+  @override
+  String get interviewHrNotes => 'From HR';
+
+  @override
+  String get interviewCoverNote => 'The candidate\'s note';
+
+  @override
+  String get interviewOpenCv => 'Open the CV';
+
+  @override
+  String get interviewNoCv => 'No CV';
+
+  @override
+  String get interviewCvGone => 'The CV is no longer available.';
+
+  @override
+  String get interviewCvNoApp =>
+      'No app on this phone can open this CV. Install a PDF or Word reader and try again.';
+
+  @override
+  String get interviewPanel => 'Panel';
+
+  @override
+  String get scorecardTitle => 'Your scorecard';
+
+  @override
+  String get scorecardIntro =>
+      'Rate each criterion from 1 (poor) to 5 (excellent).';
+
+  @override
+  String get scorecardRateThis => 'Rate this from 1 to 5';
+
+  @override
+  String scorecardRatingOption(int rating) {
+    final intl.NumberFormat ratingNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String ratingString = ratingNumberFormat.format(rating);
+
+    return '$ratingString out of 5';
+  }
+
+  @override
+  String scorecardRating(int rating) {
+    final intl.NumberFormat ratingNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String ratingString = ratingNumberFormat.format(rating);
+
+    return '$ratingString / 5';
+  }
+
+  @override
+  String get scorecardRecommendation => 'Recommendation';
+
+  @override
+  String get scorecardChooseRecommendation => 'Choose a recommendation';
+
+  @override
+  String recommendationName(String value) {
+    String _temp0 = intl.Intl.selectLogic(value, {
+      'strong_no': 'Strong no',
+      'no': 'No',
+      'yes': 'Yes',
+      'strong_yes': 'Strong yes',
+      'other': 'Unknown',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get scorecardFeedback => 'Notes';
+
+  @override
+  String get scorecardFeedbackHint =>
+      'About the interview and the work. The candidate can ask for these notes to be erased.';
+
+  @override
+  String get scorecardSubmit => 'Submit scorecard';
+
+  @override
+  String get scorecardUpdate => 'Update scorecard';
+
+  @override
+  String get scorecardSubmitted => 'Scorecard submitted';
+
+  @override
+  String get scorecardUpdated => 'Scorecard updated';
+
+  @override
+  String get scorecardIncomplete =>
+      'Rate every criterion and choose a recommendation.';
+
+  @override
+  String scorecardSubmittedOn(String date) {
+    return 'Submitted $date';
+  }
+
+  @override
+  String get scorecardClosed =>
+      'This application is closed, so scorecards can no longer change.';
+
+  @override
+  String get scorecardCancelled => 'This interview was cancelled.';
+
+  @override
+  String get scorecardCriteriaChanged =>
+      'The criteria for this position have changed. Check your ratings and submit again.';
+
+  @override
+  String get scorecardOthersTitle => 'The other interviewers\' scorecards';
+
+  @override
+  String get scorecardOthersHidden =>
+      'You will see the other interviewers\' scorecards once you have submitted yours, so that yours is your own view.';
+
+  @override
+  String get scorecardOthersNone =>
+      'No one else has submitted a scorecard yet.';
 }

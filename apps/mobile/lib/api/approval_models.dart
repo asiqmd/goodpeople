@@ -4,9 +4,9 @@ part of 'api_models.dart';
 //
 // One inbox for everything waiting on the signed-in user. Each item says
 // what it approves in `subjectType`: a leave request, an attendance
-// correction (regularization), a resignation (separation) or a month's
-// project timesheet. The approve and reject calls are the same for all of
-// them.
+// correction (regularization), a resignation (separation), a month's
+// project timesheet, a job opening or an offer above its opening's budget.
+// The approve and reject calls are the same for all of them.
 
 /// What an approval step decides.
 enum ApprovalSubjectType implements WireValue {
@@ -14,6 +14,8 @@ enum ApprovalSubjectType implements WireValue {
   regularization('regularization'),
   separation('separation'),
   timesheet('timesheet'),
+  jobOpening('job_opening'),
+  offer('offer'),
   unknown('unknown');
 
   const ApprovalSubjectType(this.wire);
@@ -44,6 +46,8 @@ sealed class ApprovalItem {
       ),
       ApprovalSubjectType.separation => SeparationApprovalItem.fromJson(json),
       ApprovalSubjectType.timesheet => TimesheetApprovalItem.fromJson(json),
+      ApprovalSubjectType.jobOpening => OpeningApprovalItem.fromJson(json),
+      ApprovalSubjectType.offer => OfferApprovalItem.fromJson(json),
       ApprovalSubjectType.unknown => UnknownApprovalItem(
         stepId: _read<String>(json, 'stepId'),
         kind: ApprovalStepKind.fromWire(_read<String>(json, 'kind')),
@@ -143,6 +147,41 @@ final class TimesheetApprovalItem extends ApprovalItem {
   );
 
   final TimesheetSummary timesheet;
+}
+
+/// A job opening waiting for the signed-in user: the hiring manager's line
+/// manager, then HR. Approved, HR may post it.
+final class OpeningApprovalItem extends ApprovalItem {
+  const OpeningApprovalItem({
+    required super.stepId,
+    required super.kind,
+    required this.opening,
+  });
+
+  factory OpeningApprovalItem.fromJson(Json json) => OpeningApprovalItem(
+    stepId: _read<String>(json, 'stepId'),
+    kind: ApprovalStepKind.fromWire(_read<String>(json, 'kind')),
+    opening: OpeningApproval.fromJson(_read<Json>(json, 'opening')),
+  );
+
+  final OpeningApproval opening;
+}
+
+/// An offer above its opening's budget, waiting for HR before it is sent.
+final class OfferApprovalItem extends ApprovalItem {
+  const OfferApprovalItem({
+    required super.stepId,
+    required super.kind,
+    required this.offer,
+  });
+
+  factory OfferApprovalItem.fromJson(Json json) => OfferApprovalItem(
+    stepId: _read<String>(json, 'stepId'),
+    kind: ApprovalStepKind.fromWire(_read<String>(json, 'kind')),
+    offer: OfferApproval.fromJson(_read<Json>(json, 'offer')),
+  );
+
+  final OfferApproval offer;
 }
 
 /// An item whose `subjectType` this app does not know yet. It can be shown,

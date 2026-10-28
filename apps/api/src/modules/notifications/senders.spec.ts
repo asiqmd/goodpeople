@@ -43,4 +43,25 @@ describe('the log drivers', () => {
       Logger.overrideLogger(new AppLogger({ format: 'json', level: 'error', write: () => {} }));
     }
   });
+
+  it('log an attachment by its size, never its bytes', async () => {
+    const lines: string[] = [];
+    Logger.overrideLogger(
+      new AppLogger({ format: 'json', level: 'info', write: (line) => lines.push(line) }),
+    );
+    try {
+      const pdf = Buffer.from('%PDF-1.4 an accepted offer letter');
+      await new LogSender<EmailMessage>('email').send({
+        to: 'a@example.test',
+        subject: 'Your offer',
+        text: 'Attached.',
+        attachments: [{ filename: 'offer.pdf', content: pdf, contentType: 'application/pdf' }],
+      });
+      expect(lines[0]).toContain(`<${pdf.length} bytes>`);
+      expect(lines[0]).toContain('offer.pdf');
+      expect(lines[0]).not.toContain('"data"');
+    } finally {
+      Logger.overrideLogger(new AppLogger({ format: 'json', level: 'error', write: () => {} }));
+    }
+  });
 });

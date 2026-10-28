@@ -56,7 +56,8 @@ On a physical phone, use your computer's LAN address, for example
 | `lib/profile/` | My profile screen and `myEmployeeProvider` |
 | `lib/leave/` | Leave screen, one file per tab, and the leave providers |
 | `lib/attendance/` | Attendance screen, its tabs, the correction form, the providers, `LocationService` and `CameraService` |
-| `lib/approvals/` | The approvals inbox tab (leave, corrections, resignations and project timesheets) and `approvalsProvider`, shared by Leave and Attendance, and `ApprovalsScreen` for notifications |
+| `lib/approvals/` | The approvals inbox tab (leave, corrections, resignations, project timesheets, job openings and offers above budget) and `approvalsProvider`, shared by Leave and Attendance, and `ApprovalsScreen` for notifications |
+| `lib/interviews/` | My interviews, an interview with its scorecard, their providers and `LinkOpener` (video call links) |
 | `lib/notifications/` | The inbox screen and `notificationInboxProvider`, which screen each notification opens, and `PushService` (Firebase, or off) |
 | `lib/team/` | The Team screen and its providers |
 | `lib/account/` | Account and the change-password form |
@@ -117,7 +118,7 @@ has the `attendance` module. The screen has three tabs, plus Approvals:
 | Today | `GET /tenant/me/attendance/today`, `POST /tenant/me/attendance/punch` | The shift, the day's status, first in, last out, hours worked and the punches (with where each came from). One large Punch in / Punch out button, following `nextDirection`. When `selfPunch.blockedReason` is set (punching from the app is off, or the location has no geofence) the tab says why instead. The punch answers with the whole day, which replaces the shown one. |
 | This month | `GET /tenant/me/attendance?from=&to=` | The 1st of this month to today, newest day first, with the totals on top. Status chips, late, left-early and overtime badges, a "Correction: Pending" mark; weekly offs and holidays are muted. Tapping a day opens the correction form for it. |
 | Corrections | `GET /tenant/me/attendance/regularizations`, `POST` to the same path, `POST /tenant/attendance/regularizations/{id}/cancel` | The user's corrections with status, times and approval trail; Cancel (with a confirmation) for pending ones. **Request correction** opens a form: the day, a missed punch (in time, out time or both) or an on-duty day (no times), and a reason (3 to 500 characters). |
-| Approvals | as on Leave | The same inbox. A correction shows who asks, the day, the times asked for, the reason and the day as recorded now. A resignation shows who, the notice date and last working day, how many days the notice is short (when it is) and the reason. A project timesheet shows who, the month, the total hours and each project's hours and share of the month, with the planned share where there is one; rejecting it returns it to the employee to correct. An item of a kind this app does not know is listed without buttons, with a note to decide it on the web. |
+| Approvals | as on Leave | The same inbox. A correction shows who asks, the day, the times asked for, the reason and the day as recorded now. A resignation shows who, the notice date and last working day, how many days the notice is short (when it is) and the reason. A project timesheet shows who, the month, the total hours and each project's hours and share of the month, with the planned share where there is one; rejecting it returns it to the employee to correct. A job opening shows its title, company, unit, location and designation, how many positions of which employment type, new or replacing whom, the monthly gross budget, the hiring manager, why it is needed and this round's approval steps. An offer above budget shows the candidate, the opening, the company and designation, the monthly gross against the budget's top, the joining date and who drafted it. An item of a kind this app does not know is listed without buttons, with a note to decide it on the web. |
 
 Times (`firstIn`, `lastOut`, punches) are shown in the response's
 `timeZone`. Only fixed-offset zones are known without a time zone database
@@ -256,6 +257,30 @@ someone besides themselves (the API always includes the person). It lists
 each person's status, first in and lateness, with chips by status, and,
 with `leave`, who is on leave this week from `GET /tenant/leave/calendar`.
 
+Interviews (recruitment): the home screen shows **Interviews**, with a
+badge, while `GET /tenant/recruitment/me` counts interviews that need the
+user (to come, or over without their scorecard); only with the workspace's
+`recruitment` feature, and a 403 or 404 hides it. The list is
+`GET /tenant/interviews`: those to come, then past ones, each with the
+candidate, the position (the job post's title in the app's language), how
+and when, and whether the scorecard is in. An interview,
+`GET /tenant/interviews/{id}`, shows when (always in Bangladesh time, as
+interviews are scheduled), the place or phone note, the video link (**Join
+the video call** opens it outside the app through
+[url_launcher](https://pub.dev/packages/url_launcher)), HR's notes, the
+candidate's note and **Open the CV**
+(`GET /tenant/recruitment/applications/{applicationId}/cv`, a PDF or Word
+file, opened like a document). The scorecard takes a rating from 1 to 5 for
+each of the opening's criteria, a recommendation (strong no to strong yes)
+and notes; it is sent only once every criterion is rated and a
+recommendation chosen (`PUT /tenant/interviews/{id}/scorecard`), and can be
+updated until the application closes. The other interviewers' scorecards
+show once the user's is in. Refusals by `code`: `scorecard_criteria` (the
+criteria changed), `application_closed` and `interview_cancelled`; each
+reloads the interview. A `recruitment.interview` notification opens the
+list. The interviewer's view has no panel list in the API yet; the page
+shows one when the API sends `panel`.
+
 Account: `GET /account` (name, email, mobile, role, two-step sign-in) and,
 for logins with a password, **Change password**
 (`POST /account/password`, at least 10 characters, with this session's
@@ -304,7 +329,9 @@ Leave, attendance, document and resignation tests also override
 soon" are fixed. Attendance tests replace the GPS with `FakeLocationService`
 (`locationServiceProvider`) and the camera with `FakeCameraService`
 (`cameraServiceProvider`); document tests replace the phone's viewer with
-`FakeFileOpener` (`fileOpenerProvider`). `test/api_client_test.dart` runs the
+`FakeFileOpener` (`fileOpenerProvider`), and interview tests replace the
+browser with `FakeLinkOpener` (`linkOpenerProvider`); recruitment fixtures
+are in `test/support/recruitment_fixtures.dart`. `test/api_client_test.dart` runs the
 real dio client against stub adapters that return the contract's JSON, or a
 file's bytes and headers.
 

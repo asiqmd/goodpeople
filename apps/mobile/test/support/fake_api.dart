@@ -12,6 +12,7 @@ import 'package:good_people/attendance/camera_service.dart';
 import 'package:good_people/attendance/location_service.dart';
 import 'package:good_people/attendance/offline_punch_queue.dart';
 import 'package:good_people/documents/file_opener.dart';
+import 'package:good_people/interviews/link_opener.dart';
 import 'package:good_people/notifications/push_service.dart';
 import 'package:good_people/timesheets/offline_timesheet_queue.dart';
 
@@ -19,12 +20,14 @@ import 'attendance_fixtures.dart';
 import 'leave_fixtures.dart';
 import 'lifecycle_fixtures.dart';
 import 'payroll_fixtures.dart';
+import 'recruitment_fixtures.dart';
 import 'timesheet_fixtures.dart';
 
 export 'attendance_fixtures.dart';
 export 'leave_fixtures.dart';
 export 'lifecycle_fixtures.dart';
 export 'payroll_fixtures.dart';
+export 'recruitment_fixtures.dart';
 export 'timesheet_fixtures.dart';
 
 /// `POST /auth/login` 200 body, exactly as the API contract shapes it.
@@ -1301,6 +1304,120 @@ class FakeGoodPeopleApi implements GoodPeopleApi {
       'submittedAt': '2026-11-02T04:00:00.000Z',
     };
     return Timesheet.fromJson(sheet);
+  }
+
+  // ── Recruitment ───────────────────────────────────────────────────────────
+
+  /// Answered by [fetchRecruitmentMe], or thrown when it is an exception.
+  Object recruitmentMe = recruitmentMeJson();
+  var recruitmentMeCalls = 0;
+
+  Json myInterviews = myInterviewsJson();
+  var myInterviewsCalls = 0;
+
+  /// Each interview's detail by id; any other id gets a 404.
+  final interviewDetails = <String, Json>{
+    upcomingInterviewId: interviewDetailJson(),
+  };
+  final interviewDetailCalls = <String>[];
+
+  /// Thrown by [submitScorecard] instead of saving, while set.
+  Exception? scorecardError;
+
+  /// Each scorecard sent, as JSON, by interview id.
+  final scorecards = <({String interviewId, Json body})>[];
+
+  /// The other interviewers' scorecards an interview shows once the
+  /// login's is in.
+  List<Json> othersAfterScorecard = [shirinScorecardJson()];
+
+  /// Answered by [downloadApplicationCv], or thrown when it is an
+  /// exception.
+  Object cv = FileDownload(
+    bytes: Uint8List.fromList(utf8.encode('%PDF-1.7 Farhana')),
+    contentType: 'application/pdf',
+    fileName: 'Farhana Yasmin CV.pdf',
+  );
+  final cvDownloads = <String>[];
+
+  @override
+  Future<RecruitmentMe> fetchRecruitmentMe(String accessToken) async {
+    recruitmentMeCalls++;
+    return switch (recruitmentMe) {
+      final Json json => RecruitmentMe.fromJson(json),
+      final Object error => throw error,
+    };
+  }
+
+  @override
+  Future<MyInterviews> fetchMyInterviews(String accessToken) async {
+    myInterviewsCalls++;
+    return MyInterviews.fromJson(myInterviews);
+  }
+
+  Json _interview(String id) =>
+      interviewDetails[id] ??
+      (throw const ApiException(
+        kind: ApiErrorKind.server,
+        statusCode: 404,
+        message: 'interview not found',
+      ));
+
+  @override
+  Future<MyInterviewDetail> fetchMyInterview(
+    String accessToken,
+    String interviewId,
+  ) async {
+    interviewDetailCalls.add(interviewId);
+    return MyInterviewDetail.fromJson(_interview(interviewId));
+  }
+
+  @override
+  Future<MyInterviewDetail> submitScorecard(
+    String accessToken,
+    String interviewId,
+    ScorecardDraft draft,
+  ) async {
+    final body = jsonDecode(jsonEncode(draft.toJson())) as Json;
+    scorecards.add((interviewId: interviewId, body: body));
+    if (scorecardError case final error?) throw error;
+    final detail = _interview(interviewId);
+    final mine = detail['mine'] as Json?;
+    final saved = interviewDetails[interviewId] = {
+      ...detail,
+      'submitted': true,
+      'mine': {
+        ...body,
+        'submittedAt': mine?['submittedAt'] ?? '2026-10-29T05:45:00.000Z',
+      },
+      'others': othersAfterScorecard,
+    };
+    return MyInterviewDetail.fromJson(saved);
+  }
+
+  @override
+  Future<FileDownload> downloadApplicationCv(
+    String accessToken,
+    String applicationId,
+  ) async {
+    cvDownloads.add(applicationId);
+    return switch (cv) {
+      final FileDownload file => file,
+      final Object error => throw error,
+    };
+  }
+}
+
+/// A [LinkOpener] with no browser: records the links it was asked to open.
+class FakeLinkOpener implements LinkOpener {
+  /// What [open] answers.
+  bool result = true;
+  final opened = <Uri>[];
+
+  @override
+  Future<bool> open(Uri uri) async {
+    opened.add(uri);
+    return result;
   }
 }
 

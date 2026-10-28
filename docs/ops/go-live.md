@@ -238,6 +238,25 @@ Before a customer's workspace relies on Good People (their admin, our Support):
       as a banner in the workspace.
 - [ ] The billing contact's email is right, because invoices and support replies go there.
 
+## 10. Recruitment (Phase 4)
+
+Before a company hires through Good People (HR, its counsel):
+
+- [ ] **Careers page settings:** the introduction in both languages, the retention period
+      (12 months unless the company's policy says otherwise), and a privacy contact address
+      someone reads. Counsel checks that the consent text on the apply form matches the
+      company's privacy notice.
+- [ ] **Hiring managers and interviewers** have logins and an employee record, so they are
+      on approvals, panels and scorecards. Their own line managers are set, since openings go
+      to them for approval before HR.
+- [ ] **Scorecard criteria** agreed per kind of job, so interviewers rate the same things.
+- [ ] **Offer letters:** each company's legal name and address are right (Organization), and
+      HR has read an English and a Bangla offer letter before the first one is sent.
+- [ ] **Salary structures** that work from a gross amount exist for the jobs hired into, so
+      the offered pay is proposed in payroll at hire.
+- [ ] The appointment letter template (Letters) is ready for the joining day, as the Labour
+      Act requires (s.5); the accepted offer does not replace it.
+
 ## If it goes wrong
 
 The old register stays readable and can be reopened for new entries. Going back is a

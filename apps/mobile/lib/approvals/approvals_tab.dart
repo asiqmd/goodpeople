@@ -13,7 +13,8 @@ import '../ui/theme.dart';
 import 'approvals_providers.dart';
 
 /// Other people's leave, attendance corrections, resignations and project
-/// timesheets waiting for the signed-in user's decision. The Leave and
+/// timesheets, job openings and offers above budget waiting for the
+/// signed-in user's decision. The Leave and
 /// Attendance screens both show it, since it is one inbox.
 class ApprovalsTab extends ConsumerWidget {
   const ApprovalsTab({super.key});
@@ -104,6 +105,14 @@ class _ApprovalCardState extends ConsumerState<_ApprovalCard> {
         approve
             ? (l10n.approveTimesheetTitle, l10n.timesheetApproved)
             : (l10n.rejectTimesheetTitle, l10n.timesheetRejected),
+      OpeningApprovalItem() =>
+        approve
+            ? (l10n.approveOpeningTitle, l10n.openingApproved)
+            : (l10n.rejectOpeningTitle, l10n.openingRejected),
+      OfferApprovalItem() =>
+        approve
+            ? (l10n.approveOfferTitle, l10n.offerApproved)
+            : (l10n.rejectOfferTitle, l10n.offerRejected),
       // Never decided here: an unknown item has no buttons.
       UnknownApprovalItem() =>
         approve ? (l10n.approve, l10n.approve) : (l10n.reject, l10n.reject),
@@ -149,6 +158,8 @@ class _ApprovalCardState extends ConsumerState<_ApprovalCard> {
       RegularizationApprovalItem() => _correctionDetails(context, item),
       SeparationApprovalItem() => _separationDetails(context, item),
       TimesheetApprovalItem() => _timesheetDetails(context, item),
+      OpeningApprovalItem() => _openingDetails(context, item),
+      OfferApprovalItem() => _offerDetails(context, item),
       UnknownApprovalItem() => [
         _header(context),
         Text(
@@ -447,7 +458,139 @@ class _ApprovalCardState extends ConsumerState<_ApprovalCard> {
         ),
     ];
   }
+
+  List<Widget> _openingDetails(BuildContext context, OpeningApprovalItem item) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final opening = item.opening;
+    final steps = opening.currentSteps;
+    final where = [
+      opening.orgUnit,
+      opening.location,
+      opening.designation,
+      opening.grade,
+    ].nonNulls.map((ref) => ref.name).join(' · ');
+    final budget = budgetRangeText(l10n, opening.budgetMin, opening.budgetMax);
+
+    return [
+      _header(context, name: opening.title),
+      Text(
+        '${l10n.approvalOpeningTitle} · ${opening.legalEntity.name}',
+        style: theme.textTheme.titleSmall,
+      ),
+      if (where.isNotEmpty) Text(where, style: theme.textTheme.bodyMedium),
+      Text(
+        l10n.approvalOpeningPositions(
+          opening.headcount,
+          l10n.employmentTypeName(opening.employmentType.wire),
+        ),
+        style: theme.textTheme.bodyMedium,
+      ),
+      Text(switch (opening.replaces) {
+        final EmployeeRef person
+            when opening.reason == OpeningReason.replacement =>
+          l10n.approvalOpeningReplaces(
+            localizedName(l10n, person.fullName, person.fullNameBn),
+          ),
+        _ => l10n.approvalOpeningNew,
+      }, style: theme.textTheme.bodyMedium),
+      if (budget != null) LeaveFact(label: l10n.approvalBudget, value: budget),
+      if (opening.hiringManager case final manager?)
+        LeaveFact(
+          label: l10n.approvalHiringManager,
+          value: localizedName(l10n, manager.fullName, manager.fullNameBn),
+        ),
+      if (opening.justification case final why? when why.isNotEmpty)
+        MergeSemantics(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.approvalJustification,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+              Text(
+                why,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+      if (steps.length > 1) ...[
+        const Divider(height: 8),
+        ApprovalTrail(steps: steps),
+      ],
+    ];
+  }
+
+  List<Widget> _offerDetails(BuildContext context, OfferApprovalItem item) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final offer = item.offer;
+    final job = [
+      localizedName(l10n, offer.legalEntity.name, offer.legalEntity.nameBn),
+      if (offer.designation case final designation?)
+        localizedName(l10n, designation.name, designation.nameBn),
+      l10n.employmentTypeName(offer.employmentType.wire),
+    ].join(' · ');
+    final pay = formatTaka(l10n, offer.monthlyGross);
+
+    return [
+      _header(context, name: offer.candidateName),
+      Text(
+        '${l10n.approvalOfferTitle} · ${offer.openingTitle}',
+        style: theme.textTheme.titleSmall,
+      ),
+      Text(job, style: theme.textTheme.bodyMedium),
+      LeaveFact(
+        label: l10n.approvalOfferPay,
+        value: switch (offer.budgetMax) {
+          final String budget => l10n.approvalOfferAgainstBudget(
+            pay,
+            formatTaka(l10n, budget),
+          ),
+          null => pay,
+        },
+      ),
+      LeaveFact(
+        label: l10n.approvalOfferJoining,
+        value: formatDate(l10n, offer.joiningOn),
+      ),
+      if (offer.createdBy case final name? when name.isNotEmpty)
+        Text(
+          l10n.approvalOfferDraftedBy(name),
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: scheme.onSurfaceVariant,
+          ),
+        ),
+      if (offer.steps.length > 1) ...[
+        const Divider(height: 8),
+        ApprovalTrail(steps: offer.steps),
+      ],
+    ];
+  }
 }
+
+/// An opening's monthly gross budget in taka: `৳30,000 – ৳40,000`, or one
+/// end of it; `null` when it has none.
+String? budgetRangeText(
+  AppLocalizations l10n,
+  String? min,
+  String? max,
+) => switch ((min, max)) {
+  (final String min, final String max) when min == max => formatTaka(l10n, max),
+  (final String min, final String max) =>
+    '${formatTaka(l10n, min)} – ${formatTaka(l10n, max)}',
+  (null, final String max) => l10n.approvalBudgetUpTo(formatTaka(l10n, max)),
+  (final String min, null) => l10n.approvalBudgetFrom(formatTaka(l10n, min)),
+  (null, null) => null,
+};
 
 /// Confirms a decision and takes an optional comment. Pops the trimmed
 /// comment (empty for none), or `null` when dismissed.

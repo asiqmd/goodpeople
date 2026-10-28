@@ -7,6 +7,8 @@ import { LeaveModule } from '../leave/leave.module.js';
 import { LifecycleModule } from '../lifecycle/lifecycle.module.js';
 import { PayrollModule } from '../payroll/payroll.module.js';
 import { TimesheetsModule } from '../timesheets/timesheets.module.js';
+import { RecruitmentModule } from '../recruitment/recruitment.module.js';
+import { OffersModule } from '../offers/offers.module.js';
 import { ApprovalsController } from './approvals.controller.js';
 import { ApprovalsService } from './approvals.service.js';
 
@@ -19,6 +21,8 @@ import { ApprovalsService } from './approvals.service.js';
     LifecycleModule,
     PayrollModule,
     TimesheetsModule,
+    RecruitmentModule,
+    OffersModule,
   ],
   controllers: [ApprovalsController],
   providers: [ApprovalsService, TenantRolesGuard],

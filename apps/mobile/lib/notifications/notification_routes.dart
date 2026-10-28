@@ -4,6 +4,7 @@ import '../api/api_models.dart';
 import '../approvals/approvals_screen.dart';
 import '../attendance/attendance_screen.dart';
 import '../documents/documents_screen.dart';
+import '../interviews/interviews_screen.dart';
 import '../leave/leave_screen.dart';
 import '../payslips/my_pay_screen.dart';
 import '../profile/profile_screen.dart';
@@ -38,6 +39,7 @@ Route<void>? notificationRoute(NotificationEvent event, String? link) =>
       NotificationEvent.timesheetDue => TimesheetScreen.route(
         month: _monthIn(link ?? ''),
       ),
+      NotificationEvent.recruitmentInterview => InterviewsScreen.route(),
       NotificationEvent.probationEnding || NotificationEvent.unknown => null,
     };
 

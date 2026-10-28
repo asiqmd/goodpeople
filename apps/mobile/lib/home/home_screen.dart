@@ -7,6 +7,8 @@ import '../attendance/attendance_screen.dart';
 import '../attendance/offline_punch_queue.dart';
 import '../auth/auth_controller.dart';
 import '../documents/documents_screen.dart';
+import '../interviews/interview_providers.dart';
+import '../interviews/interviews_screen.dart';
 import '../l10n/app_localizations.dart';
 import '../leave/leave_screen.dart';
 import '../notifications/inbox_screen.dart';
@@ -38,6 +40,8 @@ class HomeScreen extends ConsumerWidget {
   static const myPayKey = ValueKey('home-my-pay');
   static const teamKey = ValueKey('home-team');
   static const timesheetKey = ValueKey('home-timesheet');
+  static const interviewsKey = ValueKey('home-interviews');
+  static const interviewsBadgeKey = ValueKey('home-interviews-badge');
   static const accountKey = ValueKey('home-account');
   static const inboxKey = ValueKey('home-inbox');
   static const inboxBadgeKey = ValueKey('home-inbox-badge');
@@ -117,6 +121,7 @@ class _AccessDetails extends ConsumerWidget {
     final theme = Theme.of(context);
     final tenant = view.tenant;
     final hasTeam = ref.watch(hasTeamProvider);
+    final interviewsToDo = ref.watch(interviewsToDoProvider).value ?? 0;
     final refusedPunches = ref
         .watch(offlinePunchQueueProvider)
         .refusedFor(user.id);
@@ -223,6 +228,29 @@ class _AccessDetails extends ConsumerWidget {
             title: l10n.timesheetTitle,
             subtitle: l10n.timesheetSubtitle,
             onTap: () => Navigator.of(context).push(TimesheetScreen.route()),
+          ),
+        ],
+        // Interviewers, while an interview needs them (recruitment).
+        if (interviewsToDo > 0) ...[
+          const SizedBox(height: 12),
+          _ShortcutCard(
+            key: HomeScreen.interviewsKey,
+            icon: Icons.record_voice_over_outlined,
+            title: l10n.interviewsTitle,
+            subtitle: l10n.interviewsSubtitle,
+            badge: Semantics(
+              label: l10n.interviewsToDo(interviewsToDo),
+              excludeSemantics: true,
+              child: Badge(
+                key: HomeScreen.interviewsBadgeKey,
+                label: Text(
+                  interviewsToDo > 99
+                      ? '99+'
+                      : formatNumber(l10n, interviewsToDo),
+                ),
+              ),
+            ),
+            onTap: () => Navigator.of(context).push(InterviewsScreen.route()),
           ),
         ],
         if (view.access.hasFeature('payroll')) ...[
@@ -364,8 +392,8 @@ class _ModuleTile extends StatelessWidget {
 }
 
 /// A tappable card on the home screen that opens a section, such as My
-/// profile, Leave, Attendance, My documents, Timesheet, My pay, Team or
-/// Account.
+/// profile, Leave, Attendance, My documents, Timesheet, Interviews, My pay,
+/// Team or Account.
 class _ShortcutCard extends StatelessWidget {
   const _ShortcutCard({
     super.key,
@@ -373,12 +401,16 @@ class _ShortcutCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.onTap,
+    this.badge,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
+
+  /// Shown before the chevron, such as how many items need the user.
+  final Widget? badge;
 
   @override
   Widget build(BuildContext context) {
@@ -418,6 +450,10 @@ class _ShortcutCard extends StatelessWidget {
                     ],
                   ),
                 ),
+                if (badge case final badge?) ...[
+                  const SizedBox(width: 8),
+                  badge,
+                ],
                 Icon(Icons.chevron_right, color: scheme.onSecondaryContainer),
               ],
             ),

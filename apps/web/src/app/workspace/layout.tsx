@@ -3,6 +3,7 @@ import {
   isStaffRole,
   type NotificationInbox,
   type Permission,
+  type RecruitmentMe,
   type TenantAccessView,
 } from '@gp/shared';
 import { getTranslations } from 'next-intl/server';
@@ -46,14 +47,18 @@ export default async function WorkspaceLayout({ children }: LayoutProps<'/worksp
   const hasProduction = result.ok && result.data.access.features.includes('production');
   const hasProjects = result.ok && result.data.access.features.includes('projects');
   const hasGroup = result.ok && result.data.access.features.includes('multi_entity');
+  const hasRecruitment = result.ok && result.data.access.features.includes('recruitment');
   // Resignations need approval in every workspace; leave and corrections where enabled.
-  const [approvals, inbox] = result.ok
+  const [approvals, inbox, hiring] = result.ok
     ? await Promise.all([
         authedFetch<{ count: number }>('tenant', '/tenant/approvals/count'),
         authedFetch<NotificationInbox>('tenant', '/tenant/notifications?unread=true'),
+        // Hiring managers and interviewers find recruitment whatever their role.
+        hasRecruitment ? authedFetch<RecruitmentMe>('tenant', '/tenant/recruitment/me') : null,
       ])
-    : [null, null];
+    : [null, null, null];
   const waiting = approvals?.ok ? approvals.data.count : 0;
+  const recruitment = hiring?.ok ? hiring.data : null;
   // Complaint committee members hear harassment cases whatever their role (s.332A).
   const handlesGrievances =
     may('grievances.manage') ||
@@ -123,6 +128,25 @@ export default async function WorkspaceLayout({ children }: LayoutProps<'/worksp
       ? [{ href: '/workspace/compliance', label: tw('compliance') }]
       : []),
     ...(handlesGrievances ? [{ href: '/workspace/grievances', label: tw('grievances') }] : []),
+    ...(recruitment && (recruitment.manage || recruitment.hiringManager)
+      ? [
+          {
+            href: '/workspace/recruitment',
+            label: tw('recruitment'),
+            match: ['/workspace/recruitment'],
+          },
+        ]
+      : []),
+    ...(recruitment && recruitment.interviews > 0
+      ? [
+          {
+            href: '/workspace/interviews',
+            label: tw('interviews'),
+            badge: recruitment.interviews,
+            match: ['/workspace/interviews'],
+          },
+        ]
+      : []),
     ...(may('users.manage') ? [{ href: '/workspace/users', label: tw('users') }] : []),
     ...(may('billing.manage') ? [{ href: '/workspace/billing', label: tw('billing') }] : []),
     ...(may('org.manage') ? [{ href: '/workspace/setup', label: tw('setup') }] : []),

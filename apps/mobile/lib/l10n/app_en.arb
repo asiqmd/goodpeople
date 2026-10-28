@@ -1744,5 +1744,213 @@
   "timesheetRejected": "Timesheet returned for correction",
   "@timesheetRejected": {
     "description": "After a manager rejects a timesheet: it goes back to the employee to correct and submit again."
-  }
+  },
+  "approvalOpeningTitle": "Job opening",
+  "@approvalOpeningTitle": {
+    "description": "An opening to fill in the approvals inbox, followed by its company, as in \"Job opening · My Group Textiles Ltd\"."
+  },
+  "approvalOpeningPositions": "{count, plural, one{{count} position} other{{count} positions}}, {type}",
+  "@approvalOpeningPositions": {
+    "description": "How many people an opening is for, and the employment type.",
+    "placeholders": {
+      "count": {
+        "type": "num",
+        "format": "decimalPattern",
+        "example": "2"
+      },
+      "type": {
+        "type": "String",
+        "example": "Permanent"
+      }
+    }
+  },
+  "approvalOpeningNew": "New position",
+  "approvalOpeningReplaces": "Replaces {name}",
+  "@approvalOpeningReplaces": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Shirin Akter"
+      }
+    }
+  },
+  "approvalBudget": "Monthly gross budget",
+  "approvalBudgetUpTo": "Up to {amount}",
+  "@approvalBudgetUpTo": {
+    "placeholders": {
+      "amount": {
+        "type": "String",
+        "example": "৳40,000"
+      }
+    }
+  },
+  "approvalBudgetFrom": "From {amount}",
+  "@approvalBudgetFrom": {
+    "placeholders": {
+      "amount": {
+        "type": "String",
+        "example": "৳30,000"
+      }
+    }
+  },
+  "approvalHiringManager": "Hiring manager",
+  "approvalJustification": "Why it is needed",
+  "approveOpeningTitle": "Approve this job opening?",
+  "rejectOpeningTitle": "Reject this job opening?",
+  "openingApproved": "Job opening approved",
+  "openingRejected": "Job opening rejected",
+  "approvalOfferTitle": "Offer above budget",
+  "@approvalOfferTitle": {
+    "description": "An offer to a candidate whose pay is above the opening's budget, in the approvals inbox, followed by the opening, as in \"Offer above budget · Line supervisor\"."
+  },
+  "approvalOfferPay": "Monthly gross",
+  "approvalOfferAgainstBudget": "{amount} · budget up to {budget}",
+  "@approvalOfferAgainstBudget": {
+    "placeholders": {
+      "amount": {
+        "type": "String",
+        "example": "৳65,000"
+      },
+      "budget": {
+        "type": "String",
+        "example": "৳60,000"
+      }
+    }
+  },
+  "approvalOfferJoining": "Joining",
+  "approvalOfferDraftedBy": "Drafted by {name}",
+  "@approvalOfferDraftedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Nasrin Sultana"
+      }
+    }
+  },
+  "approveOfferTitle": "Approve this offer?",
+  "rejectOfferTitle": "Reject this offer?",
+  "offerApproved": "Offer approved. HR can send it now.",
+  "offerRejected": "Offer rejected",
+  "interviewsTitle": "Interviews",
+  "interviewsSubtitle": "The candidates you interview, their CVs and your scorecards",
+  "interviewsToDo": "{count, plural, one{{count} interview needs you} other{{count} interviews need you}}",
+  "@interviewsToDo": {
+    "description": "Read out for the badge on the home screen's Interviews card.",
+    "placeholders": {
+      "count": {
+        "type": "num",
+        "format": "decimalPattern",
+        "example": "2"
+      }
+    }
+  },
+  "myInterviewsTitle": "My interviews",
+  "interviewsUpcoming": "Coming up",
+  "interviewsPast": "Past",
+  "interviewsNoUpcoming": "No interviews coming up.",
+  "interviewsNoPast": "None yet.",
+  "interviewsLoadFailed": "We could not load your interviews.",
+  "interviewKindName": "{kind, select, in_person{In person} phone{By phone} video{By video} other{Interview}}",
+  "@interviewKindName": {
+    "description": "How an interview is held.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "interviewStatusName": "{status, select, scheduled{Scheduled} completed{Completed} cancelled{Cancelled} other{Unknown}}",
+  "@interviewStatusName": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "interviewScorecardIn": "Scorecard in",
+  "interviewScorecardToDo": "Scorecard to do",
+  "interviewForOpening": "For {title}",
+  "@interviewForOpening": {
+    "description": "The position a candidate is interviewed for.",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "example": "Line supervisor"
+      }
+    }
+  },
+  "interviewTitle": "Interview",
+  "interviewLoadFailed": "We could not load this interview.",
+  "interviewGone": "You are no longer on this interview's panel.",
+  "interviewWhen": "When (Bangladesh time)",
+  "interviewPlace": "Place",
+  "interviewPhoneNote": "Phone note",
+  "interviewMeetingLink": "Meeting link",
+  "interviewJoinCall": "Join the video call",
+  "interviewLinkFailed": "The link could not be opened.",
+  "interviewHrNotes": "From HR",
+  "interviewCoverNote": "The candidate's note",
+  "interviewOpenCv": "Open the CV",
+  "interviewNoCv": "No CV",
+  "interviewCvGone": "The CV is no longer available.",
+  "interviewCvNoApp": "No app on this phone can open this CV. Install a PDF or Word reader and try again.",
+  "interviewPanel": "Panel",
+  "scorecardTitle": "Your scorecard",
+  "scorecardIntro": "Rate each criterion from 1 (poor) to 5 (excellent).",
+  "scorecardRateThis": "Rate this from 1 to 5",
+  "scorecardRatingOption": "{rating} out of 5",
+  "@scorecardRatingOption": {
+    "description": "Read out for each rating button.",
+    "placeholders": {
+      "rating": {
+        "type": "int",
+        "format": "decimalPattern",
+        "example": "4"
+      }
+    }
+  },
+  "scorecardRating": "{rating} / 5",
+  "@scorecardRating": {
+    "description": "A criterion's rating on a submitted scorecard.",
+    "placeholders": {
+      "rating": {
+        "type": "int",
+        "format": "decimalPattern",
+        "example": "4"
+      }
+    }
+  },
+  "scorecardRecommendation": "Recommendation",
+  "scorecardChooseRecommendation": "Choose a recommendation",
+  "recommendationName": "{value, select, strong_no{Strong no} no{No} yes{Yes} strong_yes{Strong yes} other{Unknown}}",
+  "@recommendationName": {
+    "description": "An interviewer's recommendation on a candidate.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "scorecardFeedback": "Notes",
+  "scorecardFeedbackHint": "About the interview and the work. The candidate can ask for these notes to be erased.",
+  "scorecardSubmit": "Submit scorecard",
+  "scorecardUpdate": "Update scorecard",
+  "scorecardSubmitted": "Scorecard submitted",
+  "scorecardUpdated": "Scorecard updated",
+  "scorecardIncomplete": "Rate every criterion and choose a recommendation.",
+  "scorecardSubmittedOn": "Submitted {date}",
+  "@scorecardSubmittedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "Oct 29, 2026"
+      }
+    }
+  },
+  "scorecardClosed": "This application is closed, so scorecards can no longer change.",
+  "scorecardCancelled": "This interview was cancelled.",
+  "scorecardCriteriaChanged": "The criteria for this position have changed. Check your ratings and submit again.",
+  "scorecardOthersTitle": "The other interviewers' scorecards",
+  "scorecardOthersHidden": "You will see the other interviewers' scorecards once you have submitted yours, so that yours is your own view.",
+  "scorecardOthersNone": "No one else has submitted a scorecard yet."
 }

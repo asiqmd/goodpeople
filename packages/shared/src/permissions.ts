@@ -43,6 +43,8 @@ export const PERMISSIONS = [
   'projects.manage',
   /** Every support ticket the workspace has raised, and letting Good People support in. */
   'support.manage',
+  /** Openings, the careers page, every candidate and interview, and offers. */
+  'recruitment.manage',
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
@@ -64,6 +66,7 @@ export const ROLE_PERMISSIONS: Record<TenantRole, readonly Permission[]> = {
     'imports.run',
     'approvals.hr',
     'compliance.manage',
+    'recruitment.manage',
   ],
   attendance_officer: ['employees.read', 'attendance.manage', 'production.manage'],
   payroll_officer: [

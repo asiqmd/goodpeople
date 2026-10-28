@@ -181,6 +181,7 @@ class _InboxTile extends ConsumerWidget {
     NotificationEvent.payslipPublished => Icons.receipt_long_outlined,
     NotificationEvent.probationEnding => Icons.badge_outlined,
     NotificationEvent.timesheetDue => Icons.timer_outlined,
+    NotificationEvent.recruitmentInterview => Icons.record_voice_over_outlined,
     NotificationEvent.unknown => Icons.notifications_none,
   };
 }

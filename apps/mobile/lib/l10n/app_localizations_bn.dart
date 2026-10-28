@@ -2313,4 +2313,308 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get timesheetRejected => 'টাইমশিট সংশোধনের জন্য ফেরত পাঠানো হয়েছে';
+
+  @override
+  String get approvalOpeningTitle => 'নিয়োগের পদ';
+
+  @override
+  String approvalOpeningPositions(num count, String type) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countStringটি পদ',
+    );
+    return '$_temp0, $type';
+  }
+
+  @override
+  String get approvalOpeningNew => 'নতুন পদ';
+
+  @override
+  String approvalOpeningReplaces(String name) {
+    return '$name-এর স্থলে';
+  }
+
+  @override
+  String get approvalBudget => 'মাসিক মোট বেতনের বাজেট';
+
+  @override
+  String approvalBudgetUpTo(String amount) {
+    return 'সর্বোচ্চ $amount';
+  }
+
+  @override
+  String approvalBudgetFrom(String amount) {
+    return 'অন্তত $amount';
+  }
+
+  @override
+  String get approvalHiringManager => 'নিয়োগকারী ব্যবস্থাপক';
+
+  @override
+  String get approvalJustification => 'কেন প্রয়োজন';
+
+  @override
+  String get approveOpeningTitle => 'এই পদটি অনুমোদন করবেন?';
+
+  @override
+  String get rejectOpeningTitle => 'এই পদটি প্রত্যাখ্যান করবেন?';
+
+  @override
+  String get openingApproved => 'পদটি অনুমোদন করা হয়েছে';
+
+  @override
+  String get openingRejected => 'পদটি প্রত্যাখ্যান করা হয়েছে';
+
+  @override
+  String get approvalOfferTitle => 'বাজেটের বেশি নিয়োগ প্রস্তাব';
+
+  @override
+  String get approvalOfferPay => 'মাসিক মোট বেতন';
+
+  @override
+  String approvalOfferAgainstBudget(String amount, String budget) {
+    return '$amount · বাজেট সর্বোচ্চ $budget';
+  }
+
+  @override
+  String get approvalOfferJoining => 'যোগদান';
+
+  @override
+  String approvalOfferDraftedBy(String name) {
+    return 'খসড়া করেছেন $name';
+  }
+
+  @override
+  String get approveOfferTitle => 'এই নিয়োগ প্রস্তাব অনুমোদন করবেন?';
+
+  @override
+  String get rejectOfferTitle => 'এই নিয়োগ প্রস্তাব প্রত্যাখ্যান করবেন?';
+
+  @override
+  String get offerApproved =>
+      'নিয়োগ প্রস্তাব অনুমোদিত। এইচআর এখন এটি পাঠাতে পারবে।';
+
+  @override
+  String get offerRejected => 'নিয়োগ প্রস্তাব প্রত্যাখ্যান করা হয়েছে';
+
+  @override
+  String get interviewsTitle => 'সাক্ষাৎকার';
+
+  @override
+  String get interviewsSubtitle =>
+      'যাঁদের সাক্ষাৎকার নেবেন, তাঁদের সিভি ও আপনার স্কোরকার্ড';
+
+  @override
+  String interviewsToDo(num count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countStringটি সাক্ষাৎকারে আপনাকে প্রয়োজন',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get myInterviewsTitle => 'আমার সাক্ষাৎকার';
+
+  @override
+  String get interviewsUpcoming => 'সামনে';
+
+  @override
+  String get interviewsPast => 'আগের';
+
+  @override
+  String get interviewsNoUpcoming => 'সামনে কোনো সাক্ষাৎকার নেই।';
+
+  @override
+  String get interviewsNoPast => 'এখনো নেই।';
+
+  @override
+  String get interviewsLoadFailed => 'আপনার সাক্ষাৎকারগুলো লোড করা যায়নি।';
+
+  @override
+  String interviewKindName(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'in_person': 'সরাসরি',
+      'phone': 'ফোনে',
+      'video': 'ভিডিওতে',
+      'other': 'সাক্ষাৎকার',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String interviewStatusName(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'scheduled': 'নির্ধারিত',
+      'completed': 'সম্পন্ন',
+      'cancelled': 'বাতিল',
+      'other': 'অজানা',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get interviewScorecardIn => 'স্কোরকার্ড জমা হয়েছে';
+
+  @override
+  String get interviewScorecardToDo => 'স্কোরকার্ড বাকি';
+
+  @override
+  String interviewForOpening(String title) {
+    return '$title পদের জন্য';
+  }
+
+  @override
+  String get interviewTitle => 'সাক্ষাৎকার';
+
+  @override
+  String get interviewLoadFailed => 'এই সাক্ষাৎকারটি লোড করা যায়নি।';
+
+  @override
+  String get interviewGone => 'আপনি আর এই সাক্ষাৎকারের প্যানেলে নেই।';
+
+  @override
+  String get interviewWhen => 'সময় (বাংলাদেশ সময়)';
+
+  @override
+  String get interviewPlace => 'স্থান';
+
+  @override
+  String get interviewPhoneNote => 'ফোনের নোট';
+
+  @override
+  String get interviewMeetingLink => 'মিটিংয়ের লিংক';
+
+  @override
+  String get interviewJoinCall => 'ভিডিও কলে যোগ দিন';
+
+  @override
+  String get interviewLinkFailed => 'লিংকটি খোলা যায়নি।';
+
+  @override
+  String get interviewHrNotes => 'এইচআরের নোট';
+
+  @override
+  String get interviewCoverNote => 'প্রার্থীর বার্তা';
+
+  @override
+  String get interviewOpenCv => 'সিভি খুলুন';
+
+  @override
+  String get interviewNoCv => 'সিভি নেই';
+
+  @override
+  String get interviewCvGone => 'সিভিটি আর পাওয়া যাচ্ছে না।';
+
+  @override
+  String get interviewCvNoApp =>
+      'এই ফোনের কোনো অ্যাপ সিভিটি খুলতে পারছে না। একটি পিডিএফ বা ওয়ার্ড রিডার ইনস্টল করে আবার চেষ্টা করুন।';
+
+  @override
+  String get interviewPanel => 'প্যানেল';
+
+  @override
+  String get scorecardTitle => 'আপনার স্কোরকার্ড';
+
+  @override
+  String get scorecardIntro =>
+      'প্রতিটি মানদণ্ডে ১ (দুর্বল) থেকে ৫ (চমৎকার) দিন।';
+
+  @override
+  String get scorecardRateThis => '১ থেকে ৫-এর মধ্যে নম্বর দিন';
+
+  @override
+  String scorecardRatingOption(int rating) {
+    final intl.NumberFormat ratingNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String ratingString = ratingNumberFormat.format(rating);
+
+    return '৫-এর মধ্যে $ratingString';
+  }
+
+  @override
+  String scorecardRating(int rating) {
+    final intl.NumberFormat ratingNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String ratingString = ratingNumberFormat.format(rating);
+
+    return '$ratingString / ৫';
+  }
+
+  @override
+  String get scorecardRecommendation => 'সুপারিশ';
+
+  @override
+  String get scorecardChooseRecommendation => 'একটি সুপারিশ বেছে নিন';
+
+  @override
+  String recommendationName(String value) {
+    String _temp0 = intl.Intl.selectLogic(value, {
+      'strong_no': 'একেবারেই না',
+      'no': 'না',
+      'yes': 'হ্যাঁ',
+      'strong_yes': 'অবশ্যই হ্যাঁ',
+      'other': 'অজানা',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get scorecardFeedback => 'মতামত';
+
+  @override
+  String get scorecardFeedbackHint =>
+      'সাক্ষাৎকার ও কাজ নিয়ে লিখুন। প্রার্থী চাইলে এই মতামত মুছে ফেলা হয়।';
+
+  @override
+  String get scorecardSubmit => 'স্কোরকার্ড জমা দিন';
+
+  @override
+  String get scorecardUpdate => 'স্কোরকার্ড হালনাগাদ করুন';
+
+  @override
+  String get scorecardSubmitted => 'স্কোরকার্ড জমা দেওয়া হয়েছে';
+
+  @override
+  String get scorecardUpdated => 'স্কোরকার্ড হালনাগাদ হয়েছে';
+
+  @override
+  String get scorecardIncomplete =>
+      'প্রতিটি মানদণ্ডে নম্বর দিন এবং একটি সুপারিশ বেছে নিন।';
+
+  @override
+  String scorecardSubmittedOn(String date) {
+    return '$date তারিখে জমা';
+  }
+
+  @override
+  String get scorecardClosed =>
+      'এই আবেদনটি বন্ধ হয়ে গেছে, তাই স্কোরকার্ড আর বদলানো যায় না।';
+
+  @override
+  String get scorecardCancelled => 'এই সাক্ষাৎকারটি বাতিল হয়েছে।';
+
+  @override
+  String get scorecardCriteriaChanged =>
+      'এই পদের মানদণ্ড বদলেছে। নম্বরগুলো দেখে আবার জমা দিন।';
+
+  @override
+  String get scorecardOthersTitle => 'অন্য সাক্ষাৎকারগ্রহীতাদের স্কোরকার্ড';
+
+  @override
+  String get scorecardOthersHidden =>
+      'আপনার স্কোরকার্ড জমা দেওয়ার পর অন্যদেরগুলো দেখতে পাবেন, যাতে আপনার মূল্যায়ন একান্তই আপনার থাকে।';
+
+  @override
+  String get scorecardOthersNone => 'আর কেউ এখনো স্কোরকার্ড জমা দেননি।';
 }

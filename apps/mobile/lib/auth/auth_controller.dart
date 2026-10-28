@@ -395,6 +395,26 @@ class AuthController extends Notifier<AuthState> {
   Future<Timesheet> submitTimesheet(DateTime month) =>
       _withSession((token) => _api.submitTimesheet(token, month: month));
 
+  // ── Recruitment ───────────────────────────────────────────────────────────
+  // Same refresh-once rule. A scorecard sent twice is the same scorecard.
+
+  Future<RecruitmentMe> fetchRecruitmentMe() =>
+      _withSession(_api.fetchRecruitmentMe);
+
+  Future<MyInterviews> fetchMyInterviews() =>
+      _withSession(_api.fetchMyInterviews);
+
+  Future<MyInterviewDetail> fetchMyInterview(String interviewId) =>
+      _withSession((token) => _api.fetchMyInterview(token, interviewId));
+
+  Future<MyInterviewDetail> submitScorecard(
+    String interviewId,
+    ScorecardDraft draft,
+  ) => _withSession((token) => _api.submitScorecard(token, interviewId, draft));
+
+  Future<FileDownload> downloadApplicationCv(String applicationId) =>
+      _withSession((token) => _api.downloadApplicationCv(token, applicationId));
+
   /// Runs [call] with the stored access token.
   ///
   /// On a 401 it calls `/auth/refresh` once and retries with the new access

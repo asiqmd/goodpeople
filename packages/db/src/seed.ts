@@ -14,6 +14,7 @@ import { seedBilling } from './seed-billing.js';
 import { seedGroupBenefits, seedGroupPayroll } from './seed-payroll.js';
 import { seedGroupHr } from './seed-hr.js';
 import { seedNgo } from './seed-ngo.js';
+import { seedGroupRecruitment } from './seed-recruitment.js';
 import { seedGroupAttendance } from './seed-attendance.js';
 import { seedGroupLeave } from './seed-leave.js';
 import {
@@ -203,6 +204,7 @@ export async function seed(db: Database, opts: SeedOptions) {
         passwordHash,
       });
       await seedGroupBenefits(tx, { tenantId: group.id, cipher: createFieldCipher(opts.fieldKey) });
+      await seedGroupRecruitment(tx, { tenantId: group.id });
     });
   }
   const [ngo] = await db.select().from(tenants).where(eq(tenants.slug, 'sponsored-ngo'));

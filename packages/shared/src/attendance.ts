@@ -61,6 +61,9 @@ export const APPROVAL_SUBJECTS = [
   'loan',
   'pay_batch',
   'timesheet',
+  /** Phase 4 M1: a position to fill, and an offer above its budget. */
+  'job_opening',
+  'offer',
 ] as const;
 export type ApprovalSubject = (typeof APPROVAL_SUBJECTS)[number];
 

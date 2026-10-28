@@ -20,6 +20,8 @@ import type {
   PayrollRunApprovalItem,
 } from './payroll-types.js';
 import type { TimesheetApprovalItem } from './timesheets.js';
+import type { JobOpeningApprovalItem } from './openings.js';
+import type { OfferApprovalItem } from './offers.js';
 
 export interface EmployeeRef {
   id: string;
@@ -267,4 +269,6 @@ export type ApprovalItem =
   | PayrollRunApprovalItem
   | LoanApprovalItem
   | PayBatchApprovalItem
-  | TimesheetApprovalItem;
+  | TimesheetApprovalItem
+  | JobOpeningApprovalItem
+  | OfferApprovalItem;

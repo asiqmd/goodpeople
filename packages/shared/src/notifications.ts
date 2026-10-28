@@ -44,6 +44,12 @@ export const NOTIFICATION_EVENTS = [
   'timesheet.due',
   /** The account your salary is paid to was changed (a security notice to the employee). */
   'payment_account.changed',
+  /** A candidate applied to an opening (to recruiters and its hiring manager). */
+  'recruitment.application',
+  /** You are on an interview, or it moved or was cancelled (to the interviewers). */
+  'recruitment.interview',
+  /** A candidate accepted or declined an offer (to recruiters and the hiring manager). */
+  'recruitment.offer',
   /** A sign-in code: SMS only, always sent. */
   'auth.otp',
 ] as const;
@@ -82,6 +88,9 @@ export const DEFAULT_EVENT_CHANNELS: Record<NotificationEvent, readonly Delivery
   'maternity.payment_due': ['email'],
   'timesheet.due': ['email', 'push'],
   'payment_account.changed': ['email', 'sms', 'push'],
+  'recruitment.application': ['email'],
+  'recruitment.interview': ['email', 'push'],
+  'recruitment.offer': ['email', 'push'],
   'auth.otp': ['sms'],
 };
 

@@ -18,6 +18,10 @@ export interface EmailMessage {
   to: string;
   subject: string;
   text: string;
+  /** Files sent with it, e.g. an accepted offer letter. */
+  attachments?: { filename: string; content: Buffer; contentType: string }[];
+  /** A calendar invitation (RFC 5545), which mail clients offer to add or update. */
+  icalEvent?: { method: 'REQUEST' | 'CANCEL'; content: string };
 }
 
 export interface SmsMessage {
@@ -72,7 +76,12 @@ export class LogSender<M> implements Sender<M> {
   async send(message: M): Promise<SendResult> {
     this.sent.push(message);
     if (this.sent.length > 200) this.sent.shift();
-    const text = JSON.stringify(message);
+    // Attachments are logged by name and size, never their bytes. The holder's own value is
+    // checked: JSON.stringify has already turned a Buffer into { type, data } by then.
+    const text = JSON.stringify(message, function (this: Record<string, unknown>, key, value) {
+      const raw = this[key];
+      return Buffer.isBuffer(raw) ? `<${raw.length} bytes>` : (value as unknown);
+    });
     this.logger.log(this.showCodes ? text : hideCodes(text));
     return {};
   }

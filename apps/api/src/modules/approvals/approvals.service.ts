@@ -22,6 +22,8 @@ import { PayrollRunsService } from '../payroll/payroll-runs.service.js';
 import { forbidden } from '../../common/errors.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { TimesheetsService } from '../timesheets/timesheets.service.js';
+import { OpeningsService } from '../recruitment/openings.service.js';
+import { OffersService } from '../offers/offers.service.js';
 import { noticeDecided, noticeRequested } from './approval-notices.js';
 import { cancelOpenSteps, type ApprovalSubjectHandler } from './approval-steps.js';
 import { entityScopeOf, employeesOfEntities } from '../access-scopes/entity-scope.js';
@@ -49,6 +51,8 @@ export class ApprovalsService {
     loans: LoansService,
     batches: PayBatchesService,
     timesheets: TimesheetsService,
+    openings: OpeningsService,
+    offers: OffersService,
   ) {
     this.handlers = {
       leave_request: leave,
@@ -59,6 +63,8 @@ export class ApprovalsService {
       loan: loans,
       pay_batch: batches,
       timesheet: timesheets,
+      job_opening: openings,
+      offer: offers,
     };
   }
 

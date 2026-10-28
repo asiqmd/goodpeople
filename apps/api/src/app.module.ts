@@ -22,6 +22,9 @@ import { TimesheetsModule } from './modules/timesheets/timesheets.module.js';
 import { GroupModule } from './modules/group/group.module.js';
 import { AccessScopesModule } from './modules/access-scopes/access-scopes.module.js';
 import { StatusModule } from './modules/status/status.module.js';
+import { RecruitmentModule } from './modules/recruitment/recruitment.module.js';
+import { ApplicationsModule } from './modules/applications/applications.module.js';
+import { OffersModule } from './modules/offers/offers.module.js';
 import { SupportAccessModule } from './modules/support-access/support-access.module.js';
 import { SupportModule } from './modules/support/support.module.js';
 import { DocumentsModule } from './modules/documents/documents.module.js';
@@ -85,6 +88,9 @@ export class AppModule {
         SupportModule,
         SupportAccessModule,
         StatusModule,
+        RecruitmentModule,
+        ApplicationsModule,
+        OffersModule,
       ],
       providers: [
         { provide: APP_CONFIG, useValue: config },

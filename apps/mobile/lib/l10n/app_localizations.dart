@@ -3409,6 +3409,450 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Timesheet returned for correction'**
   String get timesheetRejected;
+
+  /// An opening to fill in the approvals inbox, followed by its company, as in "Job opening · My Group Textiles Ltd".
+  ///
+  /// In en, this message translates to:
+  /// **'Job opening'**
+  String get approvalOpeningTitle;
+
+  /// How many people an opening is for, and the employment type.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} position} other{{count} positions}}, {type}'**
+  String approvalOpeningPositions(num count, String type);
+
+  /// No description provided for @approvalOpeningNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New position'**
+  String get approvalOpeningNew;
+
+  /// No description provided for @approvalOpeningReplaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Replaces {name}'**
+  String approvalOpeningReplaces(String name);
+
+  /// No description provided for @approvalBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly gross budget'**
+  String get approvalBudget;
+
+  /// No description provided for @approvalBudgetUpTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to {amount}'**
+  String approvalBudgetUpTo(String amount);
+
+  /// No description provided for @approvalBudgetFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'From {amount}'**
+  String approvalBudgetFrom(String amount);
+
+  /// No description provided for @approvalHiringManager.
+  ///
+  /// In en, this message translates to:
+  /// **'Hiring manager'**
+  String get approvalHiringManager;
+
+  /// No description provided for @approvalJustification.
+  ///
+  /// In en, this message translates to:
+  /// **'Why it is needed'**
+  String get approvalJustification;
+
+  /// No description provided for @approveOpeningTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve this job opening?'**
+  String get approveOpeningTitle;
+
+  /// No description provided for @rejectOpeningTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject this job opening?'**
+  String get rejectOpeningTitle;
+
+  /// No description provided for @openingApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Job opening approved'**
+  String get openingApproved;
+
+  /// No description provided for @openingRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Job opening rejected'**
+  String get openingRejected;
+
+  /// An offer to a candidate whose pay is above the opening's budget, in the approvals inbox, followed by the opening, as in "Offer above budget · Line supervisor".
+  ///
+  /// In en, this message translates to:
+  /// **'Offer above budget'**
+  String get approvalOfferTitle;
+
+  /// No description provided for @approvalOfferPay.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly gross'**
+  String get approvalOfferPay;
+
+  /// No description provided for @approvalOfferAgainstBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} · budget up to {budget}'**
+  String approvalOfferAgainstBudget(String amount, String budget);
+
+  /// No description provided for @approvalOfferJoining.
+  ///
+  /// In en, this message translates to:
+  /// **'Joining'**
+  String get approvalOfferJoining;
+
+  /// No description provided for @approvalOfferDraftedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Drafted by {name}'**
+  String approvalOfferDraftedBy(String name);
+
+  /// No description provided for @approveOfferTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve this offer?'**
+  String get approveOfferTitle;
+
+  /// No description provided for @rejectOfferTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject this offer?'**
+  String get rejectOfferTitle;
+
+  /// No description provided for @offerApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Offer approved. HR can send it now.'**
+  String get offerApproved;
+
+  /// No description provided for @offerRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Offer rejected'**
+  String get offerRejected;
+
+  /// No description provided for @interviewsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Interviews'**
+  String get interviewsTitle;
+
+  /// No description provided for @interviewsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The candidates you interview, their CVs and your scorecards'**
+  String get interviewsSubtitle;
+
+  /// Read out for the badge on the home screen's Interviews card.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} interview needs you} other{{count} interviews need you}}'**
+  String interviewsToDo(num count);
+
+  /// No description provided for @myInterviewsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My interviews'**
+  String get myInterviewsTitle;
+
+  /// No description provided for @interviewsUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming up'**
+  String get interviewsUpcoming;
+
+  /// No description provided for @interviewsPast.
+  ///
+  /// In en, this message translates to:
+  /// **'Past'**
+  String get interviewsPast;
+
+  /// No description provided for @interviewsNoUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'No interviews coming up.'**
+  String get interviewsNoUpcoming;
+
+  /// No description provided for @interviewsNoPast.
+  ///
+  /// In en, this message translates to:
+  /// **'None yet.'**
+  String get interviewsNoPast;
+
+  /// No description provided for @interviewsLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load your interviews.'**
+  String get interviewsLoadFailed;
+
+  /// How an interview is held.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind, select, in_person{In person} phone{By phone} video{By video} other{Interview}}'**
+  String interviewKindName(String kind);
+
+  /// No description provided for @interviewStatusName.
+  ///
+  /// In en, this message translates to:
+  /// **'{status, select, scheduled{Scheduled} completed{Completed} cancelled{Cancelled} other{Unknown}}'**
+  String interviewStatusName(String status);
+
+  /// No description provided for @interviewScorecardIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Scorecard in'**
+  String get interviewScorecardIn;
+
+  /// No description provided for @interviewScorecardToDo.
+  ///
+  /// In en, this message translates to:
+  /// **'Scorecard to do'**
+  String get interviewScorecardToDo;
+
+  /// The position a candidate is interviewed for.
+  ///
+  /// In en, this message translates to:
+  /// **'For {title}'**
+  String interviewForOpening(String title);
+
+  /// No description provided for @interviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Interview'**
+  String get interviewTitle;
+
+  /// No description provided for @interviewLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load this interview.'**
+  String get interviewLoadFailed;
+
+  /// No description provided for @interviewGone.
+  ///
+  /// In en, this message translates to:
+  /// **'You are no longer on this interview\'s panel.'**
+  String get interviewGone;
+
+  /// No description provided for @interviewWhen.
+  ///
+  /// In en, this message translates to:
+  /// **'When (Bangladesh time)'**
+  String get interviewWhen;
+
+  /// No description provided for @interviewPlace.
+  ///
+  /// In en, this message translates to:
+  /// **'Place'**
+  String get interviewPlace;
+
+  /// No description provided for @interviewPhoneNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone note'**
+  String get interviewPhoneNote;
+
+  /// No description provided for @interviewMeetingLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Meeting link'**
+  String get interviewMeetingLink;
+
+  /// No description provided for @interviewJoinCall.
+  ///
+  /// In en, this message translates to:
+  /// **'Join the video call'**
+  String get interviewJoinCall;
+
+  /// No description provided for @interviewLinkFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The link could not be opened.'**
+  String get interviewLinkFailed;
+
+  /// No description provided for @interviewHrNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'From HR'**
+  String get interviewHrNotes;
+
+  /// No description provided for @interviewCoverNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The candidate\'s note'**
+  String get interviewCoverNote;
+
+  /// No description provided for @interviewOpenCv.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the CV'**
+  String get interviewOpenCv;
+
+  /// No description provided for @interviewNoCv.
+  ///
+  /// In en, this message translates to:
+  /// **'No CV'**
+  String get interviewNoCv;
+
+  /// No description provided for @interviewCvGone.
+  ///
+  /// In en, this message translates to:
+  /// **'The CV is no longer available.'**
+  String get interviewCvGone;
+
+  /// No description provided for @interviewCvNoApp.
+  ///
+  /// In en, this message translates to:
+  /// **'No app on this phone can open this CV. Install a PDF or Word reader and try again.'**
+  String get interviewCvNoApp;
+
+  /// No description provided for @interviewPanel.
+  ///
+  /// In en, this message translates to:
+  /// **'Panel'**
+  String get interviewPanel;
+
+  /// No description provided for @scorecardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your scorecard'**
+  String get scorecardTitle;
+
+  /// No description provided for @scorecardIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate each criterion from 1 (poor) to 5 (excellent).'**
+  String get scorecardIntro;
+
+  /// No description provided for @scorecardRateThis.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate this from 1 to 5'**
+  String get scorecardRateThis;
+
+  /// Read out for each rating button.
+  ///
+  /// In en, this message translates to:
+  /// **'{rating} out of 5'**
+  String scorecardRatingOption(int rating);
+
+  /// A criterion's rating on a submitted scorecard.
+  ///
+  /// In en, this message translates to:
+  /// **'{rating} / 5'**
+  String scorecardRating(int rating);
+
+  /// No description provided for @scorecardRecommendation.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommendation'**
+  String get scorecardRecommendation;
+
+  /// No description provided for @scorecardChooseRecommendation.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a recommendation'**
+  String get scorecardChooseRecommendation;
+
+  /// An interviewer's recommendation on a candidate.
+  ///
+  /// In en, this message translates to:
+  /// **'{value, select, strong_no{Strong no} no{No} yes{Yes} strong_yes{Strong yes} other{Unknown}}'**
+  String recommendationName(String value);
+
+  /// No description provided for @scorecardFeedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get scorecardFeedback;
+
+  /// No description provided for @scorecardFeedbackHint.
+  ///
+  /// In en, this message translates to:
+  /// **'About the interview and the work. The candidate can ask for these notes to be erased.'**
+  String get scorecardFeedbackHint;
+
+  /// No description provided for @scorecardSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit scorecard'**
+  String get scorecardSubmit;
+
+  /// No description provided for @scorecardUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Update scorecard'**
+  String get scorecardUpdate;
+
+  /// No description provided for @scorecardSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Scorecard submitted'**
+  String get scorecardSubmitted;
+
+  /// No description provided for @scorecardUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Scorecard updated'**
+  String get scorecardUpdated;
+
+  /// No description provided for @scorecardIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate every criterion and choose a recommendation.'**
+  String get scorecardIncomplete;
+
+  /// No description provided for @scorecardSubmittedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitted {date}'**
+  String scorecardSubmittedOn(String date);
+
+  /// No description provided for @scorecardClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'This application is closed, so scorecards can no longer change.'**
+  String get scorecardClosed;
+
+  /// No description provided for @scorecardCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'This interview was cancelled.'**
+  String get scorecardCancelled;
+
+  /// No description provided for @scorecardCriteriaChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'The criteria for this position have changed. Check your ratings and submit again.'**
+  String get scorecardCriteriaChanged;
+
+  /// No description provided for @scorecardOthersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The other interviewers\' scorecards'**
+  String get scorecardOthersTitle;
+
+  /// No description provided for @scorecardOthersHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'You will see the other interviewers\' scorecards once you have submitted yours, so that yours is your own view.'**
+  String get scorecardOthersHidden;
+
+  /// No description provided for @scorecardOthersNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No one else has submitted a scorecard yet.'**
+  String get scorecardOthersNone;
 }
 
 class _AppLocalizationsDelegate

@@ -357,6 +357,42 @@ abstract interface class GoodPeopleApi {
     String accessToken, {
     required DateTime month,
   });
+
+  // ── Recruitment ───────────────────────────────────────────────────────────
+  // Needs the workspace's `recruitment` feature: a 403 without it.
+
+  /// `GET /tenant/recruitment/me`: how many interviews need the login.
+  Future<RecruitmentMe> fetchRecruitmentMe(String accessToken);
+
+  /// `GET /tenant/interviews`: the login's interviews, to come and past.
+  /// Empty for a login with no employee record.
+  Future<MyInterviews> fetchMyInterviews(String accessToken);
+
+  /// `GET /tenant/interviews/{id}`. An interview the login is not on gets a
+  /// 404.
+  Future<MyInterviewDetail> fetchMyInterview(
+    String accessToken,
+    String interviewId,
+  );
+
+  /// `PUT /tenant/interviews/{id}/scorecard`, answered with the interview
+  /// as it now is, with the other interviewers' scorecards. Refusals by
+  /// `code`: `scorecard_criteria` (400: not every criterion rated, or the
+  /// criteria changed), `application_closed` and `interview_cancelled`
+  /// (409).
+  Future<MyInterviewDetail> submitScorecard(
+    String accessToken,
+    String interviewId,
+    ScorecardDraft draft,
+  );
+
+  /// `GET /tenant/recruitment/applications/{id}/cv`: the candidate's CV, a
+  /// PDF or a Word file, for those interviewing them too. A 404 when there
+  /// is none (or it was erased).
+  Future<FileDownload> downloadApplicationCv(
+    String accessToken,
+    String applicationId,
+  );
 }
 
 /// [GoodPeopleApi] over HTTP with dio.
@@ -971,6 +1007,60 @@ class DioGoodPeopleApi implements GoodPeopleApi {
       options: _bearer(accessToken),
     ),
     Timesheet.fromJson,
+  );
+
+  @override
+  Future<RecruitmentMe> fetchRecruitmentMe(String accessToken) => _call(
+    () => _dio.get<Object?>(
+      '/tenant/recruitment/me',
+      options: _bearer(accessToken),
+    ),
+    RecruitmentMe.fromJson,
+  );
+
+  @override
+  Future<MyInterviews> fetchMyInterviews(String accessToken) => _call(
+    () =>
+        _dio.get<Object?>('/tenant/interviews', options: _bearer(accessToken)),
+    MyInterviews.fromJson,
+  );
+
+  @override
+  Future<MyInterviewDetail> fetchMyInterview(
+    String accessToken,
+    String interviewId,
+  ) => _call(
+    () => _dio.get<Object?>(
+      '/tenant/interviews/${Uri.encodeComponent(interviewId)}',
+      options: _bearer(accessToken),
+    ),
+    MyInterviewDetail.fromJson,
+  );
+
+  @override
+  Future<MyInterviewDetail> submitScorecard(
+    String accessToken,
+    String interviewId,
+    ScorecardDraft draft,
+  ) => _call(
+    () => _dio.put<Object?>(
+      '/tenant/interviews/${Uri.encodeComponent(interviewId)}/scorecard',
+      data: draft.toJson(),
+      options: _bearer(accessToken),
+    ),
+    MyInterviewDetail.fromJson,
+  );
+
+  @override
+  Future<FileDownload> downloadApplicationCv(
+    String accessToken,
+    String applicationId,
+  ) => _download(
+    () => _dio.get<List<int>>(
+      '/tenant/recruitment/applications/'
+      '${Uri.encodeComponent(applicationId)}/cv',
+      options: _fileOptions(accessToken),
+    ),
   );
 
   void close() => _dio.close(force: true);

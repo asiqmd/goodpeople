@@ -81,6 +81,13 @@ A multi-tenant HR and payroll platform, built for Bangladesh first and ready to 
     page; a help centre of 17 articles and draft legal pages in both languages, with the
     accepted terms recorded at sign-up; request IDs and JSON logs; fixes from our own
     security review; a restore drill of a 20,000-person workspace; and the launch runbook.
+  - **Phase 4 M1 (recruitment):** openings approved against a budget; a careers page per
+    workspace in English and Bangla with Google-ready job posts and applications with CVs and
+    consent; a pipeline by stage with candidates found again by email or mobile; interviews
+    with calendar invitations and independent scorecards (web and app); offers approved above
+    budget, accepted online with a kept, hashed letter, and hired into the employee record with
+    their documents and a pay proposal; candidates erased after the workspace's retention
+    period.
 - **Next:**
   - Our own organisations go live: [docs/ops/go-live.md](docs/ops/go-live.md).
   - Payroll goes live after three parallel months with a design partner:
@@ -96,7 +103,8 @@ A multi-tenant HR and payroll platform, built for Bangladesh first and ready to 
     sign-off on the legal pages, the third-party penetration test
     ([docs/security/pentest-scope.md](docs/security/pentest-scope.md)) and a restore drill on
     the production backups.
-  - Phase 4: the talent suite (recruitment, performance, compensation, learning).
+  - Phase 4 M2: performance (goals, review cycles, calibration). The plan is in
+    [docs/phases/phase-4.md](docs/phases/phase-4.md).
 
 ## Repository layout
 
@@ -154,19 +162,19 @@ pnpm --filter @gp/web dev
 
 **Seeded test accounts** (local only; the password is `SEED_PASSWORD` in `.env`):
 
-| Who                                                        | Sign in at        | Workspace       | Email                        |
-| ---------------------------------------------------------- | ----------------- | --------------- | ---------------------------- |
-| Super Admin                                                | `/platform/login` | –               | `SEED_SUPER_ADMIN_EMAIL`     |
-| Internal tenant (2 legal entities)                         | `/login`          | `my-group`      | `admin@my-group.test`        |
-| Employee self-service (Rahima)                             | `/login`          | `my-group`      | `rahima@my-group.test`       |
-| Line supervisor, approves leave and attendance corrections | `/login`          | `my-group`      | `shirin@my-group.test`       |
-| Finance officer, approves pay changes                      | `/login`          | `my-group`      | `finance@my-group.test`      |
-| Complimentary tenant, an NGO with two donor projects       | `/login`          | `sponsored-ngo` | `admin@sponsored-ngo.test`   |
-| NGO field facilitator, fills in her timesheet              | `/login`          | `sponsored-ngo` | `nasrin@sponsored-ngo.test`  |
-| NGO programme coordinator, approves timesheets             | `/login`          | `sponsored-ngo` | `karim@sponsored-ngo.test`   |
-| NGO finance officer, approves payroll                      | `/login`          | `sponsored-ngo` | `finance@sponsored-ngo.test` |
-| Paid, payment overdue → read-only                          | `/login`          | `acme-garments` | `admin@acme-garments.test`   |
-| Trial on the Starter plan                                  | `/login`          | `trial-co`      | `admin@trial-co.test`        |
+| Who                                                                                                                 | Sign in at        | Workspace       | Email                        |
+| ------------------------------------------------------------------------------------------------------------------- | ----------------- | --------------- | ---------------------------- |
+| Super Admin                                                                                                         | `/platform/login` | –               | `SEED_SUPER_ADMIN_EMAIL`     |
+| Internal tenant (2 legal entities)                                                                                  | `/login`          | `my-group`      | `admin@my-group.test`        |
+| Employee self-service (Rahima)                                                                                      | `/login`          | `my-group`      | `rahima@my-group.test`       |
+| Line supervisor, approves leave and attendance corrections; hiring manager and interviewer for the sewing operators | `/login`          | `my-group`      | `shirin@my-group.test`       |
+| Finance officer, approves pay changes                                                                               | `/login`          | `my-group`      | `finance@my-group.test`      |
+| Complimentary tenant, an NGO with two donor projects                                                                | `/login`          | `sponsored-ngo` | `admin@sponsored-ngo.test`   |
+| NGO field facilitator, fills in her timesheet                                                                       | `/login`          | `sponsored-ngo` | `nasrin@sponsored-ngo.test`  |
+| NGO programme coordinator, approves timesheets                                                                      | `/login`          | `sponsored-ngo` | `karim@sponsored-ngo.test`   |
+| NGO finance officer, approves payroll                                                                               | `/login`          | `sponsored-ngo` | `finance@sponsored-ngo.test` |
+| Paid, payment overdue → read-only                                                                                   | `/login`          | `acme-garments` | `admin@acme-garments.test`   |
+| Trial on the Starter plan                                                                                           | `/login`          | `trial-co`      | `admin@trial-co.test`        |
 
 In development, email, SMS and push are written to the API's log (`EMAIL_DRIVER=log` and so
 on), so a sign-in code for an employee login with a mobile number shows up there.

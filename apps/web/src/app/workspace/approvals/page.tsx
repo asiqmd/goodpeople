@@ -14,6 +14,8 @@ import {
   PayBatchApprovalCard,
   RunApprovalItem,
 } from '@/components/payroll/payroll-views';
+import { OpeningApprovalCard } from '@/components/recruitment/opening-views';
+import { OfferApprovalCard } from '@/components/recruitment/offer-views';
 import { TimesheetApprovalCard } from '@/components/timesheets/timesheet-views';
 import { Badge, Card } from '@/components/ui';
 import { load } from '@/lib/api';
@@ -47,6 +49,10 @@ export default async function ApprovalsPage() {
                 <PayBatchApprovalCard item={item} />
               ) : item.subjectType === 'timesheet' ? (
                 <TimesheetApprovalCard item={item} />
+              ) : item.subjectType === 'job_opening' ? (
+                <OpeningApprovalCard item={item} />
+              ) : item.subjectType === 'offer' ? (
+                <OfferApprovalCard item={item} />
               ) : (
                 <SeparationItem item={item} />
               )}

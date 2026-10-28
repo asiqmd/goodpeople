@@ -11,7 +11,15 @@ export const CONTENT_LOCALES = ['en', 'bn'] as const;
 export type ContentLocale = (typeof CONTENT_LOCALES)[number];
 
 /** The help centre's sections, in the order the help page lists them. */
-export const HELP_CATEGORIES = ['start', 'time', 'payroll', 'billing', 'packs', 'support'] as const;
+export const HELP_CATEGORIES = [
+  'start',
+  'time',
+  'payroll',
+  'talent',
+  'billing',
+  'packs',
+  'support',
+] as const;
 export type HelpCategory = (typeof HELP_CATEGORIES)[number];
 
 export interface HelpArticle {

@@ -225,6 +225,20 @@
       "when": 1793081726239,
       "tag": "0031_payment_account_event",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1793173351484,
+      "tag": "0032_recruitment",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1793173351973,
+      "tag": "0033_recruitment_rls",
+      "breakpoints": true
     }
   ]
 }

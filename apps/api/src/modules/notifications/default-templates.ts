@@ -208,6 +208,42 @@ export const DEFAULT_TEMPLATES: Record<NotificationEvent, Record<UserLanguage, T
       sms: 'Good People: আপনার বেতন এখন দেওয়া হবে {{account.new}}। আপনি না চেয়ে থাকলে এখনই এইচআরকে জানান।',
     },
   },
+  'recruitment.application': {
+    en: {
+      title: 'New application for {{opening.title}}',
+      body: '{{candidate.name}} applied for {{opening.title}} ({{application.source}}).',
+      sms: 'Good People: {{candidate.name}} applied for {{opening.title}}.',
+    },
+    bn: {
+      title: '{{opening.title}} পদে নতুন আবেদন',
+      body: '{{candidate.name}} {{opening.title}} পদে আবেদন করেছেন ({{application.source}})।',
+      sms: 'Good People: {{candidate.name}} {{opening.title}} পদে আবেদন করেছেন।',
+    },
+  },
+  'recruitment.interview': {
+    en: {
+      title: 'Interview: {{candidate.name}}, {{interview.when}}',
+      body: 'You are an interviewer for {{candidate.name}} ({{opening.title}}), {{interview.when}}, {{interview.where}}. {{interview.change}}',
+      sms: 'Good People: interview with {{candidate.name}}, {{interview.when}}. {{interview.change}}',
+    },
+    bn: {
+      title: 'সাক্ষাৎকার: {{candidate.name}}, {{interview.when}}',
+      body: '{{candidate.name}}-এর ({{opening.title}}) সাক্ষাৎকারে আপনি আছেন: {{interview.when}}, {{interview.where}}। {{interview.change}}',
+      sms: 'Good People: {{candidate.name}}-এর সাক্ষাৎকার, {{interview.when}}। {{interview.change}}',
+    },
+  },
+  'recruitment.offer': {
+    en: {
+      title: '{{candidate.name}} {{offer.outcome}} the offer for {{opening.title}}',
+      body: '{{candidate.name}} {{offer.outcome}} the offer for {{opening.title}}. {{offer.note}}',
+      sms: 'Good People: {{candidate.name}} {{offer.outcome}} the offer for {{opening.title}}.',
+    },
+    bn: {
+      title: '{{candidate.name}} {{opening.title}} পদের প্রস্তাব {{offer.outcome}}',
+      body: '{{candidate.name}} {{opening.title}} পদের প্রস্তাব {{offer.outcome}}। {{offer.note}}',
+      sms: 'Good People: {{candidate.name}} {{opening.title}} পদের প্রস্তাব {{offer.outcome}}।',
+    },
+  },
   'auth.otp': {
     en: {
       title: 'Your sign-in code',
@@ -240,5 +276,14 @@ export const TEMPLATE_PLACEHOLDERS: Record<NotificationEvent, string[]> = {
   'maternity.payment_due': ['person.name', 'maternity.part', 'maternity.amount', 'maternity.due'],
   'timesheet.due': ['timesheet.month'],
   'payment_account.changed': ['account.new'],
+  'recruitment.application': ['candidate.name', 'opening.title', 'application.source'],
+  'recruitment.interview': [
+    'candidate.name',
+    'opening.title',
+    'interview.when',
+    'interview.where',
+    'interview.change',
+  ],
+  'recruitment.offer': ['candidate.name', 'opening.title', 'offer.outcome', 'offer.note'],
   'auth.otp': ['otp.code', 'otp.minutes', 'workspace.name'],
 };
