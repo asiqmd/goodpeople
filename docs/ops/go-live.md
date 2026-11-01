@@ -257,6 +257,29 @@ Before a company hires through Good People (HR, its counsel):
 - [ ] The appointment letter template (Letters) is ready for the joining day, as the Labour
       Act requires (s.5); the accepted offer does not replace it.
 
+## 11. Performance (Phase 4)
+
+Before a company runs its first review cycle (HR, its managers, its counsel):
+
+- [ ] **Managers are set:** everyone in the cycle has a current job with a manager. Launching
+      gives each review to the manager on that day; a person without one waits for HR.
+- [ ] **Who reviews themselves:** people with logins write a self review; workers without
+      logins are reviewed by their manager alone. Decide which lines get logins before launch.
+- [ ] **Competencies and the ratings guide** (Performance settings) are agreed with
+      management in both languages, and managers are told the guide is never a quota.
+- [ ] **Goals are agreed** before the self review date, with weights adding up to 100%. KPIs
+      read from the records only where attendance (and, in a factory, daily production with
+      targets) is processed every day.
+- [ ] **Peer feedback** is turned on only where people have at least three peers to ask;
+      with fewer, only the manager and HR read it.
+- [ ] **Calibration** is booked before the release date, with each unit's managers, and the
+      outcomes file goes to whoever runs the increment round.
+- [ ] **Improvement plans:** counsel confirms the plan's legal note (Labour Act s.23–24 for
+      misconduct, s.26 for other termination) before HR starts one; managers know a plan never
+      ends anyone's employment by itself.
+- [ ] **Probation end dates** are right on people's jobs, so managers are asked for probation
+      reviews three weeks before (s.4).
+
 ## If it goes wrong
 
 The old register stays readable and can be reopened for new entries. Going back is a

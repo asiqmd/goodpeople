@@ -11,7 +11,7 @@ tests pass and it has been walked through in the browser.
 | Milestone                             | Scope                                                                                                                                                                                                                                                                                                       | Depends on | Status |
 | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------ |
 | **M1 Recruitment**                    | Openings approved against a budget, a careers page per workspace with Google-ready job posts, applications with CVs and consent, a pipeline by stage, interviews with calendar invites and scorecards, offers accepted online, hiring into the employee record, candidate data kept only as long as allowed | Phase 3    | Done   |
-| **M2 Performance**                    | Goals and KPIs, review cycles (self, manager, peers), calibration, improvement plans, outcomes that feed increments and promotions                                                                                                                                                                          | M1         |        |
+| **M2 Performance**                    | Goals and KPIs, review cycles (self, manager, peers), calibration, improvement plans, outcomes that feed increments and promotions                                                                                                                                                                          | M1         | Done   |
 | **M3 Compensation planning**          | An increment matrix by rating and position in range, budgets per company and unit, managers' proposals, approval, effective-dated pay changes into payroll; the RMG minimum-wage annual increment                                                                                                           | M2         |        |
 | **M4 Learning**                       | Courses and sessions, attendance, training required by designation (fire safety, health and safety, anti-harassment), certificates with expiry, fire drills, training in the buyer-audit report                                                                                                             | Phase 3    |        |
 | **M5 Engagement & employee services** | Surveys and eNPS with anonymity thresholds, recognition, announcements and policy acknowledgements, an HR helpdesk for employees, assets issued and returned                                                                                                                                                | Phase 3    |        |
@@ -191,10 +191,159 @@ interviews and an offer the candidate accepts online. Comes with the Business pl
 - **Counsel:** checks the consent text and the retention period before a company relies on
   them.
 
+## M2: Performance
+
+Goals people agree with their managers, reviews that rate them against those goals and the
+company's expectations, and the record HR and managers need afterwards: calibrated ratings that
+feed increments (M3), improvement plans, and probation reviews before confirmation. Comes with
+the Business plan and up (`performance`).
+
+### Goals and KPIs
+
+- **A goal** belongs to a person (or to a unit, for the goals people align theirs with): a
+  title and description, a weight, a due date, and either key results (an objective) or a
+  measure with a target (a KPI: the unit, whether higher or lower is better).
+- **KPIs from the records:** a KPI can read its value from Good People instead of being typed:
+  the attendance rate from processed attendance, or output against target from daily
+  production (the RMG pack). Everything else is updated by hand.
+- **Agreeing:** the person drafts their goals for a review cycle, or their manager does; the
+  manager agrees them, and the weights of a person's agreed goals add up to 100%.
+- **Check-ins:** progress and notes from the person and the manager, dated, through the
+  period.
+
+### Review cycles
+
+- **A cycle:** HR sets its name, the period, who is in it (companies, and people who joined
+  before a date), whether there are self reviews and peer reviews, the competencies rated
+  (e.g. job knowledge, quality, teamwork, reliability, safety; in English and Bangla), and the
+  dates for each step. Launching it creates a review for each person, with their manager on
+  that day.
+- **Self review:** the person rates their goals and the competencies (1 to 5) and comments.
+  Workers without a login are reviewed by their manager alone, so a factory can review its
+  lines without asking each worker to use a screen.
+- **Peer feedback:** the person or their manager names peers; the manager approves them. Peers
+  answer a few questions and a rating; the person sees peer feedback only together, and only
+  from at least three peers, never who said what.
+- **Manager review:** the manager rates each goal and competency, sees the self review, and
+  proposes an overall rating with recommendations: an increment, a promotion (to a
+  designation), or an improvement plan.
+- **Calibration:** HR and the managers of a unit compare the proposed ratings side by side,
+  against a distribution the workspace sets as a guide (never a quota), and settle each final
+  rating; a change records who made it and why.
+- **Release and acknowledgement:** HR releases the reviews; each person reads their own, and
+  acknowledges it with a comment, agreeing or not. A released review never changes.
+- **Outcomes:** the cycle's final ratings and recommendations are the input to M3's increment
+  round.
+
+### Improvement plans
+
+- **A plan** for one person: why, from and to (30, 60 or 90 days), what must improve and how
+  it is measured, the support given, check-ins, and the outcome (successful, extended or not
+  met). The person acknowledges it.
+- **The law:** a plan records performance concerns and the help given; it never ends anyone's
+  employment by itself. Dismissal for misconduct follows the Labour Act's procedure (s.23–24:
+  a show-cause notice with at least seven days to answer, and an inquiry), and other
+  termination follows s.26 with notice or pay. Marked for the labour lawyer to confirm.
+
+### Probation reviews
+
+- Before a person's probation ends (s.4), their manager is asked for a probation review:
+  ratings, comments and a recommendation to confirm, extend or end it. HR acts on it from the
+  person's probation, as today; the review is kept on their record.
+
+### Who sees what
+
+- **The person:** their goals and check-ins, their self review, and their review once released
+  (peer feedback only together).
+- **Their manager:** the team's goals, reviews and plans (direct reports, and those below them).
+- **`performance.manage`** (workspace admin, HR admin, HR officer): every cycle, review, plan and
+  calibration, within the login's companies.
+- **Peers:** only what they write.
+
+### Done when
+
+- **Unit tests:**
+  - KPI readings from attendance and production, and goal weights;
+  - the goal score and the peer summary's threshold;
+  - when reminders go out;
+  - the probation review's window and due date;
+  - the outcomes file.
+- **API end-to-end tests:**
+  - **goals:** drafted by the person or the manager; agreement, and agreement again after a
+    change; weights adding up to 100%; check-ins; unit goals and alignment; KPIs from the
+    records; who sees what;
+  - **reviews:** settings; launching with the manager of the day; workers without logins; self
+    and manager reviews; peers named, approved, answered and summarised only from three; who
+    sees which part; the tasks;
+  - **calibration:** the spread against the guide; final ratings and their reasons; moving on
+    with reviews missing; release and its notices; acknowledgement; no change after release;
+  - **development:** plans from draft to close, with the person's acknowledgement; probation
+    reviews asked by the job, submitted, told to HR and marked acted on; the performance record;
+    outcomes as JSON and CSV within the login's companies.
+- **Web, in English and Bangla:**
+  - Performance (tasks, goals, reviews), goals and a goal, a review (self, manager, released),
+    the team's reviews, peer feedback;
+  - cycles, calibration, settings;
+  - plans, probation reviews, and the Performance tab on an employee's page.
+- **App:** the Performance entry with its badge, my goals and check-ins, goals to agree, the self
+  review, acknowledging a released review, peer feedback, and notifications that open them.
+
+### Checked
+
+- **Automated tests:**
+  - API: 658 tests in 83 files (9 new). The suite also passed shuffled runs with five seeds.
+  - Shared 118, country pack 53, Edge Agent 70, web 16.
+  - Flutter: 295 tests (30 new), and analyze is clean.
+- **The browser, in English and Bangla, on the seeded My Group:**
+  - **Self review:** Rahima Khatun was refused when she submitted an empty form. She saved a
+    draft, came back to it and submitted. Her attendance goal read 69.23% against 95% from
+    processed attendance.
+  - **Manager reviews:** Shirin Akter was notified, read Rahima's self review beside her own
+    form, and proposed 3 with an increment; the goal score was 3.3 from weights of 40, 30
+    and 30.
+  - **Without logins:** Shirin reviewed two operators who have no login alone, on competencies
+    only, proposing a promotion to Senior Sewing Operator for one and an improvement plan for
+    the other. She left the third unwritten.
+  - **Calibration:** HR moved the cycle on with a reason for the missing review. Release was
+    refused until every review had a final rating. Lowering a rating, and HR rating the review
+    with no manager's part, each needed a reason. The guide showed beside the spread.
+  - **Release:** the outcomes CSV listed all four with their recommendations. Rahima was
+    notified, read her review and acknowledged it, not agreeing, with her comment.
+  - **KPI from production:** a day's output entered for Line 1 (372 against a target of 400 for
+    Rahima) showed in her goal at once, as 93% against 90%.
+  - **Improvement plan:** Shirin started a 60-day plan for Mitu Begum from the review's
+    recommendation, with the legal note shown, and added a check-in.
+  - **Probation:** with Mitu's probation end moved into the window in the development database,
+    the job asked Shirin for a probation review due a week before the end. She recommended
+    extending the probation, with her reasons.
+  - **Bangla:** no page under Performance showed untranslated interface text or a message key.
+- **Fixed on the way:**
+  - The goals page showed a message key instead of "New goal".
+  - In Bangla, the rating choices in calibration and the review forms used Latin digits.
+  - A manager's probation review task gave the probation's end as its due date, a week late.
+  - A submitted probation review listed its ratings in storage order.
+  - The outcomes CSV showed Bangla names garbled in Excel; it now starts with a byte-order mark.
+  - Older tests:
+    - three assumed a past day in the current month, or that October 2026 was not over, and
+      failed on 1 November;
+    - a reviews test changed the workspace's competencies for every test after it;
+    - a notifications test gave up while other tests' mail was still ahead of its own.
+
+**Carried into later milestones from M2:**
+
+- **Paper acknowledgement:** a worker without a login cannot acknowledge a plan or a review in
+  Good People, and a signed paper copy cannot be recorded yet.
+- **Declining peer feedback:** a peer cannot decline a request; only the manager approves or
+  declines the peers named.
+- **Peers in the walkthrough:** My Group's seed has no colleagues with logins to name, so peer
+  feedback was checked by the tests only.
+- **The app** leaves naming peers, drafting, completing and dropping goals, the manager review,
+  plans and probation reviews to the web.
+- **Counsel:** confirms the improvement plan's legal note (s.23–24, s.26) before HR relies on
+  it.
+
 ## Later milestones (outline; detailed when each starts)
 
-- **M2 Performance:** goals and KPIs per person and unit, review cycles with self, manager and
-  peer reviews, calibration of ratings, improvement plans, and outcomes that feed M3.
 - **M3 Compensation planning:** increments by rating and position in the grade's range, budgets,
   managers' proposals, approval and the pay changes in payroll; the RMG wage board's annual
   increment.

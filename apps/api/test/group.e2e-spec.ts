@@ -61,8 +61,9 @@ describe('group', () => {
   let tenantId: string;
   let seq = 0;
   const today = todayIn();
-  const month = today.slice(0, 7);
   const yesterday = addDays(today, -1);
+  // Yesterday's month, so it has a day before today even on the 1st.
+  const month = yesterday.slice(0, 7);
 
   beforeAll(async () => {
     app = await bootApp();

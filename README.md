@@ -88,6 +88,12 @@ A multi-tenant HR and payroll platform, built for Bangladesh first and ready to 
     budget, accepted online with a kept, hashed letter, and hired into the employee record with
     their documents and a pay proposal; candidates erased after the workspace's retention
     period.
+  - **Phase 4 M2 (performance):** goals agreed with managers, weighted to 100%, with KPIs read
+    from attendance and daily production; review cycles with self reviews (managers alone for
+    workers without logins), peer feedback shown only together and from at least three, and
+    manager reviews with recommendations; calibration against a guide that is never a quota;
+    released reviews acknowledged and never changed, with outcomes for the increment round;
+    improvement plans and probation reviews on record (web and app).
 - **Next:**
   - Our own organisations go live: [docs/ops/go-live.md](docs/ops/go-live.md).
   - Payroll goes live after three parallel months with a design partner:
@@ -103,8 +109,10 @@ A multi-tenant HR and payroll platform, built for Bangladesh first and ready to 
     sign-off on the legal pages, the third-party penetration test
     ([docs/security/pentest-scope.md](docs/security/pentest-scope.md)) and a restore drill on
     the production backups.
-  - Phase 4 M2: performance (goals, review cycles, calibration). The plan is in
-    [docs/phases/phase-4.md](docs/phases/phase-4.md).
+  - Before HR relies on improvement plans: the labour lawyer's confirmation of the plan's
+    legal note ([docs/phases/phase-4.md](docs/phases/phase-4.md#improvement-plans)).
+  - Phase 4 M3: compensation planning (increments by rating, budgets, approval into payroll).
+    The plan is in [docs/phases/phase-4.md](docs/phases/phase-4.md).
 
 ## Repository layout
 

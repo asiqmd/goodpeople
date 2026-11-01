@@ -2617,4 +2617,814 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get scorecardOthersNone => 'আর কেউ এখনো স্কোরকার্ড জমা দেননি।';
+
+  @override
+  String get performanceTitle => 'কর্মমূল্যায়ন';
+
+  @override
+  String get performanceSubtitle =>
+      'আপনার লক্ষ্য ও মূল্যায়ন, আর সহকর্মীরা আপনার কাছে যে মতামত চান';
+
+  @override
+  String performanceTasksWaiting(num count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countStringটি কাজ আপনার অপেক্ষায়',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get performanceLoadFailed =>
+      'আপনার কর্মমূল্যায়নের তথ্য লোড করা যায়নি।';
+
+  @override
+  String get performanceTasksTitle => 'আপনার জন্য অপেক্ষা করছে';
+
+  @override
+  String get performanceNoTasks => 'আপনার জন্য কিছু অপেক্ষা করছে না।';
+
+  @override
+  String performanceDueBy(String date) {
+    return '$date-এর মধ্যে';
+  }
+
+  @override
+  String get performanceTaskOnWeb => 'গুড পিপলের ওয়েব অ্যাপে করতে হয়';
+
+  @override
+  String get performanceOnTheWeb =>
+      'আপনার দলের মূল্যায়ন লেখা, ক্যালিব্রেশন, মূল্যায়ন চক্র, উন্নয়ন পরিকল্পনা ও শিক্ষানবিশকালের মূল্যায়ন গুড পিপলের ওয়েব অ্যাপে করা হয়।';
+
+  @override
+  String performancePercent(String value) {
+    return '$value%';
+  }
+
+  @override
+  String get performanceChooseRating => 'একটি রেটিং বেছে নিন';
+
+  @override
+  String ratingName(String rating) {
+    String _temp0 = intl.Intl.selectLogic(rating, {
+      '1': 'প্রত্যাশার অনেক নিচে',
+      '2': 'প্রত্যাশার নিচে',
+      '3': 'প্রত্যাশা পূরণ করেছে',
+      '4': 'প্রত্যাশার চেয়ে ভালো',
+      '5': 'প্রত্যাশার চেয়ে অনেক ভালো',
+      'other': 'রেটিং দেওয়া হয়নি',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String taskSelfReview(String cycle) {
+    return 'আপনার আত্মমূল্যায়ন · $cycle';
+  }
+
+  @override
+  String taskAcknowledge(String cycle) {
+    return 'আপনার মূল্যায়ন পড়ে স্বীকার করুন · $cycle';
+  }
+
+  @override
+  String taskPeerAnswer(String person, String cycle) {
+    return '$person সম্পর্কে মতামত · $cycle';
+  }
+
+  @override
+  String taskPeerApprove(num count, String person) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$person-এর জন্য $countStringজন সহকর্মী অনুমোদন',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String taskGoalsAgree(num count, String person) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$person-এর $countStringটি লক্ষ্যে সম্মতি দিন',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String taskManagerReview(String person, String cycle) {
+    return '$person-এর মূল্যায়ন · $cycle';
+  }
+
+  @override
+  String taskNoManager(num count, String cycle) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'ম্যানেজার ছাড়া $countStringটি মূল্যায়ন · $cycle',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String taskProbationReview(String person) {
+    return '$person-এর শিক্ষানবিশকালের মূল্যায়ন';
+  }
+
+  @override
+  String get taskOther => 'কর্মমূল্যায়নের একটি কাজ';
+
+  @override
+  String get myGoalsTitle => 'আমার লক্ষ্য';
+
+  @override
+  String get myGoalsNone => 'আপনার এখনো কোনো লক্ষ্য নেই।';
+
+  @override
+  String myGoalsCounts(
+    num total,
+    String agreed,
+    String draft,
+    String completed,
+  ) {
+    final intl.NumberFormat totalNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String totalString = totalNumberFormat.format(total);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: '$totalStringটি লক্ষ্য',
+    );
+    return '$_temp0: $agreedটি সম্মত, $draftটি সম্মতির অপেক্ষায়, $completedটি সম্পন্ন।';
+  }
+
+  @override
+  String get myReviewsTitle => 'আমার মূল্যায়ন';
+
+  @override
+  String get myReviewsNone => 'আপনি এখনো কোনো মূল্যায়ন চক্রে ছিলেন না।';
+
+  @override
+  String get goalsLoadFailed => 'আপনার লক্ষ্যগুলো লোড করা যায়নি।';
+
+  @override
+  String get goalsNoEmployee =>
+      'এই লগইনের কোনো কর্মী রেকর্ড নেই, তাই এর নিজের কোনো লক্ষ্য নেই।';
+
+  @override
+  String get goalsNone => 'এখনো কোনো লক্ষ্য নেই।';
+
+  @override
+  String goalsAgreedWith(String name) {
+    return 'আপনার লক্ষ্যে সম্মতি দেন $name।';
+  }
+
+  @override
+  String get goalsOutsideCycles => 'কোনো মূল্যায়ন চক্রের বাইরে';
+
+  @override
+  String get goalsDraftOnWeb =>
+      'নতুন লক্ষ্যের খসড়া করা, আর লক্ষ্য বদলানো, সম্পন্ন করা বা বাদ দেওয়া হয় গুড পিপলের ওয়েব অ্যাপে।';
+
+  @override
+  String get goalsSubmit => 'সম্মতির জন্য পাঠান';
+
+  @override
+  String goalsSubmitted(num count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countStringটি লক্ষ্য',
+    );
+    return '$_temp0 সম্মতির জন্য আপনার ম্যানেজারের কাছে পাঠানো হয়েছে।';
+  }
+
+  @override
+  String get goalsSubmittedAlready =>
+      'এই লক্ষ্যগুলো আগেই পাঠানো হয়েছে; আপনার ম্যানেজারের কাছে আছে।';
+
+  @override
+  String goalsReportsTo(String name) {
+    return '$name-এর কাছে রিপোর্ট করেন';
+  }
+
+  @override
+  String goalKindName(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'objective': 'উদ্দেশ্য',
+      'kpi': 'কেপিআই',
+      'other': 'লক্ষ্য',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String goalStatusName(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'draft': 'খসড়া',
+      'agreed': 'সম্মত',
+      'completed': 'সম্পন্ন',
+      'dropped': 'বাদ দেওয়া',
+      'other': 'অজানা',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String goalWeight(String weight) {
+    return 'ওজন $weight';
+  }
+
+  @override
+  String goalDue(String date) {
+    return 'শেষ তারিখ $date';
+  }
+
+  @override
+  String goalKeyResultsDone(String done, String total) {
+    return '$totalটি মূল ফলের মধ্যে $doneটি সম্পন্ন';
+  }
+
+  @override
+  String goalMeasure(String value, String target, String unit) {
+    return 'লক্ষ্যমাত্রা $target $unit-এর বিপরীতে $value $unit';
+  }
+
+  @override
+  String goalMeasureNone(String target, String unit) {
+    return 'লক্ষ্যমাত্রা $target $unit; এখনো কোনো মান নেই';
+  }
+
+  @override
+  String goalMeasureShort(String current, String target, String unit) {
+    return '$target $unit-এর মধ্যে $current';
+  }
+
+  @override
+  String goalDirectionName(String direction) {
+    String _temp0 = intl.Intl.selectLogic(direction, {
+      'higher': 'যত বেশি তত ভালো',
+      'lower': 'যত কম তত ভালো',
+      'other': '',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get goalProgressLabel => 'অগ্রগতি';
+
+  @override
+  String get goalTitle => 'লক্ষ্য';
+
+  @override
+  String get goalLoadFailed => 'এই লক্ষ্যটি লোড করা যায়নি।';
+
+  @override
+  String get goalGone => 'এই লক্ষ্যটি আপনার জন্য খোলা নেই।';
+
+  @override
+  String goalDropped(String note) {
+    return 'বাদ দেওয়া হয়েছে: $note';
+  }
+
+  @override
+  String get goalProgressTitle => 'অগ্রগতি';
+
+  @override
+  String goalReadingAttendance(
+    String present,
+    String working,
+    String people,
+    String from,
+    String to,
+  ) {
+    return 'হাজিরা থেকে: $from থেকে $to পর্যন্ত $working কর্মদিবসের মধ্যে $present দিন উপস্থিত$people।';
+  }
+
+  @override
+  String goalReadingPeople(String count) {
+    return ' ($count জন)';
+  }
+
+  @override
+  String goalReadingNoAttendance(String from, String to) {
+    return 'হাজিরা থেকে: $from থেকে $to পর্যন্ত এখনো কোনো কর্মদিবস প্রক্রিয়া হয়নি।';
+  }
+
+  @override
+  String goalReadingProduction(
+    String pieces,
+    String target,
+    String people,
+    String from,
+    String to,
+  ) {
+    return 'উৎপাদন থেকে: $from থেকে $to পর্যন্ত $target পিসের লক্ষ্যমাত্রার বিপরীতে $pieces পিস$people।';
+  }
+
+  @override
+  String goalReadingNoProduction(String from, String to) {
+    return 'উৎপাদন থেকে: $from থেকে $to পর্যন্ত দৈনিক লক্ষ্যমাত্রার কোনো কাজ এখনো নেই।';
+  }
+
+  @override
+  String get goalReadingClosed =>
+      'এই লক্ষ্য বন্ধ; এর মান শেষবার যেমন পড়া হয়েছিল তেমনই আছে।';
+
+  @override
+  String goalSourceHint(String source) {
+    String _temp0 = intl.Intl.selectLogic(source, {
+      'attendance_rate': 'প্রক্রিয়াকৃত হাজিরা থেকে পড়া হয়: নির্ধারিত কর্মদিবসের কত অংশে উপস্থিত ছিলেন। অনুমোদিত ছুটি, সাপ্তাহিক ছুটি ও সরকারি ছুটি এর বিপক্ষে গণ্য হয় না।',
+      'production_target': 'দৈনিক উৎপাদন থেকে পড়া হয়: যে অপারেশনে কাজ হয়েছে তার দৈনিক লক্ষ্যমাত্রার বিপরীতে তৈরি পিস।',
+      'other': 'প্রতিটি হালনাগাদে মান লেখা হয়।',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String goalSourceName(String source) {
+    String _temp0 = intl.Intl.selectLogic(source, {
+      'manual': 'হালনাগাদে লেখা',
+      'attendance_rate': 'উপস্থিতির হার, হাজিরা থেকে',
+      'production_target': 'লক্ষ্যমাত্রার বিপরীতে উৎপাদন, উৎপাদন থেকে',
+      'other': 'অজানা',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get goalKeyResultDone => 'সম্পন্ন';
+
+  @override
+  String get goalKeyResultOpen => 'এখনো বাকি';
+
+  @override
+  String get goalDetailsTitle => 'বিস্তারিত';
+
+  @override
+  String get goalStartsOn => 'শুরু';
+
+  @override
+  String get goalDueOn => 'শেষ তারিখ';
+
+  @override
+  String get goalValueFrom => 'মান আসে';
+
+  @override
+  String get goalServes => 'যে লক্ষ্যের জন্য';
+
+  @override
+  String get goalServesNothing => 'অন্য কোনো লক্ষ্যের জন্য নয়';
+
+  @override
+  String get goalCheckinsTitle => 'হালনাগাদ';
+
+  @override
+  String get goalNoCheckins => 'এখনো কোনো হালনাগাদ নেই।';
+
+  @override
+  String goalCheckinValue(String value, String unit) {
+    return 'মান $value $unit';
+  }
+
+  @override
+  String get goalAgree => 'সম্মতি দিন';
+
+  @override
+  String get goalAgreed => 'সম্মতি দেওয়া হয়েছে।';
+
+  @override
+  String goalAgreeAll(String count, String total) {
+    return 'সবগুলোতে সম্মতি দিন ($countটি, $total)';
+  }
+
+  @override
+  String goalAgreeAllNoCycle(String count) {
+    return 'সবগুলোতে সম্মতি দিন ($countটি)';
+  }
+
+  @override
+  String goalWeights(String total) {
+    return 'ওজন: ১০০%-এর মধ্যে $total';
+  }
+
+  @override
+  String goalWeightsSplit(String agreed, String draft) {
+    return 'সম্মত $agreed, খসড়া $draft';
+  }
+
+  @override
+  String get goalCheckinKeyResults => 'সম্পন্ন মূল ফল';
+
+  @override
+  String get goalCheckinProgress => 'অগ্রগতি, শতাংশে';
+
+  @override
+  String get goalCheckinProgressHint => 'লক্ষ্য কতদূর এগিয়েছে, ০ থেকে ১০০।';
+
+  @override
+  String get goalCheckinProgressInvalid =>
+      '০ থেকে ১০০-এর মধ্যে একটি পূর্ণ সংখ্যা দিন';
+
+  @override
+  String goalCheckinValueLabel(String unit) {
+    return 'এখনকার মান ($unit)';
+  }
+
+  @override
+  String get goalCheckinValueInvalid =>
+      'একটি সংখ্যা দিন, দশমিকের পর সর্বোচ্চ দুই ঘর';
+
+  @override
+  String get goalCheckinEmpty => 'অগ্রগতি, মান অথবা একটি নোট দিন';
+
+  @override
+  String get goalCheckinFromRecords =>
+      'মান আসে রেকর্ড থেকে; কাজ কেমন চলছে, তা নিয়ে একটি নোট লিখুন।';
+
+  @override
+  String get goalCheckinNote => 'নোট';
+
+  @override
+  String get goalCheckinNoteRequired =>
+      'কাজ কেমন চলছে, তা নিয়ে একটি নোট লিখুন';
+
+  @override
+  String get goalCheckinAdd => 'হালনাগাদ যোগ করুন';
+
+  @override
+  String get goalCheckinSaved => 'হালনাগাদ যোগ হয়েছে।';
+
+  @override
+  String get goalErrorClosed => 'এই লক্ষ্যটি বন্ধ, এটি আর বদলায় না।';
+
+  @override
+  String get goalErrorCycleClosed =>
+      'এই মূল্যায়ন চক্রে লক্ষ্য ঠিক করার সময় পেরিয়ে গেছে; এর লক্ষ্যগুলো আর বদলায় না।';
+
+  @override
+  String get goalErrorNotDraft => 'এই লক্ষ্যটি আর খসড়া নয়।';
+
+  @override
+  String get goalErrorWeightRequired =>
+      'সম্মতি দেওয়ার আগে ওয়েবে চক্রের প্রতিটি লক্ষ্যের ওজন দিন।';
+
+  @override
+  String get goalErrorWeightsOver =>
+      'এই চক্রের সম্মত লক্ষ্যগুলোর ওজন ১০০%-এর বেশি হয়ে যাবে।';
+
+  @override
+  String get goalErrorWeightsTotal =>
+      'একটি চক্রে একজনের সম্মত লক্ষ্যগুলোর ওজন মিলিয়ে ১০০% হতে হবে।';
+
+  @override
+  String get goalErrorNoDrafts =>
+      'পাঠানো বা সম্মতি দেওয়ার মতো কোনো খসড়া লক্ষ্য নেই।';
+
+  @override
+  String get teamGoalsTitle => 'সম্মতির অপেক্ষায় লক্ষ্য';
+
+  @override
+  String get teamGoalsLoadFailed => 'আপনার দলের লক্ষ্যগুলো লোড করা যায়নি।';
+
+  @override
+  String get teamGoalsNone => 'আপনার সম্মতির অপেক্ষায় কিছু নেই।';
+
+  @override
+  String teamGoalsToAgree(num count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countStringটি লক্ষ্য আপনার সম্মতির অপেক্ষায়।',
+      zero: 'আপনার সম্মতির অপেক্ষায় কিছু নেই।',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reviewTitle => 'মূল্যায়ন';
+
+  @override
+  String get reviewLoadFailed => 'এই মূল্যায়নটি লোড করা যায়নি।';
+
+  @override
+  String get reviewGone => 'এই মূল্যায়নটি আপনার জন্য খোলা নেই।';
+
+  @override
+  String reviewMine(String cycle) {
+    return 'আমার মূল্যায়ন: $cycle';
+  }
+
+  @override
+  String reviewManager(String name) {
+    return 'ম্যানেজার: $name';
+  }
+
+  @override
+  String get reviewNoManager => 'ম্যানেজার নেই: এইচআর লিখবে';
+
+  @override
+  String reviewStatusName(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'self': 'আত্মমূল্যায়ন',
+      'manager': 'ম্যানেজারের কাছে',
+      'calibration': 'ক্যালিব্রেশনে',
+      'released': 'প্রকাশিত',
+      'acknowledged': 'স্বীকার করা হয়েছে',
+      'other': 'অজানা',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get reviewOnWeb =>
+      'এই মূল্যায়ন গুড পিপলের ওয়েব অ্যাপে পড়ুন ও লিখুন।';
+
+  @override
+  String get reviewOutcome => 'ফলাফল';
+
+  @override
+  String get reviewFinalRating => 'চূড়ান্ত রেটিং';
+
+  @override
+  String get reviewGoalScore => 'লক্ষ্যের স্কোর';
+
+  @override
+  String get reviewReleasedOn => 'প্রকাশের তারিখ';
+
+  @override
+  String get reviewNotRated => 'রেটিং দেওয়া হয়নি';
+
+  @override
+  String get reviewGoalsTitle => 'লক্ষ্য';
+
+  @override
+  String get reviewNoGoals =>
+      'এই চক্রে কোনো সম্মত লক্ষ্য নেই: মূল্যায়নে শুধু দক্ষতাগুলোর রেটিং দেওয়া হবে।';
+
+  @override
+  String get reviewSelfTitle => 'আত্মমূল্যায়ন';
+
+  @override
+  String get reviewWithManager =>
+      'জমা হয়েছে। এরপর আপনার ম্যানেজার মূল্যায়ন করবেন; এইচআর প্রকাশ করলে আপনি ফলাফল পড়তে পারবেন।';
+
+  @override
+  String get reviewManagerOnly =>
+      'এই চক্রে আপনার ম্যানেজার আপনার মূল্যায়ন করবেন। এইচআর প্রকাশ করলে আপনি ফলাফল পড়তে পারবেন।';
+
+  @override
+  String get reviewNoSelf => 'এই মূল্যায়নে আত্মমূল্যায়ন নেই।';
+
+  @override
+  String get reviewManagerTitle => 'ম্যানেজারের মূল্যায়ন';
+
+  @override
+  String get reviewNothingWritten => 'এখনো কিছু লেখা হয়নি।';
+
+  @override
+  String get reviewOverall => 'সার্বিক মন্তব্য';
+
+  @override
+  String get reviewNamePeersOnWeb =>
+      'মতামতের জন্য সহকর্মীদের নাম গুড পিপলের ওয়েব অ্যাপে দিতে পারেন।';
+
+  @override
+  String get reviewErrorStepClosed =>
+      'মূল্যায়নের এই ধাপে আর পরিবর্তন করা যায় না।';
+
+  @override
+  String get selfReviewIntro =>
+      'প্রতিটি লক্ষ্য ও দক্ষতার জন্য ১ থেকে ৫ রেটিং দিন এবং কারণ লিখুন। খসড়া সংরক্ষণ করে পরে ফিরে আসতে পারেন; জমা দেওয়ার পর আপনার আত্মমূল্যায়ন ম্যানেজারের কাছে যাবে এবং আর বদলানো যাবে না।';
+
+  @override
+  String get selfReviewGoals => 'লক্ষ্য';
+
+  @override
+  String get selfReviewCompetencies => 'দক্ষতা';
+
+  @override
+  String get selfReviewComment => 'মন্তব্য (ঐচ্ছিক)';
+
+  @override
+  String get selfReviewOverall => 'সার্বিক মন্তব্য';
+
+  @override
+  String get selfReviewIncomplete =>
+      'জমা দেওয়ার আগে প্রতিটি লক্ষ্য ও দক্ষতার রেটিং দিন।';
+
+  @override
+  String get selfReviewCommentUnrated =>
+      'মন্তব্য তার রেটিংয়ের সঙ্গে রাখা হয়: একটি রেটিং বেছে নিন, অথবা মন্তব্যটি মুছে দিন।';
+
+  @override
+  String get selfReviewSaveDraft => 'খসড়া সংরক্ষণ';
+
+  @override
+  String get selfReviewSubmit => 'ম্যানেজারের কাছে জমা দিন';
+
+  @override
+  String get selfReviewSaved => 'সংরক্ষিত হয়েছে।';
+
+  @override
+  String get selfReviewSubmitted =>
+      'জমা হয়েছে। এরপর আপনার ম্যানেজার মূল্যায়ন করবেন।';
+
+  @override
+  String get selfReviewConfirmTitle => 'আত্মমূল্যায়ন জমা দেবেন?';
+
+  @override
+  String get selfReviewConfirmBody =>
+      'এটি আপনার ম্যানেজারের কাছে যাবে, এবং আপনার রেটিং ও মন্তব্য আর বদলানো যাবে না।';
+
+  @override
+  String get acknowledgeTitle => 'স্বীকৃতি';
+
+  @override
+  String get acknowledgeIntro =>
+      'আপনার মূল্যায়ন পড়ে স্বীকার করুন। আপনি একমত কি না জানাতে এবং মন্তব্য যোগ করতে পারেন; তা মূল্যায়নের সঙ্গে রেকর্ডে থাকবে।';
+
+  @override
+  String get acknowledgeQuestion => 'আপনি কি আপনার মূল্যায়নের সঙ্গে একমত?';
+
+  @override
+  String get acknowledgeAgree => 'আমি একমত';
+
+  @override
+  String get acknowledgeDisagree => 'আমি একমত নই';
+
+  @override
+  String get acknowledgeComment => 'আপনার মন্তব্য';
+
+  @override
+  String get acknowledgeCommentHint =>
+      'ঐচ্ছিক। আপনার ম্যানেজার ও এইচআর পড়বেন।';
+
+  @override
+  String get acknowledgeSubmit => 'স্বীকার করুন';
+
+  @override
+  String get acknowledgeConfirmTitle => 'আপনার মূল্যায়ন স্বীকার করবেন?';
+
+  @override
+  String get acknowledgeConfirmBody =>
+      'আপনার উত্তর ও মন্তব্য মূল্যায়নের সঙ্গে রেকর্ডে থাকবে এবং আর বদলানো যাবে না।';
+
+  @override
+  String get acknowledgeDone => 'স্বীকার করা হয়েছে।';
+
+  @override
+  String get acknowledgedAgreeing => 'স্বীকার করেছেন, একমত';
+
+  @override
+  String get acknowledgedDisagreeing => 'স্বীকার করেছেন, একমত নন';
+
+  @override
+  String get acknowledgeErrorAlready =>
+      'আপনি এই মূল্যায়ন আগেই স্বীকার করেছেন।';
+
+  @override
+  String get acknowledgeErrorNotReleased => 'এই মূল্যায়ন এখনো প্রকাশিত হয়নি।';
+
+  @override
+  String get peerFeedbackTitle => 'সহকর্মীর মতামত';
+
+  @override
+  String get peersLoadFailed => 'সহকর্মীর মতামতের তালিকা লোড করা যায়নি।';
+
+  @override
+  String get peersToApprove => 'অনুমোদনের অপেক্ষায় সহকর্মী';
+
+  @override
+  String get peersToAnswer => 'আপনার কাছে চাওয়া মতামত';
+
+  @override
+  String get peersNoneToAnswer => 'কেউ আপনার মতামত চাননি।';
+
+  @override
+  String peerApproveLine(String peer, String person) {
+    return '$person-এর জন্য $peer';
+  }
+
+  @override
+  String get peerApprove => 'অনুমোদন';
+
+  @override
+  String get peerDecline => 'বাতিল';
+
+  @override
+  String get peerApproved => 'অনুমোদিত। তাঁর কাছে মতামত চাওয়া হয়েছে।';
+
+  @override
+  String get peerDeclined => 'বাতিল করা হয়েছে।';
+
+  @override
+  String peerFeedbackOn(String person) {
+    return '$person সম্পর্কে মতামত';
+  }
+
+  @override
+  String get peerStatusAnswered => 'উত্তর দিয়েছেন';
+
+  @override
+  String get peerStatusWaiting => 'আপনার অপেক্ষায়';
+
+  @override
+  String get peerStatusClosed => 'বন্ধ';
+
+  @override
+  String get peerRequestLoadFailed => 'এই অনুরোধটি লোড করা যায়নি।';
+
+  @override
+  String get peerRequestGone => 'এই অনুরোধটি আপনার জন্য খোলা নেই।';
+
+  @override
+  String get peerRequestClosed => 'এই মতামত আর দেওয়া যাবে না।';
+
+  @override
+  String get peerAnswerPrivacy =>
+      'সৎভাবে ও সম্মানের সঙ্গে উত্তর দিন। যাঁর মূল্যায়ন, তিনি আপনার উত্তর শুধু অন্য সহকর্মীদের উত্তরের সঙ্গে একসঙ্গে দেখবেন, তাও অন্তত তিনজন উত্তর দিলে; কে কী লিখেছেন, কখনো দেখবেন না। তাঁর ম্যানেজার প্রতিটি উত্তর লেখকের নামসহ দেখবেন।';
+
+  @override
+  String peerQuestion(String question) {
+    String _temp0 = intl.Intl.selectLogic(question, {
+      'strengths': 'এই মানুষটি কোন কাজ ভালো করেন?',
+      'improvements': 'তিনি কোথায় আরও ভালো করতে পারেন?',
+      'other': 'প্রশ্ন',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get peerAnswerRequired => 'কয়েকটি শব্দ লিখুন';
+
+  @override
+  String get peerRating => 'আপনার সার্বিক রেটিং';
+
+  @override
+  String get peerSend => 'আমার মতামত পাঠান';
+
+  @override
+  String get peerConfirmTitle => 'আপনার মতামত পাঠাবেন?';
+
+  @override
+  String get peerConfirmBody =>
+      'মতামত একবারই দেওয়া যায়: পাঠানোর পর আর বদলানো যাবে না।';
+
+  @override
+  String get peerThanks => 'ধন্যবাদ। আপনার মতামত পাঠানো হয়েছে।';
+
+  @override
+  String get peerYourAnswer => 'আপনার মতামত';
+
+  @override
+  String get peerSummaryTooFew =>
+      'অন্তত তিনজন সহকর্মী উত্তর দিলে তবেই সহকর্মীর মতামত দেখানো হয়।';
+
+  @override
+  String peerSummaryAverage(String average) {
+    return 'সহকর্মীদের গড় রেটিং: $average';
+  }
+
+  @override
+  String get peerSummaryTogether =>
+      'উত্তরগুলো একসঙ্গে দেখানো হয়; কে কী লিখেছেন, কখনো দেখানো হয় না।';
+
+  @override
+  String get peerErrorAnswered => 'আপনি আগেই মতামত দিয়েছেন।';
+
+  @override
+  String get peerErrorClosed =>
+      'এই মূল্যায়নে সহকর্মীর মতামতের ধাপ বন্ধ হয়ে গেছে।';
+
+  @override
+  String get peerErrorDecided =>
+      'এই সহকর্মীকে আগেই অনুমোদন বা বাতিল করা হয়েছে।';
 }

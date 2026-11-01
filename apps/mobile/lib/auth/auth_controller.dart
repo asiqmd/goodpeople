@@ -415,6 +415,58 @@ class AuthController extends Notifier<AuthState> {
   Future<FileDownload> downloadApplicationCv(String applicationId) =>
       _withSession((token) => _api.downloadApplicationCv(token, applicationId));
 
+  // ── Performance ───────────────────────────────────────────────────────────
+  // Same refresh-once rule.
+
+  Future<PerformanceMe> fetchPerformanceMe() =>
+      _withSession(_api.fetchPerformanceMe);
+
+  Future<MyGoals> fetchMyGoals() => _withSession(_api.fetchMyGoals);
+
+  Future<TeamGoals> fetchTeamGoals() => _withSession(_api.fetchTeamGoals);
+
+  Future<GoalDetail> fetchGoal(String goalId) =>
+      _withSession((token) => _api.fetchGoal(token, goalId));
+
+  Future<GoalDetail> checkinGoal(String goalId, GoalCheckinDraft draft) =>
+      _withSession((token) => _api.checkinGoal(token, goalId, draft));
+
+  Future<GoalSubmitResult> submitGoals(String? cycleId) =>
+      _withSession((token) => _api.submitGoals(token, cycleId));
+
+  Future<GoalDetail> agreeGoal(String goalId) =>
+      _withSession((token) => _api.agreeGoal(token, goalId));
+
+  Future<void> agreeAllGoals({
+    required String employeeId,
+    required String? cycleId,
+  }) => _withSession(
+    (token) =>
+        _api.agreeAllGoals(token, employeeId: employeeId, cycleId: cycleId),
+  );
+
+  Future<ReviewDetail> fetchReview(String reviewId) =>
+      _withSession((token) => _api.fetchReview(token, reviewId));
+
+  Future<ReviewDetail> saveSelfReview(String reviewId, SelfReviewDraft draft) =>
+      _withSession((token) => _api.saveSelfReview(token, reviewId, draft));
+
+  Future<ReviewDetail> acknowledgeReview(
+    String reviewId,
+    AcknowledgementDraft draft,
+  ) => _withSession((token) => _api.acknowledgeReview(token, reviewId, draft));
+
+  Future<PeerInbox> fetchPeerInbox() => _withSession(_api.fetchPeerInbox);
+
+  Future<PeerRequest> fetchPeerRequest(String peerId) =>
+      _withSession((token) => _api.fetchPeerRequest(token, peerId));
+
+  Future<PeerRequest> answerPeerRequest(String peerId, PeerAnswerDraft draft) =>
+      _withSession((token) => _api.answerPeerRequest(token, peerId, draft));
+
+  Future<void> decidePeer(String peerId, {required bool approve}) =>
+      _withSession((token) => _api.decidePeer(token, peerId, approve: approve));
+
   /// Runs [call] with the stored access token.
   ///
   /// On a 401 it calls `/auth/refresh` once and retries with the new access

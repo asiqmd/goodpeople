@@ -58,6 +58,7 @@ On a physical phone, use your computer's LAN address, for example
 | `lib/attendance/` | Attendance screen, its tabs, the correction form, the providers, `LocationService` and `CameraService` |
 | `lib/approvals/` | The approvals inbox tab (leave, corrections, resignations, project timesheets, job openings and offers above budget) and `approvalsProvider`, shared by Leave and Attendance, and `ApprovalsScreen` for notifications |
 | `lib/interviews/` | My interviews, an interview with its scorecard, their providers and `LinkOpener` (video call links) |
+| `lib/performance/` | The Performance screen, My goals, a goal with its check-ins, goals to agree, a review with the self review and the acknowledgement, peer feedback, and their providers |
 | `lib/notifications/` | The inbox screen and `notificationInboxProvider`, which screen each notification opens, and `PushService` (Firebase, or off) |
 | `lib/team/` | The Team screen and its providers |
 | `lib/account/` | Account and the change-password form |
@@ -281,6 +282,47 @@ reloads the interview. A `recruitment.interview` notification opens the
 list. The interviewer's view has no panel list in the API yet; the page
 shows one when the API sends `panel`.
 
+Performance (goals and reviews): with the workspace's `performance`
+feature the home screen shows **Performance**, with a badge of the tasks
+`GET /tenant/performance/me` counts (a 403 or 404 hides only the badge).
+The Performance screen lists those tasks, soonest due first: a self review,
+a released review to acknowledge, feedback to give, peers to approve and a
+report's goals to agree open their screen; a manager's review, reviews
+without a manager and probation reviews say they are done on the web and
+open nothing. Below them: the goals in numbers (opening **My goals**),
+**Goals to agree** for managers, **Peer feedback**, and the user's reviews
+by cycle with the final rating in words once released. Every rating shows
+its words (`3 · Meets expectations`), never the number or a colour alone.
+My goals (`GET /tenant/performance/goals/mine`) groups goals by cycle with
+the cycle's weights, and sends a cycle's drafts to the manager
+(`POST .../goals/submit`); drafting, editing, completing and dropping goals
+are done on the web. A goal (`GET .../goals/{id}`) shows its measure and
+progress, and for a KPI from the records how the value was read; a check-in
+(`POST .../goals/{id}/checkins`) ticks an objective's key results, or gives
+its progress when it has none, or a manual KPI's value (Bangla digits are
+read too), with a note; a KPI from the records takes a note only. Goals to
+agree (`GET .../goals/team`) lists the drafts of the user's reports in open
+cycles with **Agree** (`POST .../goals/{id}/agree`) and, for two or more,
+**Agree all** (`POST .../goals/agree`). A review
+(`GET /tenant/performance/reviews/{id}`) is the self review form while it is
+open (a rating and comment per goal and competency and an overall comment;
+**Save draft**, or **Submit to my manager** after a confirmation,
+`PUT .../reviews/{id}/self`), read only once submitted; once released it
+shows the final rating, the goal score, the manager's ratings and comments,
+the peer feedback together (never who wrote what) and **Acknowledge**,
+agreeing or not with a comment, after a confirmation
+(`POST .../reviews/{id}/acknowledge`). Someone else's review, such as one
+the user writes as a manager, is on the web. Peer feedback
+(`GET /tenant/performance/peers`) lists the requests and, for managers, the
+peers named for their team's reviews to approve or decline
+(`POST .../peers/{id}/decision`); a request (`GET`/`PUT .../peers/{id}`)
+takes both answers and a rating once, after a confirmation, and says that
+the person reads the answers only together with other peers'. Naming peers
+is done on the web. `performance.task` and `performance.released`
+notifications open the review, the peer request, the peer feedback list,
+goals to agree or My goals by their link, and the Performance screen for
+anything else.
+
 Account: `GET /account` (name, email, mobile, role, two-step sign-in) and,
 for logins with a password, **Change password**
 (`POST /account/password`, at least 10 characters, with this session's
@@ -331,7 +373,8 @@ soon" are fixed. Attendance tests replace the GPS with `FakeLocationService`
 (`cameraServiceProvider`); document tests replace the phone's viewer with
 `FakeFileOpener` (`fileOpenerProvider`), and interview tests replace the
 browser with `FakeLinkOpener` (`linkOpenerProvider`); recruitment fixtures
-are in `test/support/recruitment_fixtures.dart`. `test/api_client_test.dart` runs the
+are in `test/support/recruitment_fixtures.dart` and performance fixtures in
+`test/support/performance_fixtures.dart`. `test/api_client_test.dart` runs the
 real dio client against stub adapters that return the contract's JSON, or a
 file's bytes and headers.
 

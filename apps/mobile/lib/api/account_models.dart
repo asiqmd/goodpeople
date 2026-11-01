@@ -105,6 +105,12 @@ enum NotificationEvent implements WireValue {
 
   /// The user is on an interview's panel, or it changed or was cancelled.
   recruitmentInterview('recruitment.interview'),
+
+  /// A review step, goals to agree or a probation review waits for the user.
+  performanceTask('performance.task'),
+
+  /// The user's review is released for them to read and acknowledge.
+  performanceReleased('performance.released'),
   unknown('unknown');
 
   const NotificationEvent(this.wire);

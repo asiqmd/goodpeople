@@ -506,11 +506,13 @@ describe('accounts, sign-in and notifications', () => {
     expect(inbox.items[0]!.body).toContain('Casual');
 
     // The email waits in the outbox until the dispatcher sends it, oldest first and a batch
-    // at a time, behind other tests' mail; dispatch until it goes (as later sweeps would).
+    // at a time, behind however much of other tests' mail; dispatch until it goes or nothing
+    // is left (as later sweeps would).
     let mail: (typeof email.sent)[number] | undefined;
-    for (let i = 0; i < 50 && !mail; i++) {
-      await send();
+    while (!mail) {
+      const handled = await send();
       mail = email.sent.slice(sentBefore).find((m) => m.to === manager.email);
+      if (handled === 0) break;
     }
     expect(mail?.subject).toContain(worker.employee.fullName);
     expect(mail?.text).toContain('/workspace/approvals');

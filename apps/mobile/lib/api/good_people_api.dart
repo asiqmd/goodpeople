@@ -393,6 +393,101 @@ abstract interface class GoodPeopleApi {
     String accessToken,
     String applicationId,
   );
+
+  // ── Performance ───────────────────────────────────────────────────────────
+  // Needs the workspace's `performance` feature: a 403 without it. A goal,
+  // review or peer request the login may not see gets a 404. Refusals carry
+  // a `code` in the [ApiException].
+
+  /// `GET /tenant/performance/me`: what waits for the login, their goals in
+  /// numbers and their reviews.
+  Future<PerformanceMe> fetchPerformanceMe(String accessToken);
+
+  /// `GET /tenant/performance/goals/mine`. Empty for a login with no
+  /// employee record.
+  Future<MyGoals> fetchMyGoals(String accessToken);
+
+  /// `GET /tenant/performance/goals/team`: the goals of everyone below the
+  /// login, by person.
+  Future<TeamGoals> fetchTeamGoals(String accessToken);
+
+  /// `GET /tenant/performance/goals/{id}`.
+  Future<GoalDetail> fetchGoal(String accessToken, String goalId);
+
+  /// `POST /tenant/performance/goals/{id}/checkins`, answered with the goal
+  /// as it now is. Refusals: `goal_checkin_empty` (400),
+  /// `goal_value_from_records` (400, a KPI from the records), `goal_closed`
+  /// and `goal_cycle_closed` (409).
+  Future<GoalDetail> checkinGoal(
+    String accessToken,
+    String goalId,
+    GoalCheckinDraft draft,
+  );
+
+  /// `POST /tenant/performance/goals/submit`: the login's drafts for a
+  /// cycle (`null`: outside any cycle) sent to their manager to agree.
+  /// Refusals: `no_draft_goals`, `goal_cycle_closed` (409).
+  Future<GoalSubmitResult> submitGoals(String accessToken, String? cycleId);
+
+  /// `POST /tenant/performance/goals/{id}/agree`, answered with the goal.
+  /// Refusals (409): `goal_not_draft`, `goal_weight_required`,
+  /// `goal_weights_over`, `goal_weights_total` (a person's agreed goals for
+  /// a cycle weigh 100% together), `goal_cycle_closed`.
+  Future<GoalDetail> agreeGoal(String accessToken, String goalId);
+
+  /// `POST /tenant/performance/goals/agree`: every draft of one person for a
+  /// cycle (`null`: outside any cycle) agreed at once; refused as
+  /// [agreeGoal] is.
+  Future<void> agreeAllGoals(
+    String accessToken, {
+    required String employeeId,
+    required String? cycleId,
+  });
+
+  /// `GET /tenant/performance/reviews/{id}`.
+  Future<ReviewDetail> fetchReview(String accessToken, String reviewId);
+
+  /// `PUT /tenant/performance/reviews/{id}/self`, answered with the review.
+  /// Refusals: `ratings_missing` (400, submitting without every goal and
+  /// competency rated), `review_step_closed` (409).
+  Future<ReviewDetail> saveSelfReview(
+    String accessToken,
+    String reviewId,
+    SelfReviewDraft draft,
+  );
+
+  /// `POST /tenant/performance/reviews/{id}/acknowledge`, answered with the
+  /// review. Refusals (409): `already_acknowledged`, `review_not_released`.
+  Future<ReviewDetail> acknowledgeReview(
+    String accessToken,
+    String reviewId,
+    AcknowledgementDraft draft,
+  );
+
+  /// `GET /tenant/performance/peers`: feedback the login is asked for, and
+  /// peers waiting for their approval.
+  Future<PeerInbox> fetchPeerInbox(String accessToken);
+
+  /// `GET /tenant/performance/peers/{id}`: one request for the login's
+  /// feedback.
+  Future<PeerRequest> fetchPeerRequest(String accessToken, String peerId);
+
+  /// `PUT /tenant/performance/peers/{id}`, answered with the request.
+  /// Refusals (409): `peer_answered`, `peer_step_closed`.
+  Future<PeerRequest> answerPeerRequest(
+    String accessToken,
+    String peerId,
+    PeerAnswerDraft draft,
+  );
+
+  /// `POST /tenant/performance/peers/{id}/decision`: the manager approves a
+  /// named peer, who is then asked, or declines them. Refusals (409):
+  /// `peer_decided`, `peer_step_closed`.
+  Future<void> decidePeer(
+    String accessToken,
+    String peerId, {
+    required bool approve,
+  });
 }
 
 /// [GoodPeopleApi] over HTTP with dio.
@@ -1061,6 +1156,172 @@ class DioGoodPeopleApi implements GoodPeopleApi {
       '${Uri.encodeComponent(applicationId)}/cv',
       options: _fileOptions(accessToken),
     ),
+  );
+
+  static const _performance = '/tenant/performance';
+
+  @override
+  Future<PerformanceMe> fetchPerformanceMe(String accessToken) => _call(
+    () => _dio.get<Object?>('$_performance/me', options: _bearer(accessToken)),
+    PerformanceMe.fromJson,
+  );
+
+  @override
+  Future<MyGoals> fetchMyGoals(String accessToken) => _call(
+    () => _dio.get<Object?>(
+      '$_performance/goals/mine',
+      options: _bearer(accessToken),
+    ),
+    MyGoals.fromJson,
+  );
+
+  @override
+  Future<TeamGoals> fetchTeamGoals(String accessToken) => _call(
+    () => _dio.get<Object?>(
+      '$_performance/goals/team',
+      options: _bearer(accessToken),
+    ),
+    TeamGoals.fromJson,
+  );
+
+  @override
+  Future<GoalDetail> fetchGoal(String accessToken, String goalId) => _call(
+    () => _dio.get<Object?>(
+      '$_performance/goals/${Uri.encodeComponent(goalId)}',
+      options: _bearer(accessToken),
+    ),
+    GoalDetail.fromJson,
+  );
+
+  @override
+  Future<GoalDetail> checkinGoal(
+    String accessToken,
+    String goalId,
+    GoalCheckinDraft draft,
+  ) => _call(
+    () => _dio.post<Object?>(
+      '$_performance/goals/${Uri.encodeComponent(goalId)}/checkins',
+      data: draft.toJson(),
+      options: _bearer(accessToken),
+    ),
+    GoalDetail.fromJson,
+  );
+
+  @override
+  Future<GoalSubmitResult> submitGoals(String accessToken, String? cycleId) =>
+      _call(
+        () => _dio.post<Object?>(
+          '$_performance/goals/submit',
+          data: {'cycleId': cycleId},
+          options: _bearer(accessToken),
+        ),
+        GoalSubmitResult.fromJson,
+      );
+
+  @override
+  Future<GoalDetail> agreeGoal(String accessToken, String goalId) => _call(
+    () => _dio.post<Object?>(
+      '$_performance/goals/${Uri.encodeComponent(goalId)}/agree',
+      options: _bearer(accessToken),
+    ),
+    GoalDetail.fromJson,
+  );
+
+  @override
+  Future<void> agreeAllGoals(
+    String accessToken, {
+    required String employeeId,
+    required String? cycleId,
+  }) => _send(
+    () => _dio.post<Object?>(
+      '$_performance/goals/agree',
+      data: {'employeeId': employeeId, 'cycleId': cycleId},
+      options: _bearer(accessToken),
+    ),
+    (_) {},
+  );
+
+  @override
+  Future<ReviewDetail> fetchReview(String accessToken, String reviewId) =>
+      _call(
+        () => _dio.get<Object?>(
+          '$_performance/reviews/${Uri.encodeComponent(reviewId)}',
+          options: _bearer(accessToken),
+        ),
+        ReviewDetail.fromJson,
+      );
+
+  @override
+  Future<ReviewDetail> saveSelfReview(
+    String accessToken,
+    String reviewId,
+    SelfReviewDraft draft,
+  ) => _call(
+    () => _dio.put<Object?>(
+      '$_performance/reviews/${Uri.encodeComponent(reviewId)}/self',
+      data: draft.toJson(),
+      options: _bearer(accessToken),
+    ),
+    ReviewDetail.fromJson,
+  );
+
+  @override
+  Future<ReviewDetail> acknowledgeReview(
+    String accessToken,
+    String reviewId,
+    AcknowledgementDraft draft,
+  ) => _call(
+    () => _dio.post<Object?>(
+      '$_performance/reviews/${Uri.encodeComponent(reviewId)}/acknowledge',
+      data: draft.toJson(),
+      options: _bearer(accessToken),
+    ),
+    ReviewDetail.fromJson,
+  );
+
+  @override
+  Future<PeerInbox> fetchPeerInbox(String accessToken) => _call(
+    () =>
+        _dio.get<Object?>('$_performance/peers', options: _bearer(accessToken)),
+    PeerInbox.fromJson,
+  );
+
+  @override
+  Future<PeerRequest> fetchPeerRequest(String accessToken, String peerId) =>
+      _call(
+        () => _dio.get<Object?>(
+          '$_performance/peers/${Uri.encodeComponent(peerId)}',
+          options: _bearer(accessToken),
+        ),
+        PeerRequest.fromJson,
+      );
+
+  @override
+  Future<PeerRequest> answerPeerRequest(
+    String accessToken,
+    String peerId,
+    PeerAnswerDraft draft,
+  ) => _call(
+    () => _dio.put<Object?>(
+      '$_performance/peers/${Uri.encodeComponent(peerId)}',
+      data: draft.toJson(),
+      options: _bearer(accessToken),
+    ),
+    PeerRequest.fromJson,
+  );
+
+  @override
+  Future<void> decidePeer(
+    String accessToken,
+    String peerId, {
+    required bool approve,
+  }) => _send(
+    () => _dio.post<Object?>(
+      '$_performance/peers/${Uri.encodeComponent(peerId)}/decision',
+      data: {'approve': approve},
+      options: _bearer(accessToken),
+    ),
+    (_) {},
   );
 
   void close() => _dio.close(force: true);

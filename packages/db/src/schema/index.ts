@@ -15,4 +15,5 @@ export * from './group.js';
 export * from './support.js';
 export * from './status.js';
 export * from './recruitment.js';
+export * from './performance.js';
 export * from './rls.js';

@@ -3853,6 +3853,1121 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No one else has submitted a scorecard yet.'**
   String get scorecardOthersNone;
+
+  /// No description provided for @performanceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Performance'**
+  String get performanceTitle;
+
+  /// No description provided for @performanceSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your goals and reviews, and the feedback colleagues ask of you'**
+  String get performanceSubtitle;
+
+  /// Read out for the badge on the home screen's Performance card.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} task waits for you} other{{count} tasks wait for you}}'**
+  String performanceTasksWaiting(num count);
+
+  /// No description provided for @performanceLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load your performance page.'**
+  String get performanceLoadFailed;
+
+  /// No description provided for @performanceTasksTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What waits for you'**
+  String get performanceTasksTitle;
+
+  /// No description provided for @performanceNoTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing waits for you.'**
+  String get performanceNoTasks;
+
+  /// When a task or step is due.
+  ///
+  /// In en, this message translates to:
+  /// **'By {date}'**
+  String performanceDueBy(String date);
+
+  /// Under a task the app does not handle, such as writing a manager review.
+  ///
+  /// In en, this message translates to:
+  /// **'Done in the Good People web app'**
+  String get performanceTaskOnWeb;
+
+  /// No description provided for @performanceOnTheWeb.
+  ///
+  /// In en, this message translates to:
+  /// **'Writing your team\'s reviews, calibration, review cycles, improvement plans and probation reviews are done in the Good People web app.'**
+  String get performanceOnTheWeb;
+
+  /// A percent; value is already in the UI language's digits.
+  ///
+  /// In en, this message translates to:
+  /// **'{value}%'**
+  String performancePercent(String value);
+
+  /// No description provided for @performanceChooseRating.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a rating'**
+  String get performanceChooseRating;
+
+  /// The words for a rating from 1 to 5, always shown beside the number.
+  ///
+  /// In en, this message translates to:
+  /// **'{rating, select, 1{Well below expectations} 2{Below expectations} 3{Meets expectations} 4{Above expectations} 5{Well above expectations} other{Not rated}}'**
+  String ratingName(String rating);
+
+  /// No description provided for @taskSelfReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Your self review · {cycle}'**
+  String taskSelfReview(String cycle);
+
+  /// No description provided for @taskAcknowledge.
+  ///
+  /// In en, this message translates to:
+  /// **'Read and acknowledge your review · {cycle}'**
+  String taskAcknowledge(String cycle);
+
+  /// No description provided for @taskPeerAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'Feedback on {person} · {cycle}'**
+  String taskPeerAnswer(String person, String cycle);
+
+  /// No description provided for @taskPeerApprove.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Approve {count} peer for {person}} other{Approve {count} peers for {person}}}'**
+  String taskPeerApprove(num count, String person);
+
+  /// No description provided for @taskGoalsAgree.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Agree {count} goal of {person}} other{Agree {count} goals of {person}}}'**
+  String taskGoalsAgree(num count, String person);
+
+  /// No description provided for @taskManagerReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Review {person} · {cycle}'**
+  String taskManagerReview(String person, String cycle);
+
+  /// No description provided for @taskNoManager.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} review without a manager · {cycle}} other{{count} reviews without a manager · {cycle}}}'**
+  String taskNoManager(num count, String cycle);
+
+  /// No description provided for @taskProbationReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Probation review of {person}'**
+  String taskProbationReview(String person);
+
+  /// A task of a kind this version of the app does not know.
+  ///
+  /// In en, this message translates to:
+  /// **'A performance task'**
+  String get taskOther;
+
+  /// No description provided for @myGoalsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My goals'**
+  String get myGoalsTitle;
+
+  /// No description provided for @myGoalsNone.
+  ///
+  /// In en, this message translates to:
+  /// **'You have no goals yet.'**
+  String get myGoalsNone;
+
+  /// No description provided for @myGoalsCounts.
+  ///
+  /// In en, this message translates to:
+  /// **'{total, plural, one{{total} goal} other{{total} goals}}: {agreed} agreed, {draft} still to agree, {completed} completed.'**
+  String myGoalsCounts(
+    num total,
+    String agreed,
+    String draft,
+    String completed,
+  );
+
+  /// No description provided for @myReviewsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My reviews'**
+  String get myReviewsTitle;
+
+  /// No description provided for @myReviewsNone.
+  ///
+  /// In en, this message translates to:
+  /// **'You have not been in a review cycle yet.'**
+  String get myReviewsNone;
+
+  /// No description provided for @goalsLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load your goals.'**
+  String get goalsLoadFailed;
+
+  /// No description provided for @goalsNoEmployee.
+  ///
+  /// In en, this message translates to:
+  /// **'This login has no employee record, so it has no goals of its own.'**
+  String get goalsNoEmployee;
+
+  /// No description provided for @goalsNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No goals yet.'**
+  String get goalsNone;
+
+  /// No description provided for @goalsAgreedWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Your goals are agreed with {name}.'**
+  String goalsAgreedWith(String name);
+
+  /// No description provided for @goalsOutsideCycles.
+  ///
+  /// In en, this message translates to:
+  /// **'Outside review cycles'**
+  String get goalsOutsideCycles;
+
+  /// No description provided for @goalsDraftOnWeb.
+  ///
+  /// In en, this message translates to:
+  /// **'New goals are drafted, and goals changed, completed or dropped, in the Good People web app.'**
+  String get goalsDraftOnWeb;
+
+  /// No description provided for @goalsSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit for agreement'**
+  String get goalsSubmit;
+
+  /// No description provided for @goalsSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} goal sent} other{{count} goals sent}} to your manager for agreement.'**
+  String goalsSubmitted(num count);
+
+  /// No description provided for @goalsSubmittedAlready.
+  ///
+  /// In en, this message translates to:
+  /// **'These goals were already sent; your manager has them.'**
+  String get goalsSubmittedAlready;
+
+  /// No description provided for @goalsReportsTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports to {name}'**
+  String goalsReportsTo(String name);
+
+  /// An objective has key results; a KPI has a measure and a target.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind, select, objective{Objective} kpi{KPI} other{Goal}}'**
+  String goalKindName(String kind);
+
+  /// No description provided for @goalStatusName.
+  ///
+  /// In en, this message translates to:
+  /// **'{status, select, draft{Draft} agreed{Agreed} completed{Completed} dropped{Dropped} other{Unknown}}'**
+  String goalStatusName(String status);
+
+  /// A goal's share of the person's goals for a cycle.
+  ///
+  /// In en, this message translates to:
+  /// **'weight {weight}'**
+  String goalWeight(String weight);
+
+  /// No description provided for @goalDue.
+  ///
+  /// In en, this message translates to:
+  /// **'due {date}'**
+  String goalDue(String date);
+
+  /// No description provided for @goalKeyResultsDone.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total} key results done'**
+  String goalKeyResultsDone(String done, String total);
+
+  /// No description provided for @goalMeasure.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} {unit} against a target of {target} {unit}'**
+  String goalMeasure(String value, String target, String unit);
+
+  /// No description provided for @goalMeasureNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Target {target} {unit}; no value yet'**
+  String goalMeasureNone(String target, String unit);
+
+  /// No description provided for @goalMeasureShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{current} of {target} {unit}'**
+  String goalMeasureShort(String current, String target, String unit);
+
+  /// No description provided for @goalDirectionName.
+  ///
+  /// In en, this message translates to:
+  /// **'{direction, select, higher{higher is better} lower{lower is better} other{}}'**
+  String goalDirectionName(String direction);
+
+  /// No description provided for @goalProgressLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress'**
+  String get goalProgressLabel;
+
+  /// No description provided for @goalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal'**
+  String get goalTitle;
+
+  /// No description provided for @goalLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load this goal.'**
+  String get goalLoadFailed;
+
+  /// No description provided for @goalGone.
+  ///
+  /// In en, this message translates to:
+  /// **'This goal is not open to you.'**
+  String get goalGone;
+
+  /// No description provided for @goalDropped.
+  ///
+  /// In en, this message translates to:
+  /// **'Dropped: {note}'**
+  String goalDropped(String note);
+
+  /// No description provided for @goalProgressTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress'**
+  String get goalProgressTitle;
+
+  /// people is empty for one person, else goalReadingPeople.
+  ///
+  /// In en, this message translates to:
+  /// **'From attendance: present on {present} of {working} working days{people}, {from} to {to}.'**
+  String goalReadingAttendance(
+    String present,
+    String working,
+    String people,
+    String from,
+    String to,
+  );
+
+  /// Whose records a unit goal reads.
+  ///
+  /// In en, this message translates to:
+  /// **' ({count} people)'**
+  String goalReadingPeople(String count);
+
+  /// No description provided for @goalReadingNoAttendance.
+  ///
+  /// In en, this message translates to:
+  /// **'From attendance: no working days processed yet, {from} to {to}.'**
+  String goalReadingNoAttendance(String from, String to);
+
+  /// people is empty for one person, else goalReadingPeople.
+  ///
+  /// In en, this message translates to:
+  /// **'From production: {pieces} pieces against a target of {target}{people}, {from} to {to}.'**
+  String goalReadingProduction(
+    String pieces,
+    String target,
+    String people,
+    String from,
+    String to,
+  );
+
+  /// No description provided for @goalReadingNoProduction.
+  ///
+  /// In en, this message translates to:
+  /// **'From production: no work against a day target yet, {from} to {to}.'**
+  String goalReadingNoProduction(String from, String to);
+
+  /// No description provided for @goalReadingClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'This goal is closed; its value is as it was last read.'**
+  String get goalReadingClosed;
+
+  /// No description provided for @goalSourceHint.
+  ///
+  /// In en, this message translates to:
+  /// **'{source, select, attendance_rate{Read from processed attendance: the share of scheduled working days present. Approved leave, weekly offs and holidays do not count against it.} production_target{Read from daily production: pieces made against the day targets of the operations worked.} other{The value is typed at each check-in.}}'**
+  String goalSourceHint(String source);
+
+  /// Where a KPI's value comes from.
+  ///
+  /// In en, this message translates to:
+  /// **'{source, select, manual{Typed in check-ins} attendance_rate{Attendance rate, from attendance} production_target{Output against target, from production} other{Unknown}}'**
+  String goalSourceName(String source);
+
+  /// No description provided for @goalKeyResultDone.
+  ///
+  /// In en, this message translates to:
+  /// **'done'**
+  String get goalKeyResultDone;
+
+  /// No description provided for @goalKeyResultOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'not done yet'**
+  String get goalKeyResultOpen;
+
+  /// No description provided for @goalDetailsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get goalDetailsTitle;
+
+  /// No description provided for @goalStartsOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts'**
+  String get goalStartsOn;
+
+  /// No description provided for @goalDueOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Due'**
+  String get goalDueOn;
+
+  /// No description provided for @goalValueFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Value from'**
+  String get goalValueFrom;
+
+  /// No description provided for @goalServes.
+  ///
+  /// In en, this message translates to:
+  /// **'Serves'**
+  String get goalServes;
+
+  /// No description provided for @goalServesNothing.
+  ///
+  /// In en, this message translates to:
+  /// **'No other goal'**
+  String get goalServesNothing;
+
+  /// No description provided for @goalCheckinsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Check-ins'**
+  String get goalCheckinsTitle;
+
+  /// No description provided for @goalNoCheckins.
+  ///
+  /// In en, this message translates to:
+  /// **'No check-ins yet.'**
+  String get goalNoCheckins;
+
+  /// A KPI value typed at a check-in.
+  ///
+  /// In en, this message translates to:
+  /// **'value {value} {unit}'**
+  String goalCheckinValue(String value, String unit);
+
+  /// No description provided for @goalAgree.
+  ///
+  /// In en, this message translates to:
+  /// **'Agree'**
+  String get goalAgree;
+
+  /// No description provided for @goalAgreed.
+  ///
+  /// In en, this message translates to:
+  /// **'Agreed.'**
+  String get goalAgreed;
+
+  /// Agrees every draft of one person for a cycle; total is the cycle's weight once agreed.
+  ///
+  /// In en, this message translates to:
+  /// **'Agree all {count} ({total})'**
+  String goalAgreeAll(String count, String total);
+
+  /// No description provided for @goalAgreeAllNoCycle.
+  ///
+  /// In en, this message translates to:
+  /// **'Agree all {count}'**
+  String goalAgreeAllNoCycle(String count);
+
+  /// No description provided for @goalWeights.
+  ///
+  /// In en, this message translates to:
+  /// **'Weights: {total} of 100%'**
+  String goalWeights(String total);
+
+  /// No description provided for @goalWeightsSplit.
+  ///
+  /// In en, this message translates to:
+  /// **'agreed {agreed}, drafts {draft}'**
+  String goalWeightsSplit(String agreed, String draft);
+
+  /// No description provided for @goalCheckinKeyResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Key results done'**
+  String get goalCheckinKeyResults;
+
+  /// No description provided for @goalCheckinProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress, in percent'**
+  String get goalCheckinProgress;
+
+  /// No description provided for @goalCheckinProgressHint.
+  ///
+  /// In en, this message translates to:
+  /// **'How far the goal has come, 0 to 100.'**
+  String get goalCheckinProgressHint;
+
+  /// No description provided for @goalCheckinProgressInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Give a whole number from 0 to 100'**
+  String get goalCheckinProgressInvalid;
+
+  /// No description provided for @goalCheckinValueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Value now ({unit})'**
+  String goalCheckinValueLabel(String unit);
+
+  /// No description provided for @goalCheckinValueInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Give a number, with at most two decimals'**
+  String get goalCheckinValueInvalid;
+
+  /// No description provided for @goalCheckinEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Give the progress, a value or a note'**
+  String get goalCheckinEmpty;
+
+  /// No description provided for @goalCheckinFromRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'The value comes from the records; add a note on how it is going.'**
+  String get goalCheckinFromRecords;
+
+  /// No description provided for @goalCheckinNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get goalCheckinNote;
+
+  /// No description provided for @goalCheckinNoteRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Write a note on how it is going'**
+  String get goalCheckinNoteRequired;
+
+  /// No description provided for @goalCheckinAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add check-in'**
+  String get goalCheckinAdd;
+
+  /// No description provided for @goalCheckinSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Check-in added.'**
+  String get goalCheckinSaved;
+
+  /// No description provided for @goalErrorClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'This goal is closed and no longer changes.'**
+  String get goalErrorClosed;
+
+  /// No description provided for @goalErrorCycleClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'This review cycle is past setting goals; its goals no longer change.'**
+  String get goalErrorCycleClosed;
+
+  /// No description provided for @goalErrorNotDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'This goal is no longer a draft.'**
+  String get goalErrorNotDraft;
+
+  /// No description provided for @goalErrorWeightRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Give each goal of the cycle a weight, on the web, before agreeing it.'**
+  String get goalErrorWeightRequired;
+
+  /// No description provided for @goalErrorWeightsOver.
+  ///
+  /// In en, this message translates to:
+  /// **'The agreed goals for this cycle would weigh more than 100%.'**
+  String get goalErrorWeightsOver;
+
+  /// No description provided for @goalErrorWeightsTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'A person\'s agreed goals for a cycle must weigh 100% together.'**
+  String get goalErrorWeightsTotal;
+
+  /// No description provided for @goalErrorNoDrafts.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no draft goals to send or agree.'**
+  String get goalErrorNoDrafts;
+
+  /// No description provided for @teamGoalsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Goals to agree'**
+  String get teamGoalsTitle;
+
+  /// No description provided for @teamGoalsLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load your team\'s goals.'**
+  String get teamGoalsLoadFailed;
+
+  /// No description provided for @teamGoalsNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing waits for your agreement.'**
+  String get teamGoalsNone;
+
+  /// No description provided for @teamGoalsToAgree.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Nothing waits for your agreement.} one{{count} goal waits for your agreement.} other{{count} goals wait for your agreement.}}'**
+  String teamGoalsToAgree(num count);
+
+  /// No description provided for @reviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get reviewTitle;
+
+  /// No description provided for @reviewLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load this review.'**
+  String get reviewLoadFailed;
+
+  /// No description provided for @reviewGone.
+  ///
+  /// In en, this message translates to:
+  /// **'This review is not open to you.'**
+  String get reviewGone;
+
+  /// No description provided for @reviewMine.
+  ///
+  /// In en, this message translates to:
+  /// **'My review: {cycle}'**
+  String reviewMine(String cycle);
+
+  /// No description provided for @reviewManager.
+  ///
+  /// In en, this message translates to:
+  /// **'Manager: {name}'**
+  String reviewManager(String name);
+
+  /// No description provided for @reviewNoManager.
+  ///
+  /// In en, this message translates to:
+  /// **'No manager: HR writes it'**
+  String get reviewNoManager;
+
+  /// Where a review is.
+  ///
+  /// In en, this message translates to:
+  /// **'{status, select, self{Self review} manager{With the manager} calibration{In calibration} released{Released} acknowledged{Acknowledged} other{Unknown}}'**
+  String reviewStatusName(String status);
+
+  /// Someone else's review, such as one the login writes as a manager.
+  ///
+  /// In en, this message translates to:
+  /// **'You read and write this review in the Good People web app.'**
+  String get reviewOnWeb;
+
+  /// No description provided for @reviewOutcome.
+  ///
+  /// In en, this message translates to:
+  /// **'Outcome'**
+  String get reviewOutcome;
+
+  /// No description provided for @reviewFinalRating.
+  ///
+  /// In en, this message translates to:
+  /// **'Final rating'**
+  String get reviewFinalRating;
+
+  /// No description provided for @reviewGoalScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal score'**
+  String get reviewGoalScore;
+
+  /// No description provided for @reviewReleasedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Released on'**
+  String get reviewReleasedOn;
+
+  /// No description provided for @reviewNotRated.
+  ///
+  /// In en, this message translates to:
+  /// **'Not rated'**
+  String get reviewNotRated;
+
+  /// No description provided for @reviewGoalsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Goals'**
+  String get reviewGoalsTitle;
+
+  /// No description provided for @reviewNoGoals.
+  ///
+  /// In en, this message translates to:
+  /// **'No agreed goals for this cycle: the review rates the competencies only.'**
+  String get reviewNoGoals;
+
+  /// No description provided for @reviewSelfTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Self review'**
+  String get reviewSelfTitle;
+
+  /// No description provided for @reviewWithManager.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitted. Your manager reviews it next; you read the outcome once HR releases it.'**
+  String get reviewWithManager;
+
+  /// No description provided for @reviewManagerOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Your manager reviews you for this cycle. You read the outcome once HR releases it.'**
+  String get reviewManagerOnly;
+
+  /// No description provided for @reviewNoSelf.
+  ///
+  /// In en, this message translates to:
+  /// **'No self review in this review.'**
+  String get reviewNoSelf;
+
+  /// No description provided for @reviewManagerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manager\'s review'**
+  String get reviewManagerTitle;
+
+  /// No description provided for @reviewNothingWritten.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing written yet.'**
+  String get reviewNothingWritten;
+
+  /// No description provided for @reviewOverall.
+  ///
+  /// In en, this message translates to:
+  /// **'Overall'**
+  String get reviewOverall;
+
+  /// No description provided for @reviewNamePeersOnWeb.
+  ///
+  /// In en, this message translates to:
+  /// **'You can name colleagues to give feedback in the Good People web app.'**
+  String get reviewNamePeersOnWeb;
+
+  /// No description provided for @reviewErrorStepClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'This step of the review is no longer open for changes.'**
+  String get reviewErrorStepClosed;
+
+  /// No description provided for @selfReviewIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate each goal and competency from 1 to 5, and say why. You can save a draft and come back; once submitted, your self review goes to your manager and cannot change.'**
+  String get selfReviewIntro;
+
+  /// No description provided for @selfReviewGoals.
+  ///
+  /// In en, this message translates to:
+  /// **'Goals'**
+  String get selfReviewGoals;
+
+  /// No description provided for @selfReviewCompetencies.
+  ///
+  /// In en, this message translates to:
+  /// **'Competencies'**
+  String get selfReviewCompetencies;
+
+  /// No description provided for @selfReviewComment.
+  ///
+  /// In en, this message translates to:
+  /// **'Comment (optional)'**
+  String get selfReviewComment;
+
+  /// No description provided for @selfReviewOverall.
+  ///
+  /// In en, this message translates to:
+  /// **'Overall comment'**
+  String get selfReviewOverall;
+
+  /// No description provided for @selfReviewIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate every goal and competency before submitting.'**
+  String get selfReviewIncomplete;
+
+  /// No description provided for @selfReviewCommentUnrated.
+  ///
+  /// In en, this message translates to:
+  /// **'A comment is kept with its rating: choose one, or clear the comment.'**
+  String get selfReviewCommentUnrated;
+
+  /// No description provided for @selfReviewSaveDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Save draft'**
+  String get selfReviewSaveDraft;
+
+  /// No description provided for @selfReviewSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit to my manager'**
+  String get selfReviewSubmit;
+
+  /// No description provided for @selfReviewSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved.'**
+  String get selfReviewSaved;
+
+  /// No description provided for @selfReviewSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitted. Your manager reviews it next.'**
+  String get selfReviewSubmitted;
+
+  /// No description provided for @selfReviewConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit your self review?'**
+  String get selfReviewConfirmTitle;
+
+  /// No description provided for @selfReviewConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It goes to your manager, and your ratings and comments can no longer change.'**
+  String get selfReviewConfirmBody;
+
+  /// No description provided for @acknowledgeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Acknowledgement'**
+  String get acknowledgeTitle;
+
+  /// No description provided for @acknowledgeIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Please read your review, then acknowledge it. You can say whether you agree, and add your comments; they stay on record with it.'**
+  String get acknowledgeIntro;
+
+  /// No description provided for @acknowledgeQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you agree with your review?'**
+  String get acknowledgeQuestion;
+
+  /// No description provided for @acknowledgeAgree.
+  ///
+  /// In en, this message translates to:
+  /// **'I agree'**
+  String get acknowledgeAgree;
+
+  /// No description provided for @acknowledgeDisagree.
+  ///
+  /// In en, this message translates to:
+  /// **'I do not agree'**
+  String get acknowledgeDisagree;
+
+  /// No description provided for @acknowledgeComment.
+  ///
+  /// In en, this message translates to:
+  /// **'Your comments'**
+  String get acknowledgeComment;
+
+  /// No description provided for @acknowledgeCommentHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional. Your manager and HR read them.'**
+  String get acknowledgeCommentHint;
+
+  /// No description provided for @acknowledgeSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Acknowledge'**
+  String get acknowledgeSubmit;
+
+  /// No description provided for @acknowledgeConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Acknowledge your review?'**
+  String get acknowledgeConfirmTitle;
+
+  /// No description provided for @acknowledgeConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your answer and comments stay on record with the review and cannot change.'**
+  String get acknowledgeConfirmBody;
+
+  /// No description provided for @acknowledgeDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Acknowledged.'**
+  String get acknowledgeDone;
+
+  /// No description provided for @acknowledgedAgreeing.
+  ///
+  /// In en, this message translates to:
+  /// **'Acknowledged, agreeing'**
+  String get acknowledgedAgreeing;
+
+  /// No description provided for @acknowledgedDisagreeing.
+  ///
+  /// In en, this message translates to:
+  /// **'Acknowledged, not agreeing'**
+  String get acknowledgedDisagreeing;
+
+  /// No description provided for @acknowledgeErrorAlready.
+  ///
+  /// In en, this message translates to:
+  /// **'You have already acknowledged this review.'**
+  String get acknowledgeErrorAlready;
+
+  /// No description provided for @acknowledgeErrorNotReleased.
+  ///
+  /// In en, this message translates to:
+  /// **'This review has not been released yet.'**
+  String get acknowledgeErrorNotReleased;
+
+  /// No description provided for @peerFeedbackTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Peer feedback'**
+  String get peerFeedbackTitle;
+
+  /// No description provided for @peersLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load your peer feedback.'**
+  String get peersLoadFailed;
+
+  /// No description provided for @peersToApprove.
+  ///
+  /// In en, this message translates to:
+  /// **'Peers to approve'**
+  String get peersToApprove;
+
+  /// No description provided for @peersToAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'Feedback you are asked for'**
+  String get peersToAnswer;
+
+  /// No description provided for @peersNoneToAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'Nobody has asked for your feedback.'**
+  String get peersNoneToAnswer;
+
+  /// A peer named to give feedback on someone's review.
+  ///
+  /// In en, this message translates to:
+  /// **'{peer} for {person}'**
+  String peerApproveLine(String peer, String person);
+
+  /// No description provided for @peerApprove.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve'**
+  String get peerApprove;
+
+  /// No description provided for @peerDecline.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get peerDecline;
+
+  /// No description provided for @peerApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Approved. They have been asked for feedback.'**
+  String get peerApproved;
+
+  /// No description provided for @peerDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'Declined.'**
+  String get peerDeclined;
+
+  /// No description provided for @peerFeedbackOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Feedback on {person}'**
+  String peerFeedbackOn(String person);
+
+  /// No description provided for @peerStatusAnswered.
+  ///
+  /// In en, this message translates to:
+  /// **'Answered'**
+  String get peerStatusAnswered;
+
+  /// No description provided for @peerStatusWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for you'**
+  String get peerStatusWaiting;
+
+  /// No description provided for @peerStatusClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed'**
+  String get peerStatusClosed;
+
+  /// No description provided for @peerRequestLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load this request.'**
+  String get peerRequestLoadFailed;
+
+  /// No description provided for @peerRequestGone.
+  ///
+  /// In en, this message translates to:
+  /// **'This request is not open to you.'**
+  String get peerRequestGone;
+
+  /// No description provided for @peerRequestClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'This feedback can no longer be given.'**
+  String get peerRequestClosed;
+
+  /// No description provided for @peerAnswerPrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer honestly and kindly. The person sees your answers only together with those of other peers, and only when at least three have answered, never who wrote what; their manager sees each with its writer\'s name.'**
+  String get peerAnswerPrivacy;
+
+  /// The two questions every peer answers.
+  ///
+  /// In en, this message translates to:
+  /// **'{question, select, strengths{What does this person do well?} improvements{What could they do better?} other{Question}}'**
+  String peerQuestion(String question);
+
+  /// No description provided for @peerAnswerRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Write a few words'**
+  String get peerAnswerRequired;
+
+  /// No description provided for @peerRating.
+  ///
+  /// In en, this message translates to:
+  /// **'Your overall rating'**
+  String get peerRating;
+
+  /// No description provided for @peerSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send my feedback'**
+  String get peerSend;
+
+  /// No description provided for @peerConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Send your feedback?'**
+  String get peerConfirmTitle;
+
+  /// No description provided for @peerConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Feedback is given once: it cannot be changed after it is sent.'**
+  String get peerConfirmBody;
+
+  /// No description provided for @peerThanks.
+  ///
+  /// In en, this message translates to:
+  /// **'Thank you. Your feedback has been sent.'**
+  String get peerThanks;
+
+  /// No description provided for @peerYourAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'Your feedback'**
+  String get peerYourAnswer;
+
+  /// No description provided for @peerSummaryTooFew.
+  ///
+  /// In en, this message translates to:
+  /// **'Peer feedback is shown only when at least three peers have answered.'**
+  String get peerSummaryTooFew;
+
+  /// No description provided for @peerSummaryAverage.
+  ///
+  /// In en, this message translates to:
+  /// **'Average peer rating: {average}'**
+  String peerSummaryAverage(String average);
+
+  /// No description provided for @peerSummaryTogether.
+  ///
+  /// In en, this message translates to:
+  /// **'Answers are shown together, never who wrote what.'**
+  String get peerSummaryTogether;
+
+  /// No description provided for @peerErrorAnswered.
+  ///
+  /// In en, this message translates to:
+  /// **'You have already given your feedback.'**
+  String get peerErrorAnswered;
+
+  /// No description provided for @peerErrorClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'This review\'s peer feedback is closed.'**
+  String get peerErrorClosed;
+
+  /// No description provided for @peerErrorDecided.
+  ///
+  /// In en, this message translates to:
+  /// **'This peer has already been approved or declined.'**
+  String get peerErrorDecided;
 }
 
 class _AppLocalizationsDelegate

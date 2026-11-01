@@ -50,6 +50,7 @@ import {
   UploadDocumentForm,
 } from '@/components/lifecycle/lifecycle-forms';
 import { DocumentList, SeparationList } from '@/components/lifecycle/lifecycle-views';
+import { EmployeePerformanceTab } from '@/components/performance/record-views';
 import {
   DeclarationForm,
   TaxOpeningForm,
@@ -77,6 +78,7 @@ const TABS = [
   'payment',
   'leave',
   'attendance',
+  'performance',
 ] as const;
 
 /** What each tab needs: read-only roles (attendance officer, auditor) see the profile only. */
@@ -90,6 +92,7 @@ const TAB_PERMISSION: Record<(typeof TABS)[number] | 'edit', Permission> = {
   payment: 'employees.write',
   leave: 'leave.manage',
   attendance: 'attendance.manage',
+  performance: 'performance.manage',
 };
 
 export default async function EmployeePage({
@@ -102,7 +105,9 @@ export default async function EmployeePage({
   const { access } = await load<TenantAccessView>('tenant', '/tenant/access');
   const tabs = TABS.filter(
     (name) =>
-      can(role, TAB_PERMISSION[name]) && (name !== 'pay' || access.features.includes('payroll')),
+      can(role, TAB_PERMISSION[name]) &&
+      (name !== 'pay' || access.features.includes('payroll')) &&
+      (name !== 'performance' || access.features.includes('performance')),
   );
   const tabParam = sp.tab;
   const asked = (
@@ -120,6 +125,7 @@ export default async function EmployeePage({
   const ta = await getTranslations('attendance');
   const tlc = await getTranslations('lifecycle');
   const tp = await getTranslations('payroll');
+  const td = await getTranslations('development.record');
 
   return (
     <>
@@ -154,7 +160,9 @@ export default async function EmployeePage({
                   ? ta('employee.tab')
                   : name === 'documents'
                     ? tlc('documents.tab')
-                    : t(`detail.${name}`)}
+                    : name === 'performance'
+                      ? td('tab')
+                      : t(`detail.${name}`)}
           </Link>
         ))}
       </nav>
@@ -186,6 +194,7 @@ export default async function EmployeePage({
       )}
       {tab === 'leave' && <LeaveTab employeeId={id} />}
       {tab === 'documents' && <DocumentsTab employeeId={id} />}
+      {tab === 'performance' && <EmployeePerformanceTab employeeId={id} />}
       {tab === 'attendance' && (
         <AttendanceTab employeeId={id} month={typeof sp.month === 'string' ? sp.month : null} />
       )}

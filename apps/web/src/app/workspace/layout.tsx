@@ -2,6 +2,7 @@ import {
   can,
   isStaffRole,
   type NotificationInbox,
+  type PerformanceMe,
   type Permission,
   type RecruitmentMe,
   type TenantAccessView,
@@ -48,15 +49,17 @@ export default async function WorkspaceLayout({ children }: LayoutProps<'/worksp
   const hasProjects = result.ok && result.data.access.features.includes('projects');
   const hasGroup = result.ok && result.data.access.features.includes('multi_entity');
   const hasRecruitment = result.ok && result.data.access.features.includes('recruitment');
+  const hasPerformance = result.ok && result.data.access.features.includes('performance');
   // Resignations need approval in every workspace; leave and corrections where enabled.
-  const [approvals, inbox, hiring] = result.ok
+  const [approvals, inbox, hiring, performance] = result.ok
     ? await Promise.all([
         authedFetch<{ count: number }>('tenant', '/tenant/approvals/count'),
         authedFetch<NotificationInbox>('tenant', '/tenant/notifications?unread=true'),
         // Hiring managers and interviewers find recruitment whatever their role.
         hasRecruitment ? authedFetch<RecruitmentMe>('tenant', '/tenant/recruitment/me') : null,
+        hasPerformance ? authedFetch<PerformanceMe>('tenant', '/tenant/performance/me') : null,
       ])
-    : [null, null, null];
+    : [null, null, null, null];
   const waiting = approvals?.ok ? approvals.data.count : 0;
   const recruitment = hiring?.ok ? hiring.data : null;
   // Complaint committee members hear harassment cases whatever their role (s.332A).
@@ -134,6 +137,17 @@ export default async function WorkspaceLayout({ children }: LayoutProps<'/worksp
             href: '/workspace/recruitment',
             label: tw('recruitment'),
             match: ['/workspace/recruitment'],
+          },
+        ]
+      : []),
+    // Everyone has goals and reviews; the badge counts what waits for this login.
+    ...(hasPerformance
+      ? [
+          {
+            href: '/workspace/performance',
+            label: tw('performance'),
+            badge: performance?.ok ? performance.data.tasks : 0,
+            match: ['/workspace/performance'],
           },
         ]
       : []),

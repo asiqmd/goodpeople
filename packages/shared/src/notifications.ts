@@ -50,6 +50,10 @@ export const NOTIFICATION_EVENTS = [
   'recruitment.interview',
   /** A candidate accepted or declined an offer (to recruiters and the hiring manager). */
   'recruitment.offer',
+  /** A review step, goals to agree or a probation review waits for you. */
+  'performance.task',
+  /** Your review is released for you to read and acknowledge. */
+  'performance.released',
   /** A sign-in code: SMS only, always sent. */
   'auth.otp',
 ] as const;
@@ -91,6 +95,8 @@ export const DEFAULT_EVENT_CHANNELS: Record<NotificationEvent, readonly Delivery
   'recruitment.application': ['email'],
   'recruitment.interview': ['email', 'push'],
   'recruitment.offer': ['email', 'push'],
+  'performance.task': ['email', 'push'],
+  'performance.released': ['email', 'push'],
   'auth.otp': ['sms'],
 };
 

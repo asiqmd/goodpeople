@@ -1952,5 +1952,707 @@
   "scorecardCriteriaChanged": "The criteria for this position have changed. Check your ratings and submit again.",
   "scorecardOthersTitle": "The other interviewers' scorecards",
   "scorecardOthersHidden": "You will see the other interviewers' scorecards once you have submitted yours, so that yours is your own view.",
-  "scorecardOthersNone": "No one else has submitted a scorecard yet."
+  "scorecardOthersNone": "No one else has submitted a scorecard yet.",
+  "performanceTitle": "Performance",
+  "performanceSubtitle": "Your goals and reviews, and the feedback colleagues ask of you",
+  "performanceTasksWaiting": "{count, plural, one{{count} task waits for you} other{{count} tasks wait for you}}",
+  "@performanceTasksWaiting": {
+    "description": "Read out for the badge on the home screen's Performance card.",
+    "placeholders": {
+      "count": {
+        "type": "num",
+        "format": "decimalPattern",
+        "example": "2"
+      }
+    }
+  },
+  "performanceLoadFailed": "We could not load your performance page.",
+  "performanceTasksTitle": "What waits for you",
+  "performanceNoTasks": "Nothing waits for you.",
+  "performanceDueBy": "By {date}",
+  "@performanceDueBy": {
+    "description": "When a task or step is due.",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "Nov 15, 2026"
+      }
+    }
+  },
+  "performanceTaskOnWeb": "Done in the Good People web app",
+  "@performanceTaskOnWeb": {
+    "description": "Under a task the app does not handle, such as writing a manager review."
+  },
+  "performanceOnTheWeb": "Writing your team's reviews, calibration, review cycles, improvement plans and probation reviews are done in the Good People web app.",
+  "performancePercent": "{value}%",
+  "@performancePercent": {
+    "description": "A percent; value is already in the UI language's digits.",
+    "placeholders": {
+      "value": {
+        "type": "String",
+        "example": "40"
+      }
+    }
+  },
+  "performanceChooseRating": "Choose a rating",
+  "ratingName": "{rating, select, 1{Well below expectations} 2{Below expectations} 3{Meets expectations} 4{Above expectations} 5{Well above expectations} other{Not rated}}",
+  "@ratingName": {
+    "description": "The words for a rating from 1 to 5, always shown beside the number.",
+    "placeholders": {
+      "rating": {
+        "type": "String",
+        "example": "3"
+      }
+    }
+  },
+  "taskSelfReview": "Your self review · {cycle}",
+  "@taskSelfReview": {
+    "placeholders": {
+      "cycle": {
+        "type": "String",
+        "example": "Annual review 2026"
+      }
+    }
+  },
+  "taskAcknowledge": "Read and acknowledge your review · {cycle}",
+  "@taskAcknowledge": {
+    "placeholders": {
+      "cycle": {
+        "type": "String",
+        "example": "Annual review 2026"
+      }
+    }
+  },
+  "taskPeerAnswer": "Feedback on {person} · {cycle}",
+  "@taskPeerAnswer": {
+    "placeholders": {
+      "person": {
+        "type": "String",
+        "example": "Shirin Akter"
+      },
+      "cycle": {
+        "type": "String",
+        "example": "Annual review 2026"
+      }
+    }
+  },
+  "taskPeerApprove": "{count, plural, one{Approve {count} peer for {person}} other{Approve {count} peers for {person}}}",
+  "@taskPeerApprove": {
+    "placeholders": {
+      "count": {
+        "type": "num",
+        "format": "decimalPattern",
+        "example": "2"
+      },
+      "person": {
+        "type": "String",
+        "example": "Shirin Akter"
+      }
+    }
+  },
+  "taskGoalsAgree": "{count, plural, one{Agree {count} goal of {person}} other{Agree {count} goals of {person}}}",
+  "@taskGoalsAgree": {
+    "placeholders": {
+      "count": {
+        "type": "num",
+        "format": "decimalPattern",
+        "example": "3"
+      },
+      "person": {
+        "type": "String",
+        "example": "Shirin Akter"
+      }
+    }
+  },
+  "taskManagerReview": "Review {person} · {cycle}",
+  "@taskManagerReview": {
+    "placeholders": {
+      "person": {
+        "type": "String",
+        "example": "Shirin Akter"
+      },
+      "cycle": {
+        "type": "String",
+        "example": "Annual review 2026"
+      }
+    }
+  },
+  "taskNoManager": "{count, plural, one{{count} review without a manager · {cycle}} other{{count} reviews without a manager · {cycle}}}",
+  "@taskNoManager": {
+    "placeholders": {
+      "count": {
+        "type": "num",
+        "format": "decimalPattern",
+        "example": "4"
+      },
+      "cycle": {
+        "type": "String",
+        "example": "Annual review 2026"
+      }
+    }
+  },
+  "taskProbationReview": "Probation review of {person}",
+  "@taskProbationReview": {
+    "placeholders": {
+      "person": {
+        "type": "String",
+        "example": "Shirin Akter"
+      }
+    }
+  },
+  "taskOther": "A performance task",
+  "@taskOther": {
+    "description": "A task of a kind this version of the app does not know."
+  },
+  "myGoalsTitle": "My goals",
+  "myGoalsNone": "You have no goals yet.",
+  "myGoalsCounts": "{total, plural, one{{total} goal} other{{total} goals}}: {agreed} agreed, {draft} still to agree, {completed} completed.",
+  "@myGoalsCounts": {
+    "placeholders": {
+      "total": {
+        "type": "num",
+        "format": "decimalPattern",
+        "example": "4"
+      },
+      "agreed": {
+        "type": "String",
+        "example": "2"
+      },
+      "draft": {
+        "type": "String",
+        "example": "1"
+      },
+      "completed": {
+        "type": "String",
+        "example": "1"
+      }
+    }
+  },
+  "myReviewsTitle": "My reviews",
+  "myReviewsNone": "You have not been in a review cycle yet.",
+  "goalsLoadFailed": "We could not load your goals.",
+  "goalsNoEmployee": "This login has no employee record, so it has no goals of its own.",
+  "goalsNone": "No goals yet.",
+  "goalsAgreedWith": "Your goals are agreed with {name}.",
+  "@goalsAgreedWith": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Kamal Hossain"
+      }
+    }
+  },
+  "goalsOutsideCycles": "Outside review cycles",
+  "goalsDraftOnWeb": "New goals are drafted, and goals changed, completed or dropped, in the Good People web app.",
+  "goalsSubmit": "Submit for agreement",
+  "goalsSubmitted": "{count, plural, one{{count} goal sent} other{{count} goals sent}} to your manager for agreement.",
+  "@goalsSubmitted": {
+    "placeholders": {
+      "count": {
+        "type": "num",
+        "format": "decimalPattern",
+        "example": "2"
+      }
+    }
+  },
+  "goalsSubmittedAlready": "These goals were already sent; your manager has them.",
+  "goalsReportsTo": "Reports to {name}",
+  "@goalsReportsTo": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Kamal Hossain"
+      }
+    }
+  },
+  "goalKindName": "{kind, select, objective{Objective} kpi{KPI} other{Goal}}",
+  "@goalKindName": {
+    "description": "An objective has key results; a KPI has a measure and a target.",
+    "placeholders": {
+      "kind": {
+        "type": "String",
+        "example": "kpi"
+      }
+    }
+  },
+  "goalStatusName": "{status, select, draft{Draft} agreed{Agreed} completed{Completed} dropped{Dropped} other{Unknown}}",
+  "@goalStatusName": {
+    "placeholders": {
+      "status": {
+        "type": "String",
+        "example": "agreed"
+      }
+    }
+  },
+  "goalWeight": "weight {weight}",
+  "@goalWeight": {
+    "description": "A goal's share of the person's goals for a cycle.",
+    "placeholders": {
+      "weight": {
+        "type": "String",
+        "example": "40%"
+      }
+    }
+  },
+  "goalDue": "due {date}",
+  "@goalDue": {
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "Dec 31, 2026"
+      }
+    }
+  },
+  "goalKeyResultsDone": "{done} of {total} key results done",
+  "@goalKeyResultsDone": {
+    "placeholders": {
+      "done": {
+        "type": "String",
+        "example": "1"
+      },
+      "total": {
+        "type": "String",
+        "example": "3"
+      }
+    }
+  },
+  "goalMeasure": "{value} {unit} against a target of {target} {unit}",
+  "@goalMeasure": {
+    "placeholders": {
+      "value": {
+        "type": "String",
+        "example": "92"
+      },
+      "target": {
+        "type": "String",
+        "example": "95"
+      },
+      "unit": {
+        "type": "String",
+        "example": "%"
+      }
+    }
+  },
+  "goalMeasureNone": "Target {target} {unit}; no value yet",
+  "@goalMeasureNone": {
+    "placeholders": {
+      "target": {
+        "type": "String",
+        "example": "95"
+      },
+      "unit": {
+        "type": "String",
+        "example": "%"
+      }
+    }
+  },
+  "goalMeasureShort": "{current} of {target} {unit}",
+  "@goalMeasureShort": {
+    "placeholders": {
+      "current": {
+        "type": "String",
+        "example": "92"
+      },
+      "target": {
+        "type": "String",
+        "example": "95"
+      },
+      "unit": {
+        "type": "String",
+        "example": "%"
+      }
+    }
+  },
+  "goalDirectionName": "{direction, select, higher{higher is better} lower{lower is better} other{}}",
+  "@goalDirectionName": {
+    "placeholders": {
+      "direction": {
+        "type": "String",
+        "example": "higher"
+      }
+    }
+  },
+  "goalProgressLabel": "Progress",
+  "goalTitle": "Goal",
+  "goalLoadFailed": "We could not load this goal.",
+  "goalGone": "This goal is not open to you.",
+  "goalDropped": "Dropped: {note}",
+  "@goalDropped": {
+    "placeholders": {
+      "note": {
+        "type": "String",
+        "example": "The line moved to another unit."
+      }
+    }
+  },
+  "goalProgressTitle": "Progress",
+  "goalReadingAttendance": "From attendance: present on {present} of {working} working days{people}, {from} to {to}.",
+  "@goalReadingAttendance": {
+    "description": "people is empty for one person, else goalReadingPeople.",
+    "placeholders": {
+      "present": {
+        "type": "String",
+        "example": "22.5"
+      },
+      "working": {
+        "type": "String",
+        "example": "24"
+      },
+      "people": {
+        "type": "String",
+        "example": " (12 people)"
+      },
+      "from": {
+        "type": "String",
+        "example": "Jul 1, 2026"
+      },
+      "to": {
+        "type": "String",
+        "example": "Oct 31, 2026"
+      }
+    }
+  },
+  "goalReadingPeople": " ({count} people)",
+  "@goalReadingPeople": {
+    "description": "Whose records a unit goal reads.",
+    "placeholders": {
+      "count": {
+        "type": "String",
+        "example": "12"
+      }
+    }
+  },
+  "goalReadingNoAttendance": "From attendance: no working days processed yet, {from} to {to}.",
+  "@goalReadingNoAttendance": {
+    "placeholders": {
+      "from": {
+        "type": "String",
+        "example": "Jul 1, 2026"
+      },
+      "to": {
+        "type": "String",
+        "example": "Oct 31, 2026"
+      }
+    }
+  },
+  "goalReadingProduction": "From production: {pieces} pieces against a target of {target}{people}, {from} to {to}.",
+  "@goalReadingProduction": {
+    "description": "people is empty for one person, else goalReadingPeople.",
+    "placeholders": {
+      "pieces": {
+        "type": "String",
+        "example": "9,400"
+      },
+      "target": {
+        "type": "String",
+        "example": "10,000"
+      },
+      "people": {
+        "type": "String",
+        "example": " (12 people)"
+      },
+      "from": {
+        "type": "String",
+        "example": "Jul 1, 2026"
+      },
+      "to": {
+        "type": "String",
+        "example": "Oct 31, 2026"
+      }
+    }
+  },
+  "goalReadingNoProduction": "From production: no work against a day target yet, {from} to {to}.",
+  "@goalReadingNoProduction": {
+    "placeholders": {
+      "from": {
+        "type": "String",
+        "example": "Jul 1, 2026"
+      },
+      "to": {
+        "type": "String",
+        "example": "Oct 31, 2026"
+      }
+    }
+  },
+  "goalReadingClosed": "This goal is closed; its value is as it was last read.",
+  "goalSourceHint": "{source, select, attendance_rate{Read from processed attendance: the share of scheduled working days present. Approved leave, weekly offs and holidays do not count against it.} production_target{Read from daily production: pieces made against the day targets of the operations worked.} other{The value is typed at each check-in.}}",
+  "@goalSourceHint": {
+    "placeholders": {
+      "source": {
+        "type": "String",
+        "example": "attendance_rate"
+      }
+    }
+  },
+  "goalSourceName": "{source, select, manual{Typed in check-ins} attendance_rate{Attendance rate, from attendance} production_target{Output against target, from production} other{Unknown}}",
+  "@goalSourceName": {
+    "description": "Where a KPI's value comes from.",
+    "placeholders": {
+      "source": {
+        "type": "String",
+        "example": "manual"
+      }
+    }
+  },
+  "goalKeyResultDone": "done",
+  "goalKeyResultOpen": "not done yet",
+  "goalDetailsTitle": "Details",
+  "goalStartsOn": "Starts",
+  "goalDueOn": "Due",
+  "goalValueFrom": "Value from",
+  "goalServes": "Serves",
+  "goalServesNothing": "No other goal",
+  "goalCheckinsTitle": "Check-ins",
+  "goalNoCheckins": "No check-ins yet.",
+  "goalCheckinValue": "value {value} {unit}",
+  "@goalCheckinValue": {
+    "description": "A KPI value typed at a check-in.",
+    "placeholders": {
+      "value": {
+        "type": "String",
+        "example": "92"
+      },
+      "unit": {
+        "type": "String",
+        "example": "%"
+      }
+    }
+  },
+  "goalAgree": "Agree",
+  "goalAgreed": "Agreed.",
+  "goalAgreeAll": "Agree all {count} ({total})",
+  "@goalAgreeAll": {
+    "description": "Agrees every draft of one person for a cycle; total is the cycle's weight once agreed.",
+    "placeholders": {
+      "count": {
+        "type": "String",
+        "example": "3"
+      },
+      "total": {
+        "type": "String",
+        "example": "100%"
+      }
+    }
+  },
+  "goalAgreeAllNoCycle": "Agree all {count}",
+  "@goalAgreeAllNoCycle": {
+    "placeholders": {
+      "count": {
+        "type": "String",
+        "example": "3"
+      }
+    }
+  },
+  "goalWeights": "Weights: {total} of 100%",
+  "@goalWeights": {
+    "placeholders": {
+      "total": {
+        "type": "String",
+        "example": "90%"
+      }
+    }
+  },
+  "goalWeightsSplit": "agreed {agreed}, drafts {draft}",
+  "@goalWeightsSplit": {
+    "placeholders": {
+      "agreed": {
+        "type": "String",
+        "example": "60%"
+      },
+      "draft": {
+        "type": "String",
+        "example": "30%"
+      }
+    }
+  },
+  "goalCheckinKeyResults": "Key results done",
+  "goalCheckinProgress": "Progress, in percent",
+  "goalCheckinProgressHint": "How far the goal has come, 0 to 100.",
+  "goalCheckinProgressInvalid": "Give a whole number from 0 to 100",
+  "goalCheckinValueLabel": "Value now ({unit})",
+  "@goalCheckinValueLabel": {
+    "placeholders": {
+      "unit": {
+        "type": "String",
+        "example": "%"
+      }
+    }
+  },
+  "goalCheckinValueInvalid": "Give a number, with at most two decimals",
+  "goalCheckinEmpty": "Give the progress, a value or a note",
+  "goalCheckinFromRecords": "The value comes from the records; add a note on how it is going.",
+  "goalCheckinNote": "Note",
+  "goalCheckinNoteRequired": "Write a note on how it is going",
+  "goalCheckinAdd": "Add check-in",
+  "goalCheckinSaved": "Check-in added.",
+  "goalErrorClosed": "This goal is closed and no longer changes.",
+  "goalErrorCycleClosed": "This review cycle is past setting goals; its goals no longer change.",
+  "goalErrorNotDraft": "This goal is no longer a draft.",
+  "goalErrorWeightRequired": "Give each goal of the cycle a weight, on the web, before agreeing it.",
+  "goalErrorWeightsOver": "The agreed goals for this cycle would weigh more than 100%.",
+  "goalErrorWeightsTotal": "A person's agreed goals for a cycle must weigh 100% together.",
+  "goalErrorNoDrafts": "There are no draft goals to send or agree.",
+  "teamGoalsTitle": "Goals to agree",
+  "teamGoalsLoadFailed": "We could not load your team's goals.",
+  "teamGoalsNone": "Nothing waits for your agreement.",
+  "teamGoalsToAgree": "{count, plural, =0{Nothing waits for your agreement.} one{{count} goal waits for your agreement.} other{{count} goals wait for your agreement.}}",
+  "@teamGoalsToAgree": {
+    "placeholders": {
+      "count": {
+        "type": "num",
+        "format": "decimalPattern",
+        "example": "3"
+      }
+    }
+  },
+  "reviewTitle": "Review",
+  "reviewLoadFailed": "We could not load this review.",
+  "reviewGone": "This review is not open to you.",
+  "reviewMine": "My review: {cycle}",
+  "@reviewMine": {
+    "placeholders": {
+      "cycle": {
+        "type": "String",
+        "example": "Annual review 2026"
+      }
+    }
+  },
+  "reviewManager": "Manager: {name}",
+  "@reviewManager": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Kamal Hossain"
+      }
+    }
+  },
+  "reviewNoManager": "No manager: HR writes it",
+  "reviewStatusName": "{status, select, self{Self review} manager{With the manager} calibration{In calibration} released{Released} acknowledged{Acknowledged} other{Unknown}}",
+  "@reviewStatusName": {
+    "description": "Where a review is.",
+    "placeholders": {
+      "status": {
+        "type": "String",
+        "example": "self"
+      }
+    }
+  },
+  "reviewOnWeb": "You read and write this review in the Good People web app.",
+  "@reviewOnWeb": {
+    "description": "Someone else's review, such as one the login writes as a manager."
+  },
+  "reviewOutcome": "Outcome",
+  "reviewFinalRating": "Final rating",
+  "reviewGoalScore": "Goal score",
+  "reviewReleasedOn": "Released on",
+  "reviewNotRated": "Not rated",
+  "reviewGoalsTitle": "Goals",
+  "reviewNoGoals": "No agreed goals for this cycle: the review rates the competencies only.",
+  "reviewSelfTitle": "Self review",
+  "reviewWithManager": "Submitted. Your manager reviews it next; you read the outcome once HR releases it.",
+  "reviewManagerOnly": "Your manager reviews you for this cycle. You read the outcome once HR releases it.",
+  "reviewNoSelf": "No self review in this review.",
+  "reviewManagerTitle": "Manager's review",
+  "reviewNothingWritten": "Nothing written yet.",
+  "reviewOverall": "Overall",
+  "reviewNamePeersOnWeb": "You can name colleagues to give feedback in the Good People web app.",
+  "reviewErrorStepClosed": "This step of the review is no longer open for changes.",
+  "selfReviewIntro": "Rate each goal and competency from 1 to 5, and say why. You can save a draft and come back; once submitted, your self review goes to your manager and cannot change.",
+  "selfReviewGoals": "Goals",
+  "selfReviewCompetencies": "Competencies",
+  "selfReviewComment": "Comment (optional)",
+  "selfReviewOverall": "Overall comment",
+  "selfReviewIncomplete": "Rate every goal and competency before submitting.",
+  "selfReviewCommentUnrated": "A comment is kept with its rating: choose one, or clear the comment.",
+  "selfReviewSaveDraft": "Save draft",
+  "selfReviewSubmit": "Submit to my manager",
+  "selfReviewSaved": "Saved.",
+  "selfReviewSubmitted": "Submitted. Your manager reviews it next.",
+  "selfReviewConfirmTitle": "Submit your self review?",
+  "selfReviewConfirmBody": "It goes to your manager, and your ratings and comments can no longer change.",
+  "acknowledgeTitle": "Acknowledgement",
+  "acknowledgeIntro": "Please read your review, then acknowledge it. You can say whether you agree, and add your comments; they stay on record with it.",
+  "acknowledgeQuestion": "Do you agree with your review?",
+  "acknowledgeAgree": "I agree",
+  "acknowledgeDisagree": "I do not agree",
+  "acknowledgeComment": "Your comments",
+  "acknowledgeCommentHint": "Optional. Your manager and HR read them.",
+  "acknowledgeSubmit": "Acknowledge",
+  "acknowledgeConfirmTitle": "Acknowledge your review?",
+  "acknowledgeConfirmBody": "Your answer and comments stay on record with the review and cannot change.",
+  "acknowledgeDone": "Acknowledged.",
+  "acknowledgedAgreeing": "Acknowledged, agreeing",
+  "acknowledgedDisagreeing": "Acknowledged, not agreeing",
+  "acknowledgeErrorAlready": "You have already acknowledged this review.",
+  "acknowledgeErrorNotReleased": "This review has not been released yet.",
+  "peerFeedbackTitle": "Peer feedback",
+  "peersLoadFailed": "We could not load your peer feedback.",
+  "peersToApprove": "Peers to approve",
+  "peersToAnswer": "Feedback you are asked for",
+  "peersNoneToAnswer": "Nobody has asked for your feedback.",
+  "peerApproveLine": "{peer} for {person}",
+  "@peerApproveLine": {
+    "description": "A peer named to give feedback on someone's review.",
+    "placeholders": {
+      "peer": {
+        "type": "String",
+        "example": "Nasima Begum"
+      },
+      "person": {
+        "type": "String",
+        "example": "Shirin Akter"
+      }
+    }
+  },
+  "peerApprove": "Approve",
+  "peerDecline": "Decline",
+  "peerApproved": "Approved. They have been asked for feedback.",
+  "peerDeclined": "Declined.",
+  "peerFeedbackOn": "Feedback on {person}",
+  "@peerFeedbackOn": {
+    "placeholders": {
+      "person": {
+        "type": "String",
+        "example": "Shirin Akter"
+      }
+    }
+  },
+  "peerStatusAnswered": "Answered",
+  "peerStatusWaiting": "Waiting for you",
+  "peerStatusClosed": "Closed",
+  "peerRequestLoadFailed": "We could not load this request.",
+  "peerRequestGone": "This request is not open to you.",
+  "peerRequestClosed": "This feedback can no longer be given.",
+  "peerAnswerPrivacy": "Answer honestly and kindly. The person sees your answers only together with those of other peers, and only when at least three have answered, never who wrote what; their manager sees each with its writer's name.",
+  "peerQuestion": "{question, select, strengths{What does this person do well?} improvements{What could they do better?} other{Question}}",
+  "@peerQuestion": {
+    "description": "The two questions every peer answers.",
+    "placeholders": {
+      "question": {
+        "type": "String",
+        "example": "strengths"
+      }
+    }
+  },
+  "peerAnswerRequired": "Write a few words",
+  "peerRating": "Your overall rating",
+  "peerSend": "Send my feedback",
+  "peerConfirmTitle": "Send your feedback?",
+  "peerConfirmBody": "Feedback is given once: it cannot be changed after it is sent.",
+  "peerThanks": "Thank you. Your feedback has been sent.",
+  "peerYourAnswer": "Your feedback",
+  "peerSummaryTooFew": "Peer feedback is shown only when at least three peers have answered.",
+  "peerSummaryAverage": "Average peer rating: {average}",
+  "@peerSummaryAverage": {
+    "placeholders": {
+      "average": {
+        "type": "String",
+        "example": "3.7"
+      }
+    }
+  },
+  "peerSummaryTogether": "Answers are shown together, never who wrote what.",
+  "peerErrorAnswered": "You have already given your feedback.",
+  "peerErrorClosed": "This review's peer feedback is closed.",
+  "peerErrorDecided": "This peer has already been approved or declined."
 }

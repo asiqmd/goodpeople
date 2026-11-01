@@ -2626,4 +2626,817 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get scorecardOthersNone =>
       'No one else has submitted a scorecard yet.';
+
+  @override
+  String get performanceTitle => 'Performance';
+
+  @override
+  String get performanceSubtitle =>
+      'Your goals and reviews, and the feedback colleagues ask of you';
+
+  @override
+  String performanceTasksWaiting(num count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString tasks wait for you',
+      one: '$countString task waits for you',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get performanceLoadFailed =>
+      'We could not load your performance page.';
+
+  @override
+  String get performanceTasksTitle => 'What waits for you';
+
+  @override
+  String get performanceNoTasks => 'Nothing waits for you.';
+
+  @override
+  String performanceDueBy(String date) {
+    return 'By $date';
+  }
+
+  @override
+  String get performanceTaskOnWeb => 'Done in the Good People web app';
+
+  @override
+  String get performanceOnTheWeb =>
+      'Writing your team\'s reviews, calibration, review cycles, improvement plans and probation reviews are done in the Good People web app.';
+
+  @override
+  String performancePercent(String value) {
+    return '$value%';
+  }
+
+  @override
+  String get performanceChooseRating => 'Choose a rating';
+
+  @override
+  String ratingName(String rating) {
+    String _temp0 = intl.Intl.selectLogic(rating, {
+      '1': 'Well below expectations',
+      '2': 'Below expectations',
+      '3': 'Meets expectations',
+      '4': 'Above expectations',
+      '5': 'Well above expectations',
+      'other': 'Not rated',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String taskSelfReview(String cycle) {
+    return 'Your self review · $cycle';
+  }
+
+  @override
+  String taskAcknowledge(String cycle) {
+    return 'Read and acknowledge your review · $cycle';
+  }
+
+  @override
+  String taskPeerAnswer(String person, String cycle) {
+    return 'Feedback on $person · $cycle';
+  }
+
+  @override
+  String taskPeerApprove(num count, String person) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Approve $countString peers for $person',
+      one: 'Approve $countString peer for $person',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String taskGoalsAgree(num count, String person) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Agree $countString goals of $person',
+      one: 'Agree $countString goal of $person',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String taskManagerReview(String person, String cycle) {
+    return 'Review $person · $cycle';
+  }
+
+  @override
+  String taskNoManager(num count, String cycle) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString reviews without a manager · $cycle',
+      one: '$countString review without a manager · $cycle',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String taskProbationReview(String person) {
+    return 'Probation review of $person';
+  }
+
+  @override
+  String get taskOther => 'A performance task';
+
+  @override
+  String get myGoalsTitle => 'My goals';
+
+  @override
+  String get myGoalsNone => 'You have no goals yet.';
+
+  @override
+  String myGoalsCounts(
+    num total,
+    String agreed,
+    String draft,
+    String completed,
+  ) {
+    final intl.NumberFormat totalNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String totalString = totalNumberFormat.format(total);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: '$totalString goals',
+      one: '$totalString goal',
+    );
+    return '$_temp0: $agreed agreed, $draft still to agree, $completed completed.';
+  }
+
+  @override
+  String get myReviewsTitle => 'My reviews';
+
+  @override
+  String get myReviewsNone => 'You have not been in a review cycle yet.';
+
+  @override
+  String get goalsLoadFailed => 'We could not load your goals.';
+
+  @override
+  String get goalsNoEmployee =>
+      'This login has no employee record, so it has no goals of its own.';
+
+  @override
+  String get goalsNone => 'No goals yet.';
+
+  @override
+  String goalsAgreedWith(String name) {
+    return 'Your goals are agreed with $name.';
+  }
+
+  @override
+  String get goalsOutsideCycles => 'Outside review cycles';
+
+  @override
+  String get goalsDraftOnWeb =>
+      'New goals are drafted, and goals changed, completed or dropped, in the Good People web app.';
+
+  @override
+  String get goalsSubmit => 'Submit for agreement';
+
+  @override
+  String goalsSubmitted(num count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString goals sent',
+      one: '$countString goal sent',
+    );
+    return '$_temp0 to your manager for agreement.';
+  }
+
+  @override
+  String get goalsSubmittedAlready =>
+      'These goals were already sent; your manager has them.';
+
+  @override
+  String goalsReportsTo(String name) {
+    return 'Reports to $name';
+  }
+
+  @override
+  String goalKindName(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'objective': 'Objective',
+      'kpi': 'KPI',
+      'other': 'Goal',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String goalStatusName(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'draft': 'Draft',
+      'agreed': 'Agreed',
+      'completed': 'Completed',
+      'dropped': 'Dropped',
+      'other': 'Unknown',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String goalWeight(String weight) {
+    return 'weight $weight';
+  }
+
+  @override
+  String goalDue(String date) {
+    return 'due $date';
+  }
+
+  @override
+  String goalKeyResultsDone(String done, String total) {
+    return '$done of $total key results done';
+  }
+
+  @override
+  String goalMeasure(String value, String target, String unit) {
+    return '$value $unit against a target of $target $unit';
+  }
+
+  @override
+  String goalMeasureNone(String target, String unit) {
+    return 'Target $target $unit; no value yet';
+  }
+
+  @override
+  String goalMeasureShort(String current, String target, String unit) {
+    return '$current of $target $unit';
+  }
+
+  @override
+  String goalDirectionName(String direction) {
+    String _temp0 = intl.Intl.selectLogic(direction, {
+      'higher': 'higher is better',
+      'lower': 'lower is better',
+      'other': '',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get goalProgressLabel => 'Progress';
+
+  @override
+  String get goalTitle => 'Goal';
+
+  @override
+  String get goalLoadFailed => 'We could not load this goal.';
+
+  @override
+  String get goalGone => 'This goal is not open to you.';
+
+  @override
+  String goalDropped(String note) {
+    return 'Dropped: $note';
+  }
+
+  @override
+  String get goalProgressTitle => 'Progress';
+
+  @override
+  String goalReadingAttendance(
+    String present,
+    String working,
+    String people,
+    String from,
+    String to,
+  ) {
+    return 'From attendance: present on $present of $working working days$people, $from to $to.';
+  }
+
+  @override
+  String goalReadingPeople(String count) {
+    return ' ($count people)';
+  }
+
+  @override
+  String goalReadingNoAttendance(String from, String to) {
+    return 'From attendance: no working days processed yet, $from to $to.';
+  }
+
+  @override
+  String goalReadingProduction(
+    String pieces,
+    String target,
+    String people,
+    String from,
+    String to,
+  ) {
+    return 'From production: $pieces pieces against a target of $target$people, $from to $to.';
+  }
+
+  @override
+  String goalReadingNoProduction(String from, String to) {
+    return 'From production: no work against a day target yet, $from to $to.';
+  }
+
+  @override
+  String get goalReadingClosed =>
+      'This goal is closed; its value is as it was last read.';
+
+  @override
+  String goalSourceHint(String source) {
+    String _temp0 = intl.Intl.selectLogic(source, {
+      'attendance_rate': 'Read from processed attendance: the share of scheduled working days present. Approved leave, weekly offs and holidays do not count against it.',
+      'production_target': 'Read from daily production: pieces made against the day targets of the operations worked.',
+      'other': 'The value is typed at each check-in.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String goalSourceName(String source) {
+    String _temp0 = intl.Intl.selectLogic(source, {
+      'manual': 'Typed in check-ins',
+      'attendance_rate': 'Attendance rate, from attendance',
+      'production_target': 'Output against target, from production',
+      'other': 'Unknown',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get goalKeyResultDone => 'done';
+
+  @override
+  String get goalKeyResultOpen => 'not done yet';
+
+  @override
+  String get goalDetailsTitle => 'Details';
+
+  @override
+  String get goalStartsOn => 'Starts';
+
+  @override
+  String get goalDueOn => 'Due';
+
+  @override
+  String get goalValueFrom => 'Value from';
+
+  @override
+  String get goalServes => 'Serves';
+
+  @override
+  String get goalServesNothing => 'No other goal';
+
+  @override
+  String get goalCheckinsTitle => 'Check-ins';
+
+  @override
+  String get goalNoCheckins => 'No check-ins yet.';
+
+  @override
+  String goalCheckinValue(String value, String unit) {
+    return 'value $value $unit';
+  }
+
+  @override
+  String get goalAgree => 'Agree';
+
+  @override
+  String get goalAgreed => 'Agreed.';
+
+  @override
+  String goalAgreeAll(String count, String total) {
+    return 'Agree all $count ($total)';
+  }
+
+  @override
+  String goalAgreeAllNoCycle(String count) {
+    return 'Agree all $count';
+  }
+
+  @override
+  String goalWeights(String total) {
+    return 'Weights: $total of 100%';
+  }
+
+  @override
+  String goalWeightsSplit(String agreed, String draft) {
+    return 'agreed $agreed, drafts $draft';
+  }
+
+  @override
+  String get goalCheckinKeyResults => 'Key results done';
+
+  @override
+  String get goalCheckinProgress => 'Progress, in percent';
+
+  @override
+  String get goalCheckinProgressHint => 'How far the goal has come, 0 to 100.';
+
+  @override
+  String get goalCheckinProgressInvalid => 'Give a whole number from 0 to 100';
+
+  @override
+  String goalCheckinValueLabel(String unit) {
+    return 'Value now ($unit)';
+  }
+
+  @override
+  String get goalCheckinValueInvalid =>
+      'Give a number, with at most two decimals';
+
+  @override
+  String get goalCheckinEmpty => 'Give the progress, a value or a note';
+
+  @override
+  String get goalCheckinFromRecords =>
+      'The value comes from the records; add a note on how it is going.';
+
+  @override
+  String get goalCheckinNote => 'Note';
+
+  @override
+  String get goalCheckinNoteRequired => 'Write a note on how it is going';
+
+  @override
+  String get goalCheckinAdd => 'Add check-in';
+
+  @override
+  String get goalCheckinSaved => 'Check-in added.';
+
+  @override
+  String get goalErrorClosed => 'This goal is closed and no longer changes.';
+
+  @override
+  String get goalErrorCycleClosed =>
+      'This review cycle is past setting goals; its goals no longer change.';
+
+  @override
+  String get goalErrorNotDraft => 'This goal is no longer a draft.';
+
+  @override
+  String get goalErrorWeightRequired =>
+      'Give each goal of the cycle a weight, on the web, before agreeing it.';
+
+  @override
+  String get goalErrorWeightsOver =>
+      'The agreed goals for this cycle would weigh more than 100%.';
+
+  @override
+  String get goalErrorWeightsTotal =>
+      'A person\'s agreed goals for a cycle must weigh 100% together.';
+
+  @override
+  String get goalErrorNoDrafts => 'There are no draft goals to send or agree.';
+
+  @override
+  String get teamGoalsTitle => 'Goals to agree';
+
+  @override
+  String get teamGoalsLoadFailed => 'We could not load your team\'s goals.';
+
+  @override
+  String get teamGoalsNone => 'Nothing waits for your agreement.';
+
+  @override
+  String teamGoalsToAgree(num count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString goals wait for your agreement.',
+      one: '$countString goal waits for your agreement.',
+      zero: 'Nothing waits for your agreement.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reviewTitle => 'Review';
+
+  @override
+  String get reviewLoadFailed => 'We could not load this review.';
+
+  @override
+  String get reviewGone => 'This review is not open to you.';
+
+  @override
+  String reviewMine(String cycle) {
+    return 'My review: $cycle';
+  }
+
+  @override
+  String reviewManager(String name) {
+    return 'Manager: $name';
+  }
+
+  @override
+  String get reviewNoManager => 'No manager: HR writes it';
+
+  @override
+  String reviewStatusName(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'self': 'Self review',
+      'manager': 'With the manager',
+      'calibration': 'In calibration',
+      'released': 'Released',
+      'acknowledged': 'Acknowledged',
+      'other': 'Unknown',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get reviewOnWeb =>
+      'You read and write this review in the Good People web app.';
+
+  @override
+  String get reviewOutcome => 'Outcome';
+
+  @override
+  String get reviewFinalRating => 'Final rating';
+
+  @override
+  String get reviewGoalScore => 'Goal score';
+
+  @override
+  String get reviewReleasedOn => 'Released on';
+
+  @override
+  String get reviewNotRated => 'Not rated';
+
+  @override
+  String get reviewGoalsTitle => 'Goals';
+
+  @override
+  String get reviewNoGoals =>
+      'No agreed goals for this cycle: the review rates the competencies only.';
+
+  @override
+  String get reviewSelfTitle => 'Self review';
+
+  @override
+  String get reviewWithManager =>
+      'Submitted. Your manager reviews it next; you read the outcome once HR releases it.';
+
+  @override
+  String get reviewManagerOnly =>
+      'Your manager reviews you for this cycle. You read the outcome once HR releases it.';
+
+  @override
+  String get reviewNoSelf => 'No self review in this review.';
+
+  @override
+  String get reviewManagerTitle => 'Manager\'s review';
+
+  @override
+  String get reviewNothingWritten => 'Nothing written yet.';
+
+  @override
+  String get reviewOverall => 'Overall';
+
+  @override
+  String get reviewNamePeersOnWeb =>
+      'You can name colleagues to give feedback in the Good People web app.';
+
+  @override
+  String get reviewErrorStepClosed =>
+      'This step of the review is no longer open for changes.';
+
+  @override
+  String get selfReviewIntro =>
+      'Rate each goal and competency from 1 to 5, and say why. You can save a draft and come back; once submitted, your self review goes to your manager and cannot change.';
+
+  @override
+  String get selfReviewGoals => 'Goals';
+
+  @override
+  String get selfReviewCompetencies => 'Competencies';
+
+  @override
+  String get selfReviewComment => 'Comment (optional)';
+
+  @override
+  String get selfReviewOverall => 'Overall comment';
+
+  @override
+  String get selfReviewIncomplete =>
+      'Rate every goal and competency before submitting.';
+
+  @override
+  String get selfReviewCommentUnrated =>
+      'A comment is kept with its rating: choose one, or clear the comment.';
+
+  @override
+  String get selfReviewSaveDraft => 'Save draft';
+
+  @override
+  String get selfReviewSubmit => 'Submit to my manager';
+
+  @override
+  String get selfReviewSaved => 'Saved.';
+
+  @override
+  String get selfReviewSubmitted => 'Submitted. Your manager reviews it next.';
+
+  @override
+  String get selfReviewConfirmTitle => 'Submit your self review?';
+
+  @override
+  String get selfReviewConfirmBody =>
+      'It goes to your manager, and your ratings and comments can no longer change.';
+
+  @override
+  String get acknowledgeTitle => 'Acknowledgement';
+
+  @override
+  String get acknowledgeIntro =>
+      'Please read your review, then acknowledge it. You can say whether you agree, and add your comments; they stay on record with it.';
+
+  @override
+  String get acknowledgeQuestion => 'Do you agree with your review?';
+
+  @override
+  String get acknowledgeAgree => 'I agree';
+
+  @override
+  String get acknowledgeDisagree => 'I do not agree';
+
+  @override
+  String get acknowledgeComment => 'Your comments';
+
+  @override
+  String get acknowledgeCommentHint =>
+      'Optional. Your manager and HR read them.';
+
+  @override
+  String get acknowledgeSubmit => 'Acknowledge';
+
+  @override
+  String get acknowledgeConfirmTitle => 'Acknowledge your review?';
+
+  @override
+  String get acknowledgeConfirmBody =>
+      'Your answer and comments stay on record with the review and cannot change.';
+
+  @override
+  String get acknowledgeDone => 'Acknowledged.';
+
+  @override
+  String get acknowledgedAgreeing => 'Acknowledged, agreeing';
+
+  @override
+  String get acknowledgedDisagreeing => 'Acknowledged, not agreeing';
+
+  @override
+  String get acknowledgeErrorAlready =>
+      'You have already acknowledged this review.';
+
+  @override
+  String get acknowledgeErrorNotReleased =>
+      'This review has not been released yet.';
+
+  @override
+  String get peerFeedbackTitle => 'Peer feedback';
+
+  @override
+  String get peersLoadFailed => 'We could not load your peer feedback.';
+
+  @override
+  String get peersToApprove => 'Peers to approve';
+
+  @override
+  String get peersToAnswer => 'Feedback you are asked for';
+
+  @override
+  String get peersNoneToAnswer => 'Nobody has asked for your feedback.';
+
+  @override
+  String peerApproveLine(String peer, String person) {
+    return '$peer for $person';
+  }
+
+  @override
+  String get peerApprove => 'Approve';
+
+  @override
+  String get peerDecline => 'Decline';
+
+  @override
+  String get peerApproved => 'Approved. They have been asked for feedback.';
+
+  @override
+  String get peerDeclined => 'Declined.';
+
+  @override
+  String peerFeedbackOn(String person) {
+    return 'Feedback on $person';
+  }
+
+  @override
+  String get peerStatusAnswered => 'Answered';
+
+  @override
+  String get peerStatusWaiting => 'Waiting for you';
+
+  @override
+  String get peerStatusClosed => 'Closed';
+
+  @override
+  String get peerRequestLoadFailed => 'We could not load this request.';
+
+  @override
+  String get peerRequestGone => 'This request is not open to you.';
+
+  @override
+  String get peerRequestClosed => 'This feedback can no longer be given.';
+
+  @override
+  String get peerAnswerPrivacy =>
+      'Answer honestly and kindly. The person sees your answers only together with those of other peers, and only when at least three have answered, never who wrote what; their manager sees each with its writer\'s name.';
+
+  @override
+  String peerQuestion(String question) {
+    String _temp0 = intl.Intl.selectLogic(question, {
+      'strengths': 'What does this person do well?',
+      'improvements': 'What could they do better?',
+      'other': 'Question',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get peerAnswerRequired => 'Write a few words';
+
+  @override
+  String get peerRating => 'Your overall rating';
+
+  @override
+  String get peerSend => 'Send my feedback';
+
+  @override
+  String get peerConfirmTitle => 'Send your feedback?';
+
+  @override
+  String get peerConfirmBody =>
+      'Feedback is given once: it cannot be changed after it is sent.';
+
+  @override
+  String get peerThanks => 'Thank you. Your feedback has been sent.';
+
+  @override
+  String get peerYourAnswer => 'Your feedback';
+
+  @override
+  String get peerSummaryTooFew =>
+      'Peer feedback is shown only when at least three peers have answered.';
+
+  @override
+  String peerSummaryAverage(String average) {
+    return 'Average peer rating: $average';
+  }
+
+  @override
+  String get peerSummaryTogether =>
+      'Answers are shown together, never who wrote what.';
+
+  @override
+  String get peerErrorAnswered => 'You have already given your feedback.';
+
+  @override
+  String get peerErrorClosed => 'This review\'s peer feedback is closed.';
+
+  @override
+  String get peerErrorDecided =>
+      'This peer has already been approved or declined.';
 }

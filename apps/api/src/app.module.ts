@@ -25,6 +25,9 @@ import { StatusModule } from './modules/status/status.module.js';
 import { RecruitmentModule } from './modules/recruitment/recruitment.module.js';
 import { ApplicationsModule } from './modules/applications/applications.module.js';
 import { OffersModule } from './modules/offers/offers.module.js';
+import { GoalsModule } from './modules/goals/goals.module.js';
+import { ReviewsModule } from './modules/reviews/reviews.module.js';
+import { DevelopmentModule } from './modules/development/development.module.js';
 import { SupportAccessModule } from './modules/support-access/support-access.module.js';
 import { SupportModule } from './modules/support/support.module.js';
 import { DocumentsModule } from './modules/documents/documents.module.js';
@@ -91,6 +94,9 @@ export class AppModule {
         RecruitmentModule,
         ApplicationsModule,
         OffersModule,
+        GoalsModule,
+        ReviewsModule,
+        DevelopmentModule,
       ],
       providers: [
         { provide: APP_CONFIG, useValue: config },

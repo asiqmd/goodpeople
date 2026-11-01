@@ -244,6 +244,30 @@ export const DEFAULT_TEMPLATES: Record<NotificationEvent, Record<UserLanguage, T
       sms: 'Good People: {{candidate.name}} {{opening.title}} পদের প্রস্তাব {{offer.outcome}}।',
     },
   },
+  'performance.task': {
+    en: {
+      title: '{{task.title}}',
+      body: '{{task.detail}} Please finish it by {{task.due}}.',
+      sms: 'Good People: {{task.title}}, by {{task.due}}.',
+    },
+    bn: {
+      title: '{{task.title}}',
+      body: '{{task.detail}} অনুগ্রহ করে {{task.due}}-এর মধ্যে শেষ করুন।',
+      sms: 'Good People: {{task.title}}, {{task.due}}-এর মধ্যে।',
+    },
+  },
+  'performance.released': {
+    en: {
+      title: 'Your review for {{cycle.name}} is ready',
+      body: 'Your review for {{cycle.name}} is ready to read. Please read it and acknowledge it, with your comments.',
+      sms: 'Good People: your review for {{cycle.name}} is ready to read.',
+    },
+    bn: {
+      title: '{{cycle.name}}-এর আপনার মূল্যায়ন প্রস্তুত',
+      body: '{{cycle.name}}-এর আপনার মূল্যায়ন পড়ার জন্য প্রস্তুত। পড়ে নিজের মন্তব্যসহ স্বীকার করুন।',
+      sms: 'Good People: {{cycle.name}}-এর আপনার মূল্যায়ন পড়ার জন্য প্রস্তুত।',
+    },
+  },
   'auth.otp': {
     en: {
       title: 'Your sign-in code',
@@ -285,5 +309,7 @@ export const TEMPLATE_PLACEHOLDERS: Record<NotificationEvent, string[]> = {
     'interview.change',
   ],
   'recruitment.offer': ['candidate.name', 'opening.title', 'offer.outcome', 'offer.note'],
+  'performance.task': ['task.title', 'task.detail', 'task.due'],
+  'performance.released': ['cycle.name'],
   'auth.otp': ['otp.code', 'otp.minutes', 'workspace.name'],
 };

@@ -537,7 +537,7 @@ describe('payroll runs', () => {
     expect(lines.ABSENCE).toBe(`${Math.round((8500 / 30) * absent)}.00`);
     expect(lines.OVERTIME).toBe(`${Math.round((8500 * 2 * item.variables.otHours) / 208)}.00`);
     const codes = item.problems.map((p) => p.code);
-    expect(codes).toContain('period_not_over');
+    expect(codes.includes('period_not_over')).toBe(todayIn() <= '2026-10-31');
     // Until 05:00 yesterday is still open for punches, so it may be waiting to be processed.
     const waiting = range.days.filter((d) => d.status === 'pending' && d.date < todayIn());
     expect(codes.includes('not_processed')).toBe(waiting.length > 0);

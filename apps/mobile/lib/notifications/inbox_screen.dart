@@ -182,6 +182,9 @@ class _InboxTile extends ConsumerWidget {
     NotificationEvent.probationEnding => Icons.badge_outlined,
     NotificationEvent.timesheetDue => Icons.timer_outlined,
     NotificationEvent.recruitmentInterview => Icons.record_voice_over_outlined,
+    NotificationEvent.performanceTask => Icons.insights_outlined,
+    NotificationEvent.performanceReleased =>
+      Icons.assignment_turned_in_outlined,
     NotificationEvent.unknown => Icons.notifications_none,
   };
 }

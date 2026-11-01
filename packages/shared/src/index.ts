@@ -47,3 +47,7 @@ export * from './recruitment.js';
 export * from './openings.js';
 export * from './applications.js';
 export * from './offers.js';
+export * from './performance.js';
+export * from './goals.js';
+export * from './reviews.js';
+export * from './development.js';

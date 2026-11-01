@@ -14,6 +14,8 @@ import '../leave/leave_screen.dart';
 import '../notifications/inbox_screen.dart';
 import '../notifications/notification_providers.dart';
 import '../payslips/my_pay_screen.dart';
+import '../performance/performance_providers.dart';
+import '../performance/performance_screen.dart';
 import '../profile/profile_screen.dart';
 import '../team/team_providers.dart';
 import '../team/team_screen.dart';
@@ -42,6 +44,8 @@ class HomeScreen extends ConsumerWidget {
   static const timesheetKey = ValueKey('home-timesheet');
   static const interviewsKey = ValueKey('home-interviews');
   static const interviewsBadgeKey = ValueKey('home-interviews-badge');
+  static const performanceKey = ValueKey('home-performance');
+  static const performanceBadgeKey = ValueKey('home-performance-badge');
   static const accountKey = ValueKey('home-account');
   static const inboxKey = ValueKey('home-inbox');
   static const inboxBadgeKey = ValueKey('home-inbox-badge');
@@ -122,6 +126,7 @@ class _AccessDetails extends ConsumerWidget {
     final tenant = view.tenant;
     final hasTeam = ref.watch(hasTeamProvider);
     final interviewsToDo = ref.watch(interviewsToDoProvider).value ?? 0;
+    final performanceTasks = ref.watch(performanceTasksProvider).value ?? 0;
     final refusedPunches = ref
         .watch(offlinePunchQueueProvider)
         .refusedFor(user.id);
@@ -251,6 +256,31 @@ class _AccessDetails extends ConsumerWidget {
               ),
             ),
             onTap: () => Navigator.of(context).push(InterviewsScreen.route()),
+          ),
+        ],
+        // Goals and reviews (Business plan and up), with what waits.
+        if (view.access.hasFeature('performance')) ...[
+          const SizedBox(height: 12),
+          _ShortcutCard(
+            key: HomeScreen.performanceKey,
+            icon: Icons.insights_outlined,
+            title: l10n.performanceTitle,
+            subtitle: l10n.performanceSubtitle,
+            badge: performanceTasks > 0
+                ? Semantics(
+                    label: l10n.performanceTasksWaiting(performanceTasks),
+                    excludeSemantics: true,
+                    child: Badge(
+                      key: HomeScreen.performanceBadgeKey,
+                      label: Text(
+                        performanceTasks > 99
+                            ? '99+'
+                            : formatNumber(l10n, performanceTasks),
+                      ),
+                    ),
+                  )
+                : null,
+            onTap: () => Navigator.of(context).push(PerformanceScreen.route()),
           ),
         ],
         if (view.access.hasFeature('payroll')) ...[
@@ -392,8 +422,8 @@ class _ModuleTile extends StatelessWidget {
 }
 
 /// A tappable card on the home screen that opens a section, such as My
-/// profile, Leave, Attendance, My documents, Timesheet, Interviews, My pay,
-/// Team or Account.
+/// profile, Leave, Attendance, My documents, Timesheet, Interviews,
+/// Performance, My pay, Team or Account.
 class _ShortcutCard extends StatelessWidget {
   const _ShortcutCard({
     super.key,

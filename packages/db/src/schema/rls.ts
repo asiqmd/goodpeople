@@ -95,4 +95,14 @@ export const RLS_TABLES = [
   'interviews',
   'interview_panel',
   'offers',
+  // Phase 4 M2 (migration 0035)
+  'performance_settings',
+  'review_cycles',
+  'goals',
+  'goal_checkins',
+  'reviews',
+  'peer_feedback',
+  'improvement_plans',
+  'plan_checkins',
+  'probation_reviews',
 ] as const;

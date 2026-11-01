@@ -20,6 +20,7 @@ import 'attendance_fixtures.dart';
 import 'leave_fixtures.dart';
 import 'lifecycle_fixtures.dart';
 import 'payroll_fixtures.dart';
+import 'performance_fixtures.dart';
 import 'recruitment_fixtures.dart';
 import 'timesheet_fixtures.dart';
 
@@ -27,6 +28,7 @@ export 'attendance_fixtures.dart';
 export 'leave_fixtures.dart';
 export 'lifecycle_fixtures.dart';
 export 'payroll_fixtures.dart';
+export 'performance_fixtures.dart';
 export 'recruitment_fixtures.dart';
 export 'timesheet_fixtures.dart';
 
@@ -1404,6 +1406,338 @@ class FakeGoodPeopleApi implements GoodPeopleApi {
     return switch (cv) {
       final FileDownload file => file,
       final Object error => throw error,
+    };
+  }
+
+  // ── Performance ───────────────────────────────────────────────────────────
+
+  /// Answered by [fetchPerformanceMe], or thrown when it is an exception.
+  Object performanceMe = performanceMeJson();
+  var performanceMeCalls = 0;
+
+  Json myGoals = myGoalsJson();
+  var myGoalsCalls = 0;
+
+  Json teamGoals = teamGoalsJson();
+  var teamGoalsCalls = 0;
+
+  /// Each goal's detail by id; any other id gets a 404. Agreeing a goal of
+  /// [teamGoals] marks it agreed there too.
+  final goalDetails = <String, Json>{
+    for (final goal in [
+      objectiveGoalJson(),
+      manualKpiGoalJson(),
+      recordsKpiGoalJson(),
+      draftGoalJson(),
+    ])
+      goal['id']! as String: goalDetailJson(goal),
+    for (final goal in nasimaGoalsJson())
+      goal['id']! as String: goalDetailJson(goal, agree: true),
+  };
+
+  /// Thrown by the next goal change (check-in, submit, agree) instead of
+  /// making it, while set.
+  Exception? goalError;
+
+  /// Each check-in sent, as JSON, by goal id.
+  final checkins = <({String goalId, Json body})>[];
+
+  /// The cycles whose drafts were sent for agreement.
+  final goalSubmissions = <String?>[];
+
+  /// What [submitGoals] answers.
+  Json goalSubmitResult = {'goals': 1, 'notified': 1};
+
+  final goalsAgreed = <String>[];
+  final goalsAgreedAll = <({String employeeId, String? cycleId})>[];
+
+  /// Each review's detail by id; any other id gets a 404.
+  final reviewDetails = <String, Json>{
+    selfReviewId: selfReviewJson(),
+    releasedReviewId: releasedReviewJson(),
+    teamReviewId: teamReviewJson(),
+  };
+  final reviewDetailCalls = <String>[];
+
+  /// Thrown by the next self review or acknowledgement instead of saving
+  /// it, while set.
+  Exception? reviewError;
+
+  final selfReviews = <({String reviewId, Json body})>[];
+  final acknowledgements = <({String reviewId, Json body})>[];
+
+  Json peerInbox = peerInboxJson();
+  var peerInboxCalls = 0;
+
+  /// Each peer request by id; any other id gets a 404.
+  final peerRequests = <String, Json>{
+    openPeerRequestId: peerRequestJson(),
+    answeredPeerRequestId: answeredPeerRequestJson(),
+  };
+
+  /// Thrown by the next peer answer or decision instead of making it, while
+  /// set.
+  Exception? peerError;
+
+  final peerAnswers = <({String peerId, Json body})>[];
+  final peerDecisions = <({String peerId, bool approve})>[];
+
+  static Never _notFound(String what) => throw ApiException(
+    kind: ApiErrorKind.server,
+    statusCode: 404,
+    message: '$what not found',
+  );
+
+  /// The time the fake stamps on what it records.
+  static const _now = '2026-11-01T04:30:00.000Z';
+
+  @override
+  Future<PerformanceMe> fetchPerformanceMe(String accessToken) async {
+    performanceMeCalls++;
+    return switch (performanceMe) {
+      final Json json => PerformanceMe.fromJson(json),
+      final Object error => throw error,
+    };
+  }
+
+  @override
+  Future<MyGoals> fetchMyGoals(String accessToken) async {
+    myGoalsCalls++;
+    return MyGoals.fromJson(myGoals);
+  }
+
+  @override
+  Future<TeamGoals> fetchTeamGoals(String accessToken) async {
+    teamGoalsCalls++;
+    return TeamGoals.fromJson(teamGoals);
+  }
+
+  Json _goal(String id) => goalDetails[id] ?? _notFound('goal');
+
+  @override
+  Future<GoalDetail> fetchGoal(String accessToken, String goalId) async =>
+      GoalDetail.fromJson(_goal(goalId));
+
+  @override
+  Future<GoalDetail> checkinGoal(
+    String accessToken,
+    String goalId,
+    GoalCheckinDraft draft,
+  ) async {
+    final body = jsonDecode(jsonEncode(draft.toJson())) as Json;
+    checkins.add((goalId: goalId, body: body));
+    if (goalError case final error?) throw error;
+    final goal = _goal(goalId);
+    final value = body['value'] as String?;
+    final done = (body['done'] as List<Object?>?)?.cast<int>();
+    final keyResults = [
+      for (final (index, result) in (goal['keyResults']! as List).indexed)
+        if (done == null)
+          result
+        else
+          {...result as Json, 'done': done.contains(index)},
+    ];
+    final progress = switch ((value, done, body['progress'])) {
+      (final String value, _, _) =>
+        (double.parse(value) / double.parse(goal['target']! as String) * 100)
+            .round()
+            .clamp(0, 100),
+      (_, final List<int> done, _) =>
+        (done.length / keyResults.length * 100).round(),
+      (_, _, final int progress) => progress,
+      _ => goal['progress'],
+    };
+    return GoalDetail.fromJson(
+      goalDetails[goalId] = {
+        ...goal,
+        'keyResults': keyResults,
+        'currentValue': value ?? goal['currentValue'],
+        'progress': progress,
+        'checkins': [
+          checkinJson(
+            id: 'c1000000-0000-4000-8000-${checkins.length.toString().padLeft(12, '0')}',
+            progress: goal['source'] == 'manual' ? progress as int : null,
+            value: value,
+            note: body['note'] as String?,
+            createdAt: _now,
+          ),
+          ...goal['checkins']! as List,
+        ],
+      },
+    );
+  }
+
+  @override
+  Future<GoalSubmitResult> submitGoals(
+    String accessToken,
+    String? cycleId,
+  ) async {
+    goalSubmissions.add(cycleId);
+    if (goalError case final error?) throw error;
+    return GoalSubmitResult.fromJson(goalSubmitResult);
+  }
+
+  /// Marks goals agreed in their details and in [teamGoals].
+  void _agree(bool Function(Json goal) which) {
+    Json agreed(Json goal) =>
+        which(goal) ? {...goal, 'status': 'agreed', 'agreedAt': _now} : goal;
+    for (final MapEntry(:key, :value) in [...goalDetails.entries]) {
+      if (which(value)) {
+        goalDetails[key] = {
+          ...agreed(value),
+          'can': {...value['can']! as Json, 'agree': false},
+        };
+      }
+    }
+    teamGoals = {
+      ...teamGoals,
+      'people': [
+        for (final person in teamGoals['people']! as List)
+          {
+            ...person as Json,
+            'goals': [
+              for (final goal in person['goals']! as List) agreed(goal as Json),
+            ],
+          },
+      ],
+    };
+  }
+
+  @override
+  Future<GoalDetail> agreeGoal(String accessToken, String goalId) async {
+    goalsAgreed.add(goalId);
+    if (goalError case final error?) throw error;
+    _agree((goal) => goal['id'] == goalId);
+    return GoalDetail.fromJson(_goal(goalId));
+  }
+
+  @override
+  Future<void> agreeAllGoals(
+    String accessToken, {
+    required String employeeId,
+    required String? cycleId,
+  }) async {
+    goalsAgreedAll.add((employeeId: employeeId, cycleId: cycleId));
+    if (goalError case final error?) throw error;
+    _agree(
+      (goal) =>
+          (goal['employee'] as Json?)?['id'] == employeeId &&
+          (goal['cycle'] as Json?)?['id'] == cycleId &&
+          goal['status'] == 'draft',
+    );
+  }
+
+  Json _review(String id) => reviewDetails[id] ?? _notFound('review');
+
+  @override
+  Future<ReviewDetail> fetchReview(String accessToken, String reviewId) async {
+    reviewDetailCalls.add(reviewId);
+    return ReviewDetail.fromJson(_review(reviewId));
+  }
+
+  @override
+  Future<ReviewDetail> saveSelfReview(
+    String accessToken,
+    String reviewId,
+    SelfReviewDraft draft,
+  ) async {
+    final body = jsonDecode(jsonEncode(draft.toJson())) as Json;
+    selfReviews.add((reviewId: reviewId, body: body));
+    if (reviewError case final error?) throw error;
+    final review = _review(reviewId);
+    final submit = body['submit'] == true;
+    return ReviewDetail.fromJson(
+      reviewDetails[reviewId] = {
+        ...review,
+        if (submit) 'status': 'manager',
+        'can': {...review['can']! as Json, if (submit) 'writeSelf': false},
+        'self': {
+          'answers': body['answers'],
+          'submittedAt': submit ? _now : null,
+        },
+      },
+    );
+  }
+
+  @override
+  Future<ReviewDetail> acknowledgeReview(
+    String accessToken,
+    String reviewId,
+    AcknowledgementDraft draft,
+  ) async {
+    final body = jsonDecode(jsonEncode(draft.toJson())) as Json;
+    acknowledgements.add((reviewId: reviewId, body: body));
+    if (reviewError case final error?) throw error;
+    final review = _review(reviewId);
+    return ReviewDetail.fromJson(
+      reviewDetails[reviewId] = {
+        ...review,
+        'status': 'acknowledged',
+        'can': {...review['can']! as Json, 'acknowledge': false},
+        'acknowledgement': {
+          'at': _now,
+          'comment': body['comment'],
+          'agrees': body['agrees'],
+        },
+      },
+    );
+  }
+
+  @override
+  Future<PeerInbox> fetchPeerInbox(String accessToken) async {
+    peerInboxCalls++;
+    return PeerInbox.fromJson(peerInbox);
+  }
+
+  Json _peerRequest(String id) => peerRequests[id] ?? _notFound('peer request');
+
+  @override
+  Future<PeerRequest> fetchPeerRequest(
+    String accessToken,
+    String peerId,
+  ) async => PeerRequest.fromJson(_peerRequest(peerId));
+
+  @override
+  Future<PeerRequest> answerPeerRequest(
+    String accessToken,
+    String peerId,
+    PeerAnswerDraft draft,
+  ) async {
+    final body = jsonDecode(jsonEncode(draft.toJson())) as Json;
+    peerAnswers.add((peerId: peerId, body: body));
+    if (peerError case final error?) throw error;
+    final answered = peerRequests[peerId] = {
+      ..._peerRequest(peerId),
+      'status': 'submitted',
+      'open': false,
+      'answers': body['answers'],
+      'rating': body['rating'],
+      'submittedAt': _now,
+    };
+    peerInbox = {
+      ...peerInbox,
+      'toAnswer': [
+        for (final request in peerInbox['toAnswer']! as List)
+          (request as Json)['id'] == peerId ? answered : request,
+      ],
+    };
+    return PeerRequest.fromJson(answered);
+  }
+
+  @override
+  Future<void> decidePeer(
+    String accessToken,
+    String peerId, {
+    required bool approve,
+  }) async {
+    peerDecisions.add((peerId: peerId, approve: approve));
+    if (peerError case final error?) throw error;
+    peerInbox = {
+      ...peerInbox,
+      'toApprove': [
+        for (final approval in peerInbox['toApprove']! as List)
+          if ((approval as Json)['id'] != peerId) approval,
+      ],
     };
   }
 }
