@@ -2,6 +2,9 @@
 
 A multi-tenant HR and payroll platform, built for Bangladesh first and ready to grow abroad.
 
+**Picking this up later?** Start with [docs/handover.md](docs/handover.md): where things stand,
+how to get it running again, how a milestone is built, and what comes next.
+
 - **Product and delivery plan:** [Good People plan (Claude Doc)](https://claude.ai/artifact/DwMQ6zCwCRhwhUe6PbijCf)
 - **Done:**
   - **Phase 0 (foundation):** tenancy with row-level security, auth, entitlements, and the Super
@@ -122,19 +125,23 @@ apps/
              employees, leave, attendance, approvals, documents, lifecycle, letters, imports,
              accounts and users, notifications, setup checklist, payroll, sign-up, billing,
              production, compliance, maternity, relations, grievances, kiosk, audit report,
-             projects, timesheets, group, access scopes, support, support access, status
+             projects, timesheets, group, access scopes, support, support access, status,
+             recruitment, applications, offers, goals, reviews, development
   web/       Next.js 16: Super Admin console (/platform) and workspace app (/workspace), en/bn;
              public home, pricing, sign-up, /help, /legal and /status; help and legal texts in
              content/
   mobile/    Flutter app: sign-in (password or SMS code), profile, documents, leave, attendance
              (location and selfie punching, offline queue), resignation, approvals, team view,
-             notifications and push, my pay (payslips, tax, provident fund, loans), en/bn
+             notifications and push, my pay (payslips, tax, provident fund, loans), interviews
+             and scorecards, performance (goals, reviews, peer feedback), en/bn
   edge-agent/  On-site service that buffers ZKTeco and Hikvision punches (see its README)
 packages/
   shared/    Contract shared by API and web: billing modes, plans, resolveAccess(), zod schemas
   country-packs/  Statutory rules per country (Bangladesh first), each with legal references
   db/        Drizzle schema, SQL migrations (incl. RLS), setup/migrate/seed scripts
   config/    Shared TypeScript config
+docs/handover.md  Where things stand and how to carry on
+docs/phases/ Each phase's design, what was checked and what was carried over
 docs/adr/    Architecture decisions
 docs/ops/    Production runbook, go-live checklist, launch runbook and restore drills
 docs/security/ Our security review and the penetration test's scope
@@ -192,6 +199,8 @@ the Gazipur factory on the day shift, Narayanganj on a day/night roster, the hea
 punching from the web. Device user 1010 is left unmatched on purpose, to try claiming it.
 The NGO has seven people at its head office and Kurigram field office, planned shares in
 two projects, and an approved September timesheet whose hours differ from the plan.
+My Group also has an open sewing operator job with candidates (recruitment), a released annual
+review, and a half-year review cycle under way with Rahima's agreed goals (performance).
 
 After pulling changes that add country-pack defaults (Phase 2 payroll, for example), bring an
 existing dev database up to date with `pnpm db:migrate && pnpm --filter @gp/db provision`, then
