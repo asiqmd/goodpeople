@@ -47,7 +47,17 @@ export class AccessStateGuard implements CanActivate {
     req.tenant = tenant;
 
     const { accessState, reason } = tenant.access;
-    if (accessState === 'suspended') {
+    if (
+      accessState === 'suspended' &&
+      !(
+        reason === 'license_recovery_pending' &&
+        (req.path.startsWith('/tenant/enterprise') ||
+          req.path === '/tenant/access' ||
+          req.path === '/tenant/identity/step-up') &&
+        req.user.role === 'tenant_admin' &&
+        !req.user.policy?.custom
+      )
+    ) {
       throw forbidden('tenant_suspended', 'This workspace is suspended');
     }
     // Good People support: only while the workspace's grant runs, and never a write, even
@@ -69,21 +79,22 @@ export class AccessStateGuard implements CanActivate {
 const FEATURE = 'gp:feature';
 
 /** Requires a module to be in the tenant's effective entitlements. Use after AccessStateGuard. */
-export const RequireFeature = (feature: FeatureKey) => SetMetadata(FEATURE, feature);
+export const RequireFeature = (...features: FeatureKey[]) => SetMetadata(FEATURE, features);
 
 @Injectable()
 export class FeatureGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const feature = this.reflector.getAllAndOverride<FeatureKey | undefined>(FEATURE, [
+    const features = this.reflector.getAllAndOverride<FeatureKey[] | undefined>(FEATURE, [
       context.getHandler(),
       context.getClass(),
     ]);
-    if (!feature) return true;
+    if (!features) return true;
     const tenant = context.switchToHttp().getRequest<AuthedRequest>().tenant;
-    if (!tenant?.access.features.includes(feature)) {
-      throw forbidden('feature_not_in_plan', `Your plan does not include ${feature}`);
+    const missing = features.find((feature) => !tenant?.access.features.includes(feature));
+    if (missing) {
+      throw forbidden('feature_not_in_plan', `Your plan does not include ${missing}`);
     }
     return true;
   }

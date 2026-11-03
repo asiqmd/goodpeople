@@ -10,9 +10,9 @@ import { currentTenantUser, load } from '@/lib/api';
 export default async function MemberPage({
   params,
 }: PageProps<'/workspace/payroll/pf/[employeeId]'>) {
-  const role = (await currentTenantUser())?.role;
-  if (!can(role, 'payroll.view')) redirect('/workspace');
-  const canManage = can(role, 'payroll.manage');
+  const accessPrincipal = await currentTenantUser();
+  if (!can(accessPrincipal, 'payroll.view')) redirect('/workspace');
+  const canManage = can(accessPrincipal, 'payroll.manage');
   const { employeeId } = await params;
   const tp = await getTranslations('payroll.pf');
   await getFormatter();

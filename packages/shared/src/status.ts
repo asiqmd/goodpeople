@@ -159,7 +159,9 @@ export interface BackupRunView {
 /** What `/ready` answers: whether the API can serve, part by part. No hosts, paths or errors. */
 export interface ReadinessView {
   status: 'ready' | 'not_ready';
-  checks: Record<'database' | 'documents' | 'chromium', 'ok' | 'failed'>;
+  checks: Record<'database' | 'documents' | 'chromium', 'ok' | 'failed'> & {
+    security?: 'ok' | 'failed';
+  };
 }
 
 /** A component's latest automated check, with why it failed, for staff only. */

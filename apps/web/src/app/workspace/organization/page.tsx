@@ -45,7 +45,7 @@ async function Section({
           <p className="px-5 text-sm text-slate-500">{t('empty')}</p>
         ) : (
           <table className="min-w-full text-sm">
-            <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+            <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
               <tr>
                 {columns.map((c) => (
                   <th key={c} className="px-5 py-2 font-medium">
@@ -69,7 +69,7 @@ async function Section({
                       {row.isActive ? t('active') : t('inactive')}
                     </Badge>
                   </td>
-                  <td className="px-5 py-2 text-right">
+                  <td className="px-5 py-2 text-end">
                     <form action={setOrgItemActive.bind(null, kind, row.id, !row.isActive)}>
                       <button className={buttonClass.ghost}>
                         {row.isActive ? t('deactivate') : t('activate')}
@@ -89,7 +89,7 @@ async function Section({
 
 export default async function OrganizationPage() {
   const user = await currentTenantUser();
-  if (!can(user?.role, 'org.manage')) redirect('/workspace');
+  if (!can(user, 'org.manage')) redirect('/workspace');
   const org = await load<OrgSnapshot>('tenant', '/tenant/org');
   const t = await getTranslations('hr');
   const o = (key: string) => t(`org.${key}`);
@@ -196,7 +196,7 @@ export default async function OrganizationPage() {
               {depth > 0 && <span className="text-slate-400">└ </span>}
               {unit.name}
               {unit.nameBn && (
-                <span lang="bn" className="ml-2 text-xs text-slate-500">
+                <span lang="bn" className="ms-2 text-xs text-slate-500">
                   {unit.nameBn}
                 </span>
               )}

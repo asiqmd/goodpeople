@@ -1,3 +1,5 @@
+import { CurrentUser, CurrentTenant, type AuthUser } from '../../common/auth-user.js';
+import type { TenantWithAccess } from '@gp/shared';
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { auditReportQuerySchema, type AuditReportQuery, type AuditReportView } from '@gp/shared';
@@ -17,9 +19,18 @@ export class AuditReportController {
   constructor(private readonly reports: AuditReportService) {}
 
   @Get()
-  async report(@Query(zod(auditReportQuerySchema)) query: AuditReportQuery) {
-    if (query.format === 'json') return this.reports.build(query) as Promise<AuditReportView>;
-    const file = await this.reports.file(query);
+  async report(
+    @CurrentUser() user: AuthUser,
+    @CurrentTenant() tenant: TenantWithAccess,
+    @Query(zod(auditReportQuerySchema)) query: AuditReportQuery,
+  ) {
+    if (query.format === 'json')
+      return this.reports.build(
+        query,
+        user,
+        tenant.access.features.includes('lms'),
+      ) as Promise<AuditReportView>;
+    const file = await this.reports.file(query, user, tenant.access.features.includes('lms'));
     return fileResponse(file.bytes, {
       contentType: file.contentType,
       fileName: file.fileName,

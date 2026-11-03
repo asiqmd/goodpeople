@@ -13,6 +13,8 @@ describe('config in production', () => {
   afterEach(() => vi.unstubAllEnvs());
 
   const real = {
+    SECURITY_STORE: 'redis',
+    REDIS_URL: 'redis://127.0.0.1:6381',
     JWT_ACCESS_SECRET: randomBytes(48).toString('base64'),
     FIELD_ENCRYPTION_KEY: randomBytes(32).toString('base64'),
     EMAIL_DRIVER: 'smtp',
@@ -23,6 +25,9 @@ describe('config in production', () => {
     // The local .env may turn these on for development.
     BILLING_FAKE_GATEWAY: 'off',
     ALLOW_LOG_SENDERS: 'off',
+    // Test defaults independently of values in the developer's .env.
+    LOG_FORMAT: undefined,
+    API_DOCS: undefined,
   } as const;
 
   it('refuses to boot with a log driver for e-mail or SMS', () => {
@@ -64,6 +69,11 @@ describe('config in production', () => {
     expect(staging.ALLOW_LOG_SENDERS).toBe(true);
   });
 
+  it('refuses process-local security state or a missing Redis URL in production', () => {
+    expect(() => loadConfig({ ...real, SECURITY_STORE: 'memory' })).toThrow(/requires Redis/);
+    expect(() => loadConfig({ ...real, REDIS_URL: undefined })).toThrow(/REDIS_URL/);
+  });
+
   it('keeps development’s drivers, examples and docs outside production', () => {
     vi.stubEnv('NODE_ENV', 'development');
     expect(
@@ -72,6 +82,8 @@ describe('config in production', () => {
         SMS_DRIVER: 'log',
         JWT_ACCESS_SECRET: example('JWT_ACCESS_SECRET'),
         BILLING_FAKE_GATEWAY: 'on',
+        LOG_FORMAT: undefined,
+        API_DOCS: undefined,
       }),
     ).toMatchObject({ EMAIL_DRIVER: 'log', LOG_FORMAT: 'pretty', API_DOCS: true });
   });

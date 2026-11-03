@@ -58,20 +58,20 @@ export async function DistributionChart({
           </li>
         ))}
       </ul>
-      <table className="w-full text-left text-sm">
+      <table className="w-full text-start text-sm">
         <caption className="sr-only">{t('distribution')}</caption>
         <thead className="text-xs text-slate-500">
           <tr>
             <th scope="col" className="py-1 font-medium">
               {t('rating')}
             </th>
-            <th scope="col" className="py-1 text-right font-medium">
+            <th scope="col" className="py-1 text-end font-medium">
               {t('proposed')}
             </th>
-            <th scope="col" className="py-1 text-right font-medium">
+            <th scope="col" className="py-1 text-end font-medium">
               {t('final')}
             </th>
-            <th scope="col" className="py-1 text-right font-medium">
+            <th scope="col" className="py-1 text-end font-medium">
               {t('guide')}
             </th>
           </tr>
@@ -82,13 +82,13 @@ export async function DistributionChart({
               <th scope="row" className="py-1.5 font-normal">
                 {format.number(row.rating)} · {tr(String(row.rating) as '1')}
               </th>
-              <td className="py-1.5 text-right">
+              <td className="py-1.5 text-end">
                 {format.number(row.count)} ({pct(row.percent)})
               </td>
-              <td className="py-1.5 text-right">
+              <td className="py-1.5 text-end">
                 {format.number(final[i]!.count)} ({pct(final[i]!.percent)})
               </td>
-              <td className="py-1.5 text-right">{pct(row.guidePercent)}</td>
+              <td className="py-1.5 text-end">{pct(row.guidePercent)}</td>
             </tr>
           ))}
         </tbody>

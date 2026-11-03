@@ -382,7 +382,7 @@ export function AllocationActions({
       />
       <SubmitButton variant="secondary">{t('end')}</SubmitButton>
       {state?.error && (
-        <span className="w-full text-right text-xs text-red-600">
+        <span className="w-full text-end text-xs text-red-600">
           {issueFor(state, 'toOn') ?? <ErrorText state={state} />}
         </span>
       )}

@@ -1,0 +1,1 @@
+ALTER TYPE "public"."notification_event" ADD VALUE 'identity.emergency_used' BEFORE 'approval.requested';

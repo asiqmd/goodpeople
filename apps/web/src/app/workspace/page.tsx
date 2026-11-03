@@ -1,3 +1,5 @@
+import Link from 'next/link';
+import { Banner } from '@/components/ui';
 import { FEATURE_KEYS, LIMIT_KEYS, type LegalEntityView, type TenantAccessView } from '@gp/shared';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import { ACCESS_TONE, Badge, BILLING_TONE, Card } from '@/components/ui';
@@ -15,6 +17,14 @@ export default async function WorkspaceHome() {
 
   // The layout has already handled a suspended workspace.
   const { tenant, access } = await load<TenantAccessView>('tenant', '/tenant/access');
+  if (access.reason === 'license_recovery_pending')
+    return (
+      <Banner tone="amber">
+        <Link href="/workspace/enterprise">
+          {(await getTranslations('reasons'))('license_recovery_pending')}
+        </Link>
+      </Banner>
+    );
   const entities = access.features.includes('core_hr')
     ? await load<LegalEntityView[]>('tenant', '/tenant/legal-entities')
     : [];
@@ -82,7 +92,7 @@ export default async function WorkspaceHome() {
             {LIMIT_KEYS.map((key) => (
               <div key={key} className="contents">
                 <dt className="text-slate-500">{tl(key)}</dt>
-                <dd className="text-right font-medium">{limit(access.limits[key])}</dd>
+                <dd className="text-end font-medium">{limit(access.limits[key])}</dd>
               </div>
             ))}
           </dl>

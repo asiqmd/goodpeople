@@ -36,6 +36,7 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 import { employees } from './hr.js';
+import { legalEntities } from './tenant.js';
 import { separations } from './lifecycle.js';
 import { tenants } from './platform.js';
 
@@ -94,6 +95,7 @@ export const salaryStructures = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     tenantId: tenantId(),
+    currency: text('currency').notNull().default('BDT'),
     code: text('code').notNull(),
     name: text('name').notNull(),
     nameBn: text('name_bn'),
@@ -118,6 +120,8 @@ export const payGroups = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     tenantId: tenantId(),
+    currency: text('currency').notNull().default('BDT'),
+    legalEntityId: uuid('legal_entity_id'),
     code: text('code').notNull(),
     name: text('name').notNull(),
     frequency: payFrequency('frequency').notNull(),
@@ -127,6 +131,10 @@ export const payGroups = pgTable(
   },
   (t) => [
     unique('pay_groups_tenant_id_uq').on(t.tenantId, t.id),
+    foreignKey({
+      columns: [t.tenantId, t.legalEntityId],
+      foreignColumns: [legalEntities.tenantId, legalEntities.id],
+    }),
     unique('pay_groups_tenant_code_uq').on(t.tenantId, t.code),
     uniqueIndex('pay_groups_default_uq')
       .on(t.tenantId)
@@ -173,6 +181,7 @@ export const employeePay = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     tenantId: tenantId(),
+    currency: text('currency').notNull().default('BDT'),
     employeeId: uuid('employee_id').notNull(),
     effectiveFrom: isoDate('effective_from').notNull(),
     status: payChangeStatus('status').notNull(),
@@ -223,7 +232,9 @@ export const payrollRuns = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     tenantId: tenantId(),
+    currency: text('currency').notNull().default('BDT'),
     payGroupId: uuid('pay_group_id').notNull(),
+    statutoryContext: jsonb('statutory_context').$type<Record<string, unknown>>(),
     kind: runKind('kind').notNull(),
     parentRunId: uuid('parent_run_id'),
     /** An adjustment's people; everyone in its parent run when null. */
@@ -286,6 +297,7 @@ export const payrollRunItems = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     tenantId: tenantId(),
+    currency: text('currency').notNull().default('BDT'),
     runId: uuid('run_id').notNull(),
     employeeId: uuid('employee_id').notNull(),
     status: text('status').$type<'ok' | 'error'>().notNull(),
@@ -318,6 +330,7 @@ export const payrollInputs = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     tenantId: tenantId(),
+    currency: text('currency').notNull().default('BDT'),
     runId: uuid('run_id').notNull(),
     employeeId: uuid('employee_id').notNull(),
     component: text('component').notNull(),
@@ -351,6 +364,7 @@ export const payrollReconciliations = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     tenantId: tenantId(),
+    currency: text('currency').notNull().default('BDT'),
     runId: uuid('run_id').notNull(),
     fileName: text('file_name').notNull(),
     headers: jsonb('headers').$type<string[]>().notNull(),
@@ -387,6 +401,7 @@ export const paymentChecks = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     tenantId: tenantId(),
+    currency: text('currency').notNull().default('BDT'),
     runId: uuid('run_id').notNull(),
     fileName: text('file_name').notNull(),
     summary: jsonb('summary').$type<PaymentCheckView['summary']>().notNull(),

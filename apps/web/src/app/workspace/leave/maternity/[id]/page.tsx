@@ -190,21 +190,21 @@ export default async function MaternityCasePage({
                   <>
                     <div className="-mx-5 overflow-x-auto">
                       <table className="min-w-full text-sm">
-                        <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+                        <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
                           <tr>
                             <th className="px-5 py-2 font-medium">{td('period')}</th>
-                            <th className="px-5 py-2 text-right font-medium">{td('wages')}</th>
-                            <th className="px-5 py-2 text-right font-medium">{td('worked')}</th>
+                            <th className="px-5 py-2 text-end font-medium">{td('wages')}</th>
+                            <th className="px-5 py-2 text-end font-medium">{td('worked')}</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                           {average.months.map((m) => (
                             <tr key={m.periodStart}>
                               <td className="px-5 py-2">{month(m.periodStart.slice(0, 7))}</td>
-                              <td className="px-5 py-2 text-right tabular-nums">
+                              <td className="px-5 py-2 text-end tabular-nums">
                                 {taka(format, m.wages)}
                               </td>
-                              <td className="px-5 py-2 text-right tabular-nums">
+                              <td className="px-5 py-2 text-end tabular-nums">
                                 {format.number(m.workedDays)}
                               </td>
                             </tr>

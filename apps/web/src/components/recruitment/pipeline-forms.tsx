@@ -119,7 +119,7 @@ export function PeoplePicker({
               <button
                 type="button"
                 onClick={() => choose(p)}
-                className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-slate-50"
+                className="flex w-full items-center justify-between px-3 py-2 text-start text-sm hover:bg-slate-50"
               >
                 <span>{personName(p, locale)}</span>
                 <span className="font-mono text-xs text-slate-500">{p.employeeCode}</span>

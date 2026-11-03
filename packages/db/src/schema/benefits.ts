@@ -60,6 +60,7 @@ export const taxProfiles = pgTable(
   'tax_profiles',
   {
     tenantId: tenantId(),
+    currency: text('currency').notNull().default('BDT'),
     employeeId: uuid('employee_id').notNull(),
     disabled: boolean('disabled').notNull().default(false),
     freedomFighter: boolean('freedom_fighter').notNull().default(false),
@@ -82,6 +83,7 @@ export const taxDeclarations = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     tenantId: tenantId(),
+    currency: text('currency').notNull().default('BDT'),
     employeeId: uuid('employee_id').notNull(),
     /** e.g. "2026-27". */
     fiscalYear: text('fiscal_year').notNull(),
@@ -110,6 +112,7 @@ export const taxOpenings = pgTable(
   'tax_openings',
   {
     tenantId: tenantId(),
+    currency: text('currency').notNull().default('BDT'),
     employeeId: uuid('employee_id').notNull(),
     fiscalYear: text('fiscal_year').notNull(),
     /** { salary, tax, pf } as encrypted JSON. */
@@ -129,6 +132,7 @@ export const taxDeposits = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     tenantId: tenantId(),
+    currency: text('currency').notNull().default('BDT'),
     runId: uuid('run_id').notNull(),
     challanNo: text('challan_no').notNull(),
     depositedOn: isoDate('deposited_on').notNull(),
@@ -151,6 +155,7 @@ export const pfMembers = pgTable(
   'pf_members',
   {
     tenantId: tenantId(),
+    currency: text('currency').notNull().default('BDT'),
     employeeId: uuid('employee_id').notNull(),
     joinedOn: isoDate('joined_on').notNull(),
     leftOn: isoDate('left_on'),
@@ -169,6 +174,7 @@ export const pfEntries = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     tenantId: tenantId(),
+    currency: text('currency').notNull().default('BDT'),
     employeeId: uuid('employee_id').notNull(),
     date: isoDate('date').notNull(),
     kind: pfEntryKind('kind').notNull(),
@@ -198,6 +204,7 @@ export const employeeLoans = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     tenantId: tenantId(),
+    currency: text('currency').notNull().default('BDT'),
     employeeId: uuid('employee_id').notNull(),
     kind: loanKind('kind').notNull(),
     status: loanStatus('status').notNull().default('pending'),
@@ -225,6 +232,7 @@ export const loanRepayments = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     tenantId: tenantId(),
+    currency: text('currency').notNull().default('BDT'),
     loanId: uuid('loan_id').notNull(),
     runId: uuid('run_id'),
     date: isoDate('date').notNull(),
@@ -254,6 +262,7 @@ export const payBatches = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     tenantId: tenantId(),
+    currency: text('currency').notNull().default('BDT'),
     effectiveFrom: isoDate('effective_from').notNull(),
     basis: incrementBasis('basis').notNull(),
     /** The increment in percent, e.g. 5.00. */
@@ -285,6 +294,7 @@ export const wppfYears = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     tenantId: tenantId(),
+    currency: text('currency').notNull().default('BDT'),
     /** The company's accounting year it covers, e.g. "2025-26". */
     accountingYear: text('accounting_year').notNull(),
     yearStart: isoDate('year_start').notNull(),

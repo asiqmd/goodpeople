@@ -37,23 +37,8 @@ export class AttendanceJobs implements OnApplicationBootstrap, OnApplicationShut
   ) {}
 
   onApplicationBootstrap() {
-    if (!this.config.BACKGROUND_JOBS) return;
-    const minutes = this.config.ATTENDANCE_JOB_INTERVAL_MINUTES;
-    // Each run's outcome feeds the status page's attendance check.
-    const tick = () => {
-      this.running ??= this.runAll()
-        .then(
-          (failed) => this.heartbeats.beat('attendance', failed === 0),
-          (error: Error) => {
-            this.heartbeats.beat('attendance', false);
-            this.logger.error('Attendance processing failed', error);
-          },
-        )
-        .finally(() => (this.running = undefined));
-    };
-    setTimeout(tick, 5_000).unref();
-    this.timer = setInterval(tick, minutes * 60_000);
-    this.timer.unref();
+    // M2: only the separate, leased worker scheduler owns timers.
+    void this.config.BACKGROUND_JOBS;
   }
 
   async onApplicationShutdown() {

@@ -2,7 +2,7 @@
 
 import { z } from 'zod';
 import type { HireResult } from './hr-types.js';
-import { hireEmployeeSchema } from './hr-schemas.js';
+import { hireFieldsSchema } from './hr-schemas.js';
 import {
   EMPLOYMENT_TYPES,
   WORKER_CATEGORIES,
@@ -127,7 +127,7 @@ const {
   job: _job,
   mobilePhone,
   ...personFields
-} = hireEmployeeSchema.shape;
+} = hireFieldsSchema.shape;
 
 export const offerHireSchema = z.object({
   ...personFields,

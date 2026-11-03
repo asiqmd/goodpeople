@@ -194,7 +194,7 @@ export async function PeerSummaryView({ summary }: { summary: PeerSummary }) {
       {PEER_QUESTIONS.map((q) => (
         <div key={q}>
           <p className="font-medium text-slate-800">{t(`questions.${q}`)}</p>
-          <ul className="mt-1 list-disc space-y-1 pl-5 text-slate-700">
+          <ul className="mt-1 list-disc space-y-1 ps-5 text-slate-700">
             {summary.answers[q].map((a, i) => (
               <li key={i}>{a}</li>
             ))}

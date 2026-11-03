@@ -61,9 +61,10 @@ describe('group', () => {
   let tenantId: string;
   let seq = 0;
   const today = todayIn();
-  const yesterday = addDays(today, -1);
-  // Yesterday's month, so it has a day before today even on the 1st.
-  const month = yesterday.slice(0, 7);
+  // A completed month contains the required weekdays and no future punch times,
+  // including on the first days of a new month.
+  const periodEnd = addDays(`${today.slice(0, 7)}-01`, -1);
+  const month = periodEnd.slice(0, 7);
 
   beforeAll(async () => {
     app = await bootApp();
@@ -217,7 +218,7 @@ describe('group', () => {
       .expect(201);
   /** A day this month before today that all of these people work, by their own calendars. */
   async function workingDayOf(ids: string[]) {
-    const views = await Promise.all(ids.map((id) => daysOf(id, `${month}-01`, yesterday)));
+    const views = await Promise.all(ids.map((id) => daysOf(id, `${month}-01`, periodEnd)));
     const day = views[0]!.find((d) =>
       views.every((v) => v.find((x) => x.date === d.date)?.dayType === 'working'),
     );
@@ -271,7 +272,7 @@ describe('group', () => {
     await api(app)
       .post('/tenant/attendance/process')
       .set(admin())
-      .send({ from: `${month}-01`, to: yesterday, employeeIds: [textiles.id, foods.id] })
+      .send({ from: `${month}-01`, to: periodEnd, employeeIds: [textiles.id, foods.id] })
       .expect(201);
     const run = await kit.run(g, month);
     await kit.compute(run.id);
@@ -286,7 +287,7 @@ describe('group', () => {
       ['MGF', foods],
     ] as const) {
       const [was, now] = [of(before, code), of(after, code)];
-      const days = (await daysOf(person.id, `${month}-01`, yesterday)).filter(counted);
+      const days = (await daysOf(person.id, `${month}-01`, periodEnd)).filter(counted);
       const item = await kit.itemOf(run.id, person.id);
       expect(now.headcount - was.headcount).toBe(1);
       expect(now.trend.at(-1)).toBe(now.headcount);
@@ -305,7 +306,7 @@ describe('group', () => {
       ).toBeCloseTo(Number(item.employerCost), 2);
     }
     const overtime = sum(
-      (await daysOf(foods.id, `${month}-01`, yesterday)).map((d) => d.overtimeMinutes),
+      (await daysOf(foods.id, `${month}-01`, periodEnd)).map((d) => d.overtimeMinutes),
     );
     expect(overtime).toBeGreaterThan(0);
     expect(

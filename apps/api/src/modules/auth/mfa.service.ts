@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
   CIPHER_FIELDS,
+  authSessions,
   platformUsers,
   runAsTenant,
   tenantUsers,
@@ -8,19 +9,22 @@ import {
   type FieldCipher,
 } from '@gp/db';
 import type { MfaSetup } from '@gp/shared';
-import { eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
+import { SecurityState } from '../../common/security-state.js';
 import { badRequest } from '../../common/errors.js';
 import { DB, FIELD_CIPHER } from '../../db/db.module.js';
 import { hashCode, newRecoveryCodes, newTotpSecret, otpauthUrl, totpStep } from './totp.js';
 
 /** A tenant login or a platform login: they live in different tables. */
-export type Subject =
-  { kind: 'platform'; id: string } | { kind: 'tenant'; id: string; tenantId: string };
+export type Subject = (
+  { kind: 'platform'; id: string } | { kind: 'tenant'; id: string; tenantId: string }
+) & { revision?: number };
 
 interface MfaColumns {
   email: string | null;
   mfaSecretEnc: string | null;
   mfaEnabledAt: Date | null;
+  mfaLastStep: number | null;
   mfaRecoveryCodes: string[];
 }
 
@@ -28,6 +32,7 @@ const mfaColumns = (table: typeof platformUsers | typeof tenantUsers) => ({
   email: table.email,
   mfaSecretEnc: table.mfaSecretEnc,
   mfaEnabledAt: table.mfaEnabledAt,
+  mfaLastStep: table.mfaLastStep,
   mfaRecoveryCodes: table.mfaRecoveryCodes,
 });
 
@@ -40,14 +45,9 @@ const STEP_MEMORY_MS = 90_000;
  */
 @Injectable()
 export class MfaService {
-  /**
-   * The last authenticator step each login used. In this process's memory, like the rate
-   * limits: several API instances need it in the database.
-   */
-  private readonly lastSteps = new Map<string, { step: number; until: number }>();
-
   constructor(
     @Inject(DB) private readonly db: Database,
+    private readonly state: SecurityState,
     @Inject(FIELD_CIPHER) private readonly cipher: FieldCipher,
   ) {}
 
@@ -58,7 +58,11 @@ export class MfaService {
       throw badRequest('mfa_already_enabled', 'Two-step sign-in is already on');
     }
     const secret = newTotpSecret();
-    await this.save(subject, { mfaSecretEnc: this.cipher.encrypt(secret, this.context(subject)) });
+    await this.state.remove(`totp:${subject.kind}:${subject.id}`);
+    await this.save(subject, {
+      mfaSecretEnc: this.cipher.encrypt(secret, this.context(subject)),
+      mfaLastStep: null,
+    });
     return { secret, otpauthUrl: otpauthUrl(secret, user.email ?? subject.id) };
   }
 
@@ -70,7 +74,7 @@ export class MfaService {
     }
     if (!user.mfaSecretEnc) throw badRequest('mfa_not_started', 'Start the setup first');
     const secret = this.cipher.decrypt(user.mfaSecretEnc, this.context(subject));
-    if (!this.use(subject, totpStep(secret, code))) {
+    if (!(await this.use(subject, totpStep(secret, code)))) {
       throw badRequest('mfa_wrong_code', 'That code does not match. Check the time on your phone.');
     }
     const codes = newRecoveryCodes();
@@ -89,24 +93,64 @@ export class MfaService {
     }
     const hash = hashCode(trimmed);
     if (!user.mfaRecoveryCodes.includes(hash)) return false;
-    await this.save(subject, { mfaRecoveryCodes: user.mfaRecoveryCodes.filter((h) => h !== hash) });
-    return true;
+    const table = subject.kind === 'platform' ? platformUsers : tenantUsers;
+    const consume = (tx: Database | import('@gp/db').Tx) =>
+      tx
+        .update(table)
+        .set({ mfaRecoveryCodes: sql`array_remove(${table.mfaRecoveryCodes}, ${hash})` })
+        .where(
+          and(eq(table.id, subject.id), sql`${table.mfaRecoveryCodes} @> ARRAY[${hash}]::text[]`),
+        )
+        .returning({ id: table.id });
+    const used =
+      subject.kind === 'platform'
+        ? await consume(this.db)
+        : await runAsTenant(this.db, subject.tenantId, consume);
+    return used.length === 1;
   }
 
   /** Takes a right code's step unless this login already used it (or a later one). */
-  private use(subject: Subject, step: number | undefined): boolean {
+  private async use(subject: Subject, step: number | undefined): Promise<boolean> {
     if (step === undefined) return false;
-    const now = Date.now();
-    for (const [key, last] of this.lastSteps) if (last.until <= now) this.lastSteps.delete(key);
-    const key = `${subject.kind}:${subject.id}`;
-    const last = this.lastSteps.get(key);
-    if (last && step <= last.step) return false;
-    this.lastSteps.set(key, { step, until: now + STEP_MEMORY_MS });
-    return true;
+    if (!(await this.state.advance(`totp:${subject.kind}:${subject.id}`, step, STEP_MEMORY_MS)))
+      return false;
+    const table = subject.kind === 'platform' ? platformUsers : tenantUsers;
+    const update = (tx: Database | import('@gp/db').Tx) =>
+      tx
+        .update(table)
+        .set({ mfaLastStep: step })
+        .where(and(eq(table.id, subject.id), sql`coalesce(${table.mfaLastStep}, -1) < ${step}`))
+        .returning({ id: table.id });
+    const rows =
+      subject.kind === 'platform'
+        ? await update(this.db)
+        : await runAsTenant(this.db, subject.tenantId, update);
+    return rows.length === 1;
   }
 
   async disable(subject: Subject): Promise<void> {
-    await this.save(subject, { mfaSecretEnc: null, mfaEnabledAt: null, mfaRecoveryCodes: [] });
+    await this.state.remove(`totp:${subject.kind}:${subject.id}`);
+    const table = subject.kind === 'platform' ? platformUsers : tenantUsers;
+    const disable = async (tx: Database | import('@gp/db').Tx) => {
+      await tx
+        .update(table)
+        .set({
+          mfaSecretEnc: null,
+          mfaEnabledAt: null,
+          mfaRecoveryCodes: [],
+          mfaLastStep: null,
+          authRevision: sql`${table.authRevision}+1`,
+        })
+        .where(eq(table.id, subject.id));
+      await tx
+        .update(authSessions)
+        .set({ mfaAt: null })
+        .where(
+          and(eq(authSessions.subjectKind, subject.kind), eq(authSessions.subjectId, subject.id)),
+        );
+    };
+    if (subject.kind === 'platform') await this.db.transaction(disable);
+    else await runAsTenant(this.db, subject.tenantId, disable);
   }
 
   private context(subject: Subject) {

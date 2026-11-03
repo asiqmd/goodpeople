@@ -74,7 +74,7 @@ export default async function OperationsPage() {
             <p className="text-sm text-slate-600">{t('noRuns')}</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
+              <table className="w-full text-start text-sm">
                 <thead className="border-b border-slate-200 text-xs text-slate-500">
                   <tr>
                     <th className={head}>{t('columns.kind')}</th>
@@ -95,8 +95,8 @@ export default async function OperationsPage() {
                       <td className={`${cell} font-mono text-xs`}>{run.label ?? '–'}</td>
                       <td className={`${cell} text-xs`}>{run.host ?? '–'}</td>
                       <td className={`${cell} whitespace-nowrap`}>{time(run.finishedAt)}</td>
-                      <td className={`${cell} text-right tabular-nums`}>{took(run)}</td>
-                      <td className={`${cell} text-right tabular-nums`}>
+                      <td className={`${cell} text-end tabular-nums`}>{took(run)}</td>
+                      <td className={`${cell} text-end tabular-nums`}>
                         {run.sizeBytes === null
                           ? '–'
                           : t('megabytes', { size: Math.round(run.sizeBytes / 104_857.6) / 10 })}
@@ -123,7 +123,7 @@ export default async function OperationsPage() {
           </div>
         )}
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
+          <table className="w-full text-start text-sm">
             <thead className="border-b border-slate-200 text-xs text-slate-500">
               <tr>
                 <th className={head}>{t('columns.component')}</th>
@@ -143,7 +143,7 @@ export default async function OperationsPage() {
                       <>
                         <td className={cell}>{outcome(check.ok)}</td>
                         <td className={`${cell} whitespace-nowrap`}>{time(check.checkedAt)}</td>
-                        <td className={`${cell} text-right tabular-nums`}>
+                        <td className={`${cell} text-end tabular-nums`}>
                           {check.latencyMs === null
                             ? '–'
                             : t('milliseconds', { ms: check.latencyMs })}
@@ -175,8 +175,8 @@ export default async function OperationsPage() {
         }
       >
         <p className="mb-3 text-sm text-slate-600">{t('readinessIntro')}</p>
-        <ul className="grid gap-2 sm:grid-cols-3">
-          {(['database', 'documents', 'chromium'] as const).map((part) => (
+        <ul className="grid gap-2 sm:grid-cols-2">
+          {(['database', 'documents', 'chromium', 'security'] as const).map((part) => (
             <li key={part} className="flex items-center justify-between rounded-lg bg-slate-50 p-3">
               <span className="text-sm">{t(`parts.${part}`)}</span>
               {outcome(readiness.checks[part] === 'ok')}

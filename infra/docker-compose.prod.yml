@@ -11,6 +11,7 @@
 #
 # Profiles, chosen with COMPOSE_PROFILES in infra/.env:
 #   db      PostgreSQL in this stack. Leave it out when the database is managed elsewhere.
+#   redis   private Redis in this stack; omit for a managed Redis endpoint.
 #   minio   MinIO as the document bucket (STORAGE_DRIVER=s3).
 #   setup   the one-off `setup` service; `run --rm setup` enables it by itself.
 
@@ -24,7 +25,7 @@ x-logging: &logging
     max-size: 10m
     max-file: '5'
 
-# The Node containers (setup, migrate, api, web) drop every Linux capability and cannot gain
+# The Node containers (setup, migrate, api, worker, web) drop every Linux capability and cannot gain
 # privileges. They need none: they listen on ports above 1024, and Chromium runs without its
 # sandbox (see "Chrome for PDFs" in the runbook).
 
@@ -87,7 +88,7 @@ services:
     cap_drop: [ALL]
     logging: *logging
 
-  api:
+  api: &api-service
     image: *api-image
     build:
       context: ..
@@ -102,54 +103,104 @@ services:
       minio-init:
         condition: service_completed_successfully
         required: false
-    environment:
-      - PORT=4000
-      - WEB_ORIGIN=https://${GP_DOMAIN:?GP_DOMAIN is not set in infra/.env}
+    environment: &api-env
+      PORT: '4000'
+      WEB_ORIGIN: 'https://${GP_DOMAIN:?GP_DOMAIN is not set in infra/.env}'
       # Caddy is the one proxy in front, so rate limits see the visitor's address.
-      - TRUST_PROXY=1
-      - DATABASE_URL=${DATABASE_URL:?DATABASE_URL is not set in infra/.env}
-      - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET:?JWT_ACCESS_SECRET is not set in infra/.env}
-      - FIELD_ENCRYPTION_KEY=${FIELD_ENCRYPTION_KEY:?FIELD_ENCRYPTION_KEY is not set in infra/.env}
-      - ACCESS_TOKEN_TTL_SECONDS=${ACCESS_TOKEN_TTL_SECONDS:-900}
-      - REFRESH_TOKEN_TTL_DAYS=${REFRESH_TOKEN_TTL_DAYS:-30}
-      - REQUIRE_ADMIN_MFA=${REQUIRE_ADMIN_MFA:-on}
-      # Attendance processing and completing separations run inside the API on timers.
-      # Exactly one API process may have them on: if you run more API containers, set
-      # BACKGROUND_JOBS=off on all but one (see "Background jobs" in the runbook).
-      - BACKGROUND_JOBS=on
-      - ATTENDANCE_JOB_INTERVAL_MINUTES=${ATTENDANCE_JOB_INTERVAL_MINUTES:-15}
-      - STORAGE_DRIVER=${STORAGE_DRIVER:-local}
+      TRUST_PROXY: '1'
+      DATABASE_URL: '${DATABASE_URL:?DATABASE_URL is not set in infra/.env}'
+      SECURITY_STORE: 'redis'
+      REDIS_URL: '${REDIS_URL:?REDIS_URL is not set in infra/.env}'
+      SECURITY_NAMESPACE: '${SECURITY_NAMESPACE:-gp:security:v1}'
+      JWT_ACCESS_KEY_ID: '${JWT_ACCESS_KEY_ID:-v1}'
+      JWT_PREVIOUS_ACCESS_SECRET:
+      JWT_PREVIOUS_KEY_ID:
+      JWT_PREVIOUS_VALID_UNTIL:
+      OIDC_PRIVATE_HOSTS:
+      JWT_ACCESS_SECRET: '${JWT_ACCESS_SECRET:?JWT_ACCESS_SECRET is not set in infra/.env}'
+      FIELD_ENCRYPTION_KEY: '${FIELD_ENCRYPTION_KEY:?FIELD_ENCRYPTION_KEY is not set in infra/.env}'
+      ACCESS_TOKEN_TTL_SECONDS: '${ACCESS_TOKEN_TTL_SECONDS:-900}'
+      REFRESH_TOKEN_TTL_DAYS: '${REFRESH_TOKEN_TTL_DAYS:-30}'
+      REQUIRE_ADMIN_MFA: '${REQUIRE_ADMIN_MFA:-on}'
+      BACKGROUND_JOBS: 'off'
+      ATTENDANCE_JOB_INTERVAL_MINUTES: '${ATTENDANCE_JOB_INTERVAL_MINUTES:-15}'
+      STORAGE_DRIVER: '${STORAGE_DRIVER:-local}'
       # Optional settings are passed only when infra/.env sets them, so the API's own
       # defaults apply otherwise (an empty S3_ENDPOINT would fail its URL check).
-      - S3_BUCKET
-      - S3_REGION
-      - S3_ENDPOINT
-      - S3_ACCESS_KEY_ID
-      - S3_SECRET_ACCESS_KEY
-      - S3_FORCE_PATH_STYLE
-      - EMAIL_DRIVER
-      - SMTP_URL
-      - EMAIL_FROM
-      - SMS_DRIVER
-      - ALLOW_LOG_SENDERS
-      - SSLWIRELESS_URL
-      - SSLWIRELESS_API_TOKEN
-      - SSLWIRELESS_SID
-      - PUSH_DRIVER
-      - FCM_PROJECT_ID
-      - FCM_CLIENT_EMAIL
-      - FCM_PRIVATE_KEY
-      - LOG_FORMAT
-      - LOG_LEVEL
-      - API_DOCS
-      - SUPPORT_INBOX_EMAIL
-      - STATUS_WEB_URL
+      S3_BUCKET:
+      S3_REGION:
+      S3_ENDPOINT:
+      S3_ACCESS_KEY_ID:
+      S3_SECRET_ACCESS_KEY:
+      S3_FORCE_PATH_STYLE:
+      EMAIL_DRIVER:
+      SMTP_URL:
+      EMAIL_FROM:
+      SMS_DRIVER:
+      ALLOW_LOG_SENDERS:
+      SSLWIRELESS_URL:
+      SSLWIRELESS_API_TOKEN:
+      SSLWIRELESS_SID:
+      PUSH_DRIVER:
+      FCM_PROJECT_ID:
+      FCM_CLIENT_EMAIL:
+      FCM_PRIVATE_KEY:
+      LOG_FORMAT:
+      LOG_LEVEL:
+      API_DOCS:
+      SUPPORT_INBOX_EMAIL:
+      STATUS_WEB_URL:
+      PROCESS_ROLE: 'api'
+      API_ORIGIN: 'https://${GP_API_DOMAIN}'
+      PUBLIC_TOKEN_TTL_SECONDS: '${PUBLIC_TOKEN_TTL_SECONDS:-300}'
+      PUBLIC_RATE_LIMIT: '${PUBLIC_RATE_LIMIT:-120}'
+      PUBLIC_DAILY_QUOTA: '${PUBLIC_DAILY_QUOTA:-20000}'
+      WEBHOOK_MAX_ATTEMPTS: '${WEBHOOK_MAX_ATTEMPTS:-8}'
+      WEBHOOK_RETENTION_DAYS: '${WEBHOOK_RETENTION_DAYS:-14}'
+      WEBHOOK_QUEUE_LIMIT: '${WEBHOOK_QUEUE_LIMIT:-10000}'
+      JOB_LEASE_SECONDS: '${JOB_LEASE_SECONDS:-60}'
+      WORKER_CONCURRENCY: '${WORKER_CONCURRENCY:-4}'
+      WEBHOOK_PRIVATE_HOSTS:
     volumes:
       # The local document store (STORAGE_DRIVER=local). The directory must exist and belong
       # to uid 1000, the image's `node` user.
       - ${GP_DOCUMENTS_DIR:-/srv/good-people/documents}:/data/documents
     security_opt: ['no-new-privileges:true']
     cap_drop: [ALL]
+    logging: *logging
+
+  worker:
+    <<: *api-service
+    command: ['node', 'dist/worker.js']
+    environment:
+      <<: *api-env
+      PROCESS_ROLE: worker
+      BACKGROUND_JOBS: 'on'
+    # No HTTP listener. Queue age and lease progress are visible in the integration console.
+    healthcheck:
+      disable: true
+    stop_grace_period: 90s
+
+  redis:
+    profiles: [redis]
+    image: redis:7.4
+    restart: unless-stopped
+    command:
+      [
+        'redis-server',
+        '--requirepass',
+        '${REDIS_PASSWORD:?Set REDIS_PASSWORD for the bundled Redis}',
+        '--appendonly',
+        'yes',
+        '--appendfsync',
+        'always',
+        '--maxmemory',
+        '128mb',
+        '--maxmemory-policy',
+        'noeviction',
+      ]
+    volumes: [redisdata:/data]
+    security_opt: ['no-new-privileges:true']
     logging: *logging
 
   web:
@@ -230,6 +281,7 @@ services:
     logging: *logging
 
 volumes:
+  redisdata:
   pgdata:
   caddy_data:
   caddy_config:

@@ -210,7 +210,7 @@ export class OfferPublicService {
   private async open(slug: string, token: string, ip: string, kind: keyof typeof LIMITS) {
     const wanted = slug.trim().toLowerCase();
     const { limit, windowMs } = LIMITS[kind];
-    this.limiter.hit(`offer:${kind}:${ip}:${wanted}`, limit, windowMs);
+    await this.limiter.hit(`offer:${kind}:${ip}:${wanted}`, limit, windowMs);
     if (!TOKEN.test(token)) throw notFound();
     const [row] = await this.db
       .select({ id: tenants.id, name: tenants.name, slug: tenants.slug, status: tenants.status })

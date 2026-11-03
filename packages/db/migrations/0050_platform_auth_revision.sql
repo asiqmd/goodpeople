@@ -1,0 +1,1 @@
+ALTER TABLE "platform_users" ADD COLUMN "auth_revision" integer DEFAULT 0 NOT NULL;

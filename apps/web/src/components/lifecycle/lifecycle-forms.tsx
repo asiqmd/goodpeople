@@ -570,18 +570,18 @@ export function ImportEmployeesForm() {
           {batch.rows.length > 0 && (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="text-left text-xs text-slate-500">
+                <thead className="text-start text-xs text-slate-500">
                   <tr>
-                    <th className="py-2 pr-3 font-medium">{t('row')}</th>
-                    <th className="py-2 pr-3 font-medium">{t('employee')}</th>
+                    <th className="py-2 pe-3 font-medium">{t('row')}</th>
+                    <th className="py-2 pe-3 font-medium">{t('employee')}</th>
                     <th className="py-2 font-medium">{t('problems')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {batch.rows.map((r) => (
                     <tr key={r.row}>
-                      <td className="py-2 pr-3 tabular-nums">{r.row}</td>
-                      <td className="py-2 pr-3">
+                      <td className="py-2 pe-3 tabular-nums">{r.row}</td>
+                      <td className="py-2 pe-3">
                         {r.fullName}{' '}
                         <span className="font-mono text-xs text-slate-400">{r.employeeCode}</span>
                       </td>

@@ -9,9 +9,11 @@ const API_URL = process.env.API_URL ?? 'http://localhost:4000';
  * remains, rotate them before the page renders. Pages then only ever read a valid token.
  */
 export async function proxy(request: NextRequest) {
-  const kind: SessionKind = request.nextUrl.pathname.startsWith('/platform')
-    ? 'platform'
-    : 'tenant';
+  const kind: SessionKind =
+    request.nextUrl.pathname.startsWith('/platform') ||
+    request.nextUrl.pathname === '/api/assurance-export'
+      ? 'platform'
+      : 'tenant';
   const names = cookieNames(kind);
   const refreshToken = request.cookies.get(names.refresh)?.value;
   if (request.cookies.has(names.access) || !refreshToken) return NextResponse.next();
@@ -36,5 +38,12 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/workspace/:path*', '/platform/:path*'],
+  matcher: [
+    '/workspace/:path*',
+    '/platform/:path*',
+    '/api/international-profile',
+    '/api/uae-preview',
+    '/api/saudi-preview',
+    '/api/assurance-export',
+  ],
 };

@@ -7,6 +7,9 @@ import type { TenantRole } from './catalog.js';
 export const PERMISSIONS = [
   /** See everyone's records and team views; without it, people see themselves and their team. */
   'employees.read',
+  /** Workforce aggregates still require employees.read in the same company/relationship. */
+  'analytics.view',
+  'anomalies.review',
   'employees.write',
   /** NID, birth registration, passport and TIN in clear. */
   'employees.identity',
@@ -47,6 +50,11 @@ export const PERMISSIONS = [
   'recruitment.manage',
   /** Review cycles and calibration, everyone's goals, reviews and improvement plans. */
   'performance.manage',
+  /** Budgeted increment rounds; managers propose only for their direct reports. */
+  'compensation.manage',
+  'learning.manage',
+  'engagement.manage',
+  'employee_services.manage',
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
@@ -70,6 +78,9 @@ export const ROLE_PERMISSIONS: Record<TenantRole, readonly Permission[]> = {
     'compliance.manage',
     'recruitment.manage',
     'performance.manage',
+    'learning.manage',
+    'engagement.manage',
+    'employee_services.manage',
   ],
   attendance_officer: ['employees.read', 'attendance.manage', 'production.manage'],
   payroll_officer: [
@@ -91,11 +102,26 @@ export const ROLE_PERMISSIONS: Record<TenantRole, readonly Permission[]> = {
   employee: [],
   // Sees what the workspace admin sees, except identity numbers in clear, and can change
   // nothing: a support session refuses every write (Phase 3 M5).
-  support: ALL.filter((p) => p !== 'employees.identity' && p !== 'support.manage'),
+  support: ALL.filter(
+    (p) =>
+      p !== 'employees.identity' &&
+      p !== 'support.manage' &&
+      p !== 'employee_services.manage' &&
+      p !== 'anomalies.review',
+  ),
 };
 
-export function can(role: TenantRole | undefined, permission: Permission): boolean {
-  return !!role && ROLE_PERMISSIONS[role].includes(permission);
+export function can(
+  subject:
+    TenantRole | { role: TenantRole; permissions?: readonly Permission[] } | null | undefined,
+  permission: Permission,
+): boolean {
+  if (!subject) return false;
+  if (typeof subject === 'object')
+    return subject.permissions
+      ? subject.permissions.includes(permission)
+      : ROLE_PERMISSIONS[subject.role].includes(permission);
+  return ROLE_PERMISSIONS[subject].includes(permission);
 }
 
 /** Roles that see the HR side of the workspace at all. */

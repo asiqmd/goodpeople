@@ -15,7 +15,8 @@
     "db:migrate": "turbo run build --filter=@gp/db && pnpm --filter @gp/db run migrate",
     "db:seed": "turbo run build --filter=@gp/db && pnpm --filter @gp/db run seed",
     "db:reset": "turbo run build --filter=@gp/db && pnpm --filter @gp/db run reset",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "worker": "pnpm --filter @gp/api worker"
   },
   "devDependencies": {
     "oxlint": "^1.58.0",

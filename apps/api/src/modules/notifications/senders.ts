@@ -243,29 +243,42 @@ export const EMAIL_SENDER = Symbol('EMAIL_SENDER');
 export const SMS_SENDER = Symbol('SMS_SENDER');
 export const PUSH_SENDER = Symbol('PUSH_SENDER');
 
+export class DisabledSender<M> implements Sender<M> {
+  readonly driver = 'disabled';
+  async send(_message: M): Promise<SendResult> {
+    throw new PermanentSendError('Notification channel is disabled by the installation operator');
+  }
+}
+
 export function createSenders(config: AppConfig) {
   // A production server runs a log driver only with ALLOW_LOG_SENDERS=on, and hides codes.
   const showCodes = process.env.NODE_ENV !== 'production';
   return {
     email:
-      config.EMAIL_DRIVER === 'smtp'
-        ? new SmtpSender(config.SMTP_URL!, config.EMAIL_FROM)
-        : new LogSender<EmailMessage>('email', showCodes),
+      config.EMAIL_DRIVER === 'disabled'
+        ? new DisabledSender<EmailMessage>()
+        : config.EMAIL_DRIVER === 'smtp'
+          ? new SmtpSender(config.SMTP_URL!, config.EMAIL_FROM)
+          : new LogSender<EmailMessage>('email', showCodes),
     sms:
-      config.SMS_DRIVER === 'sslwireless'
-        ? new SslWirelessSender(
-            config.SSLWIRELESS_URL,
-            config.SSLWIRELESS_API_TOKEN!,
-            config.SSLWIRELESS_SID!,
-          )
-        : new LogSender<SmsMessage>('sms', showCodes),
+      config.SMS_DRIVER === 'disabled'
+        ? new DisabledSender<SmsMessage>()
+        : config.SMS_DRIVER === 'sslwireless'
+          ? new SslWirelessSender(
+              config.SSLWIRELESS_URL,
+              config.SSLWIRELESS_API_TOKEN!,
+              config.SSLWIRELESS_SID!,
+            )
+          : new LogSender<SmsMessage>('sms', showCodes),
     push:
-      config.PUSH_DRIVER === 'fcm'
-        ? new FcmSender(
-            config.FCM_PROJECT_ID!,
-            config.FCM_CLIENT_EMAIL!,
-            config.FCM_PRIVATE_KEY!.replace(/\\n/g, '\n'),
-          )
-        : new LogSender<PushMessage>('push', showCodes),
+      config.PUSH_DRIVER === 'disabled'
+        ? new DisabledSender<PushMessage>()
+        : config.PUSH_DRIVER === 'fcm'
+          ? new FcmSender(
+              config.FCM_PROJECT_ID!,
+              config.FCM_CLIENT_EMAIL!,
+              config.FCM_PRIVATE_KEY!.replace(/\\n/g, '\n'),
+            )
+          : new LogSender<PushMessage>('push', showCodes),
   };
 }

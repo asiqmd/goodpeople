@@ -3,6 +3,7 @@ import type { INestApplication } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
+import { json, urlencoded } from 'express';
 import { DocumentBuilder, SwaggerModule, type OpenAPIObject } from '@nestjs/swagger';
 import { AppModule } from './app.module.js';
 import { AppLogger } from './common/logger.js';
@@ -12,6 +13,7 @@ import type { AppConfig } from './config.js';
 export async function createApp(config: AppConfig): Promise<INestApplication> {
   const logger = new AppLogger({ format: config.LOG_FORMAT, level: config.LOG_LEVEL });
   const app = await NestFactory.create(AppModule.forRoot(config), {
+    bodyParser: false,
     cors: { origin: config.WEB_ORIGIN },
     logger,
   });
@@ -42,6 +44,8 @@ export async function createApp(config: AppConfig): Promise<INestApplication> {
   app.use((req: Request, res: Response, next: NextFunction) =>
     (req.path.startsWith('/docs') ? docs : strict)(req, res, next),
   );
+  app.use(json({ type: ['application/json', 'application/scim+json'], limit: '100kb' }));
+  app.use(urlencoded({ extended: true, limit: '100kb' }));
   if (config.TRUST_PROXY > 0) {
     app.getHttpAdapter().getInstance().set('trust proxy', config.TRUST_PROXY);
   }

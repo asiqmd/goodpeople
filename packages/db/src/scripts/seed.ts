@@ -1,6 +1,9 @@
 import { createDb, loadRootEnv, requireEnv, seed } from '../index.js';
 
 loadRootEnv();
+if (process.env.DEPLOYMENT_MODE && process.env.DEPLOYMENT_MODE !== 'managed')
+  throw new Error('This command is unavailable for an installed enterprise deployment');
+
 const { db, pool } = createDb(requireEnv('DATABASE_OWNER_URL'), { max: 2 });
 try {
   const { created } = await seed(db, {

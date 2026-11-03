@@ -7,7 +7,7 @@ import { LEGAL_DOCUMENTS, type LegalDocument } from '@gp/shared';
 // Help articles and legal documents are Markdown files in the web app's content/ directory,
 // one per language with the same name, so they are reviewed and shipped like code.
 
-export const CONTENT_LOCALES = ['en', 'bn'] as const;
+export const CONTENT_LOCALES = ['en', 'bn', 'ar'] as const;
 export type ContentLocale = (typeof CONTENT_LOCALES)[number];
 
 /** The help centre's sections, in the order the help page lists them. */
@@ -24,6 +24,7 @@ export type HelpCategory = (typeof HELP_CATEGORIES)[number];
 
 export interface HelpArticle {
   slug: string;
+  locale: ContentLocale;
   title: string;
   summary: string;
   category: HelpCategory;
@@ -89,7 +90,7 @@ function date(meta: Record<string, string>, key: string, file: string): string {
   return value;
 }
 
-function readHelp(dir: string): HelpArticle[] {
+function readHelp(dir: string, locale: ContentLocale): HelpArticle[] {
   if (!existsSync(dir)) return [];
   return readdirSync(dir)
     .filter((name) => name.endsWith('.md'))
@@ -107,6 +108,7 @@ function readHelp(dir: string): HelpArticle[] {
       if (unsafe) throw new Error(`${file}: related "${unsafe}" is not an app path`);
       return {
         slug,
+        locale,
         title: required(meta, 'title', file),
         summary: required(meta, 'summary', file),
         category,
@@ -150,19 +152,30 @@ interface Library {
 const cache = new Map<ContentLocale, Library>();
 
 /** Everything in one language, read once per server (on every request in development). */
-export function contentFor(locale: ContentLocale): Library {
-  const cached = process.env.NODE_ENV === 'development' ? undefined : cache.get(locale);
+export function contentFor(locale: ContentLocale, fresh = false): Library {
+  const cached = fresh || process.env.NODE_ENV === 'development' ? undefined : cache.get(locale);
   if (cached) return cached;
   const root = contentRoot();
   const library = {
-    help: readHelp(path.join(root, 'help', locale)),
-    legal: readLegal(path.join(root, 'legal', locale)),
+    help:
+      locale === 'ar'
+        ? [
+            ...new Map(
+              [
+                ...contentFor('en', fresh).help,
+                ...readHelp(path.join(root, 'help', 'ar'), 'ar'),
+              ].map((article) => [article.slug, article]),
+            ).values(),
+          ]
+        : readHelp(path.join(root, 'help', locale), locale),
+    legal: readLegal(path.join(root, 'legal', locale === 'ar' ? 'en' : locale)),
   };
-  cache.set(locale, library);
+  if (!fresh) cache.set(locale, library);
   return library;
 }
 
-export const contentLocale = (locale: string): ContentLocale => (locale === 'bn' ? 'bn' : 'en');
+export const contentLocale = (locale: string): ContentLocale =>
+  locale === 'ar' ? 'ar' : locale === 'bn' ? 'bn' : 'en';
 
 export const helpArticles = (locale: string) => contentFor(contentLocale(locale)).help;
 

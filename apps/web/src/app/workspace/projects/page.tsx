@@ -55,15 +55,15 @@ export default async function ProjectsPage() {
         ) : (
           <div className="-mx-5 overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+              <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="px-5 py-2 font-medium">{t('list.project')}</th>
                   <th className="px-3 py-2 font-medium">{t('list.donor')}</th>
                   <th className="px-3 py-2 font-medium">{t('list.company')}</th>
                   <th className="px-3 py-2 font-medium">{t('list.period')}</th>
                   <th className="px-3 py-2 font-medium">{t('list.status')}</th>
-                  <th className="px-3 py-2 text-right font-medium">{t('list.people')}</th>
-                  <th className="px-5 py-2 text-right font-medium">{t('list.monthCost')}</th>
+                  <th className="px-3 py-2 text-end font-medium">{t('list.people')}</th>
+                  <th className="px-5 py-2 text-end font-medium">{t('list.monthCost')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -84,10 +84,8 @@ export default async function ProjectsPage() {
                     <td className="px-3 py-2">
                       <ProjectStatusBadge status={p.status} />
                     </td>
-                    <td className="px-3 py-2 text-right tabular-nums">{format.number(p.people)}</td>
-                    <td className="px-5 py-2 text-right tabular-nums">
-                      {taka(format, p.monthCost)}
-                    </td>
+                    <td className="px-3 py-2 text-end tabular-nums">{format.number(p.people)}</td>
+                    <td className="px-5 py-2 text-end tabular-nums">{taka(format, p.monthCost)}</td>
                   </tr>
                 ))}
               </tbody>

@@ -1,5 +1,5 @@
 import { approvalSteps, employees, type Tx } from '@gp/db';
-import type { ApprovalSubject, RegularizationKind, SeparationType, UserLanguage } from '@gp/shared';
+import type { ApprovalSubject, RegularizationKind, SeparationType, } from '@gp/shared';
 import { and, eq } from 'drizzle-orm';
 import {
   localDate,
@@ -14,7 +14,7 @@ export interface ApprovalSummary {
   /** Whose request it is; empty for a payroll run. */
   employeeId: string;
   personName: string;
-  summary: Record<UserLanguage, string>;
+  summary: { en: string; bn: string; ar?: string };
   /** Where the requester sees the outcome. */
   link: string;
   /** Maker-checker: the login that proposed it, never asked to approve it. */
@@ -25,7 +25,7 @@ export interface ApprovalSummary {
 
 const bnNumber = (n: number) => new Intl.NumberFormat('bn-BD').format(n);
 
-function dateRange(start: string, end: string): Record<UserLanguage, string> {
+function dateRange(start: string, end: string): { en: string; bn: string; ar?: string } {
   const a = localDate(start);
   const b = localDate(end);
   return start === end ? a : { en: `${a.en} to ${b.en}`, bn: `${a.bn} থেকে ${b.bn}` };
@@ -36,7 +36,7 @@ export function leaveSummary(request: {
   startDate: string;
   endDate: string;
   days: number;
-}): Record<UserLanguage, string> {
+}): { en: string; bn: string; ar?: string } {
   const range = dateRange(request.startDate, request.endDate);
   const days = request.days;
   return {
@@ -45,7 +45,7 @@ export function leaveSummary(request: {
   };
 }
 
-const CORRECTION_KINDS: Record<RegularizationKind, Record<UserLanguage, string>> = {
+const CORRECTION_KINDS: Record<RegularizationKind, { en: string; bn: string; ar?: string }> = {
   missed_punch: { en: 'Missed punch', bn: 'পাঞ্চ বাদ পড়েছে' },
   on_duty: { en: 'On official duty', bn: 'দাপ্তরিক কাজে বাইরে' },
 };
@@ -58,7 +58,7 @@ export function correctionSummary(kind: RegularizationKind, date: string) {
   };
 }
 
-const SEPARATION_TYPES: Record<SeparationType, Record<UserLanguage, string>> = {
+const SEPARATION_TYPES: Record<SeparationType, { en: string; bn: string; ar?: string }> = {
   resignation: { en: 'Resignation', bn: 'পদত্যাগ' },
   termination: { en: 'Termination', bn: 'চাকরির অবসান' },
   dismissal: { en: 'Dismissal', bn: 'বরখাস্ত' },

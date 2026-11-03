@@ -1,3 +1,16 @@
+import { AssistantModule } from './modules/assistant/assistant.module.js';
+import { AnalyticsModule } from './modules/analytics/analytics.module.js';
+import { AssuranceModule } from './modules/assurance/assurance.module.js';
+import { SaudiModule } from './modules/saudi/saudi.module.js';
+import { UaeModule } from './modules/uae/uae.module.js';
+import { InternationalModule } from './modules/international/international.module.js';
+import { InternationalBoundary } from './modules/international/international-boundary.js';
+import { EnterpriseModule } from './modules/enterprise/enterprise.module.js';
+import { JobsModule } from './jobs/jobs.module.js';
+import { IntegrationsModule } from './modules/integrations/integrations.module.js';
+import { IdentityModule } from './modules/identity/identity.module.js';
+import { FieldProjectionInterceptor } from './common/field-access.js';
+import { SecurityStateModule } from './common/security-state.js';
 import { Module, type DynamicModule } from '@nestjs/common';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { DbErrorFilter } from './common/db-error.filter.js';
@@ -28,6 +41,9 @@ import { OffersModule } from './modules/offers/offers.module.js';
 import { GoalsModule } from './modules/goals/goals.module.js';
 import { ReviewsModule } from './modules/reviews/reviews.module.js';
 import { DevelopmentModule } from './modules/development/development.module.js';
+import { EmployeeServicesModule } from './modules/employee-services/employee-services.module.js';
+import { LearningModule } from './modules/learning/learning.module.js';
+import { CompensationModule } from './modules/compensation/compensation.module.js';
 import { SupportAccessModule } from './modules/support-access/support-access.module.js';
 import { SupportModule } from './modules/support/support.module.js';
 import { DocumentsModule } from './modules/documents/documents.module.js';
@@ -55,9 +71,20 @@ export class AppModule {
       global: true,
       imports: [
         DbModule,
+        EnterpriseModule,
+        InternationalModule,
+        UaeModule,
+        SaudiModule,
+        AssuranceModule,
+        AnalyticsModule,
+        AssistantModule,
+        SecurityStateModule,
         StorageModule,
         NotificationsModule,
         AuthModule,
+        IdentityModule,
+        IntegrationsModule,
+        JobsModule,
         AccountModule,
         UsersModule,
         HealthModule,
@@ -97,10 +124,15 @@ export class AppModule {
         GoalsModule,
         ReviewsModule,
         DevelopmentModule,
+        CompensationModule,
+        LearningModule,
+        EmployeeServicesModule,
       ],
       providers: [
         { provide: APP_CONFIG, useValue: config },
         { provide: APP_INTERCEPTOR, useClass: TenantContextInterceptor },
+        { provide: APP_INTERCEPTOR, useClass: FieldProjectionInterceptor },
+        { provide: APP_INTERCEPTOR, useClass: InternationalBoundary },
         { provide: APP_FILTER, useClass: DbErrorFilter },
       ],
       exports: [APP_CONFIG],

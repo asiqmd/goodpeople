@@ -41,6 +41,10 @@ export class AccessScopesService {
         }
       }
       const before = await this.view(tx, userId);
+      await tx
+        .update(tenantUsers)
+        .set({ scopeMode: ids.length ? 'selected' : 'all' })
+        .where(eq(tenantUsers.id, userId));
       await tx.delete(userEntityScopes).where(eq(userEntityScopes.userId, userId));
       if (ids.length) {
         await tx.insert(userEntityScopes).values(

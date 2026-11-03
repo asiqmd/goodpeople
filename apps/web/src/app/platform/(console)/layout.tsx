@@ -10,15 +10,18 @@ export default async function ConsoleLayout({ children }: LayoutProps<'/platform
   return (
     <>
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
-          <div className="flex min-w-0 items-center gap-6">
+        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex min-w-0 flex-col items-start gap-4 lg:flex-row lg:items-center lg:gap-6">
             <Link href="/platform" className="flex shrink-0 items-center gap-3 whitespace-nowrap">
               <Logo />
               <Badge tone="slate">{t('staffOnly')}</Badge>
             </Link>
-            <nav className="flex flex-wrap gap-x-4 gap-y-1 text-sm font-medium whitespace-nowrap text-slate-600">
+            <nav className="flex min-w-0 flex-wrap gap-x-4 gap-y-2 text-sm font-medium whitespace-nowrap text-slate-600">
               <Link href="/platform" className="hover:text-slate-900">
                 {t('tenants')}
+              </Link>
+              <Link href="/platform/international" className="hover:text-slate-900">
+                USD / AED
               </Link>
               <Link href="/platform/signups" className="hover:text-slate-900">
                 {t('signupsNav')}
@@ -38,12 +41,18 @@ export default async function ConsoleLayout({ children }: LayoutProps<'/platform
               <Link href="/platform/audit" className="hover:text-slate-900">
                 {t('audit')}
               </Link>
+              <Link href="/platform/placements" className="hover:text-slate-900">
+                {(await getTranslations('placements'))('title')}
+              </Link>
+              <Link href="/platform/assurance" className="hover:text-slate-900">
+                {(await getTranslations('assurance'))('title')}
+              </Link>
               <Link href="/platform/account" className="hover:text-slate-900">
                 {t('account')}
               </Link>
             </nav>
           </div>
-          <div className="flex shrink-0 items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4 lg:shrink-0">
             <LanguageToggle />
             <form action={signOut.bind(null, 'platform')}>
               <button className={buttonClass.ghost}>{tc('signOut')}</button>

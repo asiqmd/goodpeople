@@ -65,7 +65,7 @@ export async function PersonalDetails({ employee }: { employee: EmployeeDetail }
   const t = await getTranslations('hr');
   const format = await getFormatter();
   const locale = await getLocale();
-  const age = ageOn(employee.dateOfBirth, todayIn());
+  const age = employee.dateOfBirth ? ageOn(employee.dateOfBirth, todayIn()) : null;
   const ec = employee.emergencyContact;
   return (
     <div className="grid gap-6 lg:grid-cols-2">
@@ -75,7 +75,12 @@ export async function PersonalDetails({ employee }: { employee: EmployeeDetail }
             [t('form.fatherName'), employee.fatherName],
             [t('form.motherName'), employee.motherName],
             [t('form.spouseName'), employee.spouseName],
-            [t('form.dateOfBirth'), `${day(format, employee.dateOfBirth)} (${format.number(age)})`],
+            [
+              t('form.dateOfBirth'),
+              employee.dateOfBirth && age !== null
+                ? `${day(format, employee.dateOfBirth)} (${format.number(age)})`
+                : '—',
+            ],
             [t('form.gender'), t(`genders.${employee.gender}`)],
             [t('form.religion'), employee.religion && t(`religions.${employee.religion}`)],
             [
@@ -100,18 +105,24 @@ export async function PersonalDetails({ employee }: { employee: EmployeeDetail }
       <Card title={t('form.identity')}>
         <Dl
           items={[
-            [t('form.nid'), employee.identity.nid],
-            [t('form.birthRegistration'), employee.identity.birthRegistration],
-            [t('form.passport'), employee.identity.passport],
-            [t('form.tin'), employee.identity.tin],
+            [t('form.nid'), employee.identity?.nid],
+            [t('form.birthRegistration'), employee.identity?.birthRegistration],
+            [t('form.passport'), employee.identity?.passport],
+            [t('form.tin'), employee.identity?.tin],
           ]}
         />
       </Card>
       <Card title={t('form.presentAddress')}>
         <Dl
           items={[
-            [t('form.presentAddress'), formatAddress(employee.presentAddress, locale)],
-            [t('form.permanentAddress'), formatAddress(employee.permanentAddress, locale)],
+            [
+              t('form.presentAddress'),
+              employee.presentAddress ? formatAddress(employee.presentAddress, locale) : '—',
+            ],
+            [
+              t('form.permanentAddress'),
+              employee.permanentAddress ? formatAddress(employee.permanentAddress, locale) : '—',
+            ],
           ]}
         />
       </Card>
@@ -160,7 +171,7 @@ export async function JobHistory({
   const format = await getFormatter();
   return (
     <Card title={t('detail.history')}>
-      <ol className="space-y-4 border-l border-slate-200 pl-5">
+      <ol className="space-y-4 border-s border-slate-200 ps-5">
         {history.map((j) => (
           <li key={j.id} className="relative">
             <span className="absolute -left-[1.6rem] top-1.5 size-2.5 rounded-full bg-brand-600 ring-4 ring-white" />
@@ -236,7 +247,7 @@ export async function AccountList({ employee }: { employee: EmployeeDetail }) {
                 {a.provider &&
                   ` · ${a.method === 'mfs' ? t(`mfsProviders.${a.provider}`) : a.provider}`}
                 {a.accountNumberMasked && (
-                  <span className="ml-2 font-mono text-slate-500">{a.accountNumberMasked}</span>
+                  <span className="ms-2 font-mono text-slate-500">{a.accountNumberMasked}</span>
                 )}
               </span>
               {a.isPrimary && <Badge tone="green">{t('detail.primary')}</Badge>}

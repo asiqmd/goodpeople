@@ -1,0 +1,61 @@
+# Identity and access operations
+
+Phase 5 M1, 1 November 2026. Read [ADR 024](../adr/024-enterprise-identity-and-access.md) before activating a customer. Production activation requires the named provider pilot below; local implementation checks are separate.
+
+## Upgrade and security state
+
+M2 now supplies separate durable workers; follow the [cutover procedure](integrations.md#worker-inventory-and-operation) and stop the former timer runner before deployment. Run the migrations and provision existing tenant tables with the database owner before starting the new API. Preserve business data; do not use db:reset to upgrade. The M1 migration revokes legacy sessions deliberately. Families retain an independent revocation marker on the first session, with a foreign key from every child; pruning must retain that root until its children are removed. Users must sign in again. Kiosk/Edge credentials retain their separate principal boundaries.
+
+Production refuses SECURITY_STORE=memory. Set SECURITY_STORE=redis, REDIS_URL and a stable SECURITY_NAMESPACE shared by API processes in the same environment. Never share a namespace between customers' installations or staging and production. The bundled production compose profile redis has no host port, requires REDIS_PASSWORD, persists an AOF with appendfsync always, and refuses eviction. Generate a strong hex password and put the same value into the redis://:PASSWORD@redis:6379 URL. Managed Redis should use private networking, authentication, persistence and rediss TLS as appropriate. The web container does not receive this credential. Treat Redis files as sensitive security data.
+
+Redis is part of /ready. A store outage yields a sanitized 503 for dependent authentication/rate-limit operations; do not switch production to memory to make the error disappear. Restore connectivity/capacity and verify readiness, one-use challenges and rate limits before reopening traffic. Existing database session/authority checks continue to apply. Durable TOTP steps and consumed-proof tombstones prevent accepting a used proof merely because Redis lost a key. Temporary SSO flows may expire and require a new sign-in.
+
+Do not roll a pre-M1 binary back against a database containing custom assignments. It would not enforce this authority model. Prefer a forward fix. An isolated full restore must invalidate sessions and signing keys, discard temporary SSO state, and reconcile current IdP disables, employment separations and grants before traffic resumes. A backup rollback can restore old security decisions as well as business records.
+
+## Administrators and emergency recovery
+
+Open Workspace → Identity and access as a built-in administrator. Confirm an authenticator code before mutations; the proof lasts five minutes. Designate two individual, active built-in administrators with passwords and MFA as emergency administrators. Keep their recovery codes independently secured and avoid shared accounts. These must be local accounts, not SCIM-managed logins.
+
+Each emergency administrator must actually complete password plus MFA sign-in. The audit event and administrator notification record this use. Test the proposed OIDC connection with two different administrators as well. Enforcement requires both provider tests and two successful emergency recoveries within 24 hours. Do not treat merely checking the emergency box as a recovery test. While enforcement is on, the last two recovery administrators cannot be removed, disabled, demoted or have their MFA reset. Prepare a replacement, test recovery, and then retire an old account.
+
+During an IdP outage, use a tested emergency account, confirm fresh MFA, and turn enforcement off or repair the connection. Revoking grants, disabling managed users, removing memberships and revoking provisioning credentials remain available in read-only commercial states. New authority still requires full entitlement. Do not use support access as a recovery administrator.
+
+## Roles and fields
+
+Custom roles require the Enterprise custom_roles feature. Define a role and explicit field actions, then assign it to selected companies or explicitly all current/future companies. The effective-access preview shows company permission coverage; employee relationship rules still apply to individual records. Removing the final grant means no delegated access, while a linked employee retains own service until disabled. Restoring a built-in template is an explicit local-admin action and is unavailable for managed accounts.
+
+Read restrictions project protected JSON fields before delivery. Restricted filters/searches and content that may contain those fields are refused. Writes to protected inputs, payment-account/nominee workflows and financial mutations require the corresponding field authority. Downloads/exports require read and export authority for the relevant fields; cached or binary delivery does not bypass it. Recruitment, performance and private employee-service delegation currently require read access to all four field groups because their free text has no safe projection. Own service remains available for the person's own profile and pay records. Notifications for custom-role recipients are generic links; opening the resource rechecks authority.
+
+This version requires all-company authority for historical payroll and workspace-wide financial reports. It supports own/direct-report relationships for employee directory reads, not arbitrary workflows. A restricted employee editor supports safe partial profile changes; broader profile fields remain available to fully authorized editors. Field controls are structured permissions, not a promise to classify arbitrary free text. Unstructured document, case and report surfaces are blocked when restrictions cannot be projected safely.
+
+## Configure and pilot OIDC
+
+Register a confidential web application with the customer IdP. Use the exact API callback displayed by the console, ending /auth/sso/callback. Configure an exact HTTPS issuer and client ID, then enter the client secret once. Secrets are field-encrypted and never returned by the admin API. Rotate them through a planned overlap/test procedure; configuration changes invalidate pending flows and reset provider-test evidence.
+
+Only one connection may be enabled. Prepare replacements disabled, then switch during a recovery-covered maintenance window. Public HTTPS hosts are validated and connections pinned to checked DNS addresses; redirects and private addresses are refused. OIDC_PRIVATE_HOSTS is an exact operator allowlist for a reviewed internal provider, not a customer-controlled SSRF escape. Production still requires HTTPS. The HTTP loopback fixture is test-only.
+
+Always use Code + S256 PKCE and RS256 signed ID tokens. Existing accounts link from Account after recent local proof; email equality alone cannot attach an IdP identity. A managed account's immutable externalId must match the configured authenticated sub claim, or Entra oid claim. Coordinate the mapping before provisioning; do not guess a provider-specific subject or reuse a deleted user's external identifier.
+
+Enforcement applies to enrolled linked accounts. SCIM-managed accounts are SSO-only. Unenrolled local worker/PIN/OTP cohorts retain their supported method; this setting is not a blanket tenant-wide password shutdown. To enroll a whole customer cohort, verify every intended account's link/provisioning state before declaring migration complete. Emergency accounts remain explicit local exceptions.
+
+The browser keeps its random handoff verifier in an httpOnly cookie. Mobile opens the system browser and finishes sign-in with an app-held verifier; it does not accept tokens in a deep-link URL. Users must return to the app and press Finish sign-in. Existing MFA/enrollment requirements still apply after federation.
+
+Before production, the customer IT/security owners must name Entra or Okta and record: app/issuer/claim configuration; two real administrator links/tests; correct sub/oid provisioning binding; mobile return; IdP outage recovery; deactivation across live sessions; signing-key/JWKS rotation; and the SCIM lifecycle below. The local RSA-signed test provider is automated evidence only. Vendor setup references: [Entra Code flow](https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-auth-code-flow) and [Entra SCIM provisioning](https://learn.microsoft.com/en-us/entra/identity/app-provisioning/use-scim-to-provision-users-and-groups).
+
+## Provisioning contract
+
+The console displays /scim/v2 and issues a tenant/connection-bound bearer token once. Copy it into the provisioner's secret store, choose an expiry, and rotate with an overlap before revoking the old credential. Human access tokens, kiosk tokens and Edge credentials are not provisioning tokens. Read the ServiceProviderConfig, ResourceTypes and Schemas endpoints using that credential.
+
+Users support email-shaped userName, immutable externalId, displayName, active, name, emails and phoneNumbers. Groups support displayName, immutable externalId and Users membership. GET/list, POST, PUT, PATCH and retained DELETE are supported; eq filters cover userName/externalId or group displayName/externalId and pages are capped at 200. PATCH supports the advertised profile attributes and group members, including the documented contact/name paths. Bulk, arbitrary extension schemas, sorting and password changes are not supported. Link a provisioned login to an existing employee explicitly; provisioning never performs a hire or grants employment/pay authority.
+
+Map approved groups to bounded custom roles. Group grants stay source-owned; local grant removal cannot masquerade as an IdP removal. Administrator/support/billing/import authority and payroll checker grants are not provisionable. A first activation/profile update and initial membership add may omit If-Match. Supplied stale ETags fail with 412. Deactivation/removal is accepted without a version because it reduces authority. Reactivation and re-adding a previously removed member require the current version; unconditional stale revival fails with 428. Clearing a group records a barrier against later unconditional additions. Deletion leaves a tombstone; a local administrator may restore the same resource inactive before a deliberate current-version reactivation.
+
+Many provisioners do not send conditional headers. Confirm the actual customer's behavior. If it cannot supply If-Match on reinstatement, an operator or reviewed adapter must fetch the current resource and issue the explicit conditional change after approval. This is a visible pilot gate, not a claim of universal plug-and-play compatibility. Never drop the version check to fix a stalled reactivation.
+
+An independent HR disable survives SCIM active=true. The response reflects effective active state, and a local HR status change advances the SCIM version. Resolving an HR disable and resolving an IdP disable are separate actions. Deactivation and deletion revoke existing login sessions within the transaction and preserve the employee, payroll, documents and audit history. Audit entries retain actor, action, resource and time; the console shows the latest 100 events, not an unlimited compliance export.
+
+## Signing-key rotation and evidence
+
+Set JWT_ACCESS_KEY_ID with the current secret. A planned overlap also sets JWT_PREVIOUS_KEY_ID, JWT_PREVIOUS_ACCESS_SECRET and an explicit UTC JWT_PREVIOUS_VALID_UNTIL. These three must agree across instances; never reuse IDs for different keys. After the bounded access-token window, remove the previous key. Current session/login checks remain mandatory even for correctly signed old-key tokens. Separate derived MFA/kiosk proofs may require fresh sign-in at a key cutover. An incident rotation should revoke sessions and avoid an old-key overlap.
+
+Retain the approved configuration, access reviews, emergency-test records, secret rotation and restore/reconciliation results in the customer's evidence store. Assign real people to the owner roles in the [control register](../security/enterprise-controls.md). No external provider pilot, penetration-test sign-off or assurance report is implied by passing repository tests.

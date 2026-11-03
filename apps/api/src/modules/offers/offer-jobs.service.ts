@@ -14,8 +14,6 @@ import { TenantDb } from '../../db/db.module.js';
 import { EntitlementsService } from '../entitlements/entitlements.service.js';
 import { offerEvent } from './offer-records.js';
 
-const DAY_MS = 24 * 60 * 60_000;
-
 /**
  * Once a day, marks offers sent but not answered by their last day `expired`. The candidate's
  * link already refuses an answer after that day; this makes the record say so.
@@ -33,12 +31,8 @@ export class OfferJobs implements OnApplicationBootstrap, OnApplicationShutdown 
   ) {}
 
   onApplicationBootstrap() {
-    if (!this.config.BACKGROUND_JOBS) return;
-    const expire = () => {
-      this.running ??= this.everyTenant().finally(() => (this.running = undefined));
-    };
-    this.timers = [setInterval(expire, DAY_MS), setTimeout(expire, 60_000)];
-    for (const timer of this.timers) timer.unref();
+    // M2: only the separate, leased worker scheduler owns timers.
+    void this.config.BACKGROUND_JOBS;
   }
 
   async onApplicationShutdown() {

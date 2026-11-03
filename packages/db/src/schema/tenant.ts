@@ -4,6 +4,7 @@ import {
   boolean,
   check,
   index,
+  integer,
   jsonb,
   pgEnum,
   pgTable,
@@ -39,8 +40,14 @@ export const tenantUsers = pgTable(
     language: userLanguage('language').notNull().default('en'),
     /** Two-step sign-in: the authenticator secret (field-encrypted) and hashed recovery codes. */
     mfaSecretEnc: text('mfa_secret_enc'),
+    mfaLastStep: integer('mfa_last_step'),
     mfaEnabledAt: timestamp('mfa_enabled_at', { withTimezone: true }),
     mfaRecoveryCodes: text('mfa_recovery_codes').array().notNull().default([]),
+    authRevision: integer('auth_revision').notNull().default(0),
+    accessMode: text('access_mode').$type<'template' | 'custom'>().notNull().default('template'),
+    scopeMode: text('scope_mode').$type<'none' | 'selected' | 'all'>().notNull().default('all'),
+    provisionDisabled: boolean('provision_disabled').notNull().default(false),
+    emergencyLocal: boolean('emergency_local').notNull().default(false),
     lastSignInAt: timestamp('last_sign_in_at', { withTimezone: true }),
     /** Set when the person leaves; a disabled login cannot sign in or refresh. */
     disabledAt: timestamp('disabled_at', { withTimezone: true }),
@@ -62,6 +69,7 @@ export const legalEntities = pgTable(
     tenantId: uuid('tenant_id')
       .notNull()
       .references(() => tenants.id, { onDelete: 'cascade' }),
+    countryCode: text('country_code').notNull().default('BD'),
     name: text('name').notNull(),
     legalName: text('legal_name'),
     code: text('code'),

@@ -4,7 +4,7 @@ import type { EmailMessage } from '../notifications/senders.js';
 // What candidates and interviewers are told by email, in their own language. Candidates are
 // not users, so they are written to directly rather than through notifications.
 
-export type Localized = Record<UserLanguage, string>;
+export type Localized = { en: string; bn: string; ar?: string };
 
 /** A moment in Bangladesh time, as each language writes it (Bangla on a 24-hour clock). */
 export function dhakaWhen(date: Date): Localized {

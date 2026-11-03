@@ -4,7 +4,7 @@ import { localDate } from '../notifications/notifications.service.js';
 // The headline and detail of a worker alert in English and Bangla, for the compliance.alert
 // notification. Every limit names the section of the act that sets it.
 
-type Text = Record<UserLanguage, string>;
+type Text = { en: string; bn: string; ar?: string };
 
 const bnDigits = (text: string) => text.replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[Number(d)]!);
 

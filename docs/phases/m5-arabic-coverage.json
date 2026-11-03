@@ -1,0 +1,10 @@
+{
+  "status": "technical_preview",
+  "measuredOn": "2026-11-02",
+  "webStringsTotal": 6199,
+  "webStringsDifferentFromEnglish": 755,
+  "newUaeStrings": 199,
+  "englishFallbackAnnounced": true,
+  "arabicLegalReviewed": false,
+  "notes": "New UAE workspace authored in EN/BN/AR. Source references, rule codes, exceptions and legacy content may remain English; human translation/legal review is open."
+}

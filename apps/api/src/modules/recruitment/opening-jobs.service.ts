@@ -30,12 +30,8 @@ export class OpeningJobs implements OnApplicationBootstrap, OnApplicationShutdow
   ) {}
 
   onApplicationBootstrap() {
-    if (!this.config.BACKGROUND_JOBS) return;
-    const close = () => {
-      this.running ??= this.everyTenant().finally(() => (this.running = undefined));
-    };
-    this.timers = [setInterval(close, 60 * 60_000), setTimeout(close, 30_000)];
-    for (const timer of this.timers) timer.unref();
+    // M2: only the separate, leased worker scheduler owns timers.
+    void this.config.BACKGROUND_JOBS;
   }
 
   async onApplicationShutdown() {

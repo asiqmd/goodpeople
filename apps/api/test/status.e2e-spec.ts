@@ -418,7 +418,7 @@ describe('status page', () => {
     const ready = await api(app).get('/ready').expect(200);
     expect(ready.body).toEqual({
       status: 'ready',
-      checks: { database: 'ok', documents: 'ok', chromium: 'ok' },
+      checks: { database: 'ok', documents: 'ok', chromium: 'ok', security: 'ok' },
     });
 
     vi.spyOn(probes, 'chromium').mockReturnValue(false);
@@ -429,7 +429,7 @@ describe('status page', () => {
     const down = await api(app).get('/ready').expect(503);
     expect(down.body).toEqual({
       status: 'not_ready',
-      checks: { database: 'ok', documents: 'failed', chromium: 'failed' },
+      checks: { database: 'ok', documents: 'failed', chromium: 'failed', security: 'ok' },
     });
     expect(JSON.stringify(down.body)).not.toContain(testStorageDir);
     expect((await api(app).get('/health').expect(200)).body).toMatchObject({ status: 'ok' });

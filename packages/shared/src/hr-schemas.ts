@@ -1,3 +1,4 @@
+import { timeZoneSchema } from './international.js';
 import { z } from 'zod';
 import {
   BD_ADULT_AGE,
@@ -54,6 +55,7 @@ export const addressSchema = z
     upazila: optionalText(80),
     district: z.string().trim().min(2).max(80),
     division: z.enum(BD_DIVISION_CODES),
+    countryCode: z.literal('BD').optional(),
     postcode: z
       .string()
       .regex(/^\d{4}$/, 'A postcode has 4 digits')
@@ -63,11 +65,19 @@ export const addressSchema = z
     message: 'This district is not in the selected division',
     path: ['district'],
   });
-export type Address = z.infer<typeof addressSchema>;
+export type Address = {
+  line: string;
+  district: string;
+  division: string;
+  upazila?: string;
+  postcode?: string;
+  countryCode?: string;
+};
 
 // ── Org structure ────────────────────────────────────────────────────────────
 
 export const legalEntityInputSchema = z.object({
+  countryCode: z.enum(['BD', 'AE', 'SA']).optional(),
   name,
   legalName: optionalText(200),
   code: code.optional(),
@@ -83,6 +93,13 @@ export type LegalEntityInput = z.infer<typeof legalEntityInputSchema>;
 export type LegalEntityUpdate = z.infer<typeof legalEntityUpdateSchema>;
 
 export const locationInputSchema = z.object({
+  timeZone: timeZoneSchema.optional(),
+  weeklyOffDays: z
+    .array(z.number().int().min(0).max(6))
+    .max(3)
+    .refine((days) => new Set(days).size === days.length, 'Each day can appear once')
+    .optional(),
+  countryCode: z.enum(['BD', 'AE', 'SA']).optional(),
   legalEntityId: id,
   code,
   name,
@@ -179,6 +196,16 @@ export const emergencyContactSchema = z.object({
   phone: bdMobileSchema,
 });
 
+const internationalAddressSchema = z
+  .object({
+    line: z.string().min(2).max(200),
+    district: z.string().min(2).max(80),
+    division: z.string().min(2).max(80),
+    countryCode: z.string().regex(/^[A-Z]{2}$/),
+    postcode: z.string().max(20).optional(),
+    upazila: z.string().max(80).optional(),
+  })
+  .refine((address) => address.countryCode !== 'BD', 'Use the BD address schema for a BD address');
 const personalFields = {
   fullName: name,
   fullNameBn: optionalText(160),
@@ -191,11 +218,11 @@ const personalFields = {
   maritalStatus: z.enum(MARITAL_STATUSES).optional(),
   bloodGroup: z.enum(BLOOD_GROUPS).optional(),
   nationality: z.string().length(2).toUpperCase().default('BD'),
-  mobilePhone: bdMobileSchema,
+  mobilePhone: z.union([bdMobileSchema, z.string().regex(/^\+[1-9]\d{7,14}$/)]),
   workEmail: z.email().optional(),
   personalEmail: z.email().optional(),
-  presentAddress: addressSchema,
-  permanentAddress: addressSchema,
+  presentAddress: z.union([internationalAddressSchema, addressSchema]),
+  permanentAddress: z.union([internationalAddressSchema, addressSchema]),
   emergencyContact: emergencyContactSchema.optional(),
   identity: identitySchema,
 };
@@ -213,42 +240,67 @@ export const jobInputSchema = z.object({
 });
 export type JobInput = z.infer<typeof jobInputSchema>;
 
+export const hireFieldsSchema = z.object({
+  ...personalFields,
+  fatherName: name.optional().default(''),
+  motherName: name.optional().default(''),
+  employmentCountry: z.enum(['BD', 'AE', 'SA']).default('BD'),
+  employeeCode: code,
+  joinedOn: isoDate,
+  probationEndsOn: isoDate.optional(),
+  job: jobInputSchema,
+  /** Creates a workspace login linked to this employee. */
+  portalAccess: z
+    .object({
+      email: z.email().optional(),
+      /** Lets the person sign in with a code sent by SMS to this number. */
+      phone: bdMobileSchema.optional(),
+      role: z.enum(ASSIGNABLE_TENANT_ROLES).default('employee'),
+      password: z.string().min(10).optional(),
+    })
+    .refine((p) => p.email || p.phone, {
+      message: 'Give an email address, a mobile number or both',
+      path: ['email'],
+    })
+    .refine((p) => p.email || p.role === 'employee', {
+      message: 'Staff roles sign in with an email address and password',
+      path: ['email'],
+    })
+    .optional(),
+});
 export const hireEmployeeSchema = z
-  .object({
-    ...personalFields,
-    employeeCode: code,
-    joinedOn: isoDate,
-    probationEndsOn: isoDate.optional(),
-    job: jobInputSchema,
-    /** Creates a workspace login linked to this employee. */
-    portalAccess: z
-      .object({
-        email: z.email().optional(),
-        /** Lets the person sign in with a code sent by SMS to this number. */
-        phone: bdMobileSchema.optional(),
-        role: z.enum(ASSIGNABLE_TENANT_ROLES).default('employee'),
-        password: z.string().min(10).optional(),
-      })
-      .refine((p) => p.email || p.phone, {
-        message: 'Give an email address, a mobile number or both',
-        path: ['email'],
-      })
-      .refine((p) => p.email || p.role === 'employee', {
-        message: 'Staff roles sign in with an email address and password',
-        path: ['email'],
-      })
-      .optional(),
-  })
+  .union([
+    hireFieldsSchema.extend({ employmentCountry: z.literal('BD').default('BD') }),
+    hireFieldsSchema.extend({
+      employmentCountry: z.enum(['AE', 'SA']),
+      nationality: z.string().length(2).toUpperCase(),
+    }),
+  ])
   .superRefine((e, ctx) => {
     const { nid, birthRegistration, passport } = e.identity;
-    if (!nid && !birthRegistration && !passport) {
+    if (e.employmentCountry === 'BD') {
+      for (const key of ['fatherName', 'motherName'] as const)
+        if (!e[key])
+          ctx.addIssue({
+            code: 'custom',
+            path: [key],
+            message: 'Required for the existing BD personnel record',
+          });
+    }
+    if (
+      e.employmentCountry === 'BD' &&
+      e.nationality === 'BD' &&
+      !nid &&
+      !birthRegistration &&
+      !passport
+    ) {
       ctx.addIssue({
         code: 'custom',
         message: 'Give an NID, birth registration or passport number',
         path: ['identity', 'nid'],
       });
     }
-    if (ageOn(e.dateOfBirth, e.joinedOn) < BD_MIN_WORKING_AGE) {
+    if (e.employmentCountry === 'BD' && ageOn(e.dateOfBirth, e.joinedOn) < BD_MIN_WORKING_AGE) {
       ctx.addIssue({
         code: 'custom',
         message: `Must be at least ${BD_MIN_WORKING_AGE} on the joining date (Labour Act s.34)`,

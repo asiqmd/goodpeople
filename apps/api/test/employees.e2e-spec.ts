@@ -126,7 +126,7 @@ describe('employees', () => {
       .set(bearer(login.body.accessToken))
       .expect(200);
     expect(me.body.id).toBe(created.id);
-    expect(me.body.identity.nid).toBe(created.identity.nid);
+    expect(me.body.identity.nid).toBe(created.identity!.nid);
     await api(app).get('/tenant/employees').set(bearer(login.body.accessToken)).expect(403);
   });
 
@@ -218,10 +218,10 @@ describe('employees', () => {
     expect(res.body.message).toBe('The org unit belongs to another legal entity');
   });
 
-  it('transfers between companies from a future date, keeping continuous service', async () => {
+  it('requires reviewed settlement and openings before changing the legal employer', async () => {
     const page = await list('search=MG-0006');
     const anjali = page.items[0]!;
-    const res = await api(app)
+    await api(app)
       .post(`/tenant/employees/${anjali.id}/job-changes`)
       .set(bearer(hr))
       .send({
@@ -235,24 +235,17 @@ describe('employees', () => {
           designationId: designation('QI'),
         },
       })
-      .expect(201);
-    const detail = res.body as EmployeeDetail;
-    // Still at Textiles today; the transfer is only in force from 1 January.
-    expect(detail.currentJob?.legalEntity.id).toBe(entity('MGT'));
-    expect(detail.joinedOn).toBe('2022-08-01');
-
+      .expect(409);
+    const unchanged = (
+      await api(app).get(`/tenant/employees/${anjali.id}`).set(bearer(hr)).expect(200)
+    ).body;
+    expect(unchanged.currentJob.legalEntity.id).toBe(entity('MGT'));
+    expect(unchanged.joinedOn).toBe('2022-08-01');
     const history = (
       await api(app).get(`/tenant/employees/${anjali.id}/job-history`).set(bearer(hr)).expect(200)
     ).body;
-    expect(history).toHaveLength(2);
-    expect(history[0]).toMatchObject({
-      event: 'transfer',
-      effectiveFrom: '2027-01-01',
-      effectiveTo: null,
-    });
-    expect(history[0].legalEntity.id).toBe(entity('MGF'));
-    expect(history[0].manager).toMatchObject({ employeeCode: 'MG-0004' });
-    expect(history[1]).toMatchObject({ event: 'hire', effectiveTo: '2026-12-31' });
+    expect(history).toHaveLength(1);
+    expect(history[0].effectiveTo).toBeNull();
   });
 
   it('refuses a change on the same day as another, or before joining', async () => {

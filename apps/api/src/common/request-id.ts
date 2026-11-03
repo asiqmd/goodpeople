@@ -50,11 +50,14 @@ export function requestLine(req: Request, res: Response, durationMs: number): Re
   const route = routeOf(req);
   const status = res.statusCode;
   const userKind =
-    authed.user?.kind ?? (authed.kiosk ? 'kiosk' : authed.edgeAgent ? 'edge_agent' : undefined);
+    authed.service?.kind ??
+    authed.user?.kind ??
+    (authed.kiosk ? 'kiosk' : authed.edgeAgent ? 'edge_agent' : undefined);
   const tenantId =
-    authed.user?.kind === 'tenant'
+    authed.service?.tenantId ??
+    (authed.user?.kind === 'tenant'
       ? authed.user.tenantId
-      : (authed.kiosk?.tenantId ?? authed.edgeAgent?.tenantId);
+      : (authed.kiosk?.tenantId ?? authed.edgeAgent?.tenantId));
   const health = route !== null && HEALTH.test(route);
   const anonymous = route !== null && ANONYMOUS.test(route);
   return {

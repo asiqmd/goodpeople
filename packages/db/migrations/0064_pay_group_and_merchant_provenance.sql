@@ -1,0 +1,2 @@
+ALTER TABLE "merchant_ledger" ADD COLUMN "occurred_at" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "pay_groups" ADD CONSTRAINT "pay_groups_tenant_id_legal_entity_id_legal_entities_tenant_id_id_fk" FOREIGN KEY ("tenant_id","legal_entity_id") REFERENCES "public"."legal_entities"("tenant_id","id") ON DELETE no action ON UPDATE no action;

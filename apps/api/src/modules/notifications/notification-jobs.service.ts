@@ -6,7 +6,7 @@ import {
   type OnApplicationShutdown,
 } from '@nestjs/common';
 import { attendanceDays, documents, employees, jobAssignments } from '@gp/db';
-import { addDays, todayIn, type UserLanguage } from '@gp/shared';
+import { addDays, todayIn, } from '@gp/shared';
 import { and, count, eq, gte, isNotNull, isNull, lte } from 'drizzle-orm';
 import { runInTenantContext } from '../../common/request-context.js';
 import { APP_CONFIG, type AppConfig } from '../../config.js';
@@ -31,7 +31,7 @@ const MISSING_PUNCH_AFTER_HOUR = 9;
 const MISSING_PUNCH_MAX_SHARE = 0.2;
 const MISSING_PUNCH_MIN_SKIP = 20;
 
-function expiryWhen(daysLeft: number): Record<UserLanguage, string> {
+function expiryWhen(daysLeft: number): { en: string; bn: string; ar?: string } {
   if (daysLeft < 0) return { en: 'has expired', bn: 'মেয়াদ শেষ হয়েছে' };
   if (daysLeft === 0) return { en: 'expires today', bn: 'আজ মেয়াদ শেষ' };
   const bn = new Intl.NumberFormat('bn-BD').format(daysLeft);
@@ -65,32 +65,8 @@ export class NotificationJobs implements OnApplicationBootstrap, OnApplicationSh
   ) {}
 
   onApplicationBootstrap() {
-    if (!this.config.BACKGROUND_JOBS) return;
-    // Each sweep's outcome feeds the status page's notifications check.
-    const sweep = () => {
-      this.sweeping ??= this.forEachTenant('Sending notifications', (id) =>
-        this.dispatcher.runFor(id).then(() => undefined),
-      )
-        .then(
-          (failed) => this.heartbeats.beat('notifications', failed === 0),
-          (error: Error) => {
-            this.heartbeats.beat('notifications', false);
-            this.logger.error('Sending notifications failed', error);
-          },
-        )
-        .finally(() => (this.sweeping = undefined));
-    };
-    const remind = () => {
-      this.reminding ??= this.forEachTenant('Reminders', async () => {
-        await this.remindTenant();
-      }).finally(() => (this.reminding = undefined));
-    };
-    this.timers = [
-      setInterval(sweep, 30_000),
-      setInterval(remind, 60 * 60_000),
-      setTimeout(remind, 20_000),
-    ];
-    for (const timer of this.timers) timer.unref();
+    // M2: only the separate, leased worker scheduler owns timers.
+    void this.config.BACKGROUND_JOBS;
   }
 
   async onApplicationShutdown() {

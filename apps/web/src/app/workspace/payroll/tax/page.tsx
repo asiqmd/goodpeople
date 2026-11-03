@@ -8,9 +8,9 @@ import { Badge, Card } from '@/components/ui';
 import { currentTenantUser, load } from '@/lib/api';
 
 export default async function TaxPage({ searchParams }: PageProps<'/workspace/payroll/tax'>) {
-  const role = (await currentTenantUser())?.role;
-  if (!can(role, 'payroll.view')) redirect('/workspace');
-  const canManage = can(role, 'payroll.manage');
+  const accessPrincipal = await currentTenantUser();
+  if (!can(accessPrincipal, 'payroll.view')) redirect('/workspace');
+  const canManage = can(accessPrincipal, 'payroll.manage');
   const t = await getTranslations('payroll');
   const tt = await getTranslations('payroll.tax');
   const format = await getFormatter();

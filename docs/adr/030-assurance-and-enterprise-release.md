@@ -1,0 +1,21 @@
+# ADR 030: Restricted assurance register and scoped release qualification
+
+Date: 3 November 2026. Status: accepted for local readiness engineering; enterprise release and examination remain unqualified.
+
+M7 adds a managed-control-plane, Super-Admin-only assurance register. Current authority and MFA within five minutes protect reads, writes and exports. Tenant, support and machine credentials cannot use it; installed customer deployments do not acquire a vendor platform console. Accountability is assigned to already authorized platform reviewers; naming an external owner or firm does not grant access. External professional review remains separate evidence.
+
+A program fixes its release/source identity, deployment/country scope, system boundary, customer responsibilities, exclusions/subservices, applicable published criteria, observation period and confirmed incident/RTO/RPO targets. Changed scope or confirmations require a new program. Controls have attributable versions, procedures, named owners, cadence, classification, approved retention and next execution. Source references and SHA-256s identify actual redacted artifacts; the register does not copy arbitrary employee documents or fetch supplied URLs.
+
+Two new platform tables use FORCE RLS with a transaction-local, current Super Admin actor. They deliberately do not join tenant RLS_TABLES. Definitions and row-bound event envelopes are encrypted. Immutable sequences, parent locks, optimistic versions, actor checks and a canonical hash chain protect attribution and detect edits/reordering. Database-owner custody remains an explicit trust boundary; this is not an external timestamp or CPA signature.
+
+Evidence review requires a different administrator and the current control version. Evaluation checks current accepted evidence, freshness and continuous period coverage; later failures cannot fall back to an older green result. Synthetic evidence cannot satisfy operating/external gates. Independent provider/host/country controls need external evidence. Recovery needs a distinct host and agreed RTO/RPO; incident response has a separate response target. Native same-host and database-only exercises remain technical checks.
+
+Findings retain severity, source, ownership, due dates and attributable decisions. Unowned/overdue and open critical/high findings block. Remediation needs matching accepted proof; risk acceptance requires a different named accountable owner, compensation and bounded expiry. Only the two catalogue-marked governance controls permit short, independently reviewed exceptions; they cannot waive missing legal/provider/host/operating evidence. Reports record actual CPA metadata and restricted distribution separately; product checks never issue a report or enable a public claim.
+
+Observed backup freshness, expected system-worker cadence and actual country/merchant capabilities are independent gates. Synthetic drills do not edit backup_runs or clear alerts. Country capability is read from the existing dispatcher, and billing and assurance share the disabled merchant flag.
+
+A release recommendation requires a second administrator, all current gates and the exact event head. Later events invalidate it. Exports are restricted, unsigned, hash-verified envelopes. Enterprise qualification validates the envelope, clean exact source/version/scope, complete period, current proof/runtime, independent latest-head recommendation and existing host matrix before signing. Frozen bundle verification evaluates the record at qualification time. Successful readiness or tooling verification still cannot approve commercial distribution, activate a country or advertise SOC 2.
+
+Release source hashing now accepts normal repository names such as .gitignore, [id], (console) and spaces, while rejecting unsafe segments and symlink traversal. Strict bundle path protections are unchanged. An isolated temporary Git fixture and the actual checkout exercise this boundary; the project itself was not committed.
+
+See the [M7 review and operating dossier](../phases/m7-assurance-review.md), [enterprise control register](../security/enterprise-controls.md) and [release runbook](../../infra/enterprise/README.md).

@@ -20,6 +20,7 @@ export interface Ref {
 }
 
 export interface LegalEntityView extends Ref {
+  countryCode?: string;
   legalName: string | null;
   code: string | null;
   registrationNo: string | null;
@@ -31,6 +32,8 @@ export interface LegalEntityView extends Ref {
 }
 
 export interface LocationView extends Ref {
+  countryCode?: string;
+  timeZone?: string;
   legalEntityId: string;
   code: string;
   kind: LocationKind;
@@ -81,6 +84,7 @@ export interface OrgSnapshot {
 }
 
 export interface JobAssignmentView {
+  currency?: string;
   id: string;
   event: JobEvent;
   effectiveFrom: string;
@@ -110,7 +114,7 @@ export interface EmployeeListItem {
   designation: Ref | null;
   location: Ref | null;
   employmentType: EmploymentType | null;
-  isAdolescent: boolean;
+  isAdolescent: boolean | null;
 }
 
 export interface Page<T> {
@@ -149,20 +153,20 @@ export interface EmployeeDetail {
   status: EmployeeStatus;
   fullName: string;
   fullNameBn: string | null;
-  fatherName: string;
-  motherName: string;
+  fatherName: string | null;
+  motherName: string | null;
   spouseName: string | null;
-  dateOfBirth: string;
+  dateOfBirth: string | null;
   gender: Gender;
   religion: Religion | null;
   maritalStatus: MaritalStatus | null;
   bloodGroup: BloodGroup | null;
   nationality: string;
-  mobilePhone: string;
+  mobilePhone: string | null;
   workEmail: string | null;
   personalEmail: string | null;
-  presentAddress: Address;
-  permanentAddress: Address;
+  presentAddress: Address | null;
+  permanentAddress: Address | null;
   emergencyContact: { name: string; relation: string; phone: string } | null;
   /** Decrypted for HR roles and the employee themself. */
   identity: {
@@ -170,12 +174,12 @@ export interface EmployeeDetail {
     birthRegistration: string | null;
     passport: string | null;
     tin: string | null;
-  };
+  } | null;
   joinedOn: string;
   probationEndsOn: string | null;
   confirmedOn: string | null;
   separatedOn: string | null;
-  isAdolescent: boolean;
+  isAdolescent: boolean | null;
   currentJob: JobAssignmentView | null;
   nominees: NomineeView[];
   paymentAccounts: PaymentAccountView[];

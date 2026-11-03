@@ -21,8 +21,8 @@ import { Badge, Card } from '@/components/ui';
 import { currentTenantUser, load } from '@/lib/api';
 
 export default async function CommitteesPage() {
-  const role = (await currentTenantUser())?.role;
-  if (!can(role, 'compliance.manage')) redirect('/workspace');
+  const accessPrincipal = await currentTenantUser();
+  if (!can(accessPrincipal, 'compliance.manage')) redirect('/workspace');
   const t = await getTranslations('relations');
   const tc = await getTranslations('relations.committees');
   const format = await getFormatter();
@@ -121,13 +121,13 @@ export default async function CommitteesPage() {
         ) : (
           <div className="-mx-5 overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+              <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="px-5 py-2 font-medium">{tc('columns.committee')}</th>
                   <th className="px-3 py-2 font-medium">{tc('columns.establishment')}</th>
                   <th className="px-3 py-2 font-medium">{tc('columns.formed')}</th>
                   <th className="px-3 py-2 font-medium">{tc('columns.ends')}</th>
-                  <th className="px-3 py-2 text-right font-medium">{tc('columns.members')}</th>
+                  <th className="px-3 py-2 text-end font-medium">{tc('columns.members')}</th>
                   <th className="px-3 py-2 font-medium">{tc('columns.lastMeeting')}</th>
                   <th className="px-5 py-2 font-medium">{tc('columns.nextDue')}</th>
                 </tr>
@@ -153,7 +153,7 @@ export default async function CommitteesPage() {
                         <span className={c.inTerm ? 'text-slate-700' : 'text-red-700'}>
                           {day(format, c.endsOn)}
                           {!c.inTerm && (
-                            <span className="ml-2">
+                            <span className="ms-2">
                               <Badge tone="red">{tc('ended')}</Badge>
                             </span>
                           )}
@@ -162,9 +162,7 @@ export default async function CommitteesPage() {
                         <span className="text-slate-500">{tc('noEnd')}</span>
                       )}
                     </td>
-                    <td className="px-3 py-2 text-right tabular-nums">
-                      {format.number(c.members)}
-                    </td>
+                    <td className="px-3 py-2 text-end tabular-nums">{format.number(c.members)}</td>
                     <td className="px-3 py-2 text-slate-700">
                       {c.lastMeetingOn ? day(format, c.lastMeetingOn) : tc('never')}
                     </td>

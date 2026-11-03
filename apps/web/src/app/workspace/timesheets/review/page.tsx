@@ -92,20 +92,20 @@ export default async function TimesheetReviewPage({
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="text-left text-xs text-slate-500">
+              <thead className="text-start text-xs text-slate-500">
                 <tr>
-                  <th className="py-2 pr-3 font-medium">{t('review.person')}</th>
-                  <th className="py-2 pr-3 font-medium">{t('review.status')}</th>
-                  <th className="py-2 pr-3 text-right font-medium">{t('review.hours')}</th>
+                  <th className="py-2 pe-3 font-medium">{t('review.person')}</th>
+                  <th className="py-2 pe-3 font-medium">{t('review.status')}</th>
+                  <th className="py-2 pe-3 text-end font-medium">{t('review.hours')}</th>
                   {list.projects.map((p) => (
-                    <th key={p.id} className="py-2 pr-3 text-right font-medium">
+                    <th key={p.id} className="py-2 pe-3 text-end font-medium">
                       <span className="font-mono">{p.code}</span>
                       <span className="block font-normal">
                         {locale === 'bn' && p.nameBn ? p.nameBn : p.name}
                       </span>
                     </th>
                   ))}
-                  <th className="py-2 pr-3 text-right font-medium">{t('grid.uncharged')}</th>
+                  <th className="py-2 pe-3 text-end font-medium">{t('grid.uncharged')}</th>
                   <th className="py-2 font-medium" />
                 </tr>
               </thead>
@@ -114,7 +114,7 @@ export default async function TimesheetReviewPage({
                   const uncharged = row.totals.find((x) => x.project === null);
                   return (
                     <tr key={row.employee.id} className="align-top">
-                      <td className="py-2 pr-3">
+                      <td className="py-2 pe-3">
                         <span className="font-medium">
                           {locale === 'bn' && row.employee.fullNameBn
                             ? row.employee.fullNameBn
@@ -129,7 +129,7 @@ export default async function TimesheetReviewPage({
                           </span>
                         )}
                       </td>
-                      <td className="py-2 pr-3">
+                      <td className="py-2 pe-3">
                         {row.status ? (
                           <Badge tone={STATUS_TONE[row.status]}>
                             {t(`statuses.${row.status}`)}
@@ -138,13 +138,13 @@ export default async function TimesheetReviewPage({
                           <Badge tone="red">{t('review.notStarted')}</Badge>
                         )}
                       </td>
-                      <td className="py-2 pr-3 text-right font-medium tabular-nums">
+                      <td className="py-2 pe-3 text-end font-medium tabular-nums">
                         {hours(format, row.totalHours)}
                       </td>
                       {list.projects.map((p) => {
                         const cell = row.totals.find((x) => x.project?.id === p.id);
                         return (
-                          <td key={p.id} className="py-2 pr-3 text-right tabular-nums">
+                          <td key={p.id} className="py-2 pe-3 text-end tabular-nums">
                             {cell && Number(cell.hours) > 0 && (
                               <>
                                 {hours(format, cell.hours)}
@@ -164,7 +164,7 @@ export default async function TimesheetReviewPage({
                           </td>
                         );
                       })}
-                      <td className="py-2 pr-3 text-right tabular-nums">
+                      <td className="py-2 pe-3 text-end tabular-nums">
                         {uncharged && Number(uncharged.hours) > 0 && hours(format, uncharged.hours)}
                       </td>
                       <td className="space-y-2 py-2">

@@ -147,7 +147,7 @@ export function LanguageToggle() {
   const locale = useLocale();
   const t = useTranslations('common');
   const [pending, start] = useTransition();
-  const option = (value: 'en' | 'bn', label: string) => (
+  const option = (value: 'en' | 'bn' | 'ar', label: string) => (
     <button
       type="button"
       disabled={pending}
@@ -170,19 +170,36 @@ export function LanguageToggle() {
     >
       {option('en', t('english'))}
       {option('bn', t('bangla'))}
+      {option('ar', 'العربية')}
     </div>
   );
 }
 
-export function LoginForm({ kind }: { kind: 'tenant' | 'platform' }) {
+export function LoginForm({
+  kind,
+  initialState,
+}: {
+  kind: 'tenant' | 'platform';
+  initialState?: LoginState;
+}) {
   const t = useTranslations('login');
-  const [state, action] = useActionState<LoginState, FormData>(signIn.bind(null, kind), undefined);
+  const [state, action] = useActionState<LoginState, FormData>(
+    signIn.bind(null, kind),
+    initialState,
+  );
   // Employees may sign in with a code sent to their mobile instead of a password.
   const [byPhone, setByPhone] = useState(false);
   const step = state?.step;
   const banner = state?.error && (
     <Banner tone="red">
       <ErrorText state={state} />
+      {state.routeUrl && (
+        <p>
+          <a href={state.routeUrl} className="font-medium underline">
+            {state.routeUrl}
+          </a>
+        </p>
+      )}
     </Banner>
   );
   const codeField = (hint: string) => (
@@ -225,6 +242,17 @@ export function LoginForm({ kind }: { kind: 'tenant' | 'platform' }) {
       </div>
     );
   }
+
+  if (step === 'mfa_setup_start')
+    return (
+      <Form state={state} action={action} className="space-y-4">
+        <input type="hidden" name="step" value="mfa_setup_start" />
+        <input type="hidden" name="mfaToken" value={state?.mfaToken} />
+        <p>{t('mfaSetupIntro')}</p>
+        <SubmitButton>{t('continue')}</SubmitButton>
+        {startAgain}
+      </Form>
+    );
 
   if (step === 'mfa' || step === 'mfa_setup') {
     return (

@@ -33,6 +33,19 @@ export interface CipherContext {
 
 /** Every encrypted column, named once so encryption and decryption always agree. */
 export const CIPHER_FIELDS = {
+  assuranceProgram: 'assurance.program',
+  assuranceEvent: 'assurance.event',
+  saudiWorker: 'saudi.worker_coverage',
+  saudiPilot: 'saudi.pilot_payload',
+  saudiComparison: 'saudi.comparison',
+  saudiEvidence: 'saudi.qualification_evidence',
+  saudiWps: 'saudi.wps_payload',
+  uaeWorker: 'uae.worker_coverage',
+  uaePilot: 'uae.pilot_payload',
+  uaeComparison: 'uae.comparison',
+  uaeEvidence: 'uae.qualification_evidence',
+  uaeWps: 'uae.wps_payload',
+  internationalIdentifier: 'international.identifier',
   nid: 'employees.nid',
   birthRegistration: 'employees.birth_registration',
   passport: 'employees.passport',
@@ -40,8 +53,11 @@ export const CIPHER_FIELDS = {
   accountNumber: 'employee_payment_accounts.account_number',
   /** An authenticator app's shared secret (tenant and platform logins). */
   mfaSecret: 'users.mfa_secret',
+  oidcSecret: 'identity_connections.client_secret',
+  webhookSecret: 'webhook_subscriptions.signing_secret',
   /** An employee's pay amounts. */
   payAmounts: 'employee_pay.amounts',
+  compensationAmounts: 'compensation_lines.amounts',
   /** A person's results in a payroll run, a run's totals, and amounts entered for a run. */
   runResults: 'payroll_run_items.result',
   runTotals: 'payroll_runs.totals',
@@ -64,13 +80,14 @@ export const CIPHER_FIELDS = {
   maternityPayments: 'maternity_payments.amount',
   /** What a worker wrote in a grievance, and the messages that followed. */
   grievanceText: 'grievances.text',
+  hrRequestText: 'hr_requests.content',
 } as const;
 export type CipherField = (typeof CIPHER_FIELDS)[keyof typeof CIPHER_FIELDS];
 
 const aad = ({ tenantId, field }: CipherContext) => Buffer.from(`${tenantId}:${field}`);
 const fileAad = ({ tenantId, purpose }: FileCipherContext) => Buffer.from(`${tenantId}:${purpose}`);
 
-export function createFieldCipher(masterKeyBase64: string): FieldCipher {
+function createLegacyFieldCipher(masterKeyBase64: string, suffix = ''): FieldCipher {
   const master = Buffer.from(masterKeyBase64, 'base64');
   if (master.length !== 32) {
     throw new Error('FIELD_ENCRYPTION_KEY must be 32 random bytes, base64-encoded');
@@ -85,7 +102,7 @@ export function createFieldCipher(masterKeyBase64: string): FieldCipher {
     encrypt(plain, context) {
       const iv = randomBytes(12);
       const cipher = createCipheriv('aes-256-gcm', encKey, iv);
-      cipher.setAAD(aad(context));
+      cipher.setAAD(Buffer.concat([aad(context), Buffer.from(suffix)]));
       const ciphertext = Buffer.concat([cipher.update(plain, 'utf8'), cipher.final()]);
       return ['v1', iv, cipher.getAuthTag(), ciphertext]
         .map((p) => (typeof p === 'string' ? p : p.toString('base64url')))
@@ -97,7 +114,7 @@ export function createFieldCipher(masterKeyBase64: string): FieldCipher {
         throw new Error('Unrecognised encrypted value');
       }
       const decipher = createDecipheriv('aes-256-gcm', encKey, Buffer.from(iv, 'base64url'));
-      decipher.setAAD(aad(context));
+      decipher.setAAD(Buffer.concat([aad(context), Buffer.from(suffix)]));
       decipher.setAuthTag(Buffer.from(tag, 'base64url'));
       return Buffer.concat([
         decipher.update(Buffer.from(ciphertext, 'base64url')),
@@ -107,14 +124,14 @@ export function createFieldCipher(masterKeyBase64: string): FieldCipher {
     encryptBytes(plain, context) {
       const iv = randomBytes(12);
       const cipher = createCipheriv('aes-256-gcm', fileKey, iv);
-      cipher.setAAD(fileAad(context));
+      cipher.setAAD(Buffer.concat([fileAad(context), Buffer.from(suffix)]));
       const ciphertext = Buffer.concat([cipher.update(plain), cipher.final()]);
       return Buffer.concat([FILE_MAGIC, iv, cipher.getAuthTag(), ciphertext]);
     },
     decryptBytes(stored, context) {
       if (!stored.subarray(0, 4).equals(FILE_MAGIC)) throw new Error('Unrecognised encrypted file');
       const decipher = createDecipheriv('aes-256-gcm', fileKey, stored.subarray(4, 16));
-      decipher.setAAD(fileAad(context));
+      decipher.setAAD(Buffer.concat([fileAad(context), Buffer.from(suffix)]));
       decipher.setAuthTag(stored.subarray(16, 32));
       return Buffer.concat([decipher.update(stored.subarray(32)), decipher.final()]);
     },
@@ -122,6 +139,62 @@ export function createFieldCipher(masterKeyBase64: string): FieldCipher {
       return createHmac('sha256', macKey)
         .update(`${tenantId}:${field}:${value.trim().toUpperCase()}`)
         .digest('base64url');
+    },
+  };
+}
+
+export function createFieldCipher(
+  masterKeyBase64: string,
+  options: { activeKeyId?: string; keys?: Record<string, string> } = {},
+): FieldCipher {
+  const legacy = createLegacyFieldCipher(masterKeyBase64),
+    keys = new Map<string, FieldCipher>();
+  if (Object.keys(options.keys ?? {}).length > 8)
+    throw new Error('At most eight retained encryption keys are supported');
+  for (const [id, key] of Object.entries(options.keys ?? {})) {
+    if (!/^[a-zA-Z0-9_-]{1,32}$/.test(id)) throw new Error('Invalid encryption key ID');
+    keys.set(id, createLegacyFieldCipher(key, ':key:' + id));
+  }
+  if (options.activeKeyId && !keys.has(options.activeKeyId))
+    throw new Error('Active encryption key is unavailable');
+  const active = options.activeKeyId ? keys.get(options.activeKeyId)! : legacy;
+  const key = (id: string) => {
+    const cipher = keys.get(id);
+    if (!cipher) throw new Error('Historical encryption key is unavailable');
+    return cipher;
+  };
+  return {
+    blindIndex: (value, context) => legacy.blindIndex(value, context),
+    encrypt: (value, context) => {
+      const stored = active.encrypt(value, context);
+      return options.activeKeyId ? 'v2:' + options.activeKeyId + ':' + stored.slice(3) : stored;
+    },
+    decrypt: (stored, context) => {
+      if (!stored.startsWith('v2:')) return legacy.decrypt(stored, context);
+      const [, id, ...parts] = stored.split(':');
+      return key(id!).decrypt('v1:' + parts.join(':'), context);
+    },
+    encryptBytes: (value, context) => {
+      const stored = active.encryptBytes(value, context);
+      return options.activeKeyId
+        ? Buffer.concat([
+            Buffer.from('GPF2'),
+            Buffer.from([options.activeKeyId.length]),
+            Buffer.from(options.activeKeyId),
+            stored,
+          ])
+        : stored;
+    },
+    decryptBytes: (stored, context) => {
+      if (!stored.subarray(0, 4).equals(Buffer.from('GPF2')))
+        return legacy.decryptBytes(stored, context);
+      const length = stored[4]!;
+      if (length < 1 || length > 32 || stored.length < 5 + length + 32)
+        throw new Error('Invalid encrypted file header');
+      return key(stored.subarray(5, 5 + length).toString('ascii')).decryptBytes(
+        stored.subarray(5 + length),
+        context,
+      );
     },
   };
 }

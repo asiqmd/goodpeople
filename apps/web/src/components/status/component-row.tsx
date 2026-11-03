@@ -87,12 +87,12 @@ export async function ComponentRow({ component }: { component: ComponentStatus }
           {t('showTable')}
         </summary>
         <div className="mt-2 max-h-72 overflow-y-auto rounded-lg ring-1 ring-slate-200">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-start text-xs">
             <caption className="sr-only">{t('history', { name, count: days.length })}</caption>
             <thead className="sticky top-0 bg-slate-50 text-slate-500">
               <tr>
                 <th className="px-3 py-1.5 font-medium">{t('tableDate')}</th>
-                <th className="px-3 py-1.5 text-right font-medium">{t('tableUptime')}</th>
+                <th className="px-3 py-1.5 text-end font-medium">{t('tableUptime')}</th>
                 <th className="px-3 py-1.5 font-medium">{t('tableState')}</th>
               </tr>
             </thead>
@@ -100,7 +100,7 @@ export async function ComponentRow({ component }: { component: ComponentStatus }
               {days.toReversed().map((d) => (
                 <tr key={d.date}>
                   <td className="px-3 py-1.5">{d.dateLabel}</td>
-                  <td className="px-3 py-1.5 text-right tabular-nums">
+                  <td className="px-3 py-1.5 text-end tabular-nums">
                     {d.uptime === null ? '–' : percent(d.uptime)}
                   </td>
                   <td className="px-3 py-1.5">

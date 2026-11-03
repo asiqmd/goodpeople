@@ -111,6 +111,9 @@ enum NotificationEvent implements WireValue {
 
   /// The user's review is released for them to read and acknowledge.
   performanceReleased('performance.released'),
+  learningNotice('learning.notice'),
+  engagementNotice('engagement.notice'),
+  servicesNotice('services.notice'),
   unknown('unknown');
 
   const NotificationEvent(this.wire);

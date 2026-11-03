@@ -11,8 +11,8 @@ import { currentTenantUser, load } from '@/lib/api';
  */
 export default async function PlansPage() {
   const t = await getTranslations('development.plans');
-  const role = (await currentTenantUser())?.role;
-  const manage = can(role, 'performance.manage');
+  const accessPrincipal = await currentTenantUser();
+  const manage = can(accessPrincipal, 'performance.manage');
   const [plans, people, cycles] = await Promise.all([
     load<PlanListItem[]>('tenant', '/tenant/performance/plans'),
     load<EmployeeRef[]>('tenant', '/tenant/performance/plans/people'),

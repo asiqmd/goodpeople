@@ -12,6 +12,7 @@ class LanguageMenuButton extends ConsumerWidget {
   static const _languages = [
     (locale: Locale('en'), label: 'English'),
     (locale: Locale('bn'), label: 'বাংলা'),
+    (locale: Locale('ar'), label: 'العربية'),
   ];
 
   @override

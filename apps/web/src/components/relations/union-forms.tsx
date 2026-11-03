@@ -202,7 +202,7 @@ export function BulkMembersForm({ unionId, today }: { unionId: string; today: st
         <Banner tone={state.result.skipped.length ? 'amber' : 'green'}>
           <p>{t('bulkResult', { added: state.result.added })}</p>
           {state.result.skipped.length > 0 && (
-            <ul className="mt-1 list-disc pl-5">
+            <ul className="mt-1 list-disc ps-5">
               {state.result.skipped.map((s) => (
                 <li key={s.code}>
                   {t('skipped', { code: s.code, reason: t(`skipReasons.${s.reason}`) })}

@@ -50,6 +50,30 @@ void main() {
     expect(find.text('Good People'), findsNothing);
   });
 
+  testWidgets(
+    'Arabic preview mirrors the login and keeps mixed Latin input usable',
+    (tester) async {
+      await tester.pumpWidget(appWith(FakeGoodPeopleApi()));
+      await tester.tap(find.byTooltip('Language'));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.widgetWithText(CheckedPopupMenuItem<Locale>, 'العربية'),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        Directionality.of(tester.element(find.byType(LoginScreen))),
+        TextDirection.rtl,
+      );
+      expect(find.textContaining('معاينة عربية'), findsOneWidget);
+      await tester.enterText(
+        find.byKey(LoginScreen.emailFieldKey),
+        'person@example.test',
+      );
+      expect(find.text('person@example.test'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('successful login shows a loading state, then home', (
     tester,
   ) async {

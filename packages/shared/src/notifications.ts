@@ -12,6 +12,7 @@ export type DeliveryStatus = (typeof DELIVERY_STATUSES)[number];
 
 /** What people are told about. Each has a template per language and default channels. */
 export const NOTIFICATION_EVENTS = [
+  'identity.emergency_used',
   /** A request waits for your decision (leave, correction, resignation). */
   'approval.requested',
   /** Your request was approved or rejected. */
@@ -54,6 +55,9 @@ export const NOTIFICATION_EVENTS = [
   'performance.task',
   /** Your review is released for you to read and acknowledge. */
   'performance.released',
+  'learning.notice',
+  'engagement.notice',
+  'services.notice',
   /** A sign-in code: SMS only, always sent. */
   'auth.otp',
 ] as const;
@@ -63,7 +67,11 @@ export type NotificationEvent = (typeof NOTIFICATION_EVENTS)[number];
  * Events whose channels and wording HR cannot change: the sign-in code, and the salary
  * account notice, which must reach the employee even when HR made the change.
  */
-export const FIXED_EVENTS = ['auth.otp', 'payment_account.changed'] as const;
+export const FIXED_EVENTS = [
+  'identity.emergency_used',
+  'auth.otp',
+  'payment_account.changed',
+] as const;
 export type FixedEvent = (typeof FIXED_EVENTS)[number];
 export const isFixedEvent = (event: NotificationEvent): event is FixedEvent =>
   (FIXED_EVENTS as readonly string[]).includes(event);
@@ -76,6 +84,7 @@ export const CONFIGURABLE_EVENTS = NOTIFICATION_EVENTS.filter((e) => !isFixedEve
 
 /** Where each event goes unless HR changes it. SMS costs money, so it is off by default. */
 export const DEFAULT_EVENT_CHANNELS: Record<NotificationEvent, readonly DeliveryChannel[]> = {
+  'identity.emergency_used': ['email', 'push'],
   'approval.requested': ['email', 'push'],
   'approval.decided': ['email', 'push'],
   'document.expiring': ['email'],
@@ -97,13 +106,16 @@ export const DEFAULT_EVENT_CHANNELS: Record<NotificationEvent, readonly Delivery
   'recruitment.offer': ['email', 'push'],
   'performance.task': ['email', 'push'],
   'performance.released': ['email', 'push'],
+  'learning.notice': ['email', 'push'],
+  'engagement.notice': ['push'],
+  'services.notice': ['email', 'push'],
   'auth.otp': ['sms'],
 };
 
 export const DEVICE_PLATFORMS = ['android', 'ios', 'web'] as const;
 export type DevicePlatform = (typeof DEVICE_PLATFORMS)[number];
 
-export const USER_LANGUAGES = ['en', 'bn'] as const;
+export const USER_LANGUAGES = ['en', 'bn', 'ar'] as const;
 export type UserLanguage = (typeof USER_LANGUAGES)[number];
 
 /** A sign-in code by SMS: digits, minutes valid, wrong guesses allowed. */

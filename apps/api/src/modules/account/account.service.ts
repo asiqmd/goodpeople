@@ -1,5 +1,7 @@
+import { userCan } from '../../common/roles.js';
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import {
+  authSessions,
   deviceTokens,
   hashPassword,
   platformUsers,
@@ -9,6 +11,8 @@ import {
   type Database,
 } from '@gp/db';
 import {
+  ACCESS_FIELDS,
+  policyField,
   MFA_REQUIRED_ROLES,
   PERMISSIONS,
   ROLE_PERMISSIONS,
@@ -47,8 +51,10 @@ export class AccountService {
   async view(user: AuthUser): Promise<AccountView> {
     const row = await this.load(user);
     const required =
-      this.config.REQUIRE_ADMIN_MFA &&
-      (user.kind === 'platform' || MFA_REQUIRED_ROLES.includes(user.role));
+      (this.config.REQUIRE_ADMIN_MFA &&
+        (user.kind === 'platform' || MFA_REQUIRED_ROLES.includes(user.role))) ||
+      (user.kind === 'tenant' &&
+        !!user.policy?.grants.some((g) => g.permissions.some((p) => p.startsWith('payroll.'))));
     return {
       kind: user.kind,
       id: row.id,
@@ -61,13 +67,32 @@ export class AccountService {
       mfaEnabled: !!row.mfaEnabledAt,
       mfaRequired: required,
       recoveryCodesLeft: row.mfaEnabledAt ? row.mfaRecoveryCodes.length : 0,
-      permissions: user.kind === 'tenant' ? [...ROLE_PERMISSIONS[user.role]] : [...PERMISSIONS],
+      ...(user.kind === 'tenant' && user.policy?.custom
+        ? {
+            fieldPolicy: Object.fromEntries(
+              ACCESS_FIELDS.map((f) => [
+                f,
+                {
+                  read: policyField(user.policy!, f, 'read'),
+                  write: policyField(user.policy!, f, 'write'),
+                  export: policyField(user.policy!, f, 'export'),
+                },
+              ]),
+            ) as import('@gp/shared').FieldPolicy,
+          }
+        : {}),
+      permissions:
+        user.kind === 'tenant'
+          ? user.policy?.custom
+            ? PERMISSIONS.filter((p) => userCan(user, p))
+            : [...ROLE_PERMISSIONS[user.role]]
+          : [...PERMISSIONS],
     };
   }
 
   /** Changes the password and signs every other session out. */
   async changePassword(user: AuthUser, input: PasswordChangeInput): Promise<void> {
-    this.limiter.hit(`password:${user.id}`, 5, 15 * 60_000);
+    await this.limiter.hit(`password:${user.id}`, 5, 15 * 60_000);
     const row = await this.load(user);
     if (!row.passwordHash || !(await verifyPassword(row.passwordHash, input.currentPassword))) {
       throw badRequest('wrong_password', 'Your current password is not right');
@@ -88,22 +113,28 @@ export class AccountService {
 
   async startMfa(user: AuthUser): Promise<MfaSetup> {
     const row = await this.load(user);
-    if (!row.passwordHash) {
+    if (!row.passwordHash && !user.authMethod?.startsWith('sso:')) {
       throw badRequest('mfa_needs_password', 'Two-step sign-in is for logins with a password');
     }
     return this.mfa.begin(subjectOf(user));
   }
 
   async confirmMfa(user: AuthUser, code: string): Promise<MfaEnabled> {
-    this.limiter.hit(`mfa:${user.id}`, 5, 15 * 60_000);
-    return { recoveryCodes: await this.mfa.confirm(subjectOf(user), code) };
+    await this.limiter.hit(`mfa:${user.id}`, 5, 15 * 60_000);
+    const recoveryCodes = await this.mfa.confirm(subjectOf(user), code);
+    if (user.sessionId)
+      await this.db
+        .update(authSessions)
+        .set({ mfaAt: new Date() })
+        .where(eq(authSessions.id, user.sessionId));
+    return { recoveryCodes };
   }
 
   async disableMfa(user: AuthUser, password: string): Promise<void> {
     if ((await this.view(user)).mfaRequired) {
       throw forbidden('mfa_required', 'Your role must use two-step sign-in');
     }
-    this.limiter.hit(`password:${user.id}`, 5, 15 * 60_000);
+    await this.limiter.hit(`password:${user.id}`, 5, 15 * 60_000);
     const row = await this.load(user);
     if (!row.passwordHash || !(await verifyPassword(row.passwordHash, password))) {
       throw badRequest('wrong_password', 'Your password is not right');

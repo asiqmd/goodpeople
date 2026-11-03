@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../api/api_exception.dart';
 import '../api/api_models.dart';
 import '../config/app_config.dart';
+import '../interviews/link_opener.dart';
 import '../l10n/app_localizations.dart';
 import '../ui/error_text.dart';
 import '../ui/format.dart';
@@ -17,7 +18,7 @@ import 'phone.dart';
 
 /// How the user signs in: email and password, or a code texted to their
 /// mobile number (for workers, who often have no email).
-enum SignInMethod { email, phone }
+enum SignInMethod { email, phone, sso }
 
 /// Where the login screen is.
 enum _Step {
@@ -26,6 +27,7 @@ enum _Step {
 
   /// The code texted to the number.
   smsCode,
+  ssoComplete,
 
   /// After a right password: the authenticator or a recovery code, or (when
   /// the role must use it and has not set it up) a note to do that on the
@@ -122,6 +124,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   // On success the auth state changes and AuthGate shows HomeScreen.
   Future<void> _submit() => switch (_step) {
+    _Step.credentials when _method == SignInMethod.sso => _run(() async {
+      final flow = await _auth.startSso(_workspace.text);
+      if (!await ref.read(linkOpenerProvider).open(flow.url)) {
+        throw const FormatException('Could not open the browser');
+      }
+      if (mounted) setState(() => _step = _Step.ssoComplete);
+    }),
+    _Step.ssoComplete => _run(() async {
+      final result = await _auth.finishSso();
+      if (result.pending) {
+        if (mounted) {
+          setState(
+            () => _error = FormatException(
+              AppLocalizations.of(context).ssoPending,
+            ),
+          );
+        }
+        return;
+      }
+      if (result.challenge != null && mounted) {
+        setState(() {
+          _challenge = result.challenge;
+          _useRecoveryCode = false;
+          _code.clear();
+          _step = _Step.twoStep;
+        });
+      }
+    }),
     _Step.credentials when _method == SignInMethod.email => _run(() async {
       final challenge = await _auth.signIn(
         workspace: _workspace.text,
@@ -198,6 +228,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   /// Back to the first step, keeping what was typed there.
   void _back() {
+    _auth.cancelSso();
     _resendTimer?.cancel();
     setState(() {
       _step = _Step.credentials;
@@ -253,6 +284,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         Text(
                           switch (_step) {
                             _Step.credentials => l10n.signInSubtitle,
+                            _Step.ssoComplete => l10n.ssoBrowserHint,
                             _Step.smsCode => l10n.otpTitle,
                             _Step.twoStep => l10n.twoStepTitle,
                           },
@@ -273,6 +305,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ],
                         ...switch (_step) {
                           _Step.credentials => _credentials(context),
+                          _Step.ssoComplete => [Text(l10n.ssoBrowserHint)],
                           _Step.smsCode => _smsCode(context),
                           _Step.twoStep => _twoStep(context),
                         },
@@ -336,6 +369,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (error is ApiException && error.isUnauthorized) {
       return switch (_step) {
         _Step.credentials => l10n.loginWrongCredentials,
+        _Step.ssoComplete => l10n.ssoPending,
         _Step.smsCode => l10n.codeWrongOrExpired,
         _Step.twoStep => l10n.twoStepWrongCode,
       };
@@ -346,6 +380,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   /// `null` when the step has no main button: two-step sign-in that must be
   /// set up on the web first.
   String? _submitLabel(AppLocalizations l10n) => switch (_step) {
+    _Step.credentials when _method == SignInMethod.sso => l10n.ssoContinue,
+    _Step.ssoComplete => l10n.ssoFinish,
     _Step.credentials when _method == SignInMethod.email => l10n.signIn,
     _Step.credentials => l10n.sendCode,
     _Step.smsCode => l10n.signIn,
@@ -375,6 +411,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               key: LoginScreen.methodKey(SignInMethod.phone),
             ),
           ),
+          ButtonSegment(
+            value: SignInMethod.sso,
+            icon: const Icon(Icons.business_outlined),
+            label: Text(
+              l10n.ssoMethod,
+              key: LoginScreen.methodKey(SignInMethod.sso),
+            ),
+          ),
         ],
         selected: {_method},
         onSelectionChanged: _submitting
@@ -387,6 +431,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       const SizedBox(height: 24),
       TextFormField(
         key: LoginScreen.workspaceFieldKey,
+        textDirection: TextDirection.ltr,
         controller: _workspace,
         enabled: !_submitting,
         decoration: InputDecoration(
@@ -404,6 +449,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (email) ...[
         TextFormField(
           key: LoginScreen.emailFieldKey,
+          textDirection: TextDirection.ltr,
           controller: _email,
           enabled: !_submitting,
           decoration: InputDecoration(
@@ -424,6 +470,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         const SizedBox(height: 16),
         TextFormField(
           key: LoginScreen.passwordFieldKey,
+          textDirection: TextDirection.ltr,
           controller: _password,
           enabled: !_submitting,
           obscureText: _obscurePassword,
@@ -447,7 +494,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           validator: (value) =>
               (value ?? '').isEmpty ? l10n.passwordRequired : null,
         ),
-      ] else
+      ] else if (_method == SignInMethod.phone)
         TextFormField(
           key: LoginScreen.phoneFieldKey,
           controller: _phone,
@@ -562,6 +609,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return switch (_step) {
+      _Step.ssoComplete => [
+        const SizedBox(height: 16),
+        TextButton(
+          onPressed: _submitting ? null : _back,
+          child: Text(l10n.back),
+        ),
+      ],
       _Step.credentials => const [],
       _Step.smsCode => [
         const SizedBox(height: 16),

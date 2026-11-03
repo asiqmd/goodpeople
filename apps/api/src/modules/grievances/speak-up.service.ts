@@ -184,10 +184,10 @@ export class SpeakUpService {
   }
 
   /** Counted before the workspace is looked up, so made-up workspace slugs are limited too. */
-  private open(slug: string, ip: string, kind: keyof typeof LIMITS) {
+  private async open(slug: string, ip: string, kind: keyof typeof LIMITS) {
     const wanted = slug.trim().toLowerCase();
     const { limit, windowMs } = LIMITS[kind];
-    this.limiter.hit(`speak-up:${kind}:${ip}:${wanted}`, limit, windowMs);
+    await this.limiter.hit(`speak-up:${kind}:${ip}:${wanted}`, limit, windowMs);
     return this.workspace(wanted);
   }
 

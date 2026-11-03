@@ -16,4 +16,22 @@ export * from './support.js';
 export * from './status.js';
 export * from './recruitment.js';
 export * from './performance.js';
+export * from './compensation.js';
 export * from './rls.js';
+export * from './learning.js';
+export * from './employee-services.js';
+
+export * from './identity.js';
+export * from './integrations.js';
+export * from './enterprise.js';
+
+export * from './international.js';
+
+export * from './uae.js';
+
+export * from './saudi.js';
+
+export * from './assurance.js';
+
+export * from './insights.js';
+export * from './anomalies.js';

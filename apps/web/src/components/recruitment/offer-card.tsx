@@ -36,7 +36,7 @@ function Disclosure({ summary, children }: { summary: string; children: ReactNod
  */
 export async function OfferCard({ applicationId }: { applicationId: string }) {
   const user = await currentTenantUser();
-  if (!can(user?.role, 'recruitment.manage')) return null;
+  if (!can(user, 'recruitment.manage')) return null;
   const result = await authedFetch<ApplicationOffers>(
     'tenant',
     `/tenant/recruitment/offers?applicationId=${encodeURIComponent(applicationId)}`,
@@ -96,7 +96,7 @@ export async function OfferCard({ applicationId }: { applicationId: string }) {
                     {t('actions.viewEmployee')}
                   </Link>
                 ) : (
-                  can(user?.role, 'employees.write') && (
+                  can(user, 'employees.write') && (
                     <Link
                       href={`/workspace/employees/new?offer=${live.id}`}
                       className={buttonClass.primary}

@@ -9,8 +9,8 @@ import { currentTenantUser, load } from '@/lib/api';
 const TONE = { draft: 'slate', matched: 'green', differences: 'amber' } as const;
 
 export default async function ParallelRunsPage() {
-  const role = (await currentTenantUser())?.role;
-  if (!can(role, 'payroll.view')) redirect('/workspace');
+  const accessPrincipal = await currentTenantUser();
+  if (!can(accessPrincipal, 'payroll.view')) redirect('/workspace');
   const t = await getTranslations('payroll');
   const tp = await getTranslations('payroll.parallel');
   const tr = await getTranslations('payroll.reconcile');
@@ -40,7 +40,7 @@ export default async function ParallelRunsPage() {
         ) : (
           <div className="-mx-5 overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+              <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="px-5 py-2 font-medium">{tp('month')}</th>
                   <th className="px-5 py-2 font-medium">{tp('payGroup')}</th>

@@ -1,10 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import type { ApiError } from '@gp/shared';
-
-interface Window {
-  count: number;
-  resetsAt: number;
-}
+import { SecurityState } from './security-state.js';
 
 /**
  * Counts attempts per key in fixed windows, in this process's memory. Enough for one API
@@ -13,31 +9,17 @@ interface Window {
  */
 @Injectable()
 export class RateLimiter {
-  private readonly windows = new Map<string, Window>();
-  private sweptAt = Date.now();
+  constructor(private readonly state: SecurityState) {}
 
   /** Counts one attempt and throws 429 once `limit` is passed within the window. */
-  hit(key: string, limit: number, windowMs: number): void {
-    const now = Date.now();
-    this.sweep(now);
-    const window = this.windows.get(key);
-    if (!window || window.resetsAt <= now) {
-      this.windows.set(key, { count: 1, resetsAt: now + windowMs });
-      return;
-    }
-    window.count += 1;
-    if (window.count > limit) throw tooManyAttempts(Math.ceil((window.resetsAt - now) / 1000));
+  async hit(key: string, limit: number, windowMs: number): Promise<void> {
+    const result = await this.state.count(`limit:${key}`, windowMs);
+    if (result.count > limit) throw tooManyAttempts(Math.max(1, Math.ceil(result.ttl / 1000)));
   }
 
   /** Forgets a key, e.g. after a successful sign-in. */
-  reset(key: string): void {
-    this.windows.delete(key);
-  }
-
-  private sweep(now: number) {
-    if (now - this.sweptAt < 60_000) return;
-    this.sweptAt = now;
-    for (const [key, window] of this.windows) if (window.resetsAt <= now) this.windows.delete(key);
+  reset(key: string): Promise<void> {
+    return this.state.remove(`limit:${key}`);
   }
 }
 

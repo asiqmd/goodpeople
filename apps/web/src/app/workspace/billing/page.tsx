@@ -57,7 +57,7 @@ export default async function BillingPage({ searchParams }: PageProps<'/workspac
   const tp = await getTranslations('pricing.plans');
   const format = await getFormatter();
   const user = await currentTenantUser();
-  if (!can(user?.role, 'billing.manage')) {
+  if (!can(user, 'billing.manage')) {
     return <Banner tone="slate">{t('notAllowed')}</Banner>;
   }
   const overview = await load<BillingOverview>('tenant', '/tenant/billing');
@@ -164,13 +164,13 @@ export default async function BillingPage({ searchParams }: PageProps<'/workspac
         <Card title={t('invoices')}>
           <div className="-mx-5 overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+              <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="px-5 py-2 font-medium">{t('number')}</th>
                   <th className="px-5 py-2 font-medium">{t('period')}</th>
                   <th className="px-5 py-2 font-medium">{t('due')}</th>
-                  <th className="px-5 py-2 text-right font-medium">{t('total')}</th>
-                  <th className="px-5 py-2 text-right font-medium">{t('balance')}</th>
+                  <th className="px-5 py-2 text-end font-medium">{t('total')}</th>
+                  <th className="px-5 py-2 text-end font-medium">{t('balance')}</th>
                   <th className="px-5 py-2 font-medium">{t('statusHead')}</th>
                   <th className="px-5 py-2 font-medium">{t('download')}</th>
                 </tr>
@@ -187,8 +187,8 @@ export default async function BillingPage({ searchParams }: PageProps<'/workspac
                       <td className="px-5 py-3 text-slate-600">
                         {i.dueDate && dayOf(format, i.dueDate)}
                       </td>
-                      <td className="px-5 py-3 text-right tabular-nums">{taka(format, i.total)}</td>
-                      <td className="px-5 py-3 text-right font-medium tabular-nums">
+                      <td className="px-5 py-3 text-end tabular-nums">{taka(format, i.total)}</td>
+                      <td className="px-5 py-3 text-end font-medium tabular-nums">
                         {taka(format, i.balance)}
                       </td>
                       <td className="px-5 py-3">

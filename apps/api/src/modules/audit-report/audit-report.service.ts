@@ -1,4 +1,7 @@
-import { Inject, Injectable } from '@nestjs/common';
+import type { AuthUser } from '../../common/auth-user.js';
+import { entityScopeOf } from '../access-scopes/entity-scope.js';
+import { LearningService } from '../learning/learning.service.js';
+import { NotFoundException, Inject, Injectable } from '@nestjs/common';
 import { bdWageBoard, BD_RULES, ruleOn } from '@gp/country-packs';
 import {
   attendanceDays,
@@ -82,11 +85,28 @@ export class AuditReportService {
   constructor(
     private readonly tenantDb: TenantDb,
     private readonly pdf: PdfService,
+    private readonly learning: LearningService,
     @Inject(FIELD_CIPHER) private readonly cipher: FieldCipher,
   ) {}
 
-  build(query: AuditReportQuery): Promise<AuditReportView> {
+  build(query: AuditReportQuery, user?: AuthUser, withLearning = false): Promise<AuditReportView> {
     return this.tenantDb.run(async (tx) => {
+      if (user) {
+        const scope = await entityScopeOf(tx, user.id);
+        if (scope) {
+          const [site] = query.locationId
+            ? await tx.select().from(locations).where(eq(locations.id, query.locationId))
+            : [];
+          if (query.locationId && !site) throw new NotFoundException('Site not found');
+          const entityId =
+            query.legalEntityId ??
+            site?.legalEntityId ??
+            (scope.length === 1 ? scope[0] : undefined);
+          if (!entityId) throw badRequest('audit_company_required', 'Choose one of your companies');
+          if (!scope.includes(entityId)) throw new NotFoundException('Company not found');
+          query = { ...query, legalEntityId: entityId };
+        }
+      }
       const { from, to } = query;
       const people = await this.peopleIn(tx, query);
       const ids = people.map((p) => p.id);
@@ -116,12 +136,20 @@ export class AuditReportService {
         ...(await this.relations(tx, query)),
         grievances: await this.grievances(tx, query),
         alerts: await this.alerts(tx, ids, query),
+        ...(withLearning
+          ? {
+              training: await this.learning.auditSection(tx, from, to, {
+                entityIds: query.legalEntityId ? [query.legalEntityId] : null,
+                locationId: query.locationId,
+              }),
+            }
+          : {}),
       };
     });
   }
 
-  async file(query: AuditReportQuery) {
-    const report = await this.build(query);
+  async file(query: AuditReportQuery, user?: AuthUser, withLearning = false) {
+    const report = await this.build(query, user, withLearning);
     const name = `buyer-audit-${query.from}-${query.to}`;
     if (query.format === 'pdf') {
       const bytes = await this.pdf.render(auditReportHtml(report, query.language));
@@ -132,7 +160,17 @@ export class AuditReportService {
       };
     }
     // The CSV is the sample auditors ask for: each person's hours week by week.
-    const rows = await this.tenantDb.run((tx) => this.weeklyRows(tx, query));
+    const rows = await this.tenantDb.run(async (tx) => {
+      const scope = user ? await entityScopeOf(tx, user.id) : null;
+      const [site] = query.locationId
+        ? await tx.select().from(locations).where(eq(locations.id, query.locationId))
+        : [];
+      return this.weeklyRows(tx, {
+        ...query,
+        legalEntityId:
+          query.legalEntityId ?? (scope ? (site?.legalEntityId ?? scope[0]) : undefined),
+      });
+    });
     return {
       bytes: Buffer.from(
         csv([

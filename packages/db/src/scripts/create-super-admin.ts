@@ -15,6 +15,9 @@ import {
  *   GP_ADMIN_EMAIL=ops@example.com GP_ADMIN_PASSWORD=… node dist/scripts/create-super-admin.js
  */
 loadRootEnv();
+if (process.env.DEPLOYMENT_MODE && process.env.DEPLOYMENT_MODE !== 'managed')
+  throw new Error('This command is unavailable for an installed enterprise deployment');
+
 const email = process.env.GP_ADMIN_EMAIL?.trim().toLowerCase();
 const password = process.env.GP_ADMIN_PASSWORD ?? '';
 const name = process.env.GP_ADMIN_NAME?.trim() || 'Super Admin';

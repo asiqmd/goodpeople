@@ -69,21 +69,21 @@ export default async function GrievancesPage({ searchParams }: PageProps<'/works
           <p className="text-sm text-slate-500">{t('list.empty')}</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-start text-sm">
               <thead className="text-xs uppercase text-slate-500">
                 <tr>
-                  <th className="py-2 pr-4 font-medium">{t('list.reference')}</th>
-                  <th className="py-2 pr-4 font-medium">{t('list.category')}</th>
-                  <th className="py-2 pr-4 font-medium">{t('list.status')}</th>
-                  <th className="py-2 pr-4 font-medium">{t('list.raised')}</th>
-                  <th className="py-2 pr-4 font-medium">{t('list.age')}</th>
+                  <th className="py-2 pe-4 font-medium">{t('list.reference')}</th>
+                  <th className="py-2 pe-4 font-medium">{t('list.category')}</th>
+                  <th className="py-2 pe-4 font-medium">{t('list.status')}</th>
+                  <th className="py-2 pe-4 font-medium">{t('list.raised')}</th>
+                  <th className="py-2 pe-4 font-medium">{t('list.age')}</th>
                   <th className="py-2 font-medium">{t('list.site')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {list.items.map((g) => (
                   <tr key={g.id} className="align-top">
-                    <td className="py-2 pr-4">
+                    <td className="py-2 pe-4">
                       <Link
                         href={`/workspace/grievances/${g.id}`}
                         className="font-mono font-medium text-brand-700 hover:underline"
@@ -97,28 +97,28 @@ export default async function GrievancesPage({ searchParams }: PageProps<'/works
                         </Badge>
                       </span>
                     </td>
-                    <td className="py-2 pr-4">
+                    <td className="py-2 pe-4">
                       <span className="flex items-center gap-2">
                         <CategoryIcon category={g.category} className="size-5 text-slate-500" />
                         {t(`categories.${g.category}`)}
                       </span>
                     </td>
-                    <td className="py-2 pr-4">
+                    <td className="py-2 pe-4">
                       <span className="flex flex-wrap gap-1">
                         <Badge tone={STATUS_TONE[g.status]}>{t(`statuses.${g.status}`)}</Badge>
                         {g.awaitingReply && <Badge tone="amber">{t('list.awaiting')}</Badge>}
                       </span>
                     </td>
-                    <td className="py-2 pr-4 whitespace-nowrap">
+                    <td className="py-2 pe-4 whitespace-nowrap">
                       {format.dateTime(new Date(g.createdAt), {
                         dateStyle: 'medium',
                         timeZone: 'Asia/Dhaka',
                       })}
                     </td>
-                    <td className="py-2 pr-4 whitespace-nowrap">
+                    <td className="py-2 pe-4 whitespace-nowrap">
                       {t('list.ageDays', { days: g.ageDays })}
                       {g.overdue && (
-                        <span className="ml-2">
+                        <span className="ms-2">
                           <Badge tone="red">{t('list.overdue')}</Badge>
                         </span>
                       )}

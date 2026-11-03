@@ -58,7 +58,7 @@ describe('ID cards', () => {
 
   it('keeps Bangla text and escapes what is printed', () => {
     const html = render([card('MG-<1>', 'রহিমা খাতুন')], 'bn');
-    expect(html).toContain('<html lang="bn">');
+    expect(html).toContain('<html lang="bn" dir="ltr">');
     expect(html).toContain('রহিমা খাতুন');
     expect(html).toContain('কর্মী নম্বর');
     expect(html).toContain('aria-label="MG-&lt;1&gt;"');

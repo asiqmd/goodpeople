@@ -48,7 +48,7 @@ export async function PerformanceRecordView({
                     {t('period', { start: day(r.cycle.periodStart), end: day(r.cycle.periodEnd) })}
                   </span>
                 </span>
-                <span className="text-right">
+                <span className="text-end">
                   {r.finalRating !== null ? (
                     <span className="font-medium">
                       <RatingText rating={r.finalRating} />

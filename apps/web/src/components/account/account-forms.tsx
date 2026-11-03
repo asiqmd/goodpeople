@@ -405,7 +405,7 @@ export function NotificationSettingsForm({ settings }: { settings: NotificationS
       </div>
       <div className="-mx-5 overflow-x-auto">
         <table className="min-w-full text-sm">
-          <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+          <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
             <tr>
               <th className="px-5 py-2 font-medium">{t('event')}</th>
               {DELIVERY_CHANNELS.map((c) => (
@@ -481,7 +481,7 @@ export function TemplateForm({ template }: { template: NotificationTemplateView 
       <p className="text-xs text-slate-500">
         {t('placeholders')}{' '}
         {template.placeholders.map((p) => (
-          <code key={p} className="mr-1 rounded bg-slate-100 px-1 font-mono">{`{{${p}}}`}</code>
+          <code key={p} className="me-1 rounded bg-slate-100 px-1 font-mono">{`{{${p}}}`}</code>
         ))}
       </p>
       {!fixed && (

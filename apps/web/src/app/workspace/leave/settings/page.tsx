@@ -38,7 +38,7 @@ export default async function LeaveSettingsPage({
   searchParams,
 }: PageProps<'/workspace/leave/settings'>) {
   const user = await currentTenantUser();
-  if (!can(user?.role, 'leave.manage')) redirect('/workspace');
+  if (!can(user, 'leave.manage')) redirect('/workspace');
   const sp = await searchParams;
   const thisYear = Number(todayIn().slice(0, 4));
   const year = Number(sp.year) >= 2020 && Number(sp.year) <= 2100 ? Number(sp.year) : thisYear;
@@ -89,7 +89,7 @@ export default async function LeaveSettingsPage({
             <details key={type.id} className="group py-3">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
                 <span className="text-sm font-medium">
-                  <span className="mr-2 font-mono text-xs text-slate-400">{type.code}</span>
+                  <span className="me-2 font-mono text-xs text-slate-400">{type.code}</span>
                   {locale === 'bn' && type.nameBn ? type.nameBn : type.name}
                 </span>
                 <span className="flex gap-2">
@@ -129,7 +129,7 @@ export default async function LeaveSettingsPage({
               }`}
             >
               {c.name}
-              {c.isDefault && <span className="ml-2 text-xs text-slate-500">({t('default')})</span>}
+              {c.isDefault && <span className="ms-2 text-xs text-slate-500">({t('default')})</span>}
             </Link>
           ))}
         </div>

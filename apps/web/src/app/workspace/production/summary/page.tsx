@@ -38,16 +38,16 @@ export default async function ProductionSummaryPage({
   );
   const amounts = (row: { pieces: number; pieceEarnings: string; incentive: string }) => (
     <>
-      <td className="py-2 pr-3 text-right tabular-nums">{n(row.pieces)}</td>
-      <td className="py-2 pr-3 text-right tabular-nums">{taka(format, row.pieceEarnings)}</td>
-      <td className="py-2 pr-3 text-right tabular-nums">{taka(format, row.incentive)}</td>
+      <td className="py-2 pe-3 text-end tabular-nums">{n(row.pieces)}</td>
+      <td className="py-2 pe-3 text-end tabular-nums">{taka(format, row.pieceEarnings)}</td>
+      <td className="py-2 pe-3 text-end tabular-nums">{taka(format, row.incentive)}</td>
     </>
   );
   const amountHeads = (
     <>
-      <th className="py-2 pr-3 text-right font-medium">{t('pieces')}</th>
-      <th className="py-2 pr-3 text-right font-medium">{t('pieceEarnings')}</th>
-      <th className="py-2 pr-3 text-right font-medium">{t('incentive')}</th>
+      <th className="py-2 pe-3 text-end font-medium">{t('pieces')}</th>
+      <th className="py-2 pe-3 text-end font-medium">{t('pieceEarnings')}</th>
+      <th className="py-2 pe-3 text-end font-medium">{t('incentive')}</th>
     </>
   );
 
@@ -122,20 +122,20 @@ export default async function ProductionSummaryPage({
           <Card title={t('byLine')} action={csvLink('line')}>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="text-left text-xs text-slate-500">
+                <thead className="text-start text-xs text-slate-500">
                   <tr>
-                    <th className="py-2 pr-3 font-medium">{t('line')}</th>
-                    <th className="py-2 pr-3 text-right font-medium">{t('workers')}</th>
+                    <th className="py-2 pe-3 font-medium">{t('line')}</th>
+                    <th className="py-2 pe-3 text-end font-medium">{t('workers')}</th>
                     {amountHeads}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {summary.lines.map((l) => (
                     <tr key={l.orgUnit?.id ?? 'none'}>
-                      <td className="py-2 pr-3">
+                      <td className="py-2 pe-3">
                         {l.orgUnit ? localName(l.orgUnit, locale) : t('noLine')}
                       </td>
-                      <td className="py-2 pr-3 text-right tabular-nums">{n(l.workers)}</td>
+                      <td className="py-2 pe-3 text-end tabular-nums">{n(l.workers)}</td>
                       {amounts(l)}
                     </tr>
                   ))}
@@ -147,19 +147,19 @@ export default async function ProductionSummaryPage({
             <p className="mb-3 text-xs text-slate-500">{t('workerNote')}</p>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="text-left text-xs text-slate-500">
+                <thead className="text-start text-xs text-slate-500">
                   <tr>
-                    <th className="py-2 pr-3 font-medium">{t('worker')}</th>
-                    <th className="py-2 pr-3 font-medium">{t('line')}</th>
-                    <th className="py-2 pr-3 text-right font-medium">{t('days')}</th>
+                    <th className="py-2 pe-3 font-medium">{t('worker')}</th>
+                    <th className="py-2 pe-3 font-medium">{t('line')}</th>
+                    <th className="py-2 pe-3 text-end font-medium">{t('days')}</th>
                     {amountHeads}
-                    <th className="py-2 pr-3 text-right font-medium">{t('averageDaily')}</th>
+                    <th className="py-2 pe-3 text-end font-medium">{t('averageDaily')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {summary.workers.map((w) => (
                     <tr key={w.employee.id}>
-                      <td className="py-2 pr-3">
+                      <td className="py-2 pe-3">
                         <Link
                           href={`/workspace/employees/${w.employee.id}`}
                           className="font-medium hover:underline"
@@ -170,12 +170,12 @@ export default async function ProductionSummaryPage({
                           {w.employee.employeeCode}
                         </span>
                       </td>
-                      <td className="py-2 pr-3 text-slate-600">
+                      <td className="py-2 pe-3 text-slate-600">
                         {w.orgUnit ? localName(w.orgUnit, locale) : ''}
                       </td>
-                      <td className="py-2 pr-3 text-right tabular-nums">{n(w.days)}</td>
+                      <td className="py-2 pe-3 text-end tabular-nums">{n(w.days)}</td>
                       {amounts(w)}
-                      <td className="py-2 pr-3 text-right tabular-nums">
+                      <td className="py-2 pe-3 text-end tabular-nums">
                         {taka(format, w.averageDaily)}
                       </td>
                     </tr>
@@ -188,18 +188,18 @@ export default async function ProductionSummaryPage({
           <Card title={t('byDay')} action={csvLink('day')}>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="text-left text-xs text-slate-500">
+                <thead className="text-start text-xs text-slate-500">
                   <tr>
-                    <th className="py-2 pr-3 font-medium">{t('date')}</th>
-                    <th className="py-2 pr-3 text-right font-medium">{t('workers')}</th>
+                    <th className="py-2 pe-3 font-medium">{t('date')}</th>
+                    <th className="py-2 pe-3 text-end font-medium">{t('workers')}</th>
                     {amountHeads}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {summary.days.map((d) => (
                     <tr key={d.date}>
-                      <td className="py-2 pr-3">{day(format, d.date)}</td>
-                      <td className="py-2 pr-3 text-right tabular-nums">{n(d.workers)}</td>
+                      <td className="py-2 pe-3">{day(format, d.date)}</td>
+                      <td className="py-2 pe-3 text-end tabular-nums">{n(d.workers)}</td>
                       {amounts(d)}
                     </tr>
                   ))}

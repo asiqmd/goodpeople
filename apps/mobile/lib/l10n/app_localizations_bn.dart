@@ -3427,4 +3427,632 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get peerErrorDecided =>
       'এই সহকর্মীকে আগেই অনুমোদন বা বাতিল করা হয়েছে।';
+
+  @override
+  String get learningTitle => 'প্রশিক্ষণ';
+
+  @override
+  String get learningSubtitle =>
+      'আপনার প্রশিক্ষণ, প্রয়োজনীয় কোর্স ও সম্পন্ন করার রেকর্ড।';
+
+  @override
+  String get learningRequirements => 'আমার প্রয়োজনীয় প্রশিক্ষণ';
+
+  @override
+  String get learningNoneRequirements =>
+      'এই তালিকায় কোনো প্রয়োজনীয় কোর্স নেই।';
+
+  @override
+  String get learningSessions => 'প্রশিক্ষণ সেশন';
+
+  @override
+  String get learningNoneSessions => 'কোনো সেশন নেই।';
+
+  @override
+  String get learningCertificates => 'সম্পন্ন করার রেকর্ড';
+
+  @override
+  String get learningNoneCertificates => 'সম্পন্ন করার রেকর্ড এখনো নেই।';
+
+  @override
+  String get learningEnrol => 'নিবন্ধন করুন';
+
+  @override
+  String get learningWithdraw => 'নিবন্ধন প্রত্যাহার';
+
+  @override
+  String get learningCurrent => 'হালনাগাদ';
+
+  @override
+  String get learningDue => 'বাকি';
+
+  @override
+  String get learningOverdue => 'সময়সীমা পেরিয়েছে';
+
+  @override
+  String get learningEnrolled => 'নিবন্ধিত';
+
+  @override
+  String get learningWithdrawn => 'প্রত্যাহৃত';
+
+  @override
+  String get learningAttended => 'উপস্থিত';
+
+  @override
+  String get learningAbsent => 'অনুপস্থিত';
+
+  @override
+  String get learningRevoked => 'প্রত্যাহৃত';
+
+  @override
+  String get learningNoExpiry => 'মেয়াদ নির্ধারিত নেই';
+
+  @override
+  String get learningExpires => 'মেয়াদ শেষ';
+
+  @override
+  String get learningDownload => 'বাংলা পিডিএফ নামান';
+
+  @override
+  String get learningFull => 'সব আসন পূর্ণ।';
+
+  @override
+  String get learningStarted =>
+      'সেশন শুরু হলে নিজে নিবন্ধন বা প্রত্যাহার করা যায় না।';
+
+  @override
+  String get learningFixed => 'সম্পন্ন বা বাতিল সেশনে আর পরিবর্তন করা যায় না।';
+
+  @override
+  String get learningManageOnWeb =>
+      'কোর্স, উপস্থিতি ও অগ্নিনির্বাপন মহড়া ওয়েব থেকে পরিচালনা করুন।';
+
+  @override
+  String get learningLoadFailed => 'প্রশিক্ষণের তথ্য আনা যায়নি';
+
+  @override
+  String get learningUnknown => 'সংরক্ষিত হয়েছে।';
+
+  @override
+  String get learningExpired => 'মেয়াদোত্তীর্ণ';
+
+  @override
+  String get serviceEngagement => 'অংশগ্রহণ';
+
+  @override
+  String get serviceServices => 'কর্মীসেবা';
+
+  @override
+  String get serviceAnnouncements => 'ঘোষণা';
+
+  @override
+  String get serviceSurveys => 'জরিপ ও ইএনপিএস';
+
+  @override
+  String get serviceRecognition => 'অবদানের স্বীকৃতি';
+
+  @override
+  String get serviceRequests => 'এইচআর অনুরোধ';
+
+  @override
+  String get serviceAssets => 'আমার নেওয়া সম্পদ';
+
+  @override
+  String get serviceInventory => 'কোম্পানির সম্পদ';
+
+  @override
+  String get serviceIntroEngagement =>
+      'কোম্পানির খবর, বেনামি জরিপ ও সহকর্মীদের অবদানের স্বীকৃতি।';
+
+  @override
+  String get serviceIntroServices =>
+      'এইচআর দলের কাছে ব্যক্তিগত অনুরোধ ও আপনার নেওয়া সম্পদের তথ্য।';
+
+  @override
+  String get serviceNoEmployee =>
+      'অনুরোধ বা প্রাপ্তি স্বীকারের জন্য সক্রিয় কর্মীর রেকর্ড লাগবে। এইচআরের কাজগুলো নিচে আছে।';
+
+  @override
+  String get serviceEmpty => 'এখনও কোনো তথ্য নেই।';
+
+  @override
+  String get serviceSaved => 'সংরক্ষিত হয়েছে।';
+
+  @override
+  String get serviceHelp => 'সাহায্য';
+
+  @override
+  String get serviceHrOnWeb =>
+      'তৈরি ও পরিচালনার কাজগুলো এইচআর ওয়েব থেকে করেন।';
+
+  @override
+  String get serviceNewSurvey => 'জরিপ তৈরি করুন';
+
+  @override
+  String get serviceNewAnnouncement => 'ঘোষণা তৈরি করুন';
+
+  @override
+  String get serviceNewRecognition => 'সহকর্মীর অবদানের স্বীকৃতি দিন';
+
+  @override
+  String get serviceNewRequest => 'এইচআর অনুরোধ করুন';
+
+  @override
+  String get serviceNewAsset => 'সম্পদ নিবন্ধন করুন';
+
+  @override
+  String get serviceAllRequests => 'এইচআর সেবার অনুরোধ';
+
+  @override
+  String get serviceMyRequests => 'আমার অনুরোধ';
+
+  @override
+  String get serviceCompany => 'কোম্পানি';
+
+  @override
+  String get serviceEmployee => 'কর্মী';
+
+  @override
+  String get serviceEmployeeCode => 'কর্মী কোড';
+
+  @override
+  String get serviceTitle => 'শিরোনাম (ইংরেজি)';
+
+  @override
+  String get serviceTitleBn => 'শিরোনাম (বাংলা)';
+
+  @override
+  String get serviceDescription => 'বিবরণ (ইংরেজি)';
+
+  @override
+  String get serviceDescriptionBn => 'বিবরণ (বাংলা)';
+
+  @override
+  String get serviceBody => 'লেখা (ইংরেজি)';
+
+  @override
+  String get serviceBodyBn => 'লেখা (বাংলা)';
+
+  @override
+  String get serviceClosesAt => 'শেষ হবে (ঢাকার সময়)';
+
+  @override
+  String get serviceThreshold => 'ফল দেখাতে ন্যূনতম উত্তরসংখ্যা';
+
+  @override
+  String get serviceAnonymousNote =>
+      'বেনামি জরিপ: আলাদা ব্যক্তির উত্তর রাখা হয় না। জরিপ শেষ হলে অন্তত পাঁচজন উত্তর দিলে এইচআর নির্ধারিত দলের সামগ্রিক ফল দেখেন। ছোট উপদলের ফল দেখানো হয় না।';
+
+  @override
+  String get serviceCohortNote =>
+      'প্রকাশের সময় কোম্পানির সক্রিয় কর্মীদের তালিকা নির্ধারিত হয়। লগইনবিহীন কর্মীর হয়ে অন্য কেউ উত্তর দিতে পারেন না।';
+
+  @override
+  String get serviceEnpsQuestion =>
+      'কাজের জায়গা হিসেবে এই কোম্পানিতে যোগ দিতে আপনি কতটা সুপারিশ করবেন?';
+
+  @override
+  String get serviceEnpsScale => '০ = একেবারেই নয়; ১০ = খুব জোর দিয়ে';
+
+  @override
+  String get servicePulseScale => '১ = সম্পূর্ণ অসম্মত; ৫ = সম্পূর্ণ সম্মত';
+
+  @override
+  String get servicePulseQuestions => 'মতামতের প্রশ্ন (ঐচ্ছিক, সর্বোচ্চ ১০টি)';
+
+  @override
+  String get serviceQuestion => 'প্রশ্ন (ইংরেজি)';
+
+  @override
+  String get serviceQuestionBn => 'প্রশ্ন (বাংলা)';
+
+  @override
+  String get serviceAddQuestion => 'প্রশ্ন যোগ করুন';
+
+  @override
+  String get serviceRemove => 'সরান';
+
+  @override
+  String get serviceChoose => 'বেছে নিন';
+
+  @override
+  String get serviceSaveDraft => 'খসড়া সংরক্ষণ করুন';
+
+  @override
+  String get serviceEditDraft => 'খসড়া সম্পাদনা';
+
+  @override
+  String get servicePublish => 'প্রকাশ করুন';
+
+  @override
+  String get serviceCloseSurvey => 'জরিপ শেষ করুন';
+
+  @override
+  String get serviceSubmitSurvey => 'বেনামি উত্তর জমা দিন';
+
+  @override
+  String get serviceAlreadyResponded => 'আপনার বেনামি উত্তর নথিভুক্ত হয়েছে।';
+
+  @override
+  String get serviceResults => 'জরিপের ফল';
+
+  @override
+  String serviceResultsProtected(Object minimum) {
+    return 'জরিপ শেষ ও অন্তত $minimum জনের উত্তর না পাওয়া পর্যন্ত ফল গোপন থাকবে। তার আগে উত্তরসংখ্যাও দেখানো হয় না।';
+  }
+
+  @override
+  String get serviceResultsEmployee =>
+      'কর্মীদের আলাদা উত্তর বা জরিপের ফল দেখানো হয় না।';
+
+  @override
+  String get serviceEnps => 'ইএনপিএস';
+
+  @override
+  String get serviceResponses => 'উত্তরসংখ্যা';
+
+  @override
+  String get serviceEligible => 'অন্তর্ভুক্ত কর্মী';
+
+  @override
+  String get servicePromoters => 'প্রোমোটার (৯–১০)';
+
+  @override
+  String get servicePassives => 'প্যাসিভ (৭–৮)';
+
+  @override
+  String get serviceDetractors => 'ডিট্র্যাক্টর (০–৬)';
+
+  @override
+  String get serviceMean => 'গড়';
+
+  @override
+  String get serviceDistribution => '১–৫ স্কোরে উত্তরসংখ্যা';
+
+  @override
+  String get serviceClosed => 'জরিপটি শেষ হয়েছে।';
+
+  @override
+  String get serviceFixed =>
+      'প্রকাশিত লেখা পরিবর্তন হয় না। সংশোধনের জন্য পুরোনো নোটিশ প্রত্যাহার করে নতুনটি প্রকাশ করুন।';
+
+  @override
+  String get serviceRequiresAcknowledgement => 'নীতিমালার প্রাপ্তি স্বীকার চাই';
+
+  @override
+  String get serviceDueOn => 'নির্ধারিত তারিখ';
+
+  @override
+  String get serviceExpiresOn => 'শেষ কার্যকর তারিখ';
+
+  @override
+  String get servicePolicyNote =>
+      'প্রাপ্তি স্বীকার মানে আপনি নোটিশটি পড়েছেন। এটি চাকরির নতুন শর্তে সম্মতি বা ইলেকট্রনিক স্বাক্ষর নয়।';
+
+  @override
+  String get serviceAcknowledge => 'আমি নোটিশটি পড়েছি';
+
+  @override
+  String get serviceAcknowledged => 'প্রাপ্তি স্বীকৃত';
+
+  @override
+  String get serviceOutstanding => 'বাকি';
+
+  @override
+  String get serviceRetire => 'প্রত্যাহার করুন';
+
+  @override
+  String get serviceReason => 'কারণ';
+
+  @override
+  String get serviceReceipts => 'নীতিমালার প্রাপ্তি স্বীকারের তালিকা';
+
+  @override
+  String get serviceExpired => 'মেয়াদ শেষ';
+
+  @override
+  String get servicePending => 'বাকি';
+
+  @override
+  String get serviceValue => 'মূল্যবোধ';
+
+  @override
+  String get serviceMessage => 'বার্তা';
+
+  @override
+  String get serviceRecognitionNote =>
+      'আপনার নাম ও বার্তা আপনার কোম্পানির সহকর্মীরা দেখতে পাবেন।';
+
+  @override
+  String get serviceWithdrawRecognition => 'প্রত্যাহার / সংযত করুন';
+
+  @override
+  String get serviceFrom => 'প্রেরক';
+
+  @override
+  String get serviceTo => 'প্রাপক';
+
+  @override
+  String get serviceCategory => 'ধরন';
+
+  @override
+  String get servicePriority => 'অগ্রাধিকার';
+
+  @override
+  String get serviceSubject => 'বিষয়';
+
+  @override
+  String get serviceRequestBody => 'আপনার অনুরোধ';
+
+  @override
+  String get serviceRequestPrivacy =>
+      'শুধু আপনি ও এই কোম্পানির অনুমোদিত এইচআর কর্মীরা দেখতে পারবেন। ম্যানেজার এই অধিকার পান না। বিধিবদ্ধ অভিযোগ বা হয়রানির বিষয়ে আলাদা অভিযোগ চ্যানেল ব্যবহার করুন।';
+
+  @override
+  String get serviceGrievances => 'অভিযোগের চ্যানেল';
+
+  @override
+  String get serviceStatus => 'অবস্থা';
+
+  @override
+  String get serviceAssignee => 'দায়িত্বপ্রাপ্ত এইচআর';
+
+  @override
+  String get serviceUnassigned => 'কাউকে দেওয়া হয়নি';
+
+  @override
+  String get serviceUpdateRequest => 'অনুরোধ হালনাগাদ করুন';
+
+  @override
+  String get serviceReply => 'উত্তর পাঠান';
+
+  @override
+  String get serviceReplyBody => 'উত্তর';
+
+  @override
+  String get serviceInternal => 'শুধু এইচআরের অভ্যন্তরীণ নোট';
+
+  @override
+  String get serviceInternalLabel => 'অভ্যন্তরীণ নোট — শুধু এইচআরের জন্য';
+
+  @override
+  String get serviceResolve => 'সমাধান হিসেবে চিহ্নিত করুন';
+
+  @override
+  String get serviceCloseRequest => 'সমাধান পাওয়া অনুরোধ বন্ধ করুন';
+
+  @override
+  String get serviceReopen => 'অনুরোধ আবার খুলুন';
+
+  @override
+  String get serviceCreatedAt => 'খোলা হয়েছে';
+
+  @override
+  String get serviceUpdatedAt => 'হালনাগাদ';
+
+  @override
+  String get serviceRequestClosed =>
+      'অনুরোধটি বন্ধ আছে। কথা চালাতে আবার খুলুন।';
+
+  @override
+  String get serviceTag => 'সম্পদের ট্যাগ';
+
+  @override
+  String get serviceName => 'নাম (ইংরেজি)';
+
+  @override
+  String get serviceNameBn => 'নাম (বাংলা)';
+
+  @override
+  String get serviceKind => 'ধরন';
+
+  @override
+  String get serviceSerialNumber => 'ক্রমিক নম্বর';
+
+  @override
+  String get serviceIssueAsset => 'সম্পদ দিন';
+
+  @override
+  String get serviceIssuedOn => 'দেওয়ার তারিখ';
+
+  @override
+  String get serviceCondition => 'অবস্থা / মন্তব্য';
+
+  @override
+  String get serviceIssueCondition => 'দেওয়ার সময় অবস্থা';
+
+  @override
+  String get serviceReturnCondition => 'ফেরতের সময় অবস্থা';
+
+  @override
+  String get serviceReturnedOn => 'ফেরতের তারিখ';
+
+  @override
+  String get serviceReturnAsset => 'ফেরত নথিভুক্ত করুন';
+
+  @override
+  String get serviceAcknowledgeAsset => 'আমি সম্পদটি পেয়েছি';
+
+  @override
+  String get serviceAssetNote =>
+      'শুধু প্রাপ্তির রেকর্ড; বেতন থেকে স্বয়ংক্রিয়ভাবে টাকা কাটা হয় না। এইচআর ফেরত ও সংশোধন নথিভুক্ত করেন।';
+
+  @override
+  String get serviceOverdue => 'সময় পেরিয়েছে';
+
+  @override
+  String get serviceIssued => 'দেওয়া হয়েছে';
+
+  @override
+  String get serviceAvailable => 'দেওয়ার জন্য আছে';
+
+  @override
+  String get serviceHistory => 'দেওয়া ও ফেরতের ইতিহাস';
+
+  @override
+  String get serviceStatesDraft => 'খসড়া';
+
+  @override
+  String get serviceStatesOpen => 'খোলা';
+
+  @override
+  String get serviceStatesInProgress => 'কাজ চলছে';
+
+  @override
+  String get serviceStatesResolved => 'সমাধান হয়েছে';
+
+  @override
+  String get serviceStatesClosed => 'বন্ধ';
+
+  @override
+  String get serviceStatesPublished => 'প্রকাশিত';
+
+  @override
+  String get serviceStatesRetired => 'প্রত্যাহৃত';
+
+  @override
+  String get serviceValuesTeamwork => 'দলগত কাজ';
+
+  @override
+  String get serviceValuesService => 'সেবা';
+
+  @override
+  String get serviceValuesQuality => 'মান';
+
+  @override
+  String get serviceValuesInitiative => 'উদ্যোগ';
+
+  @override
+  String get serviceCategoriesLetters => 'চিঠিপত্র';
+
+  @override
+  String get serviceCategoriesPay => 'বেতন';
+
+  @override
+  String get serviceCategoriesLeave => 'ছুটি';
+
+  @override
+  String get serviceCategoriesBenefits => 'সুযোগ-সুবিধা';
+
+  @override
+  String get serviceCategoriesOther => 'অন্যান্য';
+
+  @override
+  String get servicePrioritiesNormal => 'সাধারণ';
+
+  @override
+  String get servicePrioritiesUrgent => 'জরুরি';
+
+  @override
+  String get serviceKindsLaptop => 'ল্যাপটপ';
+
+  @override
+  String get serviceKindsPhone => 'ফোন';
+
+  @override
+  String get serviceKindsIdCard => 'পরিচয়পত্র';
+
+  @override
+  String get serviceKindsVehicle => 'যানবাহন';
+
+  @override
+  String get serviceKindsEquipment => 'সরঞ্জাম';
+
+  @override
+  String get serviceKindsOther => 'অন্যান্য';
+
+  @override
+  String get serviceErrorsServiceEmployeeRequired =>
+      'সক্রিয় কর্মীর রেকর্ড লাগবে।';
+
+  @override
+  String get serviceErrorsSurveyDates => 'ভবিষ্যতের শেষ সময় বেছে নিন।';
+
+  @override
+  String get serviceErrorsSurveyCohort =>
+      'এই কোম্পানির কর্মীসংখ্যা ফল প্রকাশের ন্যূনতম সীমার কম।';
+
+  @override
+  String get serviceErrorsSurveyFixed => 'প্রকাশিত জরিপ পরিবর্তন হয় না।';
+
+  @override
+  String get serviceErrorsSurveyClosed => 'জরিপ শেষ হয়েছে।';
+
+  @override
+  String get serviceErrorsSurveySubmitted => 'আপনি ইতিমধ্যে উত্তর দিয়েছেন।';
+
+  @override
+  String get serviceErrorsSurveyAnswers => 'প্রতিটি প্রশ্নের উত্তর দিন।';
+
+  @override
+  String get serviceErrorsAnnouncementDates =>
+      'আজ বা ভবিষ্যতের বৈধ তারিখ বেছে নিন।';
+
+  @override
+  String get serviceErrorsAnnouncementFixed =>
+      'এই নোটিশ পরিবর্তন বা প্রাপ্তি স্বীকার করা যাচ্ছে না।';
+
+  @override
+  String get serviceErrorsRecognitionSelf =>
+      'নিজের বদলে সহকর্মীর অবদানের স্বীকৃতি দিন।';
+
+  @override
+  String get serviceErrorsRecognitionHidden =>
+      'স্বীকৃতিটি ইতিমধ্যে প্রত্যাহৃত।';
+
+  @override
+  String get serviceErrorsHrHandler =>
+      'এই কোম্পানির অধিকার থাকা সক্রিয় এইচআর কর্মী বেছে নিন।';
+
+  @override
+  String get serviceErrorsHrRequestClosed =>
+      'উত্তর বা পরিবর্তনের আগে অনুরোধটি আবার খুলুন।';
+
+  @override
+  String get serviceErrorsHrRequestTransition =>
+      'এভাবে অবস্থা পরিবর্তন করা যাবে না।';
+
+  @override
+  String get serviceErrorsAssetRetired => 'সম্পদটি ব্যবহার থেকে সরানো হয়েছে।';
+
+  @override
+  String get serviceErrorsAssetIssued =>
+      'সম্পদটি ইতিমধ্যে দেওয়া আছে। আগে ফেরত নথিভুক্ত করুন।';
+
+  @override
+  String get serviceErrorsAssetReturned => 'এটি ইতিমধ্যে ফেরত এসেছে।';
+
+  @override
+  String get serviceErrorsAssetDates =>
+      'দেওয়া, ফেরত ও নির্ধারিত তারিখ পরীক্ষা করুন। ঘটা ঘটনা ভবিষ্যতের তারিখে লেখা যাবে না।';
+
+  @override
+  String get serviceErrorsAssetEmployeeScope =>
+      'দেওয়ার তারিখে কর্মীকে এই কোম্পানিতে কাজ করতে হবে।';
+
+  @override
+  String get serviceUnknown => 'তথ্য নেই';
+
+  @override
+  String get serviceCancel => 'বাতিল';
+
+  @override
+  String get serviceFieldRequired => 'ঘরটি পূরণ করুন।';
+
+  @override
+  String get ssoMethod => 'প্রতিষ্ঠান';
+
+  @override
+  String get ssoContinue => 'একক লগইনে এগিয়ে যান';
+
+  @override
+  String get ssoFinish => 'ব্রাউজারের লগইন শেষ করুন';
+
+  @override
+  String get ssoBrowserHint =>
+      'ব্রাউজারে প্রতিষ্ঠানের একক লগইন করুন, তারপর এখানে ফিরে লগইন শেষ করুন।';
+
+  @override
+  String get ssoPending =>
+      'ব্রাউজারে লগইন এখনও সম্পন্ন হয়নি। সেখানে শেষ করে আবার চেষ্টা করুন।';
 }

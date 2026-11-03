@@ -183,8 +183,8 @@ export class KioskAuthService {
     tenant: TenantWithAccess,
     input: KioskPinRequestInput,
   ): Promise<KioskPinRequestResult> {
-    this.limiter.hit(`kiosk-pin:${kiosk.kioskId}`, 40, WINDOW_MS);
-    this.limiter.hit(
+    await this.limiter.hit(`kiosk-pin:${kiosk.kioskId}`, 40, WINDOW_MS);
+    await this.limiter.hit(
       `kiosk-pin:${kiosk.tenantId}:${input.employeeCode.toLowerCase()}`,
       3,
       WINDOW_MS,
@@ -234,8 +234,8 @@ export class KioskAuthService {
 
   /** Sets the PIN with the latest code; five wrong tries or ten minutes finish a code. */
   async setPin(kiosk: KioskIdentity, input: KioskPinSetInput): Promise<void> {
-    this.limiter.hit(`kiosk-pin-set:${kiosk.kioskId}`, 60, WINDOW_MS);
-    this.limiter.hit(
+    await this.limiter.hit(`kiosk-pin-set:${kiosk.kioskId}`, 60, WINDOW_MS);
+    await this.limiter.hit(
       `kiosk-pin-set:${kiosk.tenantId}:${input.employeeCode.toLowerCase()}`,
       10,
       WINDOW_MS,
@@ -288,30 +288,30 @@ export class KioskAuthService {
     });
     if (!employeeId) throw badRequest('kiosk_code_wrong', 'Wrong or expired code');
     // Proving the phone again lifts a lock from forgotten PINs.
-    this.lockout.reset(`${kiosk.kioskId}:${employeeId}`);
+    await this.lockout.reset(`${kiosk.kioskId}:${employeeId}`);
   }
 
   // ── Sessions ───────────────────────────────────────────────────────────────
 
   async signIn(kiosk: KioskIdentity, input: KioskSignInInput): Promise<KioskSession> {
-    this.limiter.hit(`kiosk-sign-in:${kiosk.kioskId}`, 200, WINDOW_MS);
-    const pausedFor = this.pause.pausedFor(kiosk.kioskId);
+    await this.limiter.hit(`kiosk-sign-in:${kiosk.kioskId}`, 200, WINDOW_MS);
+    const pausedFor = await this.pause.pausedFor(kiosk.kioskId);
     if (pausedFor) throw paused(pausedFor);
     const employee = await this.tenantDb.run((tx) => employeeByCode(tx, input.employeeCode));
     if (!employee?.kioskPinHash) {
       await verifyPassword(await (this.dummyHash ??= hashPassword(randomUUID())), input.pin);
-      const pause = this.pause.fail(kiosk.kioskId);
+      const pause = await this.pause.fail(kiosk.kioskId);
       throw pause ? paused(pause) : signInFailed();
     }
     const key = `${kiosk.kioskId}:${employee.id}`;
-    const lockedFor = this.lockout.lockedFor(key);
+    const lockedFor = await this.lockout.lockedFor(key);
     if (lockedFor) throw locked(lockedFor);
     if (!(await verifyPassword(employee.kioskPinHash, input.pin))) {
-      const lock = this.lockout.fail(key);
-      const pause = this.pause.fail(kiosk.kioskId);
+      const lock = await this.lockout.fail(key);
+      const pause = await this.pause.fail(kiosk.kioskId);
       throw pause ? paused(pause) : lock ? locked(lock) : signInFailed();
     }
-    this.lockout.reset(key);
+    await this.lockout.reset(key);
     if (!(await this.tenantDb.run((tx) => mayUseKiosk(tx, employee)))) throw inactive();
     const payload: Omit<KioskSessionPayload, 'exp' | 'jti'> = {
       typ: 'kiosk',
@@ -347,7 +347,7 @@ export class KioskAuthService {
       payload.tid !== kiosk.tenantId ||
       payload.kid !== kiosk.kioskId ||
       !payload.jti ||
-      this.ended.has(payload.jti)
+      (await this.ended.has(payload.jti))
     ) {
       throw sessionEnded();
     }
@@ -359,8 +359,8 @@ export class KioskAuthService {
     return { employeeId: payload.sub, sessionId: payload.jti, expiresAt: payload.exp * 1000 };
   }
 
-  end(worker: KioskWorker): void {
-    this.ended.end(worker.sessionId, worker.expiresAt);
+  async end(worker: KioskWorker): Promise<void> {
+    await this.ended.end(worker.sessionId, worker.expiresAt);
   }
 
   // ── Sending ────────────────────────────────────────────────────────────────

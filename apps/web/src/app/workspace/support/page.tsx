@@ -31,7 +31,7 @@ export default async function SupportPage({ searchParams }: PageProps<'/workspac
   const tp = await getTranslations('pricing.plans');
   const format = await getFormatter();
   const clock = await clockOptions();
-  const manage = can(user.role, 'support.manage');
+  const manage = can(user, 'support.manage');
   const all = manage && one((await searchParams).scope) === 'all';
   const [tickets, access] = await Promise.all([
     load<SupportTicketSummary[]>('tenant', `/tenant/support/tickets?scope=${all ? 'all' : 'mine'}`),
@@ -86,19 +86,19 @@ export default async function SupportPage({ searchParams }: PageProps<'/workspac
             <p className="text-sm text-slate-500">{t('list.empty')}</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
+              <table className="w-full text-start text-sm">
                 <thead className="text-xs uppercase text-slate-500">
                   <tr>
-                    <th className="py-2 pr-4 font-medium">{t('list.ticket')}</th>
-                    <th className="py-2 pr-4 font-medium">{t('list.subject')}</th>
-                    <th className="py-2 pr-4 font-medium">{t('list.status')}</th>
-                    <th className="py-2 pr-4 font-medium">{t('list.updated')}</th>
+                    <th className="py-2 pe-4 font-medium">{t('list.ticket')}</th>
+                    <th className="py-2 pe-4 font-medium">{t('list.subject')}</th>
+                    <th className="py-2 pe-4 font-medium">{t('list.status')}</th>
+                    <th className="py-2 pe-4 font-medium">{t('list.updated')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {tickets.map((ticket) => (
                     <tr key={ticket.id} className="align-top">
-                      <td className="py-2 pr-4 whitespace-nowrap">
+                      <td className="py-2 pe-4 whitespace-nowrap">
                         <Link
                           href={`/workspace/support/${ticket.id}`}
                           className="font-mono font-medium text-brand-700 hover:underline"
@@ -106,7 +106,7 @@ export default async function SupportPage({ searchParams }: PageProps<'/workspac
                           {ticketLabel(ticket.number)}
                         </Link>
                       </td>
-                      <td className="py-2 pr-4">
+                      <td className="py-2 pe-4">
                         <span className="text-slate-900">{ticket.subject}</span>
                         {all && (
                           <span className="block text-xs text-slate-500">
@@ -114,7 +114,7 @@ export default async function SupportPage({ searchParams }: PageProps<'/workspac
                           </span>
                         )}
                       </td>
-                      <td className="py-2 pr-4">
+                      <td className="py-2 pe-4">
                         <span className="flex flex-wrap gap-1">
                           <StatusBadge status={ticket.status} />
                           {ticket.priority === 'urgent' && (
@@ -122,7 +122,7 @@ export default async function SupportPage({ searchParams }: PageProps<'/workspac
                           )}
                         </span>
                       </td>
-                      <td className="py-2 pr-4 whitespace-nowrap text-slate-600">
+                      <td className="py-2 pe-4 whitespace-nowrap text-slate-600">
                         {format.dateTime(new Date(ticket.updatedAt), {
                           dateStyle: 'medium',
                           timeStyle: 'short',

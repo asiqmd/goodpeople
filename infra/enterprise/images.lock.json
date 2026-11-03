@@ -1,0 +1,29 @@
+{
+  "status": "registry-resolved; container qualification pending",
+  "resolvedOn": "2026-11-02",
+  "images": {
+    "node": {
+      "reference": "docker.io/library/node:24.15.0-bookworm-slim@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d",
+      "platforms": ["linux/amd64", "linux/arm64", "linux/ppc64le", "linux/s390x"]
+    },
+    "postgres": {
+      "reference": "docker.io/library/postgres:17-bookworm@sha256:839fbb5a4942a7758dd93e18b42ea5649807491a0545b5eeeb8f0b8bb11857a5",
+      "platforms": ["linux/386", "linux/amd64", "linux/arm", "linux/arm64", "linux/ppc64le"]
+    },
+    "redis": {
+      "reference": "docker.io/library/redis:7.4-bookworm@sha256:b6b6e3dc0c0952737748e55d5d885272840c7e42ba41ab1d5489f693419882f5",
+      "platforms": ["linux/386", "linux/amd64", "linux/arm", "linux/arm64", "linux/ppc64le"]
+    },
+    "caddy": {
+      "reference": "docker.io/library/caddy:2-alpine@sha256:e70b164da81ef698b3ad19af799ea6086ce6d9e48ed4079eb9fe26f6fbf14ee5",
+      "platforms": [
+        "linux/amd64",
+        "linux/arm",
+        "linux/arm64",
+        "linux/ppc64le",
+        "linux/riscv64",
+        "linux/s390x"
+      ]
+    }
+  }
+}

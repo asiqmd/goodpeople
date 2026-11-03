@@ -198,7 +198,7 @@ export function StructureEditor({
                 </span>
               )}
             </div>
-            <span className="w-28 pt-2 text-right text-sm tabular-nums text-slate-600">
+            <span className="w-28 pt-2 text-end text-sm tabular-nums text-slate-600">
               {preview && 'values' in preview && preview.values[line.component]
                 ? taka(format, preview.values[line.component]!)
                 : ''}

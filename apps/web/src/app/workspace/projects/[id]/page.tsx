@@ -201,7 +201,7 @@ export default async function ProjectPage({
 
         <div className="-mx-5 overflow-x-auto">
           <table className="min-w-full text-sm">
-            <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+            <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-5 py-2 font-medium">{t('costs.month')}</th>
                 {(
@@ -215,7 +215,7 @@ export default async function ProjectPage({
                     'admin',
                   ] as const
                 ).map((k) => (
-                  <th key={k} className="px-3 py-2 text-right font-medium">
+                  <th key={k} className="px-3 py-2 text-end font-medium">
                     {t(`costs.${k}`)}
                   </th>
                 ))}
@@ -226,19 +226,19 @@ export default async function ProjectPage({
               {report.months.map((m) => (
                 <tr key={m.month}>
                   <td className="px-5 py-2 whitespace-nowrap">{monthName(format, m.month)}</td>
-                  <td className="px-3 py-2 text-right tabular-nums">{format.number(m.people)}</td>
-                  <td className="px-3 py-2 text-right tabular-nums">
+                  <td className="px-3 py-2 text-end tabular-nums">{format.number(m.people)}</td>
+                  <td className="px-3 py-2 text-end tabular-nums">
                     {format.number(Number(m.fte), { maximumFractionDigits: 2 })}
                   </td>
-                  <td className="px-3 py-2 text-right tabular-nums">{taka(format, m.earnings)}</td>
-                  <td className="px-3 py-2 text-right tabular-nums">
+                  <td className="px-3 py-2 text-end tabular-nums">{taka(format, m.earnings)}</td>
+                  <td className="px-3 py-2 text-end tabular-nums">
                     {taka(format, m.employerCost)}
                   </td>
-                  <td className="px-3 py-2 text-right font-medium tabular-nums">
+                  <td className="px-3 py-2 text-end font-medium tabular-nums">
                     {taka(format, m.total)}
                   </td>
-                  <td className="px-3 py-2 text-right tabular-nums">{taka(format, m.programme)}</td>
-                  <td className="px-3 py-2 text-right tabular-nums">{taka(format, m.admin)}</td>
+                  <td className="px-3 py-2 text-end tabular-nums">{taka(format, m.programme)}</td>
+                  <td className="px-3 py-2 text-end tabular-nums">{taka(format, m.admin)}</td>
                   <td className="px-5 py-2 text-xs text-slate-600">
                     {m.people > 0 &&
                       t('costs.basisValue', {
@@ -256,19 +256,19 @@ export default async function ProjectPage({
               <tr>
                 <td className="px-5 py-2">{t('costs.totalRow')}</td>
                 <td colSpan={2} />
-                <td className="px-3 py-2 text-right tabular-nums">
+                <td className="px-3 py-2 text-end tabular-nums">
                   {taka(format, report.total.earnings)}
                 </td>
-                <td className="px-3 py-2 text-right tabular-nums">
+                <td className="px-3 py-2 text-end tabular-nums">
                   {taka(format, report.total.employerCost)}
                 </td>
-                <td className="px-3 py-2 text-right tabular-nums">
+                <td className="px-3 py-2 text-end tabular-nums">
                   {taka(format, report.total.total)}
                 </td>
-                <td className="px-3 py-2 text-right tabular-nums">
+                <td className="px-3 py-2 text-end tabular-nums">
                   {taka(format, report.total.programme)}
                 </td>
-                <td className="px-3 py-2 text-right tabular-nums">
+                <td className="px-3 py-2 text-end tabular-nums">
                   {taka(format, report.total.admin)}
                 </td>
                 <td />
@@ -341,10 +341,10 @@ export default async function ProjectPage({
         ) : (
           <div className="-mx-5 mb-5 overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+              <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="px-5 py-2 font-medium">{t('allocations.person')}</th>
-                  <th className="px-3 py-2 text-right font-medium">{t('allocations.percent')}</th>
+                  <th className="px-3 py-2 text-end font-medium">{t('allocations.percent')}</th>
                   <th className="px-3 py-2 font-medium">{t('allocations.kind')}</th>
                   <th className="px-3 py-2 font-medium">{t('allocations.from')}</th>
                   <th className="px-3 py-2 font-medium">{t('allocations.to')}</th>
@@ -360,7 +360,7 @@ export default async function ProjectPage({
                         {a.employee.employeeCode}
                       </span>
                     </td>
-                    <td className="px-3 py-2 text-right tabular-nums">
+                    <td className="px-3 py-2 text-end tabular-nums">
                       {percent(Number(a.percent))}
                     </td>
                     <td className="px-3 py-2">{t(`allocations.kinds.${a.costKind}`)}</td>
@@ -368,7 +368,7 @@ export default async function ProjectPage({
                     <td className="px-3 py-2 whitespace-nowrap">
                       {a.toOn ? day(format, a.toOn) : t('allocations.untilEnd')}
                     </td>
-                    <td className="px-5 py-2 text-right">
+                    <td className="px-5 py-2 text-end">
                       {(!a.toOn || a.toOn >= today || a.fromOn > today) && (
                         <AllocationActions allocation={a} started={a.fromOn <= today} />
                       )}

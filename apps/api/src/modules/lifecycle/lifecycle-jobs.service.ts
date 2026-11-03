@@ -24,18 +24,17 @@ export class LifecycleJobs implements OnApplicationBootstrap, OnApplicationShutd
   ) {}
 
   onApplicationBootstrap() {
-    if (!this.config.BACKGROUND_JOBS) return;
-    const tick = () => {
-      this.running ??= this.runAll().finally(() => (this.running = undefined));
-    };
-    setTimeout(tick, 10_000).unref();
-    this.timer = setInterval(tick, 60 * 60_000);
-    this.timer.unref();
+    // M2: only the separate, leased worker scheduler owns timers.
+    void this.config.BACKGROUND_JOBS;
   }
 
   async onApplicationShutdown() {
     clearInterval(this.timer);
     await this.running;
+  }
+
+  runTenant() {
+    return this.separations.completeDue();
   }
 
   async runAll(): Promise<void> {

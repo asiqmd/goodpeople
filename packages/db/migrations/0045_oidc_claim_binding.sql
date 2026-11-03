@@ -1,0 +1,1 @@
+ALTER TABLE "identity_connections" ADD COLUMN "provisioning_claim" text DEFAULT 'sub' NOT NULL;

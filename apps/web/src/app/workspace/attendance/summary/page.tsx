@@ -12,8 +12,7 @@ import { treeOrder } from '@/lib/org';
 export default async function AttendanceSummaryPage({
   searchParams,
 }: PageProps<'/workspace/attendance/summary'>) {
-  if (!can((await currentTenantUser())?.role, 'attendance.manage'))
-    redirect('/workspace/attendance');
+  if (!can(await currentTenantUser(), 'attendance.manage')) redirect('/workspace/attendance');
   const t = await getTranslations('attendance');
   const format = await getFormatter();
   const sp = await searchParams;
@@ -78,24 +77,24 @@ export default async function AttendanceSummaryPage({
       <Card>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="text-left text-xs text-slate-500">
+            <thead className="text-start text-xs text-slate-500">
               <tr>
-                <th className="py-2 pr-3 font-medium">{t('team.employee')}</th>
-                <th className="py-2 pr-3 text-right font-medium">{t('totals.present')}</th>
-                <th className="py-2 pr-3 text-right font-medium">{t('totals.halfDay')}</th>
-                <th className="py-2 pr-3 text-right font-medium">{t('totals.absent')}</th>
-                <th className="py-2 pr-3 text-right font-medium">{t('totals.onLeave')}</th>
-                <th className="py-2 pr-3 text-right font-medium">{t('totals.missingPunch')}</th>
-                <th className="py-2 pr-3 text-right font-medium">{t('totals.late')}</th>
-                <th className="py-2 pr-3 text-right font-medium">{t('totals.worked')}</th>
-                <th className="py-2 pr-3 text-right font-medium">{t('totals.overtime')}</th>
+                <th className="py-2 pe-3 font-medium">{t('team.employee')}</th>
+                <th className="py-2 pe-3 text-end font-medium">{t('totals.present')}</th>
+                <th className="py-2 pe-3 text-end font-medium">{t('totals.halfDay')}</th>
+                <th className="py-2 pe-3 text-end font-medium">{t('totals.absent')}</th>
+                <th className="py-2 pe-3 text-end font-medium">{t('totals.onLeave')}</th>
+                <th className="py-2 pe-3 text-end font-medium">{t('totals.missingPunch')}</th>
+                <th className="py-2 pe-3 text-end font-medium">{t('totals.late')}</th>
+                <th className="py-2 pe-3 text-end font-medium">{t('totals.worked')}</th>
+                <th className="py-2 pe-3 text-end font-medium">{t('totals.overtime')}</th>
                 <th className="py-2 font-medium">{t('summary.limit')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 tabular-nums">
               {summary.rows.map(({ employee, totals, weeksOverLimit }) => (
                 <tr key={employee.id}>
-                  <td className="py-2 pr-3">
+                  <td className="py-2 pe-3">
                     <Link
                       href={`/workspace/employees/${employee.id}?tab=attendance`}
                       className="font-medium hover:underline"
@@ -106,14 +105,14 @@ export default async function AttendanceSummaryPage({
                       {employee.employeeCode}
                     </span>
                   </td>
-                  <td className="py-2 pr-3 text-right">{n(totals.present)}</td>
-                  <td className="py-2 pr-3 text-right">{n(totals.halfDay)}</td>
-                  <td className="py-2 pr-3 text-right">{n(totals.absent)}</td>
-                  <td className="py-2 pr-3 text-right">{n(totals.onLeave)}</td>
-                  <td className="py-2 pr-3 text-right">{n(totals.missingPunch)}</td>
-                  <td className="py-2 pr-3 text-right">{n(totals.late)}</td>
-                  <td className="py-2 pr-3 text-right">{hm(format, totals.workedMinutes)}</td>
-                  <td className="py-2 pr-3 text-right">{hm(format, totals.overtimeMinutes)}</td>
+                  <td className="py-2 pe-3 text-end">{n(totals.present)}</td>
+                  <td className="py-2 pe-3 text-end">{n(totals.halfDay)}</td>
+                  <td className="py-2 pe-3 text-end">{n(totals.absent)}</td>
+                  <td className="py-2 pe-3 text-end">{n(totals.onLeave)}</td>
+                  <td className="py-2 pe-3 text-end">{n(totals.missingPunch)}</td>
+                  <td className="py-2 pe-3 text-end">{n(totals.late)}</td>
+                  <td className="py-2 pe-3 text-end">{hm(format, totals.workedMinutes)}</td>
+                  <td className="py-2 pe-3 text-end">{hm(format, totals.overtimeMinutes)}</td>
                   <td className="py-2">
                     {weeksOverLimit > 0 && (
                       <Badge tone="red">{t('summary.weeksOver', { count: weeksOverLimit })}</Badge>

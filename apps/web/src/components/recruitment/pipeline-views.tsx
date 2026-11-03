@@ -70,7 +70,7 @@ export async function EventsTimeline({ events }: { events: ApplicationEventView[
     return t(e.kind === 'note' ? 'note' : 'other');
   };
   return (
-    <ol className="space-y-3 border-l border-slate-200 pl-4 text-sm">
+    <ol className="space-y-3 border-s border-slate-200 ps-4 text-sm">
       {events.map((e) => (
         <li key={e.id} className="relative">
           <span className="absolute -left-[1.3rem] top-1.5 size-2 rounded-full bg-slate-300" />

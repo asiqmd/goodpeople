@@ -41,9 +41,9 @@ export default async function PayrollRunPage({
   params,
   searchParams,
 }: PageProps<'/workspace/payroll/runs/[id]'>) {
-  const role = (await currentTenantUser())?.role;
-  if (!can(role, 'payroll.view')) redirect('/workspace');
-  const canManage = can(role, 'payroll.manage');
+  const accessPrincipal = await currentTenantUser();
+  if (!can(accessPrincipal, 'payroll.view')) redirect('/workspace');
+  const canManage = can(accessPrincipal, 'payroll.manage');
   const { id } = await params;
   const query = await searchParams;
   const show = RUN_ITEM_FILTERS.includes(query.show as never)
@@ -306,7 +306,7 @@ async function ItemRow({
             <span className="block">{t('otHours', { hours: format.number(v.otHours) })}</span>
           )}
         </span>
-        <span className="text-right font-semibold tabular-nums">{taka(format, item.net)}</span>
+        <span className="text-end font-semibold tabular-nums">{taka(format, item.net)}</span>
         <span className="flex flex-wrap justify-end gap-1.5">
           {regular && item.variance && item.variance !== 'same' && (
             <Badge tone={item.flagged ? 'amber' : 'slate'}>
@@ -349,7 +349,7 @@ async function ItemRow({
           <div className="grid gap-6 md:grid-cols-2">
             {(['earning', 'deduction'] as const).map((kind) => (
               <table key={kind} className="w-full self-start text-sm">
-                <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+                <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
                   <tr>
                     <th className="py-1 font-medium">{t(`totals.${kind}s`)}</th>
                     <th />
@@ -361,15 +361,15 @@ async function ItemRow({
                       <td className="py-1 text-slate-700">
                         {name(l)}
                         {l.code in item.inputs && (
-                          <span className="ml-1 text-xs text-slate-400">({t('entered')})</span>
+                          <span className="ms-1 text-xs text-slate-400">({t('entered')})</span>
                         )}
                       </td>
-                      <td className="py-1 text-right tabular-nums">{taka(format, l.amount)}</td>
+                      <td className="py-1 text-end tabular-nums">{taka(format, l.amount)}</td>
                     </tr>
                   ))}
                   <tr className="font-semibold">
                     <td className="py-1.5">{t(`totals.${kind}s`)}</td>
-                    <td className="py-1.5 text-right tabular-nums">
+                    <td className="py-1.5 text-end tabular-nums">
                       {taka(format, kind === 'earning' ? item.earnings : item.deductions)}
                     </td>
                   </tr>
@@ -509,11 +509,11 @@ async function Payments({ runId, canManage }: { runId: string; canManage: boolea
     >
       <div className="-mx-5 overflow-x-auto">
         <table className="min-w-full text-sm">
-          <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+          <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
             <tr>
               <th className="px-5 py-2 font-medium">{t('channel')}</th>
-              <th className="px-5 py-2 text-right font-medium">{t('people')}</th>
-              <th className="px-5 py-2 text-right font-medium">{t('amount')}</th>
+              <th className="px-5 py-2 text-end font-medium">{t('people')}</th>
+              <th className="px-5 py-2 text-end font-medium">{t('amount')}</th>
               <th className="px-5 py-2 font-medium">{t('file')}</th>
             </tr>
           </thead>
@@ -523,8 +523,8 @@ async function Payments({ runId, canManage }: { runId: string; canManage: boolea
                 <td className="px-5 py-2">
                   {t.has(`channels.${c.channel}`) ? t(`channels.${c.channel}`) : c.channel}
                 </td>
-                <td className="px-5 py-2 text-right tabular-nums">{format.number(c.people)}</td>
-                <td className="px-5 py-2 text-right tabular-nums">{taka(format, c.amount)}</td>
+                <td className="px-5 py-2 text-end tabular-nums">{format.number(c.people)}</td>
+                <td className="px-5 py-2 text-end tabular-nums">{taka(format, c.amount)}</td>
                 <td className="px-5 py-2">
                   {c.channel === 'cash' ? (
                     <span className="flex gap-3">
@@ -554,8 +554,8 @@ async function Payments({ runId, canManage }: { runId: string; canManage: boolea
             ))}
             <tr className="font-semibold">
               <td className="px-5 py-2">{t('total')}</td>
-              <td className="px-5 py-2 text-right tabular-nums">{format.number(view.people)}</td>
-              <td className="px-5 py-2 text-right tabular-nums">{taka(format, view.total)}</td>
+              <td className="px-5 py-2 text-end tabular-nums">{format.number(view.people)}</td>
+              <td className="px-5 py-2 text-end tabular-nums">{taka(format, view.total)}</td>
               <td />
             </tr>
           </tbody>
@@ -634,8 +634,8 @@ async function PaymentChecks({ runId, canManage }: { runId: string; canManage: b
                         </span>
                       </td>
                       <td className="py-1 text-slate-600">{r.account}</td>
-                      <td className="py-1 text-right tabular-nums">{taka(format, r.amount)}</td>
-                      <td className="py-1 pl-3 text-slate-600">{r.reason}</td>
+                      <td className="py-1 text-end tabular-nums">{taka(format, r.amount)}</td>
+                      <td className="py-1 ps-3 text-slate-600">{r.reason}</td>
                     </tr>
                   ))}
                 </tbody>

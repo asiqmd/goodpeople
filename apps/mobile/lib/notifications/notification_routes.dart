@@ -6,6 +6,9 @@ import '../attendance/attendance_screen.dart';
 import '../documents/documents_screen.dart';
 import '../interviews/interviews_screen.dart';
 import '../leave/leave_screen.dart';
+import '../learning/learning_screen.dart';
+import '../employee_services/engagement_screen.dart';
+import '../employee_services/employee_services_screen.dart';
 import '../payslips/my_pay_screen.dart';
 import '../performance/goals_screen.dart';
 import '../performance/peer_request_screen.dart';
@@ -51,6 +54,19 @@ Route<void>? notificationRoute(NotificationEvent event, String? link) =>
       NotificationEvent.recruitmentInterview => InterviewsScreen.route(),
       NotificationEvent.performanceTask ||
       NotificationEvent.performanceReleased => _performanceRoute(link ?? ''),
+      NotificationEvent.learningNotice => LearningScreen.route(),
+      NotificationEvent.engagementNotice => EngagementScreen.route(
+        tab: (link ?? '').contains('/surveys') ? 1 : 0,
+      ),
+      NotificationEvent.servicesNotice => switch (Uri.tryParse(link ?? '')
+          ?.pathSegments) {
+        ['workspace', 'employee-services', 'requests', final id]
+            when id.isNotEmpty =>
+          HrRequestScreen.route(id),
+        ['workspace', 'employee-services', 'assets', ...] =>
+          EmployeeServicesScreen.route(tab: 1),
+        _ => EmployeeServicesScreen.route(),
+      },
       NotificationEvent.probationEnding || NotificationEvent.unknown => null,
     };
 

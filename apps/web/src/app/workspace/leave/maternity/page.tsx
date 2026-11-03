@@ -55,14 +55,14 @@ export default async function MaternityCasesPage({
         ) : (
           <div className="-mx-5 overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+              <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="px-5 py-2 font-medium">{t('columns.person')}</th>
                   <th className="px-5 py-2 font-medium">{t('columns.expected')}</th>
                   <th className="px-5 py-2 font-medium">{t('columns.option')}</th>
                   <th className="px-5 py-2 font-medium">{t('columns.status')}</th>
                   <th className="px-5 py-2 font-medium">{t('columns.next')}</th>
-                  <th className="px-5 py-2 text-right font-medium">{t('columns.total')}</th>
+                  <th className="px-5 py-2 text-end font-medium">{t('columns.total')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -101,7 +101,7 @@ export default async function MaternityCasesPage({
                     <td className="px-5 py-2.5 text-slate-700">
                       <NextPart next={c.next} />
                     </td>
-                    <td className="px-5 py-2.5 text-right tabular-nums">
+                    <td className="px-5 py-2.5 text-end tabular-nums">
                       {c.total ? taka(format, c.total) : '—'}
                     </td>
                   </tr>

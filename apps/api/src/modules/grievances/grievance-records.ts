@@ -1,3 +1,5 @@
+import type { AuthUser } from '../../common/auth-user.js';
+import { userCan } from '../../common/roles.js';
 import { BD_RULES, ruleOn } from '@gp/country-packs';
 import {
   CIPHER_FIELDS,
@@ -11,22 +13,20 @@ import {
 } from '@gp/db';
 import {
   addDays,
-  can,
   daysInclusive,
   GRIEVANCE_DONE_STATUSES,
   todayIn,
   type GrievanceCategory,
   type GrievanceDeadline,
   type GrievanceStatus,
-  type UserLanguage,
-  type TenantRole,
+
 } from '@gp/shared';
 import { and, eq, gte, isNull, lte, or } from 'drizzle-orm';
 
 type GrievanceRow = typeof grievances.$inferSelect;
 
 /** Category names for notifications, which never carry what the worker wrote. */
-export const CATEGORY_LABELS: Record<GrievanceCategory, Record<UserLanguage, string>> = {
+export const CATEGORY_LABELS: Record<GrievanceCategory, { en: string; bn: string; ar?: string }> = {
   wages: { en: 'wages and pay', bn: 'মজুরি ও বেতন' },
   hours: { en: 'working hours and overtime', bn: 'কর্মঘণ্টা ও ওভারটাইম' },
   leave: { en: 'leave and holidays', bn: 'ছুটি' },
@@ -106,19 +106,20 @@ export async function complaintCommitteeLogins(tx: Tx, today = todayIn()): Promi
  * (users.manage), who alone forms the committee, never HR, who could otherwise empty it to
  * read them, nor Good People's support login.
  */
-const readsWithoutCommittee = (role: TenantRole) => role !== 'support' && can(role, 'users.manage');
+const readsWithoutCommittee = (user: AuthUser) =>
+  user.role !== 'support' && userCan(user, 'users.manage');
 
 /**
  * What a login may open: every grievance but harassment when it handles grievances, and
  * harassment when it sits on the complaint committee (or is the workspace admin where there
  * is no committee to send them to).
  */
-export async function grievanceAccessOf(tx: Tx, user: { id: string; role: TenantRole }) {
+export async function grievanceAccessOf(tx: Tx, user: AuthUser) {
   const members = await complaintCommitteeLogins(tx);
   return {
-    all: can(user.role, 'grievances.manage'),
+    all: userCan(user, 'grievances.manage'),
     committeeMissing: members.length === 0,
     canSeeRestricted:
-      members.includes(user.id) || (members.length === 0 && readsWithoutCommittee(user.role)),
+      members.includes(user.id) || (members.length === 0 && readsWithoutCommittee(user)),
   };
 }

@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { employees, hashPassword, tenantUsers, userEntityScopes, type Tx } from '@gp/db';
+import { employees, hashPassword, scimUsers, tenantUsers, userEntityScopes, type Tx } from '@gp/db';
 import type {
   TenantRole,
   UserCreateInput,
@@ -99,6 +99,29 @@ export class UsersService {
     const disabling = input.disabled === true;
     const view = await this.tenantDb.run(async (tx) => {
       const before = await this.row(tx, id);
+      if (before.emergencyLocal && (disabling || (input.role && input.role !== 'tenant_admin')))
+        throw forbidden(
+          'protected_emergency',
+          'Remove emergency access in Identity settings before changing this administrator',
+        );
+      const managed = await tx
+        .select({ id: scimUsers.id })
+        .from(scimUsers)
+        .where(eq(scimUsers.userId, id))
+        .limit(1);
+      if (
+        managed.length &&
+        ['name', 'email', 'phone'].some((key) => input[key as keyof typeof input] !== undefined)
+      )
+        throw forbidden(
+          'managed_attributes',
+          'The identity provider owns this login’s name and contact details',
+        );
+      if (managed.length && input.role && input.role !== 'employee')
+        throw forbidden(
+          'managed_login',
+          'Provisioned identities use explicit custom grants, not privileged templates',
+        );
       if (id === actor.id && input.role && input.role !== before.role) {
         throw forbidden('own_role', 'You cannot change your own role');
       }
@@ -131,7 +154,14 @@ export class UsersService {
             : null;
       await tx
         .update(tenantUsers)
-        .set({ name: input.name ?? before.name, email, phone, role, disabledAt })
+        .set({
+          name: input.name ?? before.name,
+          email,
+          phone,
+          role,
+          disabledAt,
+          ...(role === 'tenant_admin' ? { scopeMode: 'all' as const } : {}),
+        })
         .where(eq(tenantUsers.id, id));
       // A workspace admin sees every company, so a limit set for an earlier role goes.
       if (role === 'tenant_admin') {
@@ -191,6 +221,8 @@ export class UsersService {
       throw forbidden('own_mfa', 'Turn your own two-step sign-in off from your account');
     }
     const user = await this.tenantDb.run((tx) => this.row(tx, id));
+    if (user.emergencyLocal)
+      throw forbidden('protected_emergency', 'Remove emergency access before resetting MFA');
     await this.mfa.disable({ kind: 'tenant', id, tenantId: user.tenantId });
     await this.auth.revokeAll('tenant', id);
     return this.tenantDb.run(async (tx) => {

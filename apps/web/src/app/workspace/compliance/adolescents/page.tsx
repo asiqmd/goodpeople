@@ -80,20 +80,20 @@ export default async function ComplianceAdolescentsPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="text-left text-xs text-slate-500">
+              <thead className="text-start text-xs text-slate-500">
                 <tr>
-                  <th className="py-2 pr-3 font-medium">{t('adolescents.employee')}</th>
-                  <th className="py-2 pr-3 font-medium">{t('adolescents.age')}</th>
-                  <th className="py-2 pr-3 font-medium">{t('adolescents.workplace')}</th>
-                  <th className="py-2 pr-3 font-medium">{t('adolescents.certificateColumn')}</th>
-                  <th className="py-2 pr-3 text-right font-medium">{t('adolescents.weekHours')}</th>
+                  <th className="py-2 pe-3 font-medium">{t('adolescents.employee')}</th>
+                  <th className="py-2 pe-3 font-medium">{t('adolescents.age')}</th>
+                  <th className="py-2 pe-3 font-medium">{t('adolescents.workplace')}</th>
+                  <th className="py-2 pe-3 font-medium">{t('adolescents.certificateColumn')}</th>
+                  <th className="py-2 pe-3 text-end font-medium">{t('adolescents.weekHours')}</th>
                   <th className="py-2 font-medium">{t('adolescents.alerts')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 align-top">
                 {view.rows.map((r) => (
                   <tr key={r.employee.id}>
-                    <td className="py-2 pr-3">
+                    <td className="py-2 pe-3">
                       <Link
                         href={`/workspace/employees/${r.employee.id}`}
                         className="font-medium hover:underline"
@@ -104,19 +104,19 @@ export default async function ComplianceAdolescentsPage() {
                         {r.employee.employeeCode}
                       </span>
                     </td>
-                    <td className="py-2 pr-3">
+                    <td className="py-2 pe-3">
                       {t('adolescents.ageValue', { age: r.age })}
                       <span className="block text-xs text-slate-500">
                         {t('adolescents.adultOn', { date: day(format, r.adultOn) })}
                       </span>
                     </td>
-                    <td className="py-2 pr-3">
+                    <td className="py-2 pe-3">
                       {r.location ?? '—'}
                       <span className="block text-xs text-slate-500">
                         {t(`adolescents.places.${r.workplace}`)}
                       </span>
                     </td>
-                    <td className="py-2 pr-3">
+                    <td className="py-2 pe-3">
                       <Badge tone={CERTIFICATE_TONE[r.certificate.state]}>
                         {t(`adolescents.states.${r.certificate.state}`)}
                       </Badge>
@@ -136,7 +136,7 @@ export default async function ComplianceAdolescentsPage() {
                           : t('adolescents.upload')}
                       </Link>
                     </td>
-                    <td className="py-2 pr-3 text-right tabular-nums">
+                    <td className="py-2 pe-3 text-end tabular-nums">
                       <span
                         className={
                           r.weekWorkedMinutes > r.weekLimitMinutes

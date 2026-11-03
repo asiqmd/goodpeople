@@ -12,9 +12,9 @@ tests pass and it has been walked through in the browser.
 | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------ |
 | **M1 Recruitment**                    | Openings approved against a budget, a careers page per workspace with Google-ready job posts, applications with CVs and consent, a pipeline by stage, interviews with calendar invites and scorecards, offers accepted online, hiring into the employee record, candidate data kept only as long as allowed | Phase 3    | Done   |
 | **M2 Performance**                    | Goals and KPIs, review cycles (self, manager, peers), calibration, improvement plans, outcomes that feed increments and promotions                                                                                                                                                                          | M1         | Done   |
-| **M3 Compensation planning**          | An increment matrix by rating and position in range, budgets per company and unit, managers' proposals, approval, effective-dated pay changes into payroll; the RMG minimum-wage annual increment                                                                                                           | M2         |        |
-| **M4 Learning**                       | Courses and sessions, attendance, training required by designation (fire safety, health and safety, anti-harassment), certificates with expiry, fire drills, training in the buyer-audit report                                                                                                             | Phase 3    |        |
-| **M5 Engagement & employee services** | Surveys and eNPS with anonymity thresholds, recognition, announcements and policy acknowledgements, an HR helpdesk for employees, assets issued and returned                                                                                                                                                | Phase 3    |        |
+| **M3 Compensation planning**          | An increment matrix by rating and position in range, budgets per company and unit, managers' proposals, approval, effective-dated pay changes into payroll; the RMG minimum-wage annual increment                                                                                                           | M2         | Done   |
+| **M4 Learning**                       | Courses and sessions, attendance, training required by designation (fire safety, health and safety, anti-harassment), certificates with expiry, fire drills, training in the buyer-audit report                                                                                                             | Phase 3    | Done   |
+| **M5 Engagement & employee services** | Surveys and eNPS with anonymity thresholds, recognition, announcements and policy acknowledgements, an HR helpdesk for employees, assets issued and returned                                                                                                                                                | Phase 3    | Done   |
 
 **Exit test:** a company publishes a job on its careers page, which Google can index; hires a
 candidate who applied there through interviews and an offer accepted online, and that person
@@ -342,15 +342,275 @@ the Business plan and up (`performance`).
 - **Counsel:** confirms the improvement plan's legal note (s.23–24, s.26) before HR relies on
   it.
 
-## Later milestones (outline; detailed when each starts)
+## M3: Compensation planning
 
-- **M3 Compensation planning:** increments by rating and position in the grade's range, budgets,
-  managers' proposals, approval and the pay changes in payroll; the RMG wage board's annual
-  increment.
-- **M4 Learning:** courses, sessions and attendance; training required by designation; fire
-  drills; certificates with expiry; the buyer-audit report's training section.
-- **M5 Engagement & employee services:** surveys and eNPS, recognition, announcements, policy
-  acknowledgements, an HR helpdesk for employees, and assets.
+One company and effective date per round. HR sets a monthly gross increment budget for the
+company and optional unit limits, grade ranges (monthly gross), and a 5 × 3 matrix of suggested
+gross increment percentages. Position in range is below midpoint, midpoint to maximum, or
+above maximum. Ranges and matrix are copied into the round, so later policy changes do not
+rewrite a decision. Suggestions are guidance; a different proposal requires a reason.
+
+Only released reviews with final ratings enter a performance round. Current active employees
+with approved pay and a job in the company on the effective date are included; missing pay,
+pending/future changes and missing ranges are reported explicitly. A review's recommendation
+is shown, never treated as an automatic entitlement. An RMG annual round may run without a
+review cycle and includes only wage-board workers with twelve months' service. Its minimum
+basic increment comes from an effective-dated country-pack rule, independent of ratings and
+range ceilings; a lawyer must confirm the rule and eligibility before production reliance.
+
+Amounts and baseline pay snapshots are encrypted. Managers see only their direct reports'
+lines, cannot propose their own pay, and submit each proposal with a reason. HR sees the
+company within their login's scope, can revise proposals with a reason, and submits the whole
+round to payroll only once every line is submitted and all budgets are met. Zero increments
+are explicit submitted decisions. A cancelled round never changes pay.
+
+Sending to payroll is atomic and creates ordinary effective-dated pay proposals. It always
+requires a second person's payroll approval, even when one-person payroll is enabled. No
+manager proposal changes pay by itself. The source pay and job must still match the snapshot;
+otherwise the round must be cancelled and rebuilt. Payroll's existing checks enforce active
+structures, minimum wages, one pending change and no backdating. Payroll approval, rejection
+or withdrawal is shown on each line; rejected lines are replanned in a new round. Promotions
+remain separate effective-dated job changes; this round changes pay only.
+
+### Done when
+
+- Matrix boundaries, decimal rounding, unit/company budgets and the independent RMG floor
+  have unit tests.
+- API tests cover released-only input, scoped HR and managers, encrypted snapshots, reasons,
+  submission, stale/concurrent writes, budget refusal, atomic export, forced maker-checker,
+  repeat export, cancellations and approved pay reaching payroll history.
+- HR and managers complete the workflow in English and Bangla in the browser. Planning is a
+  web workflow; employees continue to see approved pay and payslips in web and mobile.
+- A help article, ADR, seed round and handover describe the shipped workflow and its limits.
+
+### Checked
+
+- Full Node suite: API 670 tests in 85 files, plus the added custom-structure regression
+  (671 API tests in the final source); shared 121, country pack 54, Edge Agent 70,
+  web 16. The API suite also passed shuffled order; compensation, payroll and isolation
+  have additional shuffled checks.
+- Flutter analyze is clean and all 295 tests pass. Planning remains on the web; existing
+  payroll approval cards and employee pay continue to use the same mobile contracts.
+- In the browser: HR created a round with ranges and a matrix, with the over-budget total
+  visible. Shirin saw only her three direct reports, saved and submitted proposals, and
+  could no longer edit them. English and Bangla labels, names, currency and digits were
+  checked. Payroll approval, budget refusal, rejection, concurrency and stale snapshots are
+  covered end to end at the API and payroll engine. A smoke test against the running local
+  API refused and cancelled the over-budget walkthrough, then submitted the seeded round
+  and approved three pay changes as the seeded finance officer; one zero-increment decision
+  created no pay record. The approved changes start on 1 December 2026.
+- Dev migrations applied without resetting the existing database; the seed adds a draft demo
+  round without creating pay proposals. Re-running the seed leaves it alone.
+
+**Carried from M3:**
+
+- The company view loads the entire round; pagination, bulk manager submission and measuring
+  very large increment rounds remain for later.
+- Promotions are separate effective-dated job changes. A review recommendation does not
+  automatically promote anyone.
+- RMG eligibility and the increment rule require counsel confirmation. Prior increments
+  outside this workflow are not automatically classified.
+- Once exported, a round is fixed. Rejected or withdrawn pay changes are replanned in a new
+  round; there is no partial reopening of the old one.
+
+## M4: Learning
+
+Learning comes with `lms`. HR manages a bilingual catalogue of courses (fire safety, health
+and safety, anti-harassment, or other), scheduled sessions for one company/site, enrolment,
+attendance and completion. An employee sees sessions offered to their company, enrols or
+withdraws before a session starts, and reads their own training record and certificates on
+web and mobile. Managers see their direct reports' training coverage. HR officers and above
+have `learning.manage`, limited to their companies. Nobody outside those relationships sees
+a person's learning record or downloads their certificate.
+
+HR records attendance for every enrolled person after the session ends. Completion is one
+atomic action: attended people receive a numbered completion record, absent people do not.
+Concurrent enrolments cannot exceed capacity. Completed/cancelled sessions are fixed; wrong
+certificates are revoked with a reason, retained on record, and never count as current
+training. Certificates snapshot the course name, trainer, completion date and expiry policy.
+A PDF in English or Bangla is available without writing on a GET. It attests to attendance
+recorded by the employer; it does not imply external accreditation. Course renewal periods
+are employer policy, not inferred statutory requirements. Archived courses retain history.
+
+An effective-dated company/designation policy requires a course, with a grace period from
+the later of the policy start and the start of the current continuous designation. Transfers
+and new designations therefore change coverage; unrelated changes in the same designation
+do not restart the grace period. An unrevoked completion on or before the report date counts
+through its expiry date. Missing/expired certificates show as due or overdue. Read endpoints
+compute this without writing. A daily job sends deduplicated session and expiry reminders.
+
+Fire drills record the company/site, held date, participants, evacuation time, conductor,
+findings, corrective actions and the next due date. Records cannot be future-dated and are
+voided with a reason rather than deleted. Labour Act s.62(8) requires drills at least every
+six months for establishments with 50 or more workers/employees (official consolidated Act,
+checked 1 November 2026). The company sets its next date to reflect its applicable rules,
+fire licence and buyer conditions; the app makes no automatic legal-compliance declaration.
+
+The buyer-audit JSON, web page and EN/BN PDF gain training coverage as of the period end,
+completions in the period and site drill records. Learning data is included only with `lms`,
+and company-limited logins cannot obtain other companies' learning evidence through this
+report. Existing report sections also respect that company boundary.
+
+### Done when
+
+- Unit tests cover expiry boundaries/month ends, grace periods and continuous designations.
+- API tests cover tenancy, company scopes and relationship access, capacity/concurrent
+  enrolment, self withdrawal, complete/absent attendance, atomic completion, future dates,
+  immutable sessions, revoked/expired certificates, PDF access, requirements, reminders and
+  training/drills in the buyer-audit report.
+- HR and employees use Learning in English/Bangla; mobile self-service has widget tests.
+- Migration/RLS, demo data, help, ADR, README, handover and the go-live checklist are updated.
+
+### Checked
+
+- Migration 0038 and forced RLS migration 0039 applied to the existing local database without
+  resetting it. An add-only seed provides three courses, current/expired completion records,
+  an upcoming enrolment, required-training policies and a fire drill.
+- API coverage includes tenant/company boundaries, direct-report access, concurrent capacity
+  and completion, attendance/absence, future-date refusal, cancellation, expiry, revocation,
+  PDF access, policy overlap/retirement, reminders and training/drills in buyer-audit JSON/PDF.
+- Mobile widget checks cover self enrolment/withdrawal, read-only access, capacity refusal,
+  Bangla downloads through the file opener and notification routing.
+- Full Node suite: API 682 tests in 87 files, shared 125, country pack 54, Edge Agent 70,
+  web 16. The complete API suite also passes shuffled order (seed 41); 22 focused learning,
+  audit and tenant-isolation checks pass with seed 17 after the demo-policy correction.
+- Flutter: 303 tests pass; analyze is clean. HTTP client checks cover authentication,
+  enrolment/withdrawal with empty responses, capacity refusals, malformed responses and
+  binary certificate downloads in the selected language.
+- Lint, typecheck and the production build pass. Drizzle reports no schema drift.
+- Browser walkthrough, in English and Bangla: HR created a bilingual course, scheduled
+  historical/future sessions, enrolled Rahima, completed attendance and downloaded her
+  Bangla PDF. Rahima enrolled/withdrew herself; seat counts changed correctly and the roster
+  stayed private. Shirin saw coverage for her four direct reports. HR recorded a drill and
+  read the training/drill section in the buyer report and downloaded its Bangla PDF.
+- Browser checks caught and fixed the Learning navigation translation and a demo-policy
+  mismatch: Rahima's designation is Senior Sewing Operator. The seed now requires the
+  three courses for both Sewing Operator designations; her record shows current and overdue
+  training. Existing local demo policies were added through the API without resetting data.
+
+**Carried from M4:**
+
+- Trainer-led courses only: no SCORM, hosted videos, quizzes or external-provider imports.
+- HR authoring and manager coverage are web workflows; mobile provides employee self-service.
+- Course fields and completed attendance are fixed. Corrections use archive/new courses,
+  reasoned revocation and a new session/attendance record.
+- HR lists are unpaged. PDFs are employer attendance records, not externally accredited or
+  cryptographically signed qualifications; signed registers/notices remain with the employer.
+
+## M5: Engagement and employee services
+
+These services use the existing `core_hr` entitlement. `engagement.manage` lets HR officers
+and above publish surveys, announcements and policy notices and moderate recognition within
+their company scopes. `employee_services.manage` lets those HR roles handle private employee
+requests and inventory. Platform support sessions do not receive the latter permission.
+Employees use both areas on web and mobile. HR authoring, reports and inventory are web
+workflows. Reads compute views without writing; all tenant tables use forced RLS.
+
+### Surveys and eNPS
+
+HR drafts a bilingual anonymous survey for one company, with one eNPS question (0–10) and
+up to ten required pulse questions (1–5). Publishing freezes the active employee audience,
+questions, closing time and reporting threshold (at least five). A cohort smaller than the
+threshold cannot be published. Only the person can respond, once, before closing; neither
+HR proxy responses nor response edits are supported. A locked aggregate is updated in the
+same transaction as a participation marker. Individual answers, answer timestamps and an
+identity-to-answer relation are never stored. Audit and notification payloads omit scores.
+
+Only authorized HR sees results, after closing and after the threshold is met. Otherwise
+counts and distributions are suppressed. Results are a single fixed cohort: eNPS, promoter/
+passive/detractor counts and each question's mean/distribution. There are no department,
+demographic, date-range or individual drill-downs, participant lists or raw-response exports.
+This protects reporting against small-group comparisons; it is not a promise of anonymity
+against a database administrator observing live transactions. People without logins remain
+in the frozen audience but cannot respond by proxy. HR must provide them a suitable separate
+channel; the app never fabricates their answers.
+
+### Recognition and announcements
+
+An active employee can recognize another active colleague in their current company with a
+value and message. The form clearly says it is visible to that company. The sender can
+withdraw their own recognition; scoped HR can moderate it, with a reason. Hidden messages
+are retained but excluded from the feed. Self-recognition and cross-company posts are refused.
+
+HR writes bilingual plain-text announcements for one company. Publishing fixes the wording;
+corrections use a new announcement and reasoned retirement of the old one. General news is
+visible to current company employees. Policy notices freeze an employee audience and due date
+at publication; new joiners require a new notice. Each assigned person acknowledges only their
+own receipt, once, including after the due date while the notice remains live. HR sees the
+assigned/acknowledged/outstanding register within its company scope. This records reading,
+not agreement to changed employment terms or an electronic signature. Retired/expired notices
+retain their receipt history and cannot acquire new acknowledgements.
+
+### Employee HR requests
+
+An active employee opens a private request in letters, pay, leave, benefits or other, with
+normal/urgent priority. It is separate from Good People platform support and from the existing
+grievance/harassment process. Only the requester and scoped HR service handlers read it.
+Managers and other employees cannot find it. Subject, original text and replies are encrypted;
+notifications and audit logs carry no request content. HR may assign only an active HR handler
+who can access the request's original company. Internal notes are HR-only, create no employee
+notification and do not expose their text or activity through the employee view.
+
+HR moves open requests to in progress or resolved with a public explanation. The requester
+can close a resolved request, or reopen a resolved/closed one with a reason. Closed requests
+refuse further replies until reopened. Company transfers do not move an existing private
+request to a different HR team. No SLA or legal deadline is inferred for these ordinary
+requests; statutory grievances keep their existing dedicated workflow.
+
+### Assets
+
+Scoped HR registers company inventory with a unique tag, bilingual name, kind and optional
+serial number. A locked asset can have only one outstanding issue. HR records issue/return
+dates and conditions, with an optional due date. Future dates, return before issue, issue
+before prior return and issue to somebody outside the company on the issue date are refused.
+The employee sees their own issue history and can acknowledge an outstanding issue once.
+Only HR records returns or retires an unissued asset, with a reason. History is retained;
+there is no automatic salary deduction or change to payroll.
+
+### Notifications and verification
+
+Publishing sends generic links to the eligible recipients. Public HR replies/status changes
+and asset issues notify the employee without sensitive text. Daily jobs deduplicate survey
+closing reminders (to the whole cohort, so delivery logs reveal no response status),
+outstanding policy acknowledgements and overdue assets; read-only or
+suspended workspaces do not run these jobs.
+
+**Done when:** survey anonymity and concurrent single submission, company/tenant boundaries,
+read-only access, recognition moderation, fixed policy wording/receipts, private/internal
+request access and assignment, issue/return concurrency and notifications have API tests.
+Web and mobile employee flows work in English and Bangla. Migrations/RLS, seed data, help,
+ADR, README, handover and go-live notes describe the shipped scope and verification.
+
+### Checked
+
+- Migrations 0040 (nine tenant tables), 0041 (forced RLS) and 0042 (notification events)
+  applied to the existing local database without resetting it. The add-only seed provides
+  news, a policy notice, an unanswered survey, recognition, an encrypted HR request and
+  issued/available inventory; it invents no anonymous responses.
+- Full Node suite: API 695 tests in 88 files, shared 128, country pack 54, Edge Agent 70,
+  web 16. The complete API suite also passes shuffled order (seed 41). Focused service and
+  tenant-isolation tests also pass shuffled (20 checks, seed 17), covering thresholds,
+  concurrency, frozen audiences, private/internal
+  access, transfers, handler scopes, historical asset dates and retained history.
+- Flutter: 316 tests pass; analyze is clean. New widget/client tests cover Bangla policy
+  receipts, complete anonymous responses without employee identifiers, recognition, private
+  replies and closure/reopening, asset receipts, authentication, notification routes,
+  read-only access, malformed responses and preserving entered data on refusals.
+- Lint, typecheck and production builds pass; Drizzle reports no schema drift. Browser walkthrough in English and Bangla on My
+  Group: HR created/published a survey and policy notice, and registered/issued an asset.
+  Rahima submitted anonymously, acknowledged the notice/asset, recognized Shirin and opened
+  a private request. HR assigned it, made internal/public replies and resolved it; Rahima
+  closed, reopened and closed it again. Shirin could not open her report's private request.
+- HR's register showed Rahima's policy receipt. The closed survey stayed suppressed below
+  five responses, without disclosing a count. The returned/retired asset retained its
+  acknowledged history. Threshold-met survey arithmetic is covered by automated tests.
+- Verification fixed two bugs: showing a mobile form error reset fields (now retained with
+  stable field state/controllers); a web status update could clear the handler (now an
+  explicit keep/unassign choice, checked again through resolution and reopening).
+
+**Carried scope:** no survey free text or raw-answer exports, recognition rewards, rich-text/
+attachment publishing, HR-ticket attachments/SLA automation, asset procurement/depreciation,
+or offline proxy acknowledgements. Employee self-service is on mobile; HR tools are on web.
 
 ## Sources (checked 28 Oct 2026)
 
@@ -366,3 +626,14 @@ the Business plan and up (`performance`).
   https://www.thedailystar.net/tech-startup/news/bangladeshs-personal-data-protection-ordinance-2025-key-takeaways-4015401
 - bdjobs.com has no public posting API (vendor note):
   https://www.manatal.com/integrations/my-contract-bdj-jobs
+
+**M3 compensation (checked 1 Nov 2026):**
+
+- BGMEA circular, 30 December 2024, enclosing the Ministry's annual increment decision;
+  recorded as 5% under the 2023 award and 9% from 1 December 2024, pending counsel review:
+  https://bgmea.com.bd/uploads/circulars/attachments/circular_attachment_Circular_regarding_annual_increment_for_garment_industry_workers__1735622009.pdf
+
+**M4 learning (checked 1 Nov 2026):**
+
+- Official consolidated Bangladesh Labour Act 2006, s.62(8), fire drills and records:
+  https://bdlaws.minlaw.gov.bd/act-details-952.html?lang=en

@@ -50,6 +50,7 @@ import {
 import { and, asc, desc, eq, gte, inArray, isNull, lte, ne, or, sql, type SQL } from 'drizzle-orm';
 import type { AuthUser, PlatformUser } from '../../common/auth-user.js';
 import { badRequest, conflict } from '../../common/errors.js';
+import { SecurityState } from '../../common/security-state.js';
 import { RateLimiter } from '../../common/rate-limit.js';
 import { runInTenantContext } from '../../common/request-context.js';
 import { DB, TenantDb } from '../../db/db.module.js';
@@ -82,7 +83,7 @@ const previousMonth = (month: string) => monthOf(addDays(`${month}-01`, -1));
 export class BillingService {
   private readonly logger = new Logger(BillingService.name);
   /** Coupon codes tried per workspace, so they cannot be guessed. */
-  private readonly couponAttempts = new RateLimiter();
+  private readonly couponAttempts: RateLimiter;
 
   constructor(
     @Inject(DB) private readonly db: Database,
@@ -91,7 +92,10 @@ export class BillingService {
     private readonly notifications: NotificationsService,
     private readonly audit: AuditService,
     private readonly pdf: PdfService,
-  ) {}
+    security: SecurityState,
+  ) {
+    this.couponAttempts = new RateLimiter(security);
+  }
 
   // ── Settings, prices, coupons and partners (platform) ──────────────────────
 
@@ -887,7 +891,7 @@ export class BillingService {
   // ── Internals ──────────────────────────────────────────────────────────────
 
   private async redeem(tx: Tx, tenantId: string, code: string, today: string) {
-    this.couponAttempts.hit(`coupon:${tenantId}`, COUPON_ATTEMPTS_PER_HOUR, 60 * 60_000);
+    await this.couponAttempts.hit(`coupon:${tenantId}`, COUPON_ATTEMPTS_PER_HOUR, 60 * 60_000);
     // Locked until this transaction ends, so concurrent redemptions count one another.
     const [coupon] = await tx
       .select()

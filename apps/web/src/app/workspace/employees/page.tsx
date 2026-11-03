@@ -11,7 +11,7 @@ const param = (v: string | string[] | undefined) => (typeof v === 'string' ? v :
 
 export default async function EmployeesPage({ searchParams }: PageProps<'/workspace/employees'>) {
   const user = await currentTenantUser();
-  if (!can(user?.role, 'employees.read')) redirect('/workspace');
+  if (!can(user, 'employees.read')) redirect('/workspace');
   const sp = await searchParams;
   const filters = {
     search: param(sp.q),
@@ -50,12 +50,12 @@ export default async function EmployeesPage({ searchParams }: PageProps<'/worksp
           <Link href="/workspace/employees/id-cards" className={buttonClass.secondary}>
             {tl('idCards.title')}
           </Link>
-          {can(user?.role, 'imports.run') && (
+          {can(user, 'imports.run') && (
             <Link href="/workspace/employees/import" className={buttonClass.secondary}>
               {tl('import.title')}
             </Link>
           )}
-          {can(user?.role, 'employees.write') && (
+          {can(user, 'employees.write') && (
             <Link href="/workspace/employees/new" className={buttonClass.primary}>
               {t('employees.hire')}
             </Link>
@@ -94,7 +94,7 @@ export default async function EmployeesPage({ searchParams }: PageProps<'/worksp
       ) : (
         <div className="-mx-5 overflow-x-auto">
           <table className="min-w-full text-sm">
-            <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+            <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-5 py-2 font-medium">{t('employees.code')}</th>
                 <th className="px-5 py-2 font-medium">{t('employees.name')}</th>

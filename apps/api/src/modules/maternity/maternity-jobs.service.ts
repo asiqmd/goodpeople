@@ -54,12 +54,8 @@ export class MaternityJobs implements OnApplicationBootstrap, OnApplicationShutd
   ) {}
 
   onApplicationBootstrap() {
-    if (!this.config.BACKGROUND_JOBS) return;
-    const remind = () => {
-      this.running ??= this.everyTenant().finally(() => (this.running = undefined));
-    };
-    this.timers = [setInterval(remind, 60 * 60_000), setTimeout(remind, 30_000)];
-    for (const timer of this.timers) timer.unref();
+    // M2: only the separate, leased worker scheduler owns timers.
+    void this.config.BACKGROUND_JOBS;
   }
 
   async onApplicationShutdown() {

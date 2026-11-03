@@ -107,24 +107,24 @@ export default async function ComplianceAlertsPage({
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="text-left text-xs text-slate-500">
+              <thead className="text-start text-xs text-slate-500">
                 <tr>
-                  <th className="py-2 pr-3 font-medium">{t('alerts.what')}</th>
-                  <th className="py-2 pr-3 font-medium">{t('alerts.who')}</th>
-                  <th className="py-2 pr-3 font-medium">{t('alerts.period')}</th>
-                  <th className="py-2 pr-3 font-medium">{t('alerts.measure')}</th>
-                  <th className="py-2 pr-3 font-medium">{t('alerts.status')}</th>
+                  <th className="py-2 pe-3 font-medium">{t('alerts.what')}</th>
+                  <th className="py-2 pe-3 font-medium">{t('alerts.who')}</th>
+                  <th className="py-2 pe-3 font-medium">{t('alerts.period')}</th>
+                  <th className="py-2 pe-3 font-medium">{t('alerts.measure')}</th>
+                  <th className="py-2 pe-3 font-medium">{t('alerts.status')}</th>
                   <th className="py-2 font-medium">{t('alerts.action')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 align-top">
                 {data.items.map((a) => (
                   <tr key={a.id}>
-                    <td className="py-2 pr-3">
+                    <td className="py-2 pe-3">
                       <span className="font-medium">{t(`kinds.${a.kind}`)}</span>{' '}
                       <Section reference={referenceOf(a)} />
                     </td>
-                    <td className="py-2 pr-3">
+                    <td className="py-2 pe-3">
                       {a.employee ? (
                         <>
                           <Link
@@ -141,13 +141,13 @@ export default async function ComplianceAlertsPage({
                         (a.subjectName ?? '—')
                       )}
                     </td>
-                    <td className="whitespace-nowrap py-2 pr-3">
+                    <td className="whitespace-nowrap py-2 pe-3">
                       {period(format, a.periodStart, a.periodEnd)}
                     </td>
-                    <td className="py-2 pr-3 tabular-nums">
+                    <td className="py-2 pe-3 tabular-nums">
                       <AlertMeasure alert={a} />
                     </td>
-                    <td className="py-2 pr-3">
+                    <td className="py-2 pe-3">
                       <Badge tone={STATUS_TONE[a.status]}>{t(`statuses.${a.status}`)}</Badge>
                     </td>
                     <td className="max-w-xs py-2">

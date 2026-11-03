@@ -16,7 +16,8 @@ import { fail } from '@/lib/form';
 import { cookieNames, writeSessionCookies, type SessionKind } from '@/lib/session';
 
 /** Where a sign-in is: each step's form sends `step` and what the step needs. */
-export type LoginStep = 'password' | 'mfa' | 'mfa_setup' | 'recovery' | 'otp_request' | 'otp_code';
+export type LoginStep =
+  'password' | 'mfa' | 'mfa_setup' | 'recovery' | 'otp_request' | 'otp_code' | 'mfa_setup_start';
 
 export type LoginState =
   | {
@@ -25,6 +26,7 @@ export type LoginState =
       code?: string;
       issues?: { path: string; message: string }[];
       mfaToken?: string;
+      routeUrl?: string;
       /** Setting up two-step sign-in during sign-in: the key and its QR code. */
       setup?: { secret: string; qr: string };
       recoveryCodes?: string[];
@@ -37,7 +39,10 @@ const text = (form: FormData, name: string) => String(form.get(name) ?? '').trim
 const HOME = { tenant: '/workspace', platform: '/platform' } as const;
 
 async function signedIn(kind: SessionKind, tokens: TokenPair): Promise<never> {
-  writeSessionCookies(await cookies(), kind, tokens);
+  const jar = await cookies();
+  jar.delete('gp_sso_mfa');
+  jar.delete('gp_sso_setup');
+  writeSessionCookies(jar, kind, tokens);
   redirect(HOME[kind]);
 }
 
@@ -62,6 +67,8 @@ export async function signIn(
   form: FormData,
 ): Promise<LoginState> {
   const step = text(form, 'step') as LoginStep;
+
+  if (step === 'mfa_setup_start') return setupStep(text(form, 'mfaToken'));
 
   if (step === 'mfa') {
     const mfaToken = text(form, 'mfaToken');
@@ -107,6 +114,21 @@ export async function signIn(
     return signedIn('tenant', result.data);
   }
 
+  if (kind === 'tenant') {
+    const routing = await apiFetch<{ kind: string; webOrigin?: string }>(
+      '/installation/route?workspace=' + encodeURIComponent(text(form, 'tenant').toLowerCase()),
+    );
+    if (routing.ok && routing.data.kind === 'dedicated' && routing.data.webOrigin) {
+      const url = new URL('/login', routing.data.webOrigin);
+      if (url.protocol === 'https:')
+        return {
+          step: 'password',
+          code: 'dedicated_workspace',
+          error: 'Use the dedicated workspace sign-in page',
+          routeUrl: url.href,
+        };
+    }
+  }
   const result =
     kind === 'tenant'
       ? await apiFetch<TenantSession | MfaChallenge | MfaSetupRequired>('/auth/login', {

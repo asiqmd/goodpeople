@@ -23,3 +23,10 @@ minimumReleaseAgeExclude:
 overrides:
   # GHSA-q7qp-rjg7-q26m: @nestjs/platform-express pins multer 2.4.0; 2.5.0 fixes it.
   multer: ^2.5.0
+  # GHSA-w5hq-g745-h8pq: use the patched CommonJS-compatible uuid for ExcelJS.
+  exceljs>uuid: 11.1.1
+  # GHSA-g3hv-75wg-m249: patch the two glob consumers in the production ExcelJS tree.
+  glob@7.2.3>minimatch: 11.0.1
+  readdir-glob@1.1.3>minimatch: 11.0.1
+patchedDependencies:
+  glob@7.2.3: patches/glob@7.2.3.patch

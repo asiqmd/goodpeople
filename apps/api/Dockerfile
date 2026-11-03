@@ -12,10 +12,15 @@
 #
 # See docs/ops/runbook.md.
 
-ARG NODE_VERSION=24
+ARG NODE_IMAGE=docker.io/library/node:24.15.0-bookworm-slim@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d
 
 # ── Build: the whole workspace, then a production-only copy of the API ─────────────────────
-FROM node:${NODE_VERSION}-slim AS build
+ARG GP_RELEASE_VERSION=5.3.0-local
+ARG GP_SOURCE_COMMIT=unrecorded
+ARG GP_SOURCE_TREE_SHA256=unrecorded
+ARG GP_SOURCE_DIRTY=true
+
+FROM ${NODE_IMAGE} AS build
 ENV CI=true \
     COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
     TURBO_TELEMETRY_DISABLED=1 \
@@ -27,6 +32,7 @@ WORKDIR /repo
 # Packages are fetched from the lockfile alone, so this layer is reused until the lockfile
 # changes. The api and web Dockerfiles share these steps, and so the cached layers.
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY patches ./patches
 RUN pnpm fetch
 
 COPY . .
@@ -40,7 +46,16 @@ RUN pnpm exec turbo run build --filter=@gp/api...
 RUN pnpm deploy --filter=@gp/api --prod /prod/api
 
 # ── Runtime ───────────────────────────────────────────────────────────────────────────────
-FROM node:${NODE_VERSION}-slim AS runtime
+FROM ${NODE_IMAGE} AS runtime
+ARG GP_RELEASE_VERSION
+ARG GP_SOURCE_COMMIT
+ARG GP_SOURCE_TREE_SHA256
+ARG GP_SOURCE_DIRTY
+LABEL org.opencontainers.image.version=$GP_RELEASE_VERSION \
+      org.opencontainers.image.revision=$GP_SOURCE_COMMIT \
+      org.goodpeople.source-tree-sha256=$GP_SOURCE_TREE_SHA256 \
+      org.goodpeople.source-dirty=$GP_SOURCE_DIRTY
+ENV RELEASE_VERSION=$GP_RELEASE_VERSION
 
 # Chromium renders letters, ID cards and service books to PDF (puppeteer-core starts it via
 # CHROME_PATH). The API embeds the Bangla font itself; Liberation covers Latin text. tini runs

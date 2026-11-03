@@ -73,13 +73,22 @@ export function amountFor(
     );
   };
   let low = 0;
-  let high = Math.max(1, target.times(4).ceil().toNumber());
-  if (!valueAt(high)?.greaterThanOrEqualTo(target)) return null;
+  // A valid structure may put much less than a quarter of gross in BASIC. Expand the
+  // bracket rather than assuming target × 4 is enough; stay within the pay input limit.
+  const maximum = 9_999_999_999;
+  let high = Math.min(maximum, Math.max(1, target.times(4).ceil().toNumber()));
+  let sufficient = valueAt(high)?.greaterThanOrEqualTo(target) ?? false;
+  while (!sufficient) {
+    if (high === maximum) return null;
+    high = Math.min(maximum, high * 2);
+    sufficient = valueAt(high)?.greaterThanOrEqualTo(target) ?? false;
+  }
   while (low < high) {
     const mid = Math.floor((low + high) / 2);
     const value = valueAt(mid);
-    if (value === null) return null;
-    if (value.greaterThanOrEqualTo(target)) high = mid;
+    // Fixed allowances can make low input amounts invalid. With the monotone pay
+    // structure assumed here, those inputs are below the valid, sufficient bracket.
+    if (value?.greaterThanOrEqualTo(target)) high = mid;
     else low = mid + 1;
   }
   return new Decimal(low);

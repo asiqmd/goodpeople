@@ -8,6 +8,7 @@ import 'package:good_people/api/api_models.dart';
 import 'package:good_people/api/good_people_api.dart';
 
 import 'support/fake_api.dart';
+import 'support/employee_service_fixtures.dart';
 
 /// Answers every request with [status] and [body] and records the request.
 class _StubAdapter implements HttpClientAdapter {
@@ -86,6 +87,231 @@ void main() {
     )..httpClientAdapter = adapter;
     return (DioGoodPeopleApi(dio), adapter);
   }
+
+  test(
+    'learning reads the authenticated record and rejects malformed data',
+    () async {
+      final (api, adapter) = client(200, {
+        'manage': false,
+        'sessions': <Object?>[],
+        'certificates': <Object?>[],
+        'requirements': <Object?>[],
+      });
+      final record = await api.fetchLearningMe('learning-token');
+      expect(record.manage, isFalse);
+      expect(record.sessions, isEmpty);
+      expect(adapter.requests.single.uri.path, '/tenant/learning/me');
+      expect(
+        adapter.requests.single.headers['Authorization'],
+        'Bearer learning-token',
+      );
+      final (broken, _) = client(200, {'manage': false});
+      await expectLater(
+        broken.fetchLearningMe('learning-token'),
+        throwsA(
+          isA<ApiException>().having(
+            (e) => e.kind,
+            'kind',
+            ApiErrorKind.badResponse,
+          ),
+        ),
+      );
+    },
+  );
+
+  test('learning enrolment accepts empty responses and preserves capacity refusals', () async {
+    for (final enrol in [true, false]) {
+      final (api, adapter) = client(204, null);
+      await api.moveLearningEnrolment(
+        'learning-token',
+        'session-1',
+        enrol: enrol,
+      );
+      final request = adapter.requests.single;
+      expect(request.method, 'POST');
+      expect(
+        request.uri.path,
+        '/tenant/learning/sessions/session-1/${enrol ? 'enrol' : 'withdraw'}',
+      );
+      expect(request.data, <String, Object?>{});
+      expect(request.headers['Authorization'], 'Bearer learning-token');
+    }
+    final (full, _) = client(409, {
+      'code': 'learning_capacity',
+      'message': 'Full',
+    });
+    await expectLater(
+      full.moveLearningEnrolment('learning-token', 'session-1', enrol: true),
+      throwsA(
+        isA<ApiException>().having((e) => e.code, 'code', 'learning_capacity'),
+      ),
+    );
+  });
+
+  test('learning certificate uses the authenticated binary download and chosen language', () async {
+    final bytes = utf8.encode('%PDF-1.7 demo');
+    final (api, adapter) = fileClient(
+      200,
+      bytes,
+      headers: {
+        Headers.contentTypeHeader: ['application/pdf'],
+        'content-disposition': ['attachment; filename="training-bn.pdf"'],
+      },
+    );
+    final file = await api.downloadLearningCertificate(
+      'learning-token',
+      'certificate-1',
+      language: LetterLanguage.bn,
+    );
+    expect(file.bytes, bytes);
+    expect(file.fileName, 'training-bn.pdf');
+    final request = adapter.requests.single;
+    expect(
+      request.uri.path,
+      '/tenant/learning/certificates/certificate-1/file',
+    );
+    expect(request.uri.queryParameters, {'language': 'bn'});
+    expect(request.headers['Authorization'], 'Bearer learning-token');
+    expect(request.responseType, ResponseType.bytes);
+  });
+
+  test('engagement and employee service records use authenticated endpoints and strict parsing', () async {
+    final (engagement, e) = client(200, engagementJson());
+    expect(
+      (await engagement.fetchEngagement('service-token')).surveys.single.id,
+      'survey-1',
+    );
+    expect(e.requests.single.uri.path, '/tenant/engagement/me');
+    final (services, s) = client(200, employeeServicesJson());
+    expect(
+      (await services.fetchEmployeeServices('service-token')).issues.single.tag,
+      'GP-ID-01',
+    );
+    expect(s.requests.single.uri.path, '/tenant/employee-services/me');
+    for (final r in [...e.requests, ...s.requests]) {
+      expect(r.headers['Authorization'], 'Bearer service-token');
+    }
+    final (broken, _) = client(200, {'manage': false});
+    await expectLater(
+      broken.fetchEmployeeServices('service-token'),
+      throwsA(
+        isA<ApiException>().having(
+          (e) => e.kind,
+          'kind',
+          ApiErrorKind.badResponse,
+        ),
+      ),
+    );
+  });
+  test('anonymous responses and acknowledgements send only their own contract fields', () async {
+    final (api, adapter) = client(200, <String, Object?>{});
+    await api.respondToSurvey(
+      'service-token',
+      'survey-1',
+      enps: 0,
+      scores: [1, 5],
+    );
+    await api.acknowledgeAnnouncement('service-token', 'notice-1');
+    await api.acknowledgeAsset('service-token', 'issue-1');
+    expect(
+      adapter.requests[0].uri.path,
+      '/tenant/engagement/surveys/survey-1/respond',
+    );
+    expect(adapter.requests[0].data, {
+      'enps': 0,
+      'scores': [1, 5],
+    });
+    expect(
+      adapter.requests[1].uri.path,
+      '/tenant/engagement/announcements/notice-1/acknowledge',
+    );
+    expect(
+      adapter.requests[2].uri.path,
+      '/tenant/employee-services/issues/issue-1/acknowledge',
+    );
+    expect(adapter.requests[1].data, <String, Object?>{});
+    final (closed, _) = client(409, {
+      'code': 'survey_closed',
+      'message': 'Closed',
+    });
+    await expectLater(
+      closed.respondToSurvey('service-token', 'survey-1', enps: 10, scores: []),
+      throwsA(
+        isA<ApiException>().having((e) => e.code, 'code', 'survey_closed'),
+      ),
+    );
+  });
+  test('HR requests create, read, reply and change status on their authenticated private routes', () async {
+    final body = (employeeServicesJson()['requests']! as List).single;
+    final (api, adapter) = client(200, body);
+    expect(
+      (await api.fetchHrRequest('service-token', 'request-1')).subject,
+      'Employment letter',
+    );
+    await api.createHrRequest(
+      'service-token',
+      subject: 'My letter',
+      body: 'For my bank',
+      category: 'letters',
+      priority: 'normal',
+    );
+    await api.replyToHrRequest('service-token', 'request-1', 'Thank you');
+    await api.moveHrRequest(
+      'service-token',
+      'request-1',
+      status: 'closed',
+      reason: 'Received it',
+    );
+    expect(adapter.requests.map((r) => r.method), [
+      'GET',
+      'POST',
+      'POST',
+      'PATCH',
+    ]);
+    expect(adapter.requests[1].data, {
+      'subject': 'My letter',
+      'body': 'For my bank',
+      'category': 'letters',
+      'priority': 'normal',
+    });
+    expect(
+      adapter.requests[2].uri.path,
+      '/tenant/employee-services/requests/request-1/replies',
+    );
+    expect(adapter.requests[2].data, {'body': 'Thank you'});
+    expect(adapter.requests[3].data, {
+      'status': 'closed',
+      'reason': 'Received it',
+    });
+    for (final request in adapter.requests) {
+      expect(request.headers['Authorization'], 'Bearer service-token');
+    }
+  });
+  test('recognition writes use the colleague code and reasoned withdrawal contract', () async {
+    final (api, adapter) = client(200, <String, Object?>{});
+    await api.recognizeColleague(
+      'service-token',
+      employeeCode: 'MG-0006',
+      value: 'quality',
+      message: 'Careful work',
+    );
+    await api.withdrawRecognition(
+      'service-token',
+      'recognition-1',
+      'Duplicate message',
+    );
+    expect(adapter.requests[0].uri.path, '/tenant/engagement/recognition');
+    expect(adapter.requests[0].data, {
+      'employeeCode': 'MG-0006',
+      'value': 'quality',
+      'message': 'Careful work',
+    });
+    expect(
+      adapter.requests[1].uri.path,
+      '/tenant/engagement/recognition/recognition-1/hide',
+    );
+    expect(adapter.requests[1].data, {'reason': 'Duplicate message'});
+  });
 
   test('login posts the contract body and parses the response', () async {
     final (api, adapter) = client(200, loginJson);

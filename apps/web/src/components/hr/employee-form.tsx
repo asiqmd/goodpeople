@@ -164,7 +164,7 @@ export function EmployeeForm(
           <input
             name="fatherName"
             required
-            defaultValue={employee?.fatherName}
+            defaultValue={employee?.fatherName ?? undefined}
             className={inputClass}
           />
         </Field>
@@ -172,7 +172,7 @@ export function EmployeeForm(
           <input
             name="motherName"
             required
-            defaultValue={employee?.motherName}
+            defaultValue={employee?.motherName ?? undefined}
             className={inputClass}
           />
         </Field>
@@ -188,7 +188,7 @@ export function EmployeeForm(
             name="dateOfBirth"
             type="date"
             required
-            defaultValue={employee?.dateOfBirth}
+            defaultValue={employee?.dateOfBirth ?? undefined}
             className={inputClass}
           />
         </Field>
@@ -293,7 +293,7 @@ export function EmployeeForm(
               name={`identity.${key}`}
               inputMode={key === 'passport' ? 'text' : 'numeric'}
               autoComplete="off"
-              defaultValue={employee?.identity[key] ?? ''}
+              defaultValue={employee?.identity?.[key] ?? ''}
               className={inputClass}
             />
           </Field>
@@ -301,7 +301,11 @@ export function EmployeeForm(
       </Section>
 
       <Card title={t('presentAddress')}>
-        <AddressFields prefix="presentAddress" defaults={employee?.presentAddress} state={state} />
+        <AddressFields
+          prefix="presentAddress"
+          defaults={employee?.presentAddress ?? undefined}
+          state={state}
+        />
       </Card>
       <Card title={t('permanentAddress')}>
         <label className="mb-4 flex items-center gap-2 text-sm">
@@ -316,7 +320,7 @@ export function EmployeeForm(
         {!sameAddress && (
           <AddressFields
             prefix="permanentAddress"
-            defaults={employee?.permanentAddress}
+            defaults={employee?.permanentAddress ?? undefined}
             state={state}
           />
         )}

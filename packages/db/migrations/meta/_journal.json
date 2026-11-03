@@ -253,6 +253,272 @@
       "when": 1793519266841,
       "tag": "0035_performance_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1793527329976,
+      "tag": "0036_compensation",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1793527337122,
+      "tag": "0037_compensation_rls",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1793531577333,
+      "tag": "0038_learning",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1793531577894,
+      "tag": "0039_learning_rls",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1793534667516,
+      "tag": "0040_employee_services",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1793534783790,
+      "tag": "0041_employee_services_rls",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1793535422777,
+      "tag": "0042_employee_service_notifications",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1793541621516,
+      "tag": "0043_identity_access",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1793541922598,
+      "tag": "0044_identity_security",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1793542930011,
+      "tag": "0045_oidc_claim_binding",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1793543276618,
+      "tag": "0046_durable_mfa_replay",
+      "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1793545179354,
+      "tag": "0047_emergency_access_alert",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1793546466464,
+      "tag": "0048_provisioning_reconciliation",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1793546467120,
+      "tag": "0049_provisioning_reconciliation_security",
+      "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1793546866082,
+      "tag": "0050_platform_auth_revision",
+      "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1793546866738,
+      "tag": "0051_platform_auth_revision_trigger",
+      "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1793550814563,
+      "tag": "0052_session_family_revocation",
+      "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1793559575663,
+      "tag": "0053_public_integrations",
+      "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1793559576332,
+      "tag": "0054_integration_outbox_security",
+      "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "7",
+      "when": 1793560317381,
+      "tag": "0055_webhook_key_staging",
+      "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1793590626557,
+      "tag": "0056_enterprise_installations",
+      "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "7",
+      "when": 1793591046079,
+      "tag": "0057_enterprise_security",
+      "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1793592357936,
+      "tag": "0058_recovery_freeze",
+      "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1793604228604,
+      "tag": "0059_international_foundations",
+      "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1793604453753,
+      "tag": "0060_international_boundaries",
+      "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1793606632155,
+      "tag": "0061_arabic_and_site_context",
+      "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1793607207987,
+      "tag": "0062_bank_and_price_context",
+      "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "7",
+      "when": 1793607615396,
+      "tag": "0063_international_qualification",
+      "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1793608849077,
+      "tag": "0064_pay_group_and_merchant_provenance",
+      "breakpoints": true
+    },
+    {
+      "idx": 65,
+      "version": "7",
+      "when": 1793619577611,
+      "tag": "0065_uae_candidate",
+      "breakpoints": true
+    },
+    {
+      "idx": 66,
+      "version": "7",
+      "when": 1793619757014,
+      "tag": "0066_uae_boundaries",
+      "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1793621429985,
+      "tag": "0067_uae_evidence_order",
+      "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "7",
+      "when": 1793644992014,
+      "tag": "0068_saudi_candidate",
+      "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "7",
+      "when": 1793645035117,
+      "tag": "0069_saudi_boundaries",
+      "breakpoints": true
+    },
+    {
+      "idx": 70,
+      "version": "7",
+      "when": 1793647228570,
+      "tag": "0070_assurance_register",
+      "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "7",
+      "when": 1793647235773,
+      "tag": "0071_assurance_boundaries",
+      "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "7",
+      "when": 1793679426563,
+      "tag": "0072_analytics_insights",
+      "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "7",
+      "when": 1793682096174,
+      "tag": "0073_anomaly_review",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,2 @@
+ALTER TYPE "public"."notification_event" ADD VALUE 'engagement.notice' BEFORE 'auth.otp';--> statement-breakpoint
+ALTER TYPE "public"."notification_event" ADD VALUE 'services.notice' BEFORE 'auth.otp';

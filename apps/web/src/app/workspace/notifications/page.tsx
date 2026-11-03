@@ -35,7 +35,7 @@ export default async function NotificationsPage({
   const t = await getTranslations('notifications');
   const format = await getFormatter();
   const user = await currentTenantUser();
-  const manages = can(user?.role, 'notifications.manage');
+  const manages = can(user, 'notifications.manage');
   const params = await searchParams;
   const tab =
     manages && TABS.includes(params.tab as never) ? (params.tab as (typeof TABS)[number]) : 'inbox';
@@ -169,7 +169,7 @@ export default async function NotificationsPage({
           ) : (
             <div className="-mx-5 overflow-x-auto">
               <table className="min-w-full text-sm">
-                <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+                <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
                   <tr>
                     <th className="px-5 py-2 font-medium">{t('when')}</th>
                     <th className="px-5 py-2 font-medium">{t('event')}</th>
@@ -198,7 +198,7 @@ export default async function NotificationsPage({
                       <td className="px-5 py-3">
                         <Badge tone={STATUS_TONE[d.status]}>{t(`statuses.${d.status}`)}</Badge>
                         {d.attempts > 1 && (
-                          <span className="ml-1 text-xs text-slate-500">×{d.attempts}</span>
+                          <span className="ms-1 text-xs text-slate-500">×{d.attempts}</span>
                         )}
                         {d.lastError && (
                           <span className="mt-1 block text-xs text-red-600">{d.lastError}</span>
@@ -240,7 +240,7 @@ export default async function NotificationsPage({
             {inbox.items.map((n) => (
               <li key={n.id}>
                 <form action={openNotification.bind(null, n.id, n.link)}>
-                  <button className="flex w-full items-start gap-3 px-5 py-3 text-left hover:bg-slate-50">
+                  <button className="flex w-full items-start gap-3 px-5 py-3 text-start hover:bg-slate-50">
                     <span
                       aria-hidden
                       className={`mt-1.5 size-2 shrink-0 rounded-full ${n.readAt ? 'bg-transparent' : 'bg-brand-600'}`}

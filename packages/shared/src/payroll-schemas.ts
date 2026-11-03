@@ -75,6 +75,7 @@ export type PayComponentUpdateInput = z.infer<typeof payComponentUpdateSchema>;
 export const structureLineSchema = z.object({ component: componentCodeSchema, formula });
 
 const structureFields = {
+  currency: z.enum(['BDT', 'AED', 'SAR']).default('BDT'),
   name,
   nameBn,
   basis: z.enum(PAY_BASES),
@@ -104,6 +105,8 @@ export type StructurePreviewInput = z.infer<typeof structurePreviewSchema>;
 // ── Pay groups and settings ──────────────────────────────────────────────────
 
 const payGroupFields = {
+  currency: z.enum(['BDT', 'AED', 'SAR']).default('BDT'),
+  legalEntityId: z.uuid().optional(),
   name,
   frequency: z.enum(PAY_FREQUENCIES),
   isDefault: z.boolean().default(false),

@@ -23,8 +23,8 @@ import { currentTenantUser, load } from '@/lib/api';
 export default async function CommitteePage({
   params,
 }: PageProps<'/workspace/compliance/committees/[id]'>) {
-  const role = (await currentTenantUser())?.role;
-  if (!can(role, 'compliance.manage')) redirect('/workspace');
+  const accessPrincipal = await currentTenantUser();
+  if (!can(accessPrincipal, 'compliance.manage')) redirect('/workspace');
   const { id } = await params;
   const t = await getTranslations('relations');
   const tc = await getTranslations('relations.committee');
@@ -58,7 +58,7 @@ export default async function CommitteePage({
   const memberTable = (members: CommitteeMemberView[], active: boolean) => (
     <div className="-mx-5 overflow-x-auto">
       <table className="w-full text-sm">
-        <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+        <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
           <tr>
             <th className="px-5 py-2 font-medium">{tc('memberColumns.name')}</th>
             <th className="px-3 py-2 font-medium">{tc('memberColumns.gender')}</th>

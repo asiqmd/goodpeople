@@ -1,0 +1,117 @@
+name: ${GP_STACK_NAME:-good-people-enterprise}
+x-hardening: &hardening
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  restart: unless-stopped
+  networks: [backend]
+x-app: &app
+  <<: *hardening
+  image: ${GP_API_IMAGE_ID:?Use the signed images.env}
+  pull_policy: never
+  env_file: ['${GP_APP_ENV_FILE:-./config/app.env}']
+  user: '1000:1000'
+  volumes:
+    - ${GP_DOCUMENTS_DIR:?Set the customer document directory}:/data/documents
+  depends_on:
+    database: { condition: service_healthy }
+    redis: { condition: service_healthy }
+services:
+  database:
+    <<: *hardening
+    image: ${GP_POSTGRES_IMAGE_ID:?Use the signed images.env}
+    pull_policy: never
+    user: '${GP_POSTGRES_UID:-999}:${GP_POSTGRES_GID:-999}'
+    env_file: ['${GP_DATABASE_ENV_FILE:-./config/database.env}']
+    volumes: ['${GP_DATABASE_DIR:?Set the database directory}:/var/lib/postgresql/data']
+    ports: ['127.0.0.1:${GP_DATABASE_PORT:-5432}:5432']
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U postgres']
+      interval: 5s
+      retries: 20
+    stop_grace_period: 90s
+  redis:
+    <<: *hardening
+    image: ${GP_REDIS_IMAGE_ID:?Use the signed images.env}
+    pull_policy: never
+    user: '${GP_REDIS_UID:-999}:${GP_REDIS_GID:-999}'
+    env_file: [./config/redis.env]
+    command: [redis-server, /run/redis/redis.conf]
+    volumes:
+      - ${GP_REDIS_DIR:?Set the persistent Redis directory}:/data
+      - ./config/redis.conf:/run/redis/redis.conf:ro
+    healthcheck:
+      test: [CMD, redis-cli, --no-auth-warning, ping]
+      interval: 5s
+      retries: 20
+  api:
+    <<: *app
+    environment: { PROCESS_ROLE: api, BACKGROUND_JOBS: 'off' }
+  worker:
+    <<: *app
+    command: [node, dist/worker.js]
+    environment: { PROCESS_ROLE: worker, BACKGROUND_JOBS: 'on' }
+    healthcheck: { disable: true }
+    stop_grace_period: 90s
+  web:
+    <<: *hardening
+    image: ${GP_WEB_IMAGE_ID:?Use the signed images.env}
+    pull_policy: never
+    user: '1000:1000'
+    environment:
+      API_URL: http://api:4000
+      NEXT_TELEMETRY_DISABLED: '1'
+      GP_SUPPORT_EMAIL: ${GP_SUPPORT_EMAIL:?Set the customer support address}
+    depends_on: [api]
+    init: true
+  proxy:
+    <<: *hardening
+    image: ${GP_CADDY_IMAGE_ID:?Use the signed images.env}
+    pull_policy: never
+    user: '1000:1000'
+    networks: [backend, ingress]
+    environment:
+      GP_WEB_HOST: ${GP_WEB_HOST:?Set the customer web host}
+      GP_API_HOST: ${GP_API_HOST:?Set the customer API host}
+    ports: ['443:8443']
+    command: [caddy, run, --config, /etc/caddy/Caddyfile]
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./config/tls:/run/tls:ro
+      - ${GP_PROXY_DATA_DIR:?Set the proxy state directory}:/data
+      - ${GP_PROXY_CONFIG_DIR:?Set the proxy config directory}:/config
+    depends_on: [web, api]
+  setup:
+    <<: *hardening
+    image: ${GP_API_IMAGE_ID:?Use the signed images.env}
+    pull_policy: never
+    restart: 'no'
+    profiles: [operator]
+    env_file: ['${GP_SETUP_ENV_FILE:-./config/setup.env}']
+    command: [node, node_modules/@gp/db/dist/scripts/setup.js]
+    healthcheck: { disable: true }
+    depends_on: { database: { condition: service_healthy } }
+  migrate:
+    <<: *hardening
+    image: ${GP_API_IMAGE_ID:?Use the signed images.env}
+    pull_policy: never
+    restart: 'no'
+    profiles: [operator]
+    env_file: ['${GP_APP_ENV_FILE:-./config/app.env}', '${GP_OWNER_ENV_FILE:-./config/owner.env}']
+    command: [node, dist/enterprise-cli.js, migrate]
+    volumes: ['./config/upgrade:/upgrade:ro']
+    healthcheck: { disable: true }
+    depends_on: { database: { condition: service_healthy } }
+  bootstrap:
+    <<: *hardening
+    image: ${GP_API_IMAGE_ID:?Use the signed images.env}
+    pull_policy: never
+    restart: 'no'
+    profiles: [operator]
+    env_file: ['${GP_APP_ENV_FILE:-./config/app.env}', '${GP_OWNER_ENV_FILE:-./config/owner.env}']
+    command: [node, dist/enterprise-cli.js, bootstrap, /input/bootstrap.json]
+    volumes: ['./config/bootstrap:/input:ro']
+    healthcheck: { disable: true }
+    depends_on: { database: { condition: service_healthy } }
+networks:
+  backend: { internal: '${GP_OFFLINE:-true}' }
+  ingress: {}

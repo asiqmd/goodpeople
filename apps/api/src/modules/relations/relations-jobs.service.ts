@@ -10,8 +10,6 @@ import { APP_CONFIG, type AppConfig } from '../../config.js';
 import { EntitlementsService } from '../entitlements/entitlements.service.js';
 import { RelationsAlertsService } from './relations-alerts.service.js';
 
-const DAY = 24 * 60 * 60_000;
-
 /** Checks every workspace's committees once a day (and soon after start) and raises alerts. */
 @Injectable()
 export class RelationsJobs implements OnApplicationBootstrap, OnApplicationShutdown {
@@ -26,12 +24,8 @@ export class RelationsJobs implements OnApplicationBootstrap, OnApplicationShutd
   ) {}
 
   onApplicationBootstrap() {
-    if (!this.config.BACKGROUND_JOBS) return;
-    const run = () => {
-      this.running ??= this.checkAll().finally(() => (this.running = undefined));
-    };
-    this.timers = [setInterval(run, DAY), setTimeout(run, 90_000)];
-    for (const timer of this.timers) timer.unref();
+    // M2: only the separate, leased worker scheduler owns timers.
+    void this.config.BACKGROUND_JOBS;
   }
 
   async onApplicationShutdown() {
@@ -40,6 +34,10 @@ export class RelationsJobs implements OnApplicationBootstrap, OnApplicationShutd
   }
 
   /** Every workspace that is not suspended; one failing does not stop the others. */
+  runTenant() {
+    return this.alerts.check();
+  }
+
   async checkAll(): Promise<void> {
     for (const tenant of await this.entitlements.all()) {
       if (tenant.access.accessState === 'suspended') continue;

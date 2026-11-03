@@ -24,6 +24,11 @@ export type SubscriptionStatus = (typeof SUBSCRIPTION_STATUSES)[number];
 
 export const FEATURE_KEYS = [
   'core_hr',
+  /** Explicit opt-in workforce analytics; not added to existing commercial plans. */
+  'analytics',
+  'analytics_insights',
+  'workspace_assistant',
+  'anomaly_review',
   'leave',
   'attendance',
   'payroll',
@@ -38,6 +43,7 @@ export const FEATURE_KEYS = [
   'performance',
   'lms',
   'multi_entity',
+  'custom_roles',
   'api_access',
   'sso',
 ] as const;
@@ -143,7 +149,13 @@ export const PLAN_CATALOG: readonly PlanDefinition[] = [
   {
     code: 'enterprise',
     name: 'Enterprise (all modules)',
-    features: [...FEATURE_KEYS],
+    features: FEATURE_KEYS.filter(
+      (f) =>
+        f !== 'analytics' &&
+        f !== 'analytics_insights' &&
+        f !== 'workspace_assistant' &&
+        f !== 'anomaly_review',
+    ),
     limits: {
       max_employees: null,
       max_legal_entities: null,

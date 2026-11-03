@@ -10,10 +10,15 @@
 # a pruned production install (about 350 MB of node_modules). Standalone output would cut that
 # to the files the server traces; see "Known gaps" in docs/ops/runbook.md.
 
-ARG NODE_VERSION=24
+ARG NODE_IMAGE=docker.io/library/node:24.15.0-bookworm-slim@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d
 
 # ── Build ─────────────────────────────────────────────────────────────────────────────────
-FROM node:${NODE_VERSION}-slim AS build
+ARG GP_RELEASE_VERSION=5.3.0-local
+ARG GP_SOURCE_COMMIT=unrecorded
+ARG GP_SOURCE_TREE_SHA256=unrecorded
+ARG GP_SOURCE_DIRTY=true
+
+FROM ${NODE_IMAGE} AS build
 ENV CI=true \
     COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
     TURBO_TELEMETRY_DISABLED=1 \
@@ -24,6 +29,7 @@ WORKDIR /repo
 
 # Same steps as apps/api/Dockerfile, so both images share these cached layers.
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY patches ./patches
 RUN pnpm fetch
 
 COPY . .
@@ -37,7 +43,16 @@ RUN pnpm deploy --filter=@gp/web --prod /prod/web \
  && rm -rf /prod/web/.next/cache
 
 # ── Runtime ───────────────────────────────────────────────────────────────────────────────
-FROM node:${NODE_VERSION}-slim AS runtime
+FROM ${NODE_IMAGE} AS runtime
+ARG GP_RELEASE_VERSION
+ARG GP_SOURCE_COMMIT
+ARG GP_SOURCE_TREE_SHA256
+ARG GP_SOURCE_DIRTY
+LABEL org.opencontainers.image.version=$GP_RELEASE_VERSION \
+      org.opencontainers.image.revision=$GP_SOURCE_COMMIT \
+      org.goodpeople.source-tree-sha256=$GP_SOURCE_TREE_SHA256 \
+      org.goodpeople.source-dirty=$GP_SOURCE_DIRTY
+ENV RELEASE_VERSION=$GP_RELEASE_VERSION
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
     HOSTNAME=0.0.0.0 \

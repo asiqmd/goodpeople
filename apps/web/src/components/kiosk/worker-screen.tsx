@@ -207,7 +207,7 @@ export function WorkerScreen({
                         onClick={() =>
                           onOpenPayslip(`/kiosk/payslips/${p.itemId}?language=${locale}`)
                         }
-                        className="flex min-h-32 w-full flex-col items-start justify-center gap-1 rounded-2xl bg-slate-50 p-5 text-left ring-2 ring-inset ring-slate-200 active:bg-slate-200"
+                        className="flex min-h-32 w-full flex-col items-start justify-center gap-1 rounded-2xl bg-slate-50 p-5 text-start ring-2 ring-inset ring-slate-200 active:bg-slate-200"
                       >
                         <span className="text-xl text-slate-600">
                           {bn(p.festival, p.festivalBn) ??
