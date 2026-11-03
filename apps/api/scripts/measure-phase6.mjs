@@ -33,6 +33,7 @@ if (mode === 'mixed' && concurrency < 2)
   throw new Error('Mixed load requires at least two clients');
 const access = await fetch(origin + '/tenant/access', {
   headers: { authorization: 'Bearer ' + tenant.token },
+  redirect: 'error',
   signal: AbortSignal.timeout(5000),
 });
 const workspace = access.ok ? (await access.json()).tenant : null;
@@ -86,6 +87,7 @@ async function sample(path, { method = 'GET', body, valid } = {}) {
       method,
       headers: { authorization: 'Bearer ' + tenant.token, 'content-type': 'application/json' },
       body: body === undefined ? undefined : JSON.stringify(body),
+      redirect: 'error',
       signal: AbortSignal.timeout(20_000),
     });
     const bytes = Buffer.from(await response.arrayBuffer());
