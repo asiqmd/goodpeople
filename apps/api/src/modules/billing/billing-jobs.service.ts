@@ -91,14 +91,8 @@ export class BillingJobs implements OnApplicationBootstrap, OnApplicationShutdow
   ) {}
 
   onApplicationBootstrap() {
-    if (!this.config.BACKGROUND_JOBS) return;
-    const run = () => {
-      this.running ??= this.runDaily()
-        .catch((error: Error) => this.logger.error('Billing jobs failed', error))
-        .finally(() => (this.running = undefined));
-    };
-    this.timers = [setInterval(run, 3 * 60 * 60_000), setTimeout(run, 30_000)];
-    for (const timer of this.timers) timer.unref();
+    // M2: only the separate, leased worker scheduler owns timers.
+    void this.config.BACKGROUND_JOBS;
   }
 
   async onApplicationShutdown() {

@@ -8,7 +8,11 @@ const PLATFORM_TABLES_WITH_TENANT_ID = [
   'auth_sessions',
   'coupon_redemptions',
   'entitlement_grants',
+  // Server-managed installation/auth and routing metadata; never tenant HR/payroll rows.
+  'enterprise_installations',
+  'tenant_placements',
   'invoices',
+  'merchant_ledger',
   'platform_audit_log',
   'signups',
   'subscriptions',

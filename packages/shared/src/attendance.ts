@@ -103,9 +103,18 @@ export function zonedInstant(date: IsoDate, time: string, timeZone: string): Dat
   const [y, mo, d] = date.split('-').map(Number) as [number, number, number];
   const [h, mi] = time.split(':').map(Number) as [number, number];
   const guess = Date.UTC(y, mo - 1, d, h, mi);
-  const first = zoneOffsetMinutes(timeZone, new Date(guess));
-  const second = zoneOffsetMinutes(timeZone, new Date(guess - first * 60_000));
-  return new Date(guess - second * 60_000);
+  const offsets = new Set(
+    [-36, 0, 36].map((hours) => zoneOffsetMinutes(timeZone, new Date(guess + hours * 3600000))),
+  );
+  const matches = [...offsets]
+    .map((offset) => new Date(guess - offset * 60000))
+    .filter((candidate) => {
+      const parts = localParts(candidate, timeZone);
+      return parts.date === date && parts.time === time.slice(0, 5);
+    });
+  if (matches.length !== 1)
+    throw new Error(matches.length ? 'ambiguous_local_time' : 'nonexistent_local_time');
+  return matches[0]!;
 }
 
 /** The wall-clock date and time (HH:MM) of an instant in a time zone. */

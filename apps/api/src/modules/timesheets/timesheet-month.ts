@@ -24,7 +24,7 @@ import {
   type TimesheetProjectTotal,
   type TimesheetStatus,
   type TimesheetView,
-  type UserLanguage,
+
 } from '@gp/shared';
 import { and, asc, desc, eq, gte, inArray, isNull, lte, max, min, or, sql } from 'drizzle-orm';
 import { loadSteps } from '../approvals/approval-views.js';
@@ -45,7 +45,7 @@ export const editable = (status: TimesheetStatus) => status === 'draft' || statu
 export const monthOf = (firstDay: string) => firstDay.slice(0, 7);
 
 /** "October 2026" and "অক্টোবর ২০২৬" for '2026-10'. */
-export function monthName(month: string): Record<UserLanguage, string> {
+export function monthName(month: string): { en: string; bn: string; ar?: string } {
   const first = new Date(`${month}-01T00:00:00Z`);
   const format = (locale: string) =>
     new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(

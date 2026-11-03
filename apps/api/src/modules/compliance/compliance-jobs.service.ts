@@ -28,12 +28,8 @@ export class ComplianceJobs implements OnApplicationBootstrap, OnApplicationShut
   ) {}
 
   onApplicationBootstrap() {
-    if (!this.config.BACKGROUND_JOBS) return;
-    const tick = () => {
-      this.running ??= this.runAll().finally(() => (this.running = undefined));
-    };
-    this.timers = [setTimeout(tick, 90_000), setInterval(tick, 60 * 60_000)];
-    for (const timer of this.timers) timer.unref();
+    // M2: only the separate, leased worker scheduler owns timers.
+    void this.config.BACKGROUND_JOBS;
   }
 
   async onApplicationShutdown() {

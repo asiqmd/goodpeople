@@ -9,9 +9,9 @@ import { Badge, Banner, buttonClass, Card, inputClass } from '@/components/ui';
 import { currentTenantUser, load } from '@/lib/api';
 
 export default async function FundPage({ searchParams }: PageProps<'/workspace/payroll/pf'>) {
-  const role = (await currentTenantUser())?.role;
-  if (!can(role, 'payroll.view')) redirect('/workspace');
-  const canManage = can(role, 'payroll.manage');
+  const accessPrincipal = await currentTenantUser();
+  if (!can(accessPrincipal, 'payroll.view')) redirect('/workspace');
+  const canManage = can(accessPrincipal, 'payroll.manage');
   const t = await getTranslations('payroll');
   const tp = await getTranslations('payroll.pf');
   const format = await getFormatter();
@@ -90,13 +90,13 @@ export default async function FundPage({ searchParams }: PageProps<'/workspace/p
         ) : (
           <div className="-mx-5 overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+              <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="px-5 py-2 font-medium">{tp('member')}</th>
                   <th className="px-5 py-2 font-medium">{tp('memberSince')}</th>
-                  <th className="px-5 py-2 text-right font-medium">{tp('accounts.own')}</th>
-                  <th className="px-5 py-2 text-right font-medium">{tp('accounts.employer')}</th>
-                  <th className="px-5 py-2 text-right font-medium">{tp('payable')}</th>
+                  <th className="px-5 py-2 text-end font-medium">{tp('accounts.own')}</th>
+                  <th className="px-5 py-2 text-end font-medium">{tp('accounts.employer')}</th>
+                  <th className="px-5 py-2 text-end font-medium">{tp('payable')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -113,19 +113,19 @@ export default async function FundPage({ searchParams }: PageProps<'/workspace/p
                         {m.employee.employeeCode}
                       </span>
                       {m.leftOn && (
-                        <span className="ml-2">
+                        <span className="ms-2">
                           <Badge tone="slate">{tp('left', { date: day(format, m.leftOn) })}</Badge>
                         </span>
                       )}
                     </td>
                     <td className="px-5 py-2.5 text-slate-600">{day(format, m.joinedOn)}</td>
-                    <td className="px-5 py-2.5 text-right tabular-nums">
+                    <td className="px-5 py-2.5 text-end tabular-nums">
                       {taka(format, m.balance.own)}
                     </td>
-                    <td className="px-5 py-2.5 text-right tabular-nums">
+                    <td className="px-5 py-2.5 text-end tabular-nums">
                       {taka(format, m.balance.employer)}
                     </td>
-                    <td className="px-5 py-2.5 text-right tabular-nums font-medium">
+                    <td className="px-5 py-2.5 text-end tabular-nums font-medium">
                       {taka(format, m.balance.payable)}
                     </td>
                   </tr>

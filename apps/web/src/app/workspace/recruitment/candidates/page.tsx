@@ -96,7 +96,7 @@ export default async function CandidatesPage({
         ) : (
           <div className="-mx-5 overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="text-left text-xs tracking-wide text-slate-500 uppercase">
+              <thead className="text-start text-xs tracking-wide text-slate-500 uppercase">
                 <tr>
                   <th className="px-5 py-2 font-medium">{t('list.name')}</th>
                   <th className="px-3 py-2 font-medium">{t('list.contact')}</th>

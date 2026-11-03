@@ -19,8 +19,8 @@ const lastMonthEnd = () => addDays(`${todayIn().slice(0, 8)}01`, -1);
 export default async function GratuityPage({
   searchParams,
 }: PageProps<'/workspace/payroll/gratuity'>) {
-  const role = (await currentTenantUser())?.role;
-  if (!can(role, 'payroll.view')) redirect('/workspace');
+  const accessPrincipal = await currentTenantUser();
+  if (!can(accessPrincipal, 'payroll.view')) redirect('/workspace');
   const t = await getTranslations('payroll');
   const tg = await getTranslations('payroll.gratuity');
   const format = await getFormatter();
@@ -114,14 +114,14 @@ export default async function GratuityPage({
         ) : (
           <div className="-mx-5 overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+              <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="px-5 py-2 font-medium">{tg('person')}</th>
                   <th className="px-5 py-2 font-medium">{tg('joined')}</th>
-                  <th className="px-5 py-2 text-right font-medium">{tg('years')}</th>
-                  <th className="px-5 py-2 text-right font-medium">{tg('basic')}</th>
-                  <th className="px-5 py-2 text-right font-medium">{tg('days')}</th>
-                  <th className="px-5 py-2 text-right font-medium">{tg('liability')}</th>
+                  <th className="px-5 py-2 text-end font-medium">{tg('years')}</th>
+                  <th className="px-5 py-2 text-end font-medium">{tg('basic')}</th>
+                  <th className="px-5 py-2 text-end font-medium">{tg('days')}</th>
+                  <th className="px-5 py-2 text-end font-medium">{tg('liability')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -134,14 +134,14 @@ export default async function GratuityPage({
                       </span>
                     </td>
                     <td className="px-5 py-2.5 text-slate-600">{day(format, l.joinedOn)}</td>
-                    <td className="px-5 py-2.5 text-right tabular-nums">
+                    <td className="px-5 py-2.5 text-end tabular-nums">
                       {format.number(l.serviceYears)}
                     </td>
-                    <td className="px-5 py-2.5 text-right tabular-nums">
+                    <td className="px-5 py-2.5 text-end tabular-nums">
                       {taka(format, l.monthlyWage)}
                     </td>
-                    <td className="px-5 py-2.5 text-right tabular-nums">{format.number(l.days)}</td>
-                    <td className="px-5 py-2.5 text-right font-medium tabular-nums">
+                    <td className="px-5 py-2.5 text-end tabular-nums">{format.number(l.days)}</td>
+                    <td className="px-5 py-2.5 text-end font-medium tabular-nums">
                       {taka(format, l.liability)}
                     </td>
                   </tr>

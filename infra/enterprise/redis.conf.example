@@ -1,0 +1,9 @@
+# Copy privately to config/redis.conf; replace the placeholder with a strong secret.
+bind 0.0.0.0
+protected-mode yes
+requirepass REPLACE_WITH_A_RANDOM_SECRET
+appendonly yes
+appendfsync always
+maxmemory 128mb
+maxmemory-policy noeviction
+dir /data

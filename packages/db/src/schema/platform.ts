@@ -11,6 +11,7 @@ import {
 } from '@gp/shared';
 import {
   date,
+  foreignKey,
   index,
   integer,
   jsonb,
@@ -56,6 +57,8 @@ export const platformUsers = pgTable('platform_users', {
   mfaSecretEnc: text('mfa_secret_enc'),
   mfaEnabledAt: timestamptz('mfa_enabled_at'),
   mfaRecoveryCodes: text('mfa_recovery_codes').array().notNull().default([]),
+  authRevision: integer('auth_revision').notNull().default(0),
+  mfaLastStep: integer('mfa_last_step'),
   lastSignInAt: timestamptz('last_sign_in_at'),
   createdAt: createdAt(),
 });
@@ -174,9 +177,18 @@ export const authSessions = pgTable(
     expiresAt: timestamptz('expires_at').notNull(),
     revokedAt: timestamptz('revoked_at'),
     replacedBy: uuid('replaced_by'),
+    familyId: uuid('family_id').notNull(),
+    familyRevokedAt: timestamptz('family_revoked_at'),
+    authMethod: text('auth_method').notNull().default('password'),
+    mfaAt: timestamptz('mfa_at'),
+    authenticatedAt: timestamptz('authenticated_at').notNull().defaultNow(),
     createdAt: createdAt(),
   },
-  (t) => [index('auth_sessions_subject_idx').on(t.subjectKind, t.subjectId)],
+  (t) => [
+    index('auth_sessions_subject_idx').on(t.subjectKind, t.subjectId),
+    index('auth_sessions_family_idx').on(t.familyId),
+    foreignKey({ name: 'auth_sessions_family_fk', columns: [t.familyId], foreignColumns: [t.id] }),
+  ],
 );
 
 /**
@@ -208,4 +220,16 @@ export const signups = pgTable(
     index('signups_email_idx').on(t.email, t.createdAt),
     index('signups_created_idx').on(t.createdAt),
   ],
+);
+
+/** Durable one-use proof tombstones; no permission or employee payloads. */
+export const authProofs = pgTable(
+  'auth_proofs',
+  {
+    hash: text('hash').primaryKey(),
+    kind: text('kind').notNull(),
+    expiresAt: timestamptz('expires_at').notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index('auth_proofs_expiry_idx').on(t.expiresAt)],
 );

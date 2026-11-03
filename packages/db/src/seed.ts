@@ -1,3 +1,6 @@
+import { seedGroupEmployeeServices } from './seed-employee-services.js';
+import { seedGroupLearning } from './seed-learning.js';
+import { seedGroupCompensation } from './seed-compensation.js';
 import {
   PLAN_CATALOG,
   todayIn,
@@ -207,6 +210,15 @@ export async function seed(db: Database, opts: SeedOptions) {
       await seedGroupBenefits(tx, { tenantId: group.id, cipher: createFieldCipher(opts.fieldKey) });
       await seedGroupRecruitment(tx, { tenantId: group.id });
       await seedGroupPerformance(tx, { tenantId: group.id });
+      await seedGroupLearning(tx, { tenantId: group.id });
+      await seedGroupEmployeeServices(tx, {
+        tenantId: group.id,
+        cipher: createFieldCipher(opts.fieldKey),
+      });
+      await seedGroupCompensation(tx, {
+        tenantId: group.id,
+        cipher: createFieldCipher(opts.fieldKey),
+      });
     });
   }
   const [ngo] = await db.select().from(tenants).where(eq(tenants.slug, 'sponsored-ngo'));

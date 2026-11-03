@@ -26,7 +26,6 @@ import type {
   WorkspaceUserListItem,
 } from '@gp/shared';
 import type { INestApplication } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { and, eq } from 'drizzle-orm';
 import {
   EMAIL_SENDER,
@@ -277,7 +276,7 @@ describe('support access', () => {
       const employee = page.items.find((e) => e.employeeCode === 'MG-0005')!;
       const detail = (await api(app).get(`/tenant/employees/${employee.id}`).set(as).expect(200))
         .body as EmployeeDetail;
-      expect(detail.identity.nid).toBe('••••0005');
+      expect(detail.identity!.nid).toBe('••••0005');
       const account = (await api(app).get('/account').set(as).expect(200)).body;
       expect(account).toMatchObject({ role: 'support', hasPassword: false });
       // What the workspace layout and home page load, for a login with no employee record.
@@ -545,11 +544,11 @@ describe('support access', () => {
 
     await revoke(ws.token, view.id).expect(200);
     for (const token of [session.accessToken, renewed.accessToken]) {
-      expect((await api(app).get('/tenant/access').set(bearer(token)).expect(403)).body.code).toBe(
-        'support_access_ended',
-      );
-      expect((await api(app).get('/account').set(bearer(token)).expect(403)).body.code).toBe(
-        'support_access_ended',
+      expect(
+        (await api(app).get('/tenant/access').set(bearer(token)).expect(401)).body.statusCode,
+      ).toBe(401);
+      expect((await api(app).get('/account').set(bearer(token)).expect(401)).body.statusCode).toBe(
+        401,
       );
     }
     await refresh(renewed.refreshToken).expect(401);
@@ -567,8 +566,9 @@ describe('support access', () => {
     const first = await opened(ws.id, view.id);
     await api(app).post('/auth/logout').send({ refreshToken: first.refreshToken }).expect(204);
     expect(
-      (await api(app).get('/tenant/access').set(bearer(first.accessToken)).expect(403)).body.code,
-    ).toBe('support_access_ended');
+      (await api(app).get('/tenant/access').set(bearer(first.accessToken)).expect(401)).body
+        .statusCode,
+    ).toBe(401);
 
     const second = await opened(ws.id, view.id);
     const listed = (
@@ -582,8 +582,9 @@ describe('support access', () => {
       .set(bearer(support.token))
       .expect(204);
     expect(
-      (await api(app).get('/tenant/access').set(bearer(second.accessToken)).expect(403)).body.code,
-    ).toBe('support_access_ended');
+      (await api(app).get('/tenant/access').set(bearer(second.accessToken)).expect(401)).body
+        .statusCode,
+    ).toBe(401);
     await refresh(second.refreshToken).expect(401);
     // The grant itself still runs: support may come back.
     await opened(ws.id, view.id);
@@ -594,9 +595,7 @@ describe('support access', () => {
     const view = await granted(ws.token);
     const strict = await bootApp({ REQUIRE_ADMIN_MFA: 'on' });
     try {
-      const token = await strict
-        .get(JwtService, { strict: false })
-        .signAsync({ sub: support.id, kind: 'platform', role: 'support' });
+      const token = support.token; // A real password-only session from the same database.
       const res = await api(strict)
         .post('/platform/support/access/sessions')
         .set(bearer(token))

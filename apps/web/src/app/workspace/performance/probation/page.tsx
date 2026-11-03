@@ -11,10 +11,11 @@ import { currentTenantUser, load } from '@/lib/api';
  */
 export default async function ProbationPage() {
   const t = await getTranslations('development.probation');
-  const role = (await currentTenantUser())?.role;
+  const accessPrincipal = await currentTenantUser();
   const reviews = await load<ProbationReviewListItem[]>('tenant', '/tenant/performance/probation');
   // HR who may change a job confirm, extend or end probation from the employee page.
-  const actions = can(role, 'performance.manage') && can(role, 'employees.write');
+  const actions =
+    can(accessPrincipal, 'performance.manage') && can(accessPrincipal, 'employees.write');
   const sections = [
     { key: 'due', reviews: reviews.filter((r) => r.state === 'due') },
     { key: 'submitted', reviews: reviews.filter((r) => r.state === 'submitted') },

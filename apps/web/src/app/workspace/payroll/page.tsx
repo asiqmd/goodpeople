@@ -23,9 +23,9 @@ import { Badge, Card } from '@/components/ui';
 import { currentTenantUser, load } from '@/lib/api';
 
 export default async function PayrollSetupPage({ searchParams }: PageProps<'/workspace/payroll'>) {
-  const role = (await currentTenantUser())?.role;
-  if (!can(role, 'payroll.view')) redirect('/workspace');
-  const canEdit = can(role, 'payroll.manage');
+  const accessPrincipal = await currentTenantUser();
+  if (!can(accessPrincipal, 'payroll.view')) redirect('/workspace');
+  const canEdit = can(accessPrincipal, 'payroll.manage');
   const t = await getTranslations('payroll');
   const format = await getFormatter();
   const locale = await getLocale();
@@ -143,12 +143,12 @@ export default async function PayrollSetupPage({ searchParams }: PageProps<'/wor
             </p>
             <div className="-mx-5 overflow-x-auto">
               <table className="min-w-full text-sm">
-                <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+                <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
                   <tr>
                     <th className="px-5 py-2 font-medium">{t('wages.grade')}</th>
-                    <th className="px-5 py-2 text-right font-medium">{t('pay.gross')}</th>
+                    <th className="px-5 py-2 text-end font-medium">{t('pay.gross')}</th>
                     {Object.keys(b.grades[0]?.components ?? {}).map((code) => (
-                      <th key={code} className="px-5 py-2 text-right font-medium">
+                      <th key={code} className="px-5 py-2 text-end font-medium">
                         {code}
                       </th>
                     ))}
@@ -158,11 +158,11 @@ export default async function PayrollSetupPage({ searchParams }: PageProps<'/wor
                   {b.grades.map((g) => (
                     <tr key={g.grade}>
                       <td className="px-5 py-2">{g.name}</td>
-                      <td className="px-5 py-2 text-right font-medium tabular-nums">
+                      <td className="px-5 py-2 text-end font-medium tabular-nums">
                         {taka(format, g.gross)}
                       </td>
                       {Object.values(g.components).map((v, i) => (
-                        <td key={i} className="px-5 py-2 text-right tabular-nums text-slate-600">
+                        <td key={i} className="px-5 py-2 text-end tabular-nums text-slate-600">
                           {taka(format, v)}
                         </td>
                       ))}
@@ -191,7 +191,7 @@ export default async function PayrollSetupPage({ searchParams }: PageProps<'/wor
             </Badge>
           }
         >
-          {can(role, 'payroll.manage') && can(role, 'payroll.approve') ? (
+          {can(accessPrincipal, 'payroll.manage') && can(accessPrincipal, 'payroll.approve') ? (
             <MakerCheckerSwitch on={settings.makerChecker} approvers={settings.approvers} />
           ) : (
             <p className="text-sm text-slate-600">{t('settings.makerCheckerHint')}</p>

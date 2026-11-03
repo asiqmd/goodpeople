@@ -23,8 +23,8 @@ const isId = (v: unknown): v is string => typeof v === 'string' && /^[0-9a-f-]{3
 export default async function UnionsPage({
   searchParams,
 }: PageProps<'/workspace/compliance/unions'>) {
-  const role = (await currentTenantUser())?.role;
-  if (!can(role, 'compliance.manage')) redirect('/workspace');
+  const accessPrincipal = await currentTenantUser();
+  if (!can(accessPrincipal, 'compliance.manage')) redirect('/workspace');
   const tu = await getTranslations('relations.unions');
   const tk = await getTranslations('relations.checkOff');
   const format = await getFormatter();
@@ -70,14 +70,14 @@ export default async function UnionsPage({
         ) : (
           <div className="-mx-5 overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+              <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="px-5 py-2 font-medium">{tu('columns.name')}</th>
                   <th className="px-3 py-2 font-medium">{tu('columns.company')}</th>
                   <th className="px-3 py-2 font-medium">{tu('columns.registration')}</th>
                   <th className="px-3 py-2 font-medium">{tu('columns.subscription')}</th>
-                  <th className="px-3 py-2 text-right font-medium">{tu('columns.members')}</th>
-                  <th className="px-3 py-2 text-right font-medium">{tu('columns.consenting')}</th>
+                  <th className="px-3 py-2 text-end font-medium">{tu('columns.members')}</th>
+                  <th className="px-3 py-2 text-end font-medium">{tu('columns.consenting')}</th>
                   <th className="px-5 py-2 font-medium">{tu('columns.threshold')}</th>
                 </tr>
               </thead>
@@ -92,7 +92,7 @@ export default async function UnionsPage({
                         {u.name}
                       </Link>
                       {u.isCba && (
-                        <span className="ml-2">
+                        <span className="ms-2">
                           <Badge tone="violet">{tu('cba')}</Badge>
                         </span>
                       )}
@@ -111,10 +111,8 @@ export default async function UnionsPage({
                         '—'
                       )}
                     </td>
-                    <td className="px-3 py-2 text-right tabular-nums">
-                      {format.number(u.members)}
-                    </td>
-                    <td className="px-3 py-2 text-right tabular-nums">
+                    <td className="px-3 py-2 text-end tabular-nums">{format.number(u.members)}</td>
+                    <td className="px-3 py-2 text-end tabular-nums">
                       {format.number(u.consenting)}
                     </td>
                     <td className="px-5 py-2">
@@ -207,15 +205,13 @@ export default async function UnionsPage({
           ) : (
             <div className="-mx-5 overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+                <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
                   <tr>
                     <th className="px-5 py-2 font-medium">{tk('columns.employee')}</th>
                     <th className="px-3 py-2 font-medium">{tk('columns.union')}</th>
                     <th className="px-3 py-2 font-medium">{tk('columns.consent')}</th>
-                    <th className="px-3 py-2 text-right font-medium">
-                      {tk('columns.subscription')}
-                    </th>
-                    <th className="px-3 py-2 text-right font-medium">{tk('columns.deducted')}</th>
+                    <th className="px-3 py-2 text-end font-medium">{tk('columns.subscription')}</th>
+                    <th className="px-3 py-2 text-end font-medium">{tk('columns.deducted')}</th>
                     <th className="px-3 py-2 font-medium">{tk('columns.payGroup')}</th>
                     <th className="px-3 py-2 font-medium">{tk('columns.paid')}</th>
                     <th className="px-5 py-2 font-medium">{tk('columns.due')}</th>
@@ -234,10 +230,10 @@ export default async function UnionsPage({
                       <td className="px-3 py-2 text-slate-700">
                         {day(format, r.checkOffConsentOn)}
                       </td>
-                      <td className="px-3 py-2 text-right tabular-nums">
+                      <td className="px-3 py-2 text-end tabular-nums">
                         {taka(format, r.subscription)}
                       </td>
-                      <td className="px-3 py-2 text-right tabular-nums">
+                      <td className="px-3 py-2 text-end tabular-nums">
                         {r.deducted === null ? (
                           <span className="text-slate-500">{tk('notInRun')}</span>
                         ) : (

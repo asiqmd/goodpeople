@@ -1,3 +1,4 @@
+import { TrainingAudit } from '@/components/learning/views';
 import type { AuditReportView, OrgSnapshot } from '@gp/shared';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
@@ -38,7 +39,7 @@ function Table({ headers, rows }: { headers: string[]; rows: ReactNode[][] }) {
   return (
     <div className="-mx-5 mt-3 overflow-x-auto">
       <table className="min-w-full text-sm">
-        <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+        <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
           <tr>
             {headers.map((h) => (
               <th key={h} className={head}>
@@ -361,6 +362,7 @@ async function Report({ report: r, params }: { report: AuditReportView; params: 
           />
         )}
       </Card>
+      {r.training && <TrainingAudit report={r.training} />}
     </>
   );
 }

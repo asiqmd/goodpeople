@@ -68,7 +68,7 @@ export default async function RosterPage({
           <table className="text-xs">
             <thead>
               <tr>
-                <th className="sticky left-0 bg-white py-1 pr-3 text-left font-medium text-slate-500">
+                <th className="sticky left-0 bg-white py-1 pe-3 text-start font-medium text-slate-500">
                   {t('team.employee')}
                 </th>
                 {dates.map((d) => (
@@ -85,7 +85,7 @@ export default async function RosterPage({
             <tbody>
               {roster.rows.map(({ employee, days }) => (
                 <tr key={employee.id} className="border-t border-slate-100">
-                  <td className="sticky left-0 whitespace-nowrap bg-white py-1 pr-3">
+                  <td className="sticky left-0 whitespace-nowrap bg-white py-1 pe-3">
                     <span className="font-mono text-slate-400">{employee.employeeCode}</span>{' '}
                     {employee.fullName}
                   </td>

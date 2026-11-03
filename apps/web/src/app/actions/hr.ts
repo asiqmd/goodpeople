@@ -44,6 +44,12 @@ export async function updateEmployee(
 ): Promise<ActionState> {
   const { person } = personBody(nest(form));
   const { employeeCode: _code, joinedOn: _joined, ...editable } = person as Record<string, unknown>;
+  if (
+    editable.identity &&
+    typeof editable.identity === 'object' &&
+    !Object.keys(editable.identity).length
+  )
+    delete editable.identity;
   const result = await authedFetch<EmployeeDetail>('tenant', `/tenant/employees/${id}`, {
     method: 'PATCH',
     body: editable,

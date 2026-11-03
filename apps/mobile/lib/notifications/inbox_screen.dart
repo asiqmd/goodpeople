@@ -185,6 +185,9 @@ class _InboxTile extends ConsumerWidget {
     NotificationEvent.performanceTask => Icons.insights_outlined,
     NotificationEvent.performanceReleased =>
       Icons.assignment_turned_in_outlined,
+    NotificationEvent.learningNotice => Icons.school_outlined,
+    NotificationEvent.engagementNotice => Icons.forum_outlined,
+    NotificationEvent.servicesNotice => Icons.support_agent_outlined,
     NotificationEvent.unknown => Icons.notifications_none,
   };
 }

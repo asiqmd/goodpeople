@@ -1,3 +1,7 @@
+import { currentAuthUser } from '../../common/request-context.js';
+import { policyOf } from '../../common/authority.js';
+import { policyCan } from '@gp/shared';
+import { accessAssignments, accessRoles } from '@gp/db';
 import { randomUUID } from 'node:crypto';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
@@ -23,7 +27,7 @@ import {
   type Permission,
   type UserLanguage,
 } from '@gp/shared';
-import { and, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
+import { or, and, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import type { AuthUser } from '../../common/auth-user.js';
 import { currentTenantId } from '../../common/request-context.js';
 import { APP_CONFIG, type AppConfig } from '../../config.js';
@@ -33,7 +37,7 @@ import { NotificationDispatcher } from './notification-dispatcher.service.js';
 import { SMS_SENDER, type Sender, type SmsMessage } from './senders.js';
 
 /** A value in each language, or one for both (a name, a number). */
-export type Localized = string | Record<UserLanguage, string>;
+export type Localized = string | { en: string; bn: string; ar?: string };
 
 /** A login, an employee, or both; an employee's own login is found from their record. */
 export interface Recipient {
@@ -60,11 +64,15 @@ const PLACEHOLDER = /\{\{\s*([a-zA-Z]+(?:\.[a-zA-Z0-9_]+)+)\s*\}\}/g;
 export function fill(text: string, values: Record<string, Localized>, language: UserLanguage) {
   return text.replace(PLACEHOLDER, (_, key: string) => {
     const value = values[key];
-    return value === undefined ? '' : typeof value === 'string' ? value : value[language];
+    return value === undefined
+      ? ''
+      : typeof value === 'string'
+        ? value
+        : (value[language] ?? value.en);
   });
 }
 
-export const localDate = (iso: string): Record<UserLanguage, string> => {
+export const localDate = (iso: string): { en: string; bn: string; ar?: string } => {
   const date = new Date(`${iso}T00:00:00Z`);
   const format = (locale: string) =>
     new Intl.DateTimeFormat(locale, {
@@ -72,8 +80,9 @@ export const localDate = (iso: string): Record<UserLanguage, string> => {
       month: 'short',
       year: 'numeric',
       timeZone: 'UTC',
+      calendar: 'gregory',
     }).format(date);
-  return { en: format('en-GB'), bn: format('bn-BD') };
+  return { en: format('en-GB'), bn: format('bn-BD'), ar: format('ar') };
 };
 
 export interface ChannelSettings {
@@ -117,28 +126,75 @@ export async function templatesFor(
       ? { title: row.title, body: row.body, sms: row.sms }
       : DEFAULT_TEMPLATES[event][language];
   };
-  return { en: pick('en'), bn: pick('bn') };
+  return { en: pick('en'), bn: pick('bn'), ar: pick('ar') };
 }
 
 /** Active logins whose role has the permission, e.g. everyone who handles documents. */
 export async function usersWith(tx: Tx, permission: Permission): Promise<Recipient[]> {
   const roles = ASSIGNABLE_TENANT_ROLES.filter((r) => ROLE_PERMISSIONS[r].includes(permission));
   const rows = await tx
-    .select({ id: tenantUsers.id })
+    .select()
     .from(tenantUsers)
-    .where(and(inArray(tenantUsers.role, roles), isNull(tenantUsers.disabledAt)));
-  return rows.map((r) => ({ userId: r.id }));
+    .where(
+      and(
+        isNull(tenantUsers.disabledAt),
+        eq(tenantUsers.provisionDisabled, false),
+        or(
+          and(inArray(tenantUsers.role, roles), eq(tenantUsers.accessMode, 'template')),
+          and(
+            eq(tenantUsers.accessMode, 'custom'),
+            inArray(
+              tenantUsers.id,
+              tx
+                .select({ id: accessAssignments.userId })
+                .from(accessAssignments)
+                .innerJoin(accessRoles, eq(accessRoles.id, accessAssignments.roleId))
+                .where(
+                  and(
+                    eq(accessAssignments.scope, 'all'),
+                    eq(accessAssignments.relationship, 'all'),
+                    sql`${accessRoles.permissions} @> ARRAY[${permission}]::text[]`,
+                  ),
+                ),
+            ),
+          ),
+        ),
+      ),
+    );
+  const recipients: Recipient[] = [];
+  for (const user of rows) {
+    if (user.accessMode === 'template') {
+      recipients.push({ userId: user.id });
+      continue;
+    }
+    const policy = await policyOf(tx, user);
+    if (
+      (policy.companies ?? []).every((id) => policyCan(policy, permission, id)) &&
+      policyCan(policy, permission)
+    )
+      recipients.push({ userId: user.id });
+  }
+  return recipients;
 }
 
-const toView = (n: typeof notifications.$inferSelect): NotificationView => ({
-  id: n.id,
-  event: n.event,
-  title: n.title,
-  body: n.body,
-  link: n.link,
-  readAt: n.readAt?.toISOString() ?? null,
-  createdAt: n.createdAt.toISOString(),
-});
+const toView = (n: typeof notifications.$inferSelect): NotificationView => {
+  const user = currentAuthUser(),
+    custom = user?.kind === 'tenant' && user.policy?.custom,
+    bn = user?.language === 'bn';
+  return {
+    id: n.id,
+    event: n.event,
+    title: custom ? (bn ? 'গুড পিপল' : 'Good People') : n.title,
+    body: custom
+      ? bn
+        ? 'আপনার জন্য একটি নতুন বার্তা আছে। বিস্তারিত দেখতে সংশ্লিষ্ট রেকর্ড খুলুন।'
+        : 'You have an update. Open the record to see the details.'
+      : n.body,
+    link: n.link,
+    readAt: n.readAt?.toISOString() ?? null,
+    createdAt: n.createdAt.toISOString(),
+  };
+};
 
 /**
  * Tells people what happened: an inbox entry for logins, and email, SMS and push messages
@@ -181,7 +237,19 @@ export class NotificationsService {
         ...input.values,
         ...(person.employeeId ? input.perRecipient?.get(person.employeeId) : undefined),
       };
-      const text = templates[person.language];
+      const text = person.custom
+        ? person.language === 'bn'
+          ? {
+              title: 'গুড পিপল',
+              body: 'আপনার জন্য একটি নতুন বার্তা আছে। বিস্তারিত দেখতে সংশ্লিষ্ট রেকর্ড খুলুন।',
+              sms: 'গুড পিপল: নতুন বার্তা আছে। অ্যাপে দেখুন।',
+            }
+          : {
+              title: 'Good People',
+              body: 'You have an update. Open the record to see the details.',
+              sms: 'Good People: you have an update. Open the app.',
+            }
+        : templates[person.language];
       return {
         person,
         values,
@@ -365,6 +433,8 @@ export class NotificationsService {
             phone: tenantUsers.phone,
             language: tenantUsers.language,
             disabledAt: tenantUsers.disabledAt,
+            provisionDisabled: tenantUsers.provisionDisabled,
+            accessMode: tenantUsers.accessMode,
           })
           .from(tenantUsers)
           .where(inArray(tenantUsers.id, [...userIds]))
@@ -376,9 +446,10 @@ export class NotificationsService {
       email: string | null;
       phone: string | null;
       language: UserLanguage;
+      custom: boolean;
     }[] = [];
     for (const login of logins) {
-      if (login.disabledAt) continue;
+      if (login.disabledAt || login.provisionDisabled) continue;
       const employee = staff.find((e) => e.userId === login.id);
       people.push({
         userId: login.id,
@@ -386,6 +457,7 @@ export class NotificationsService {
         email: login.email ?? employee?.workEmail ?? null,
         phone: login.phone ?? employee?.mobilePhone ?? null,
         language: login.language,
+        custom: login.accessMode === 'custom',
       });
     }
     for (const e of staff) {
@@ -396,6 +468,7 @@ export class NotificationsService {
         email: e.workEmail ?? e.personalEmail,
         phone: e.mobilePhone,
         language: 'en',
+        custom: false,
       });
     }
     return people;

@@ -43,39 +43,39 @@ export default async function ProductionOperationsPage({
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="text-left text-xs text-slate-500">
+              <thead className="text-start text-xs text-slate-500">
                 <tr>
-                  <th className="py-2 pr-3 font-medium">{t('code')}</th>
-                  <th className="py-2 pr-3 font-medium">{t('name')}</th>
-                  <th className="py-2 pr-3 font-medium">{t('style')}</th>
-                  <th className="py-2 pr-3 text-right font-medium">{t('pieceRate')}</th>
-                  <th className="py-2 pr-3 text-right font-medium">{t('dailyTarget')}</th>
-                  <th className="py-2 pr-3 text-right font-medium">{t('incentiveRate')}</th>
-                  <th className="py-2 pr-3 font-medium">{t('status')}</th>
+                  <th className="py-2 pe-3 font-medium">{t('code')}</th>
+                  <th className="py-2 pe-3 font-medium">{t('name')}</th>
+                  <th className="py-2 pe-3 font-medium">{t('style')}</th>
+                  <th className="py-2 pe-3 text-end font-medium">{t('pieceRate')}</th>
+                  <th className="py-2 pe-3 text-end font-medium">{t('dailyTarget')}</th>
+                  <th className="py-2 pe-3 text-end font-medium">{t('incentiveRate')}</th>
+                  <th className="py-2 pe-3 font-medium">{t('status')}</th>
                   <th className="py-2 font-medium" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {operations.map((o) => (
                   <tr key={o.id} className={o.isActive ? undefined : 'text-slate-400'}>
-                    <td className="py-2 pr-3 font-mono text-xs">{o.code}</td>
-                    <td className="py-2 pr-3">{localName(o, locale)}</td>
-                    <td className="py-2 pr-3">{o.style}</td>
-                    <td className="py-2 pr-3 text-right tabular-nums">
+                    <td className="py-2 pe-3 font-mono text-xs">{o.code}</td>
+                    <td className="py-2 pe-3">{localName(o, locale)}</td>
+                    <td className="py-2 pe-3">{o.style}</td>
+                    <td className="py-2 pe-3 text-end tabular-nums">
                       {o.pieceRate !== null && rate(format, o.pieceRate)}
                     </td>
-                    <td className="py-2 pr-3 text-right tabular-nums">
+                    <td className="py-2 pe-3 text-end tabular-nums">
                       {o.dailyTarget !== null && format.number(o.dailyTarget)}
                     </td>
-                    <td className="py-2 pr-3 text-right tabular-nums">
+                    <td className="py-2 pe-3 text-end tabular-nums">
                       {o.incentiveRate !== null && rate(format, o.incentiveRate)}
                     </td>
-                    <td className="py-2 pr-3">
+                    <td className="py-2 pe-3">
                       <Badge tone={o.isActive ? 'green' : 'slate'}>
                         {o.isActive ? t('active') : t('inactive')}
                       </Badge>
                     </td>
-                    <td className="space-x-3 py-2 text-right whitespace-nowrap">
+                    <td className="space-x-3 py-2 text-end whitespace-nowrap">
                       <Link
                         href={`/workspace/production/operations?edit=${o.id}`}
                         className="text-sm font-medium text-slate-700 hover:underline"

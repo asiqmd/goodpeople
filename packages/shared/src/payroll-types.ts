@@ -228,6 +228,8 @@ export interface RunTotals {
 }
 
 export interface PayrollRunView {
+  currency?: string;
+  statutoryContext?: Record<string, unknown>;
   id: string;
   kind: RunKind;
   /** The locked run an adjustment corrects. */

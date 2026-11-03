@@ -1,3 +1,4 @@
+import { learningAuditHtml } from '../learning/audit-html.js';
 import type { AuditReportView } from '@gp/shared';
 import { escapeHtml, page } from '../letters/render.js';
 import { date } from '../payroll/payslip.js';
@@ -451,6 +452,6 @@ ${table(
     n(language, a.resolved),
   ]),
   [1, 2, 3],
-)}</section>`,
+)}</section>${r.training ? learningAuditHtml(r.training, language) : ''}`,
   );
 }

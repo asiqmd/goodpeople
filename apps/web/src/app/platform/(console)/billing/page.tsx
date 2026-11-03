@@ -155,7 +155,7 @@ async function Invoices({ status }: { status?: string }) {
         ) : (
           <div className="-mx-5 overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+              <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className={head}>{ti('number')}</th>
                   <th className={head}>{t('to')}</th>
@@ -209,10 +209,8 @@ async function Invoices({ status }: { status?: string }) {
                             </span>
                           )}
                         </td>
-                        <td className={`${cell} text-right tabular-nums`}>
-                          {taka(format, i.total)}
-                        </td>
-                        <td className={`${cell} text-right tabular-nums`}>
+                        <td className={`${cell} text-end tabular-nums`}>{taka(format, i.total)}</td>
+                        <td className={`${cell} text-end tabular-nums`}>
                           {i.kind === 'invoice' ? taka(format, i.balance) : '—'}
                         </td>
                         <td className={cell}>
@@ -307,7 +305,7 @@ async function Prices() {
       <p className="mb-4 text-sm text-slate-600">{t('hint')}</p>
       <div className="-mx-5 mb-6 overflow-x-auto">
         <table className="min-w-full text-sm">
-          <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+          <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
             <tr>
               <th className={head}>{t('plan')}</th>
               <th className={`${head} text-right`}>{t('staffSeat')}</th>
@@ -320,9 +318,9 @@ async function Prices() {
             {prices.map((p) => (
               <tr key={p.id}>
                 <td className={cell}>{tp(p.planCode)}</td>
-                <td className={`${cell} text-right tabular-nums`}>{taka(format, p.staffSeat)}</td>
-                <td className={`${cell} text-right tabular-nums`}>{taka(format, p.workerSeat)}</td>
-                <td className={`${cell} text-right tabular-nums`}>{taka(format, p.minimum)}</td>
+                <td className={`${cell} text-end tabular-nums`}>{taka(format, p.staffSeat)}</td>
+                <td className={`${cell} text-end tabular-nums`}>{taka(format, p.workerSeat)}</td>
+                <td className={`${cell} text-end tabular-nums`}>{taka(format, p.minimum)}</td>
                 <td className={cell}>{dayOf(format, p.effectiveFrom)}</td>
               </tr>
             ))}
@@ -343,7 +341,7 @@ async function Coupons() {
       {coupons.length > 0 && (
         <div className="-mx-5 mb-6 overflow-x-auto">
           <table className="min-w-full text-sm">
-            <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+            <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
               <tr>
                 <th className={head}>{t('code')}</th>
                 <th className={head}>{t('off')}</th>
@@ -394,7 +392,7 @@ async function Partners() {
         {partners.length > 0 && (
           <div className="-mx-5 mb-6 overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+              <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className={head}>{t('name')}</th>
                   <th className={head}>{t('discount')}</th>
@@ -416,7 +414,7 @@ async function Partners() {
                             <Link
                               key={x.id}
                               href={`/platform/tenants/${x.id}`}
-                              className="mr-2 font-mono text-xs text-brand-700 hover:underline"
+                              className="me-2 font-mono text-xs text-brand-700 hover:underline"
                             >
                               {x.slug}
                             </Link>

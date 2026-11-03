@@ -126,19 +126,19 @@ export default async function CalibrationPage({
           <p className="text-sm text-slate-500">{t('cycle.nobody')}</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-start text-sm">
               <thead className="text-xs text-slate-500">
                 <tr>
-                  <th scope="col" className="py-2 pr-3 font-medium">
+                  <th scope="col" className="py-2 pe-3 font-medium">
                     {t('calibration.person')}
                   </th>
-                  <th scope="col" className="py-2 pr-3 font-medium">
+                  <th scope="col" className="py-2 pe-3 font-medium">
                     {t('review.goalScore')}
                   </th>
-                  <th scope="col" className="py-2 pr-3 font-medium">
+                  <th scope="col" className="py-2 pe-3 font-medium">
                     {t('calibration.proposed')}
                   </th>
-                  <th scope="col" className="py-2 pr-3 font-medium">
+                  <th scope="col" className="py-2 pe-3 font-medium">
                     {t('form.recommendations')}
                   </th>
                   <th scope="col" className="py-2 font-medium">
@@ -149,7 +149,7 @@ export default async function CalibrationPage({
               <tbody className="divide-y divide-slate-100 align-top">
                 {view.people.map((p) => (
                   <tr key={p.reviewId}>
-                    <td className="py-2.5 pr-3">
+                    <td className="py-2.5 pe-3">
                       <Link
                         href={`/workspace/performance/reviews/${p.reviewId}`}
                         className="font-medium text-brand-700 hover:underline"
@@ -170,13 +170,13 @@ export default async function CalibrationPage({
                         <ReviewStatusBadge status={p.status} />
                       </div>
                     </td>
-                    <td className="py-2.5 pr-3 tabular-nums">
+                    <td className="py-2.5 pe-3 tabular-nums">
                       {p.goalScore === null ? '–' : format.number(Number(p.goalScore))}
                     </td>
-                    <td className="py-2.5 pr-3">
+                    <td className="py-2.5 pe-3">
                       <RatingText rating={p.proposedRating} />
                     </td>
-                    <td className="py-2.5 pr-3">
+                    <td className="py-2.5 pe-3">
                       {p.recommendations ? (
                         <ul className="flex flex-wrap gap-1">
                           {p.recommendations.increment && (

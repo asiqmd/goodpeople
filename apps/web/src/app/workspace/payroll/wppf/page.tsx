@@ -30,9 +30,9 @@ const AMOUNTS = [
 ] as const;
 
 export default async function WppfPage() {
-  const role = (await currentTenantUser())?.role;
-  if (!can(role, 'payroll.view')) redirect('/workspace');
-  const canManage = can(role, 'payroll.manage');
+  const accessPrincipal = await currentTenantUser();
+  if (!can(accessPrincipal, 'payroll.view')) redirect('/workspace');
+  const canManage = can(accessPrincipal, 'payroll.manage');
   const t = await getTranslations('payroll');
   const tw = await getTranslations('payroll.wppf');
   const format = await getFormatter();
@@ -79,9 +79,7 @@ export default async function WppfPage() {
                   {AMOUNTS.map((key) => (
                     <tr key={key} className={key === 'cash' ? 'font-semibold' : undefined}>
                       <td className="py-1 text-slate-600">{tw(`amounts.${key}`)}</td>
-                      <td className="py-1 text-right tabular-nums">
-                        {taka(format, y.amounts[key])}
-                      </td>
+                      <td className="py-1 text-end tabular-nums">{taka(format, y.amounts[key])}</td>
                     </tr>
                   ))}
                 </tbody>

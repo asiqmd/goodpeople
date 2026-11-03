@@ -25,8 +25,8 @@ const or = (v: number | null, show: (v: number) => string) => (v === null ? '—
 const link = (month: string) => `/workspace/group?month=${month}`;
 
 export default async function GroupDashboardPage({ searchParams }: PageProps<'/workspace/group'>) {
-  const role = (await currentTenantUser())?.role;
-  if (!can(role, 'employees.read')) redirect('/workspace');
+  const accessPrincipal = await currentTenantUser();
+  if (!can(accessPrincipal, 'employees.read')) redirect('/workspace');
   const t = await getTranslations('group');
   const format = await getFormatter();
   const thisMonth = todayIn().slice(0, 7);
@@ -107,7 +107,7 @@ export default async function GroupDashboardPage({ searchParams }: PageProps<'/w
   return (
     <>
       {header}
-      <GroupTabs active="dashboard" policies={can(role, 'org.manage')} />
+      <GroupTabs active="dashboard" policies={can(accessPrincipal, 'org.manage')} />
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h2 className="text-lg font-semibold">
           {t('dashboard.title', { month: monthName(month) })}
@@ -162,13 +162,13 @@ export default async function GroupDashboardPage({ searchParams }: PageProps<'/w
           <Card title={t('dashboard.byCompany')}>
             <div className="-mx-5 overflow-x-auto">
               <table className="min-w-full text-sm">
-                <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+                <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
                   <tr>
                     <th scope="col" className="px-5 py-2 font-medium">
                       {t('dashboard.company')}
                     </th>
                     {figures.map((figure) => (
-                      <th key={figure} scope="col" className="px-3 py-2 text-right font-medium">
+                      <th key={figure} scope="col" className="px-3 py-2 text-end font-medium">
                         {t(`dashboard.figures.${figure}`)}
                       </th>
                     ))}
@@ -184,11 +184,11 @@ export default async function GroupDashboardPage({ searchParams }: PageProps<'/w
                     { key: 'group', name: t('dashboard.groupRow'), f: view.group },
                   ].map(({ key, name, f }) => (
                     <tr key={key} className={key === 'group' ? 'bg-slate-50 font-semibold' : ''}>
-                      <th scope="row" className="px-5 py-2 text-left font-medium">
+                      <th scope="row" className="px-5 py-2 text-start font-medium">
                         {name}
                       </th>
                       {figures.map((figure) => (
-                        <td key={figure} className="px-3 py-2 text-right tabular-nums">
+                        <td key={figure} className="px-3 py-2 text-end tabular-nums">
                           {value(f, figure)}
                         </td>
                       ))}

@@ -20,7 +20,7 @@ const limitable = (u: WorkspaceUserListItem) =>
 
 export default async function UsersPage() {
   const user = await currentTenantUser();
-  if (!can(user?.role, 'users.manage')) notFound();
+  if (!can(user, 'users.manage')) notFound();
   const t = await getTranslations('users');
   const th = await getTranslations('hr');
   const ts = await getTranslations('accessScopes');
@@ -48,7 +48,7 @@ export default async function UsersPage() {
         )}
         <div className="-mx-5 overflow-x-auto">
           <table className="min-w-full text-sm">
-            <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+            <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-5 py-2 font-medium">{t('name')}</th>
                 <th className="px-5 py-2 font-medium">{t('signsInWith')}</th>

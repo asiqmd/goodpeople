@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Good People installed deployment environment",
+  "type": "object",
+  "required": [
+    "DEPLOYMENT_MODE",
+    "INSTALLATION_ID",
+    "INSTALLATION_TENANT_ID",
+    "DATABASE_URL",
+    "JWT_ACCESS_SECRET",
+    "FIELD_ENCRYPTION_KEY",
+    "LICENSE_PUBLIC_KEYS_JSON",
+    "REQUIRE_ADMIN_MFA",
+    "SIGNUP_ENABLED",
+    "SECURITY_STORE",
+    "REDIS_URL",
+    "WEB_ORIGIN",
+    "API_ORIGIN",
+    "RELEASE_VERSION"
+  ],
+  "properties": {
+    "DEPLOYMENT_MODE": { "enum": ["self_hosted", "dedicated"] },
+    "INSTALLATION_ID": { "type": "string", "format": "uuid" },
+    "INSTALLATION_TENANT_ID": { "type": "string", "format": "uuid" },
+    "REQUIRE_ADMIN_MFA": { "const": "on" },
+    "SIGNUP_ENABLED": { "const": "off" },
+    "SECURITY_STORE": { "const": "redis" },
+    "JWT_ACCESS_SECRET": { "type": "string", "minLength": 32, "writeOnly": true },
+    "FIELD_ENCRYPTION_KEY": { "type": "string", "minLength": 40, "writeOnly": true },
+    "FIELD_ENCRYPTION_KEYS_JSON": { "type": "string", "writeOnly": true },
+    "FIELD_ENCRYPTION_ACTIVE_KEY_ID": { "type": "string" },
+    "LICENSE_PUBLIC_KEYS_JSON": {
+      "type": "string",
+      "description": "Operator-pinned Ed25519 public key map; never accept keys supplied with an unverified license"
+    },
+    "DATABASE_URL": { "type": "string", "writeOnly": true },
+    "REDIS_URL": { "type": "string", "writeOnly": true },
+    "API_ORIGIN": { "type": "string", "format": "uri" },
+    "WEB_ORIGIN": { "type": "string", "format": "uri" },
+    "RELEASE_VERSION": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+" }
+  },
+  "description": "Full validation is authoritative in the matching API config module and enterprise-cli validate-config. Owner/admin/backup URLs must be in separate operator files, never app.env."
+}

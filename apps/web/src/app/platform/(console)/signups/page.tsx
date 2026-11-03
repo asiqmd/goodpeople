@@ -27,7 +27,7 @@ export default async function SignupsPage() {
       ) : (
         <div className="-mx-5 overflow-x-auto">
           <table className="min-w-full text-sm">
-            <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+            <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-5 py-2 font-medium">{t('when')}</th>
                 <th className="px-5 py-2 font-medium">{t('company')}</th>
@@ -61,7 +61,7 @@ export default async function SignupsPage() {
                     {s.tenant && (
                       <Link
                         href={`/platform/tenants/${s.tenant.id}`}
-                        className="ml-2 font-mono text-xs text-brand-700 hover:underline"
+                        className="ms-2 font-mono text-xs text-brand-700 hover:underline"
                       >
                         {s.tenant.slug}
                       </Link>

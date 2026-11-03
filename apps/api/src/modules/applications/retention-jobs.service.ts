@@ -39,12 +39,8 @@ export class CandidateRetentionJobs implements OnApplicationBootstrap, OnApplica
   ) {}
 
   onApplicationBootstrap() {
-    if (!this.config.BACKGROUND_JOBS) return;
-    const erase = () => {
-      this.running ??= this.everyTenant().finally(() => (this.running = undefined));
-    };
-    this.timers = [setInterval(erase, 24 * 60 * 60_000), setTimeout(erase, 120_000)];
-    for (const timer of this.timers) timer.unref();
+    // M2: only the separate, leased worker scheduler owns timers.
+    void this.config.BACKGROUND_JOBS;
   }
 
   async onApplicationShutdown() {

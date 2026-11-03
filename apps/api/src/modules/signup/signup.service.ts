@@ -76,8 +76,8 @@ export class SignupService {
   async start(input: SignupStartInput, ip: string): Promise<SignupStarted> {
     this.enabled();
     const email = input.email.trim().toLowerCase();
-    this.limiter.hit(`signup-ip:${ip}`, 10, 60 * MINUTE_MS);
-    this.limiter.hit(`signup:${email}`, 3, 15 * MINUTE_MS);
+    await this.limiter.hit(`signup-ip:${ip}`, 10, 60 * MINUTE_MS);
+    await this.limiter.hit(`signup:${email}`, 3, 15 * MINUTE_MS);
     const code = numericCode(6);
     const [row] = await this.db
       .insert(signups)
@@ -156,7 +156,7 @@ export class SignupService {
     ip: string,
   ): Promise<{ tenant: { slug: string; name: string }; login: TenantLoginResult }> {
     this.enabled();
-    this.limiter.hit(`signup-verify:${input.signupId}`, 10, 15 * MINUTE_MS);
+    await this.limiter.hit(`signup-verify:${input.signupId}`, 10, 15 * MINUTE_MS);
     const [signup] = await this.db.select().from(signups).where(eq(signups.id, input.signupId));
     if (!signup || signup.tenantId) throw new NotFoundException('This sign-up is not open');
     if (signup.expiresAt.getTime() <= Date.now() || signup.attempts >= SIGNUP_CODE_ATTEMPTS) {

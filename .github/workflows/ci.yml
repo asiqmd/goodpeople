@@ -8,7 +8,12 @@ on:
 jobs:
   node:
     runs-on: ubuntu-latest
+    env:
+      GP_ENTERPRISE_DRILLS: 'on'
     services:
+      redis:
+        image: redis:7.4
+        ports: ['6381:6379']
       postgres:
         image: postgres:17
         env:
@@ -24,6 +29,22 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Official PGDG repository/key; the native recovery rehearsal needs v17 dump/restore clients.
+      # https://www.postgresql.org/download/linux/ubuntu/
+      - name: Install PostgreSQL 17 recovery clients
+        shell: bash
+        run: |
+          curl --fail --silent --show-error https://www.postgresql.org/media/keys/ACCC4CF8.asc -o "$RUNNER_TEMP/pgdg.asc"
+          gp_pgdg_fingerprint=$(gpg --show-keys --with-colons "$RUNNER_TEMP/pgdg.asc" | awk -F: '$1=="fpr" {print $10; exit}')
+          test "$gp_pgdg_fingerprint" = B97B0AFCAA1A47F044F244A07FCC7D46ACCC4CF8
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo install -m 0644 "$RUNNER_TEMP/pgdg.asc" /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc
+          . /etc/os-release
+          printf 'Types: deb\nURIs: https://apt.postgresql.org/pub/repos/apt\nSuites: %s-pgdg\nComponents: main\nSigned-By: /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc\n' "$VERSION_CODENAME" > "$RUNNER_TEMP/pgdg.sources"
+          sudo install -m 0644 "$RUNNER_TEMP/pgdg.sources" /etc/apt/sources.list.d/pgdg.sources
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y postgresql-client-17
+          echo /usr/lib/postgresql/17/bin >> "$GITHUB_PATH"
       - run: cp .env.example .env
       - run: pnpm build
       - run: pnpm db:setup
@@ -97,6 +118,7 @@ jobs:
           hardening=(--cap-drop ALL --security-opt no-new-privileges:true)
 
           docker network create gp
+          docker run -d --name redis --network gp redis:7.4
           docker run -d --name postgres --network gp -e POSTGRES_PASSWORD=postgres postgres:17
           retry docker exec postgres pg_isready -h 127.0.0.1 -U postgres
 
@@ -107,13 +129,27 @@ jobs:
           docker run --rm --network gp "${hardening[@]}" -e DATABASE_OWNER_URL="$owner" \
             good-people-api:ci node node_modules/@gp/db/dist/scripts/migrate.js
 
+          access_secret=$(openssl rand -base64 48)
+          field_key=$(openssl rand -base64 32)
           # No mail or SMS provider in CI: the log drivers, which production otherwise refuses.
           docker run -d --name api --network gp "${hardening[@]}" \
-            -e DATABASE_URL="$app" -e BACKGROUND_JOBS=off -e ALLOW_LOG_SENDERS=on \
-            -e JWT_ACCESS_SECRET="$(openssl rand -base64 48)" \
-            -e FIELD_ENCRYPTION_KEY="$(openssl rand -base64 32)" \
+            -e DATABASE_URL="$app" -e REDIS_URL=redis://redis:6379 -e BACKGROUND_JOBS=off -e ALLOW_LOG_SENDERS=on \
+            -e JWT_ACCESS_SECRET="$access_secret" \
+            -e FIELD_ENCRYPTION_KEY="$field_key" \
             good-people-api:ci
           retry docker exec api node -e "$(get http://127.0.0.1:4000/health)"
+
+          # Separate worker, shared keys/state, no HTTP listener.
+          docker run -d --name worker --network gp "${hardening[@]}" \
+            -e DATABASE_URL="$app" -e REDIS_URL=redis://redis:6379 -e BACKGROUND_JOBS=on -e PROCESS_ROLE=worker -e ALLOW_LOG_SENDERS=on \
+            -e JWT_ACCESS_SECRET="$access_secret" -e FIELD_ENCRYPTION_KEY="$field_key" \
+            good-people-api:ci node dist/worker.js
+          retry docker exec worker node --input-type=module -e '
+            import {createDb} from "@gp/db";
+            const {pool}=createDb(process.env.DATABASE_URL);
+            try {const {rows}=await pool.query("select count(*)::int n from job_leases where heartbeat_at > now() - make_interval(mins=>2) and ok=true");if(!rows[0].n)process.exitCode=1;}
+            finally{await pool.end();}
+          '
 
           # Chromium as the API starts it when not root: CHROME_PATH (the --no-sandbox wrapper).
           docker exec api node --input-type=module -e "
@@ -135,4 +171,4 @@ jobs:
           retry docker exec web node -e "$(get http://127.0.0.1:3000/login)"
       - name: Container logs
         if: failure()
-        run: for c in postgres api web; do echo "::group::$c"; docker logs "$c" || true; echo "::endgroup::"; done
+        run: for c in postgres redis api worker web; do echo "::group::$c"; docker logs "$c" || true; echo "::endgroup::"; done

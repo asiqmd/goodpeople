@@ -16,8 +16,23 @@ part 'lifecycle_models.dart';
 part 'payroll_benefit_models.dart';
 part 'payroll_models.dart';
 part 'performance_models.dart';
+part 'learning_models.dart';
+part 'employee_service_models.dart';
 part 'recruitment_models.dart';
 part 'timesheet_models.dart';
+
+class SsoStart {
+  const SsoStart({required this.url,required this.flowId});
+  final Uri url;
+  final String flowId;
+  factory SsoStart.fromJson(Json json){
+    final url=json['url'],flow=json['flowId'];
+    if(url is! String||flow is! String||!RegExp(r'^[A-Za-z0-9_-]{32}$').hasMatch(flow))throw const FormatException('Invalid SSO flow');
+    final uri=Uri.parse(url);
+    if(!['https','http'].contains(uri.scheme)||!uri.hasAuthority||uri.userInfo.isNotEmpty)throw const FormatException('Invalid sign-in URL');
+    return SsoStart(url:uri,flowId:flow);
+  }
+}
 
 typedef Json = Map<String, Object?>;
 

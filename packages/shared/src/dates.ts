@@ -3,9 +3,15 @@
 
 export type IsoDate = string;
 
+let defaultZone = () => 'Asia/Dhaka';
+/** The API supplies an async-context resolver; pure consumers retain the explicit legacy BD default. */
+export function setBusinessZoneResolver(resolver: () => string) {
+  defaultZone = resolver;
+}
+
 /** Today's calendar date in a time zone (Bangladesh by default). */
-export function todayIn(timeZone = 'Asia/Dhaka', now = new Date()): IsoDate {
-  return new Intl.DateTimeFormat('en-CA', { timeZone }).format(now);
+export function todayIn(timeZone: string | undefined = undefined, now = new Date()): IsoDate {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: timeZone ?? defaultZone() }).format(now);
 }
 
 export function addDays(date: IsoDate, days: number): IsoDate {

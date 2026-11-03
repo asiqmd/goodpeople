@@ -21,9 +21,9 @@ const TONE: Record<PayBatchView['status'], Tone> = {
 };
 
 export default async function IncrementsPage() {
-  const role = (await currentTenantUser())?.role;
-  if (!can(role, 'payroll.view')) redirect('/workspace');
-  const canManage = can(role, 'payroll.manage');
+  const accessPrincipal = await currentTenantUser();
+  if (!can(accessPrincipal, 'payroll.view')) redirect('/workspace');
+  const canManage = can(accessPrincipal, 'payroll.manage');
   const t = await getTranslations('payroll');
   const ti = await getTranslations('payroll.increments');
   const format = await getFormatter();

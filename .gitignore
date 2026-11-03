@@ -15,3 +15,8 @@ apps/mobile/ios/Pods/
 apps/api/openapi.json
 # Local document store (STORAGE_DRIVER=local)
 apps/api/storage/
+
+# Customer enterprise secrets, image bundles and private qualification records.
+/infra/enterprise/config/
+/enterprise-bundles/
+/enterprise-evidence-private/

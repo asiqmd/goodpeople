@@ -123,23 +123,23 @@ export default async function ComplianceHoursPage({
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="text-left text-xs text-slate-500">
+              <thead className="text-start text-xs text-slate-500">
                 <tr>
-                  <th className="py-2 pr-3 font-medium">{t('hours.employee')}</th>
-                  <th className="py-2 pr-3 font-medium">{t('hours.unitColumn')}</th>
-                  <th className="py-2 pr-3 text-right font-medium">{t('hours.days')}</th>
-                  <th className="py-2 pr-3 text-right font-medium">{t('hours.worked')}</th>
-                  <th className="py-2 pr-3 text-right font-medium">{t('hours.limit')}</th>
-                  <th className="py-2 pr-3 text-right font-medium">{t('hours.longest')}</th>
-                  <th className="py-2 pr-3 text-right font-medium">{t('hours.overtime')}</th>
-                  <th className="py-2 pr-3 text-right font-medium">{t('hours.monthOvertime')}</th>
+                  <th className="py-2 pe-3 font-medium">{t('hours.employee')}</th>
+                  <th className="py-2 pe-3 font-medium">{t('hours.unitColumn')}</th>
+                  <th className="py-2 pe-3 text-end font-medium">{t('hours.days')}</th>
+                  <th className="py-2 pe-3 text-end font-medium">{t('hours.worked')}</th>
+                  <th className="py-2 pe-3 text-end font-medium">{t('hours.limit')}</th>
+                  <th className="py-2 pe-3 text-end font-medium">{t('hours.longest')}</th>
+                  <th className="py-2 pe-3 text-end font-medium">{t('hours.overtime')}</th>
+                  <th className="py-2 pe-3 text-end font-medium">{t('hours.monthOvertime')}</th>
                   <th className="py-2 font-medium">{t('hours.level')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 tabular-nums">
                 {board.rows.map((r) => (
                   <tr key={r.employee.id}>
-                    <td className="py-2 pr-3">
+                    <td className="py-2 pe-3">
                       <Link
                         href={`/workspace/employees/${r.employee.id}?tab=attendance`}
                         className="font-medium hover:underline"
@@ -150,20 +150,18 @@ export default async function ComplianceHoursPage({
                         {r.employee.employeeCode}
                       </span>
                       {r.adolescent && (
-                        <span className="ml-2">
+                        <span className="ms-2">
                           <Badge tone="violet">{t('hours.adolescent')}</Badge>
                         </span>
                       )}
                     </td>
-                    <td className="py-2 pr-3">{r.orgUnit ?? '—'}</td>
-                    <td className="py-2 pr-3 text-right">{format.number(r.daysWorked)}</td>
-                    <td className="py-2 pr-3 text-right">{h(r.workedMinutes)}</td>
-                    <td className="py-2 pr-3 text-right text-slate-500">
-                      {h(r.weeklyLimitMinutes)}
-                    </td>
-                    <td className="py-2 pr-3 text-right">{h(r.longestDayMinutes)}</td>
-                    <td className="py-2 pr-3 text-right">{h(r.overtimeMinutes)}</td>
-                    <td className="py-2 pr-3 text-right">{h(r.monthOvertimeMinutes)}</td>
+                    <td className="py-2 pe-3">{r.orgUnit ?? '—'}</td>
+                    <td className="py-2 pe-3 text-end">{format.number(r.daysWorked)}</td>
+                    <td className="py-2 pe-3 text-end">{h(r.workedMinutes)}</td>
+                    <td className="py-2 pe-3 text-end text-slate-500">{h(r.weeklyLimitMinutes)}</td>
+                    <td className="py-2 pe-3 text-end">{h(r.longestDayMinutes)}</td>
+                    <td className="py-2 pe-3 text-end">{h(r.overtimeMinutes)}</td>
+                    <td className="py-2 pe-3 text-end">{h(r.monthOvertimeMinutes)}</td>
                     <td className="py-2">
                       <Badge tone={LEVEL_TONE[r.level]}>
                         {t(`hours.levels.${r.level}`, { percent: r.percent })}

@@ -1,3 +1,5 @@
+import { isDeepStrictEqual } from 'node:util';
+import { resolveStatutoryContext } from '@gp/db';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   approvalSteps,
@@ -338,6 +340,14 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
       if (run.status !== 'draft' && run.status !== 'computed') {
         throw conflict('run_not_open', `This run is ${run.status} and cannot be computed again`);
       }
+      const statutoryContext = await resolveStatutoryContext(
+        tx,
+        currentTenantId(),
+        run.payGroupId,
+        run.periodStart,
+        run.periodEnd,
+      );
+      await tx.update(payrollRuns).set({ statutoryContext }).where(eq(payrollRuns.id, run.id));
       const results =
         run.kind === 'regular'
           ? await this.computeRegular(tx, run, tenant)
@@ -1063,6 +1073,22 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
   }
 
   async finalize(tx: Tx, subjectId: string, outcome: 'approved' | 'rejected', actorUserId: string) {
+    if (outcome === 'approved') {
+      const [run] = await tx.select().from(payrollRuns).where(eq(payrollRuns.id, subjectId));
+      if (!run) throw new NotFoundException('Run not found');
+      const current = await resolveStatutoryContext(
+        tx,
+        currentTenantId(),
+        run.payGroupId,
+        run.periodStart,
+        run.periodEnd,
+      );
+      if (!isDeepStrictEqual(current, run.statutoryContext))
+        throw conflict(
+          'statutory_context_changed',
+          'Recompute the open run after a company or rule context change',
+        );
+    }
     await tx
       .update(payrollRuns)
       .set(
@@ -1195,6 +1221,14 @@ export class PayrollRunsService implements ApprovalSubjectHandler<PayrollRunView
       paymentDate: run.paymentDate,
       status: run.status,
       headcount: run.headcount,
+      currency: run.currency,
+      statutoryContext: run.statutoryContext ?? {
+        adapter: 'legacy_bd_unsnapshotted',
+        country: 'BD',
+        currency: 'BDT',
+        reviewer: null,
+        note: 'Read-only historical BD result; no reconstructed rule approval',
+      },
       totals: run.totalsEnc
         ? this.decrypt<RunTotals>(run.totalsEnc, CIPHER_FIELDS.runTotals)
         : null,

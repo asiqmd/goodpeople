@@ -9,9 +9,9 @@ import { Badge, Card } from '@/components/ui';
 import { currentTenantUser, load } from '@/lib/api';
 
 export default async function SettlementsPage() {
-  const role = (await currentTenantUser())?.role;
-  if (!can(role, 'payroll.view')) redirect('/workspace');
-  const canManage = can(role, 'payroll.manage');
+  const accessPrincipal = await currentTenantUser();
+  if (!can(accessPrincipal, 'payroll.view')) redirect('/workspace');
+  const canManage = can(accessPrincipal, 'payroll.manage');
   const t = await getTranslations('payroll');
   const ts = await getTranslations('payroll.settlements');
   const tl = await getTranslations('lifecycle');
@@ -29,13 +29,13 @@ export default async function SettlementsPage() {
         ) : (
           <div className="-mx-5 overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+              <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="px-5 py-2 font-medium">{ts('person')}</th>
                   <th className="px-5 py-2 font-medium">{ts('type')}</th>
                   <th className="px-5 py-2 font-medium">{ts('lastDay')}</th>
                   <th className="px-5 py-2 font-medium">{ts('settlement')}</th>
-                  <th className="px-5 py-2 text-right font-medium">{ts('net')}</th>
+                  <th className="px-5 py-2 text-end font-medium">{ts('net')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -75,7 +75,7 @@ export default async function SettlementsPage() {
                         <span className="text-slate-500">{ts('notOpened')}</span>
                       )}
                     </td>
-                    <td className="px-5 py-2.5 text-right tabular-nums">
+                    <td className="px-5 py-2.5 text-end tabular-nums">
                       {c.run?.net ? taka(format, c.run.net) : '—'}
                     </td>
                   </tr>

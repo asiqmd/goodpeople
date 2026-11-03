@@ -106,12 +106,12 @@ export function EntryGrid({
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="text-left text-xs text-slate-500">
+            <thead className="text-start text-xs text-slate-500">
               <tr>
-                <th className="py-2 pr-3 font-medium">{t('worker')}</th>
-                <th className="py-2 pr-3 font-medium">{t('designation')}</th>
-                <th className="py-2 pr-3 font-medium">{t('line')}</th>
-                <th className="py-2 pr-3 text-right font-medium">{t('otherOperations')}</th>
+                <th className="py-2 pe-3 font-medium">{t('worker')}</th>
+                <th className="py-2 pe-3 font-medium">{t('designation')}</th>
+                <th className="py-2 pe-3 font-medium">{t('line')}</th>
+                <th className="py-2 pe-3 text-end font-medium">{t('otherOperations')}</th>
                 <th className="w-32 py-2 font-medium">{t('pieces')}</th>
               </tr>
             </thead>
@@ -125,19 +125,19 @@ export function EntryGrid({
                 const above = target !== null && Number(value) > target;
                 return (
                   <tr key={id} className={value !== savedOf(id) ? 'bg-amber-50' : undefined}>
-                    <td className="py-1.5 pr-3">
+                    <td className="py-1.5 pe-3">
                       <span className="font-medium">{personName(w.employee, locale)}</span>{' '}
                       <span className="font-mono text-xs text-slate-400">
                         {w.employee.employeeCode}
                       </span>
                     </td>
-                    <td className="py-1.5 pr-3 text-slate-600">
+                    <td className="py-1.5 pe-3 text-slate-600">
                       {locale === 'bn' && w.designationBn ? w.designationBn : w.designation}
                     </td>
-                    <td className="py-1.5 pr-3 text-slate-600">
+                    <td className="py-1.5 pe-3 text-slate-600">
                       {w.orgUnit ? localName(w.orgUnit, locale) : ''}
                     </td>
-                    <td className="py-1.5 pr-3 text-right tabular-nums text-slate-500">
+                    <td className="py-1.5 pe-3 text-end tabular-nums text-slate-500">
                       {others ? format.number(others) : ''}
                     </td>
                     <td className="py-1.5">
@@ -162,7 +162,7 @@ export function EntryGrid({
                             maxLength={6}
                             autoComplete="off"
                             aria-label={t('piecesFor', { name: w.employee.fullName })}
-                            className={`${inputClass} w-24 text-right tabular-nums`}
+                            className={`${inputClass} w-24 text-end tabular-nums`}
                           />
                           {above && (
                             <span className="text-xs text-brand-700">

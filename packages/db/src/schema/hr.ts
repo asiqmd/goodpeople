@@ -67,6 +67,7 @@ export const locations = pgTable(
     latitude: doublePrecision('latitude'),
     longitude: doublePrecision('longitude'),
     geofenceRadiusM: integer('geofence_radius_m'),
+    countryCode: text('country_code').notNull().default('BD'),
     timeZone: text('time_zone').notNull().default('Asia/Dhaka'),
     /** null: the workspace's default holiday calendar. */
     holidayCalendarId: uuid('holiday_calendar_id'),
@@ -257,6 +258,7 @@ export const jobAssignments = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     tenantId: tenantId(),
+    currency: text('currency').notNull().default('BDT'),
     employeeId: uuid('employee_id').notNull(),
     event: jobEvent('event').notNull(),
     effectiveFrom: isoDate('effective_from').notNull(),
@@ -276,6 +278,7 @@ export const jobAssignments = pgTable(
   },
   (t) => [
     index('job_assignments_employee_idx').on(t.tenantId, t.employeeId, t.effectiveFrom),
+    unique('job_assignments_tenant_id_uq').on(t.tenantId, t.id),
     uniqueIndex('job_assignments_open_uq')
       .on(t.employeeId)
       .where(sql`${t.effectiveTo} is null`),
@@ -350,6 +353,8 @@ export const employeePaymentAccounts = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     tenantId: tenantId(),
+    countryCode: text('country_code').notNull().default('BD'),
+    currency: text('currency').notNull().default('BDT'),
     employeeId: uuid('employee_id').notNull(),
     method: paymentMethod('method').notNull(),
     provider: text('provider'),

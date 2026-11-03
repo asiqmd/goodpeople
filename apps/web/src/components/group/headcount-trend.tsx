@@ -193,11 +193,11 @@ export function HeadcountTrend({ months, series }: { months: string[]; series: T
           <caption className="sr-only">{t('trendTable')}</caption>
           <thead className="text-slate-500">
             <tr>
-              <th scope="col" className="py-1 pr-3 text-left font-medium">
+              <th scope="col" className="py-1 pe-3 text-start font-medium">
                 {t('company')}
               </th>
               {months.map((m) => (
-                <th key={m} scope="col" className="px-1.5 py-1 text-right font-medium">
+                <th key={m} scope="col" className="px-1.5 py-1 text-end font-medium">
                   {short(m)}
                 </th>
               ))}
@@ -206,11 +206,11 @@ export function HeadcountTrend({ months, series }: { months: string[]; series: T
           <tbody className="divide-y divide-slate-100 text-slate-700">
             {series.map((s) => (
               <tr key={s.id}>
-                <th scope="row" className="py-1 pr-3 text-left font-medium">
+                <th scope="row" className="py-1 pe-3 text-start font-medium">
                   {s.label}
                 </th>
                 {s.values.map((v, i) => (
-                  <td key={months[i]} className="px-1.5 py-1 text-right tabular-nums">
+                  <td key={months[i]} className="px-1.5 py-1 text-end tabular-nums">
                     {n(v)}
                   </td>
                 ))}

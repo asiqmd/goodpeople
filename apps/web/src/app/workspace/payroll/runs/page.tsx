@@ -11,8 +11,8 @@ import { Badge, Card } from '@/components/ui';
 import { currentTenantUser, load } from '@/lib/api';
 
 export default async function PayrollRunsPage() {
-  const role = (await currentTenantUser())?.role;
-  if (!can(role, 'payroll.view')) redirect('/workspace');
+  const accessPrincipal = await currentTenantUser();
+  if (!can(accessPrincipal, 'payroll.view')) redirect('/workspace');
   const t = await getTranslations('payroll');
   const tr = await getTranslations('payroll.runs');
   const format = await getFormatter();
@@ -40,7 +40,7 @@ export default async function PayrollRunsPage() {
         <HelpLink slug="run-payroll" />
       </h1>
       <PayrollTabs current="runs" />
-      {can(role, 'payroll.manage') && (
+      {can(accessPrincipal, 'payroll.manage') && (
         <Card title={tr('new')}>
           <NewRunForm groups={groups} month={month} />
           <details className="mt-5 border-t border-slate-100 pt-4">
@@ -58,13 +58,13 @@ export default async function PayrollRunsPage() {
         ) : (
           <div className="-mx-5 overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+              <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="px-5 py-2 font-medium">{tr('period')}</th>
                   <th className="px-5 py-2 font-medium">{tr('group')}</th>
                   <th className="px-5 py-2 font-medium">{tr('status')}</th>
-                  <th className="px-5 py-2 text-right font-medium">{tr('headcount')}</th>
-                  <th className="px-5 py-2 text-right font-medium">{tr('totals.net')}</th>
+                  <th className="px-5 py-2 text-end font-medium">{tr('headcount')}</th>
+                  <th className="px-5 py-2 text-end font-medium">{tr('totals.net')}</th>
                   <th className="px-5 py-2 font-medium">{tr('paymentDate')}</th>
                 </tr>
               </thead>
@@ -79,7 +79,7 @@ export default async function PayrollRunsPage() {
                         {runTitle(format, locale, r)}
                       </Link>
                       {r.kind !== 'regular' && (
-                        <span className="ml-2">
+                        <span className="ms-2">
                           <Badge tone="violet">{tr(`kinds.${r.kind}`)}</Badge>
                         </span>
                       )}
@@ -94,16 +94,16 @@ export default async function PayrollRunsPage() {
                         )}
                       </span>
                     </td>
-                    <td className="px-5 py-2.5 text-right tabular-nums">
+                    <td className="px-5 py-2.5 text-end tabular-nums">
                       {format.number(r.headcount)}
                     </td>
-                    <td className="px-5 py-2.5 text-right tabular-nums">
+                    <td className="px-5 py-2.5 text-end tabular-nums">
                       {r.totals ? taka(format, r.totals.net) : '—'}
                     </td>
                     <td className="px-5 py-2.5 text-slate-700">
                       {day(format, r.paymentDate)}
                       {r.paymentDate > r.paymentDue && (
-                        <span className="ml-1 text-xs text-red-600">{tr('afterDeadline')}</span>
+                        <span className="ms-1 text-xs text-red-600">{tr('afterDeadline')}</span>
                       )}
                     </td>
                   </tr>

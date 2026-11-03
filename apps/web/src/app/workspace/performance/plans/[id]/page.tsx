@@ -67,7 +67,7 @@ export default async function PlanPage({ params }: PageProps<'/workspace/perform
             <p className="text-sm whitespace-pre-line text-slate-800">{plan.reason}</p>
           </Card>
           <Card title={t('objectives')}>
-            <ol className="list-decimal space-y-3 pl-5 text-sm">
+            <ol className="list-decimal space-y-3 ps-5 text-sm">
               {plan.objectives.map((o, i) => (
                 <li key={i}>
                   <span className="font-medium text-slate-900">{o.text}</span>
@@ -162,7 +162,7 @@ export default async function PlanPage({ params }: PageProps<'/workspace/perform
               <p className="text-sm">
                 <PlanStatusBadge status={plan.status} />
                 {plan.decidedAt && (
-                  <span className="ml-2 text-slate-500">{day(plan.decidedAt)}</span>
+                  <span className="ms-2 text-slate-500">{day(plan.decidedAt)}</span>
                 )}
               </p>
               {plan.outcomeNote && (
@@ -184,7 +184,7 @@ export default async function PlanPage({ params }: PageProps<'/workspace/perform
                     {t('acknowledgedOn', { date: day(plan.acknowledgedAt) })}
                   </p>
                   {plan.employeeComment && (
-                    <blockquote className="border-l-2 border-slate-200 pl-3 whitespace-pre-line text-slate-800">
+                    <blockquote className="border-s-2 border-slate-200 ps-3 whitespace-pre-line text-slate-800">
                       {plan.employeeComment}
                     </blockquote>
                   )}

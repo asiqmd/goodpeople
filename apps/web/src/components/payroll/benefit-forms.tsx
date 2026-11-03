@@ -759,12 +759,12 @@ export function IncrementForm({
             })}
           </p>
           <table className="w-full text-sm">
-            <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+            <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="py-1 font-medium">{t('person')}</th>
-                <th className="py-1 text-right font-medium">{t('basicBefore')}</th>
-                <th className="py-1 text-right font-medium">{t('basicAfter')}</th>
-                <th className="py-1 text-right font-medium">{t('grossAfter')}</th>
+                <th className="py-1 text-end font-medium">{t('basicBefore')}</th>
+                <th className="py-1 text-end font-medium">{t('basicAfter')}</th>
+                <th className="py-1 text-end font-medium">{t('grossAfter')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -776,11 +776,11 @@ export function IncrementForm({
                       {l.employee.employeeCode}
                     </span>
                   </td>
-                  <td className="py-1 text-right tabular-nums text-slate-500">
+                  <td className="py-1 text-end tabular-nums text-slate-500">
                     {taka(format, l.basicBefore)}
                   </td>
-                  <td className="py-1 text-right tabular-nums">{taka(format, l.basicAfter)}</td>
-                  <td className="py-1 text-right tabular-nums">{taka(format, l.grossAfter)}</td>
+                  <td className="py-1 text-end tabular-nums">{taka(format, l.basicAfter)}</td>
+                  <td className="py-1 text-end tabular-nums">{taka(format, l.grossAfter)}</td>
                 </tr>
               ))}
             </tbody>

@@ -21,6 +21,9 @@ import {
   formatAddress,
   groupBy,
   money,
+  INSIGHT_MAX_ROWS,
+  INSIGHT_MIN_COHORT,
+  type InsightPoint,
   type CostDimension,
   type CostFigures,
   type CostSummary,
@@ -30,8 +33,8 @@ import {
   type RunTotals,
   type RunVariables,
 } from '@gp/shared';
-import { and, asc, countDistinct, eq, gte, inArray, lte, ne, notInArray } from 'drizzle-orm';
-import { conflict } from '../../common/errors.js';
+import { and, asc, countDistinct, eq, gte, inArray, lte, ne, notInArray, sql } from 'drizzle-orm';
+import { badRequest, conflict } from '../../common/errors.js';
 import { FIELD_CIPHER, TenantDb } from '../../db/db.module.js';
 import { PdfService } from '../letters/pdf.service.js';
 import { ProjectSharesService } from '../projects/project-shares.service.js';
@@ -346,6 +349,127 @@ export class PayrollReportsService {
           cost: money(sums.earnings.plus(sums.employerCost)),
         };
       });
+    });
+  }
+
+  /** Bounded aggregate view of the same sealed cost totals used by trend(). */
+  async insightCost(
+    tx: Tx,
+    to: string,
+    months: number,
+    legacyBd: boolean,
+  ): Promise<InsightPoint[]> {
+    const from = shiftMonth(to, -(months - 1));
+    const runs = await tx
+      .select({
+        id: payrollRuns.id,
+        periodStart: payrollRuns.periodStart,
+        currency: payrollRuns.currency,
+        hasContext: sql<boolean>`${payrollRuns.statutoryContext} is not null`,
+        country: sql<string | null>`${payrollRuns.statutoryContext}->>'country'`,
+        adapter: sql<string | null>`${payrollRuns.statutoryContext}->>'adapter'`,
+        contextCurrency: sql<string | null>`${payrollRuns.statutoryContext}->>'currency'`,
+        regime: sql<string | null>`${payrollRuns.statutoryContext}->>'regime'`,
+        calendar: sql<string | null>`${payrollRuns.statutoryContext}->>'calendar'`,
+        totalsEnc: payrollRuns.totalsEnc,
+        headcount: payrollRuns.headcount,
+        errors: payrollRuns.errors,
+      })
+      .from(payrollRuns)
+      .where(
+        and(
+          inArray(payrollRuns.kind, [...COST_KINDS]),
+          eq(payrollRuns.status, 'locked'),
+          gte(payrollRuns.periodStart, from + '-01'),
+          lte(payrollRuns.periodStart, monthEnd(to)),
+        ),
+      )
+      .orderBy(asc(payrollRuns.id))
+      .limit(501);
+    if (runs.length > 500)
+      throw badRequest('insight_limit', 'The trend exceeds the locked run limit');
+    const supported = (run: (typeof runs)[number]) =>
+      run.currency === 'BDT' &&
+      (!run.hasContext
+        ? legacyBd
+        : (run.country === 'BD' || (run.country === null && run.adapter === 'explicit_bd')) &&
+          run.contextCurrency === 'BDT' &&
+          run.regime === 'BD_PRIVATE' &&
+          run.calendar === 'gregorian');
+    const included = runs.filter(supported);
+    const items = included.length
+      ? await tx
+          .select({
+            runId: payrollRunItems.runId,
+            currency: payrollRunItems.currency,
+            status: payrollRunItems.status,
+            result: payrollRunItems.resultEnc,
+          })
+          .from(payrollRunItems)
+          .where(
+            inArray(
+              payrollRunItems.runId,
+              included.map((r) => r.id),
+            ),
+          )
+          .limit(INSIGHT_MAX_ROWS + 1)
+      : [];
+    if (items.length > INSIGHT_MAX_ROWS)
+      throw badRequest('insight_limit', 'The trend exceeds the payroll item limit');
+    const itemsByRun = groupBy(items, (item) => item.runId);
+    const { open } = sealed(this.cipher);
+    return Array.from({ length: months }, (_, i) => {
+      const month = shiftMonth(from, i);
+      const point: InsightPoint = {
+        month,
+        country: 'BD',
+        currency: 'BDT',
+        state: 'recorded',
+        values: {},
+      };
+      const inMonth = runs.filter((r) => r.periodStart.startsWith(month));
+      if (!inMonth.length) return { ...point, state: 'unavailable', issue: 'no_locked_runs' };
+      if (inMonth.some((r) => !supported(r)))
+        return { ...point, country: null, currency: null, state: 'unavailable', issue: 'context' };
+      const incomplete: InsightPoint = { ...point, state: 'incomplete', issue: 'reconciliation' };
+      let cost = zero();
+      try {
+        for (const run of inMonth) {
+          const rows = itemsByRun.get(run.id) ?? [];
+          if (
+            !run.totalsEnc ||
+            run.errors ||
+            rows.length !== run.headcount ||
+            rows.some((item) => item.status !== 'ok' || item.currency !== run.currency)
+          )
+            return incomplete;
+          const total = open<RunTotals>(CIPHER_FIELDS.runTotals, run.totalsEnc);
+          let earnings = zero(),
+            employer = zero(),
+            contributors = 0;
+          for (const item of rows) {
+            const result = open<StoredItem>(CIPHER_FIELDS.runResults, item.result);
+            const paid = new Decimal(result.earnings),
+              costPart = new Decimal(result.employerCost);
+            earnings = earnings.plus(paid);
+            employer = employer.plus(costPart);
+            if (!paid.plus(costPart).isZero()) contributors++;
+          }
+          if (
+            !earnings.isFinite() ||
+            !employer.isFinite() ||
+            !earnings.equals(total.earnings) ||
+            !employer.equals(total.employerCost)
+          )
+            return incomplete;
+          if (contributors < INSIGHT_MIN_COHORT)
+            return { ...point, state: 'suppressed', issue: 'cohort' };
+          cost = cost.plus(total.earnings).plus(total.employerCost);
+        }
+      } catch {
+        return incomplete;
+      }
+      return { ...point, values: { employer_cost: money(cost) } };
     });
   }
 

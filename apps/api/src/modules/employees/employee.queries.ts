@@ -53,6 +53,7 @@ export function selectAssignments(tx: Tx, where: SQL) {
 type AssignmentRow = Awaited<ReturnType<typeof selectAssignments>>[number];
 
 export const toJobView = (r: AssignmentRow): JobAssignmentView => ({
+  currency: r.a.currency,
   id: r.a.id,
   event: r.a.event,
   effectiveFrom: r.a.effectiveFrom,

@@ -63,44 +63,44 @@ export async function DaysTable({
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
-        <thead className="text-left text-xs text-slate-500">
+        <thead className="text-start text-xs text-slate-500">
           <tr>
-            <th className="py-2 pr-3 font-medium">{t('table.date')}</th>
-            <th className="py-2 pr-3 font-medium">{t('table.status')}</th>
-            <th className="py-2 pr-3 font-medium">{t('table.shift')}</th>
-            <th className="py-2 pr-3 font-medium">{t('table.in')}</th>
-            <th className="py-2 pr-3 font-medium">{t('table.out')}</th>
-            <th className="py-2 pr-3 text-right font-medium">{t('table.worked')}</th>
-            <th className="py-2 pr-3 text-right font-medium">{t('table.overtime')}</th>
+            <th className="py-2 pe-3 font-medium">{t('table.date')}</th>
+            <th className="py-2 pe-3 font-medium">{t('table.status')}</th>
+            <th className="py-2 pe-3 font-medium">{t('table.shift')}</th>
+            <th className="py-2 pe-3 font-medium">{t('table.in')}</th>
+            <th className="py-2 pe-3 font-medium">{t('table.out')}</th>
+            <th className="py-2 pe-3 text-end font-medium">{t('table.worked')}</th>
+            <th className="py-2 pe-3 text-end font-medium">{t('table.overtime')}</th>
             <th className="py-2 font-medium">{t('table.notes')}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
           {days.map((d) => (
             <tr key={d.date} className={d.dayType === 'working' ? '' : 'bg-slate-50/60'}>
-              <td className="whitespace-nowrap py-2 pr-3 text-slate-700">
+              <td className="whitespace-nowrap py-2 pe-3 text-slate-700">
                 {weekdayDate(format, d.date)}
               </td>
-              <td className="py-2 pr-3">
+              <td className="py-2 pe-3">
                 {d.date > today && d.status === 'pending' ? (
                   <Badge tone="slate">{t('upcoming')}</Badge>
                 ) : (
                   <StatusBadge day={d} />
                 )}
               </td>
-              <td className="whitespace-nowrap py-2 pr-3 text-slate-600">
+              <td className="whitespace-nowrap py-2 pe-3 text-slate-600">
                 {d.shift && d.dayType === 'working'
                   ? locale === 'bn' && d.shift.nameBn
                     ? d.shift.nameBn
                     : d.shift.code
                   : ''}
               </td>
-              <td className="whitespace-nowrap py-2 pr-3">{clock(format, d.firstIn, timeZone)}</td>
-              <td className="whitespace-nowrap py-2 pr-3">{clock(format, d.lastOut, timeZone)}</td>
-              <td className="py-2 pr-3 text-right tabular-nums">
+              <td className="whitespace-nowrap py-2 pe-3">{clock(format, d.firstIn, timeZone)}</td>
+              <td className="whitespace-nowrap py-2 pe-3">{clock(format, d.lastOut, timeZone)}</td>
+              <td className="py-2 pe-3 text-end tabular-nums">
                 {d.workedMinutes ? hm(format, d.workedMinutes) : ''}
               </td>
-              <td className="py-2 pr-3 text-right tabular-nums">
+              <td className="py-2 pe-3 text-end tabular-nums">
                 {d.overtimeMinutes ? hm(format, d.overtimeMinutes) : ''}
               </td>
               <td className="py-2">

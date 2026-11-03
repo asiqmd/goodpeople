@@ -9,7 +9,7 @@ export function HelpLink({ slug }: { slug: string }) {
       target="_blank"
       rel="noopener"
       title={t('linkTitle')}
-      className="ml-3 inline-flex items-center gap-1 align-middle text-sm font-medium text-slate-500 hover:text-brand-700"
+      className="ms-3 inline-flex items-center gap-1 align-middle text-sm font-medium text-slate-500 hover:text-brand-700"
     >
       <svg
         aria-hidden

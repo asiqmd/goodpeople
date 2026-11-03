@@ -43,7 +43,7 @@ interface AlertDraft {
   keySuffix?: string;
 }
 
-const KIND_NAMES: Record<CommitteeKind, Record<UserLanguage, string>> = {
+const KIND_NAMES: Record<CommitteeKind, { en: string; bn: string; ar?: string }> = {
   participation: { en: 'participation committee', bn: 'অংশগ্রহণকারী কমিটি' },
   safety: { en: 'safety committee', bn: 'সেইফটি কমিটি' },
   complaint: { en: 'complaint committee', bn: 'অভিযোগ কমিটি' },

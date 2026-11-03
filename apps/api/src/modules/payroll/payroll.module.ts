@@ -71,6 +71,7 @@ import { TaxService } from './tax.service.js';
     TenantRolesGuard,
   ],
   exports: [
+    PayrollReportsService,
     EmployeePayService,
     PayrollRunsService,
     LoansService,

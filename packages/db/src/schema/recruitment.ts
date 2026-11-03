@@ -77,6 +77,7 @@ export const jobOpenings = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     tenantId: tenantId(),
+    currency: text('currency').notNull().default('BDT'),
     legalEntityId: uuid('legal_entity_id').notNull(),
     orgUnitId: uuid('org_unit_id'),
     locationId: uuid('location_id'),
@@ -278,6 +279,7 @@ export const offers = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     tenantId: tenantId(),
+    currency: text('currency').notNull().default('BDT'),
     applicationId: uuid('application_id').notNull(),
     status: text('status').$type<OfferStatus>().notNull().default('draft'),
     legalEntityId: uuid('legal_entity_id').notNull(),

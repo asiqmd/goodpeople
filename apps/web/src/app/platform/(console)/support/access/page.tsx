@@ -39,7 +39,7 @@ export default async function SupportAccessConsolePage() {
       ) : (
         <div className="-mx-5 overflow-x-auto">
           <table className="min-w-full text-sm">
-            <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+            <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-5 py-2 font-medium">{t('workspace')}</th>
                 <th className="px-5 py-2 font-medium">{t('grantedBy')}</th>
@@ -69,7 +69,7 @@ export default async function SupportAccessConsolePage() {
                     {grant.ticketId && grant.ticketNumber && (
                       <Link
                         href={`/platform/support/${grant.ticketId}`}
-                        className="mr-1 font-medium text-brand-700 hover:underline"
+                        className="me-1 font-medium text-brand-700 hover:underline"
                       >
                         {ticketLabel(grant.ticketNumber)}
                       </Link>
@@ -86,7 +86,7 @@ export default async function SupportAccessConsolePage() {
                       ))}
                     </ul>
                   </td>
-                  <td className="px-5 py-3 text-right">
+                  <td className="px-5 py-3 text-end">
                     <OpenWorkspaceButton tenantId={grant.tenant.id} grantId={grant.id} />
                   </td>
                 </tr>

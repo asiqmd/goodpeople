@@ -73,14 +73,8 @@ export class StatusChecks implements OnApplicationBootstrap, OnApplicationShutdo
   ) {}
 
   onApplicationBootstrap() {
-    if (!this.config.BACKGROUND_JOBS) return;
-    const run = () => {
-      this.running ??= this.runChecks()
-        .catch((error: Error) => this.logger.error('Status checks failed', error))
-        .finally(() => (this.running = undefined));
-    };
-    this.timers = [setInterval(run, MINUTE_MS), setTimeout(run, 15_000)];
-    for (const timer of this.timers) timer.unref();
+    // M2: only the separate, leased worker scheduler owns timers.
+    void this.config.BACKGROUND_JOBS;
   }
 
   async onApplicationShutdown() {
@@ -177,10 +171,10 @@ export class StatusChecks implements OnApplicationBootstrap, OnApplicationShutdo
   }
 
   /** A background job's last sweep. With background jobs off nothing sweeps: not checked. */
-  private sweeps(job: WatchedJob, windowMs: number, now: Date): CheckResult | null {
+  private async sweeps(job: WatchedJob, windowMs: number, now: Date): Promise<CheckResult | null> {
     if (!this.config.BACKGROUND_JOBS) return null;
     const result = heartbeatCheck(
-      this.heartbeats.last(job),
+      await this.heartbeats.read(job),
       this.heartbeats.startedAt,
       windowMs,
       now,

@@ -152,6 +152,7 @@ export function formatAddress(
     district: string;
     division: string;
     postcode?: string | null;
+    countryCode?: string;
   },
   locale: string,
 ): string {
@@ -161,6 +162,7 @@ export function formatAddress(
     address.district,
     divisionName(address.division, locale),
     address.postcode,
+    address.countryCode && address.countryCode !== 'BD' ? address.countryCode : undefined,
   ]
     .filter(Boolean)
     .join(', ');

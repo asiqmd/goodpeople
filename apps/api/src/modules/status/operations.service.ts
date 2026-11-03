@@ -8,6 +8,7 @@ import {
   type ReadinessView,
 } from '@gp/shared';
 import { and, desc, eq } from 'drizzle-orm';
+import { SecurityState } from '../../common/security-state.js';
 import { APP_CONFIG, type AppConfig } from '../../config.js';
 import { DB } from '../../db/db.module.js';
 import { StatusProbes, within } from './status-probes.js';
@@ -33,6 +34,7 @@ export class OperationsService {
     @Inject(APP_CONFIG) private readonly config: AppConfig,
     @Inject(DB) private readonly db: Database,
     private readonly probes: StatusProbes,
+    private readonly security: SecurityState,
   ) {}
 
   /** The database, the document store and Chromium; cached for a few seconds unless `fresh`. */
@@ -50,13 +52,15 @@ export class OperationsService {
   }
 
   private async checkReadiness(): Promise<ReadinessView> {
-    const [database, documents] = await Promise.all([
+    const [database, documents, security] = await Promise.all([
       passes(() => this.probes.database()),
       passes(() => this.probes.fileStore()),
+      passes(() => this.security.ping()),
     ]);
     const checks: ReadinessView['checks'] = {
       database,
       documents,
+      security,
       chromium: this.probes.chromium() ? 'ok' : 'failed',
     };
     return {

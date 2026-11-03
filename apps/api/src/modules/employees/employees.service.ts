@@ -1,3 +1,7 @@
+import { badRequest } from '../../common/errors.js';
+import { fieldAllowed } from '../../common/field-access.js';
+import { entityScopeOf } from '../access-scopes/entity-scope.js';
+import { currentAuthUser } from '../../common/request-context.js';
 import { randomBytes } from 'node:crypto';
 import {
   BadRequestException,
@@ -46,7 +50,7 @@ import {
   type TenantWithAccess,
   type UpdateEmployeeInput,
 } from '@gp/shared';
-import { and, asc, count, eq, ilike, inArray, or, type SQL } from 'drizzle-orm';
+import { and, asc,desc,lte, count, eq, ilike, inArray, or, type SQL } from 'drizzle-orm';
 import type { AuthUser } from '../../common/auth-user.js';
 import { forbidden } from '../../common/errors.js';
 import { userCan } from '../../common/roles.js';
@@ -286,7 +290,7 @@ export class EmployeesService {
           designation,
           location,
           employmentType: a?.employmentType ?? null,
-          isAdolescent: isAdolescentOn(e.dateOfBirth, today),
+          isAdolescent: a?.currency === 'BDT' && isAdolescentOn(e.dateOfBirth, today),
         })),
         total,
         page: query.page,
@@ -318,7 +322,15 @@ export class EmployeesService {
   history(user: AuthUser, id: string): Promise<JobAssignmentView[]> {
     return this.tenantDb.run(async (tx) => {
       const scope = await entityScope(tx, user, jobAssignments.employeeId);
-      const rows = await selectAssignments(tx, and(eq(jobAssignments.employeeId, id), scope)!);
+      const companies = await entityScopeOf(tx, user.id);
+      const rows = await selectAssignments(
+        tx,
+        and(
+          eq(jobAssignments.employeeId, id),
+          scope,
+          companies ? inArray(jobAssignments.legalEntityId, companies) : undefined,
+        )!,
+      );
       if (rows.length === 0) throw new NotFoundException('Employee not found');
       return rows.map(toJobView);
     });
@@ -338,6 +350,15 @@ export class EmployeesService {
     const passwordHash = password ? await hashPassword(password) : undefined;
 
     const id = await this.tenantDb.run(async (tx) => {
+      const [employer] = await tx
+        .select()
+        .from(legalEntities)
+        .where(eq(legalEntities.id, input.job.legalEntityId));
+      if (employer && employer.countryCode !== input.employmentCountry)
+        throw badRequest(
+          'employment_country_mismatch',
+          'Employment country must match the selected legal employer',
+        );
       await this.checkLimit(tx, limit, 1);
       return this.insertHire(tx, actor, input, passwordHash);
     });
@@ -405,7 +426,7 @@ export class EmployeesService {
         // A probationer's probation defaults to the statutory period (s.4).
         probationEndsOn:
           input.probationEndsOn ??
-          (input.job.employmentType === 'probationer'
+          (input.employmentCountry === 'BD' && input.job.employmentType === 'probationer'
             ? bdProbationEnd(
                 input.joinedOn,
                 input.job.workerCategory === 'staff' ? 'clerical' : 'other',
@@ -445,6 +466,25 @@ export class EmployeesService {
     const { identity, probationEndsOn, ...personal } = input;
     await this.tenantDb.run(async (tx) => {
       await mustChangeEmployee(tx, actor, id);
+      const [context] = await tx
+        .select({ country: legalEntities.countryCode })
+        .from(jobAssignments)
+        .innerJoin(legalEntities, eq(legalEntities.id, jobAssignments.legalEntityId))
+        .where(and(eq(jobAssignments.employeeId, id), lte(jobAssignments.effectiveFrom, todayIn())))
+        .orderBy(desc(jobAssignments.effectiveFrom))
+        .limit(1);
+      if (
+        context &&
+        context.country !== 'BD' &&
+        [personal.presentAddress, personal.permanentAddress].some(
+          (address) => address && !address.countryCode,
+        )
+      )
+        throw badRequest(
+          'explicit_address_country_required',
+          'Preserve an explicit address country for international employee records',
+        );
+
       const [row] = await tx
         .update(employees)
         .set({
@@ -742,8 +782,19 @@ export class EmployeesService {
     const [e] = await tx.select().from(employees).where(where);
     if (!e) return null;
     const today = todayIn();
+    const actor = currentAuthUser();
+    const companies =
+      actor?.kind === 'tenant' && e.userId !== actor.id ? await entityScopeOf(tx, actor.id) : null;
     const [history, nominees, accounts, [user]] = [
-      (await selectAssignments(tx, eq(jobAssignments.employeeId, e.id))).map(toJobView),
+      (
+        await selectAssignments(
+          tx,
+          and(
+            eq(jobAssignments.employeeId, e.id),
+            companies ? inArray(jobAssignments.legalEntityId, companies) : undefined,
+          )!,
+        )
+      ).map(toJobView),
       await tx
         .select()
         .from(employeeNominees)
@@ -802,10 +853,13 @@ export class EmployeesService {
       probationEndsOn: e.probationEndsOn,
       confirmedOn: e.confirmedOn,
       separatedOn: e.separatedOn,
-      isAdolescent: isAdolescentOn(e.dateOfBirth, today),
+      isAdolescent:
+        currentOf(history, today)?.currency === 'BDT' && isAdolescentOn(e.dateOfBirth, today),
       currentJob: currentOf(history, today),
       nominees: nominees.map(toNomineeView),
-      paymentAccounts: accounts.map(toPaymentAccountView),
+      paymentAccounts: fieldAllowed(currentAuthUser(), 'bank', 'read')
+        ? accounts.map(toPaymentAccountView)
+        : [],
       portalUser: user
         ? {
             id: user.id,
@@ -890,6 +944,7 @@ export class EmployeesService {
 
   /** An identity number in clear, or only its last four digits for roles without the permission. */
   private reveal(value: string | null, field: CipherField, reveal: boolean) {
+    if (!fieldAllowed(currentAuthUser(), 'identity', 'read')) return null;
     const plain = this.decrypt(value, field);
     return plain === null || reveal ? plain : `••••${plain.slice(-4)}`;
   }

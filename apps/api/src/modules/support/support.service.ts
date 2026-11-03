@@ -167,7 +167,7 @@ export class SupportService {
     input: CreateTicketInput,
     files: UploadedAttachment[] | undefined,
   ): Promise<SupportTicketDetail> {
-    this.limiter.hit(`support:open:${user.id}`, OPEN_LIMIT, HOUR);
+    await this.limiter.hit(`support:open:${user.id}`, OPEN_LIMIT, HOUR);
     const prepared = prepareFiles(files);
     const now = new Date();
     const ticketId = randomUUID();

@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger, type OnApplicationShutdown } from '@nestjs/common';
-import { deviceTokens, notificationDeliveries, notifications, type Tx } from '@gp/db';
+import { tenantUsers, deviceTokens, notificationDeliveries, notifications, type Tx } from '@gp/db';
 import { smsSegments, type DeliveryStatus } from '@gp/shared';
 import { and, eq, gte, inArray, lte, sql, sum } from 'drizzle-orm';
 import { currentTenantId, runInTenantContext } from '../../common/request-context.js';
@@ -77,15 +77,7 @@ export class NotificationDispatcher implements OnApplicationShutdown {
    * committed. Anything missed is picked up by the regular sweep.
    */
   kick(tenantId: string): void {
-    if (!this.config.BACKGROUND_JOBS || this.pending.has(tenantId)) return;
-    const timer = setTimeout(() => {
-      this.pending.delete(tenantId);
-      void this.runFor(tenantId).catch((error: unknown) =>
-        this.logger.error(`Sending notifications failed for ${tenantId}`, error as Error),
-      );
-    }, 500);
-    timer.unref();
-    this.pending.set(tenantId, timer);
+    void tenantId; /* The durable worker sweep drains committed outbox rows. */
   }
 
   /** One run at a time per workspace. */
@@ -141,13 +133,49 @@ export class NotificationDispatcher implements OnApplicationShutdown {
       : 0;
 
     for (const delivery of claimed) {
+      const sender =
+        delivery.channel === 'email'
+          ? this.email
+          : delivery.channel === 'sms'
+            ? this.sms
+            : this.push;
+      if (sender.driver === 'disabled') {
+        await this.tenantDb.run((tx) =>
+          this.record(tx, delivery, { status: 'skipped', error: 'channel_disabled' }),
+        );
+        continue;
+      }
       let outcome: Outcome;
       try {
+        if (delivery.notificationId) {
+          const recipient = await this.tenantDb.run(async (tx) => {
+            const [row] = await tx
+              .select({ user: tenantUsers })
+              .from(notifications)
+              .innerJoin(tenantUsers, eq(tenantUsers.id, notifications.userId))
+              .where(eq(notifications.id, delivery.notificationId!));
+            return row?.user;
+          });
+          if (recipient?.disabledAt || recipient?.provisionDisabled) {
+            await this.tenantDb.run((tx) =>
+              this.record(tx, delivery, { status: 'skipped', error: 'Recipient access ended' }),
+            );
+            continue;
+          }
+          if (recipient?.accessMode === 'custom') {
+            delivery.subject = recipient.language === 'bn' ? 'গুড পিপল' : 'Good People';
+            delivery.body =
+              recipient.language === 'bn'
+                ? 'আপনার জন্য একটি নতুন বার্তা আছে। বিস্তারিত দেখতে অ্যাপ খুলুন।'
+                : 'You have an update. Open Good People to see the details.';
+          }
+        }
         if (delivery.channel === 'sms') {
           const segments = smsSegments(delivery.body);
           if (smsLimit !== null && smsUsed + segments > smsLimit) {
             outcome = { status: 'skipped', error: 'The monthly SMS credits are used up' };
           } else {
+            await this.tenantDb.run(async () => undefined);
             const sent = await this.sms.send({
               to: delivery.recipient,
               text: delivery.body,
@@ -157,6 +185,7 @@ export class NotificationDispatcher implements OnApplicationShutdown {
             outcome = { status: 'sent', providerRef: sent.providerRef, segments };
           }
         } else if (delivery.channel === 'email') {
+          await this.tenantDb.run(async () => undefined);
           const sent = await this.email.send({
             to: delivery.recipient,
             subject: delivery.subject ?? '',
@@ -206,6 +235,7 @@ export class NotificationDispatcher implements OnApplicationShutdown {
     let lastError: unknown;
     for (const token of tokens) {
       try {
+        await this.tenantDb.run(async () => undefined);
         await this.push.send({
           token: token.token,
           title: delivery.subject ?? '',

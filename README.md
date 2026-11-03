@@ -97,7 +97,39 @@ how to get it running again, how a milestone is built, and what comes next.
     manager reviews with recommendations; calibration against a guide that is never a quota;
     released reviews acknowledged and never changed, with outcomes for the increment round;
     improvement plans and probation reviews on record (web and app).
+  - **Phase 4 M3 (compensation planning):** increment rounds from released ratings and grade
+    ranges, company and unit budgets, direct managers' reasoned proposals, encrypted pay
+    snapshots, and atomic submission into payroll's maker-checker; an independent,
+    effective-dated RMG annual basic increment floor, with English and Bangla web screens.
+  - **Phase 4 M4 (learning):** bilingual courses and scheduled sessions, capacity-checked
+    enrolment, HR attendance and numbered completion records with expiry and EN/BN PDFs;
+    effective-dated required training by designation, direct-report coverage, session/expiry
+    reminders, fire drills and the buyer-audit training section. Employees use Learning on
+    web and mobile; HR manages it on the web.
+  - **Phase 4 M5 (engagement and employee services):** anonymous survey/eNPS aggregates with
+    frozen cohorts and a minimum of five responses, company recognition, bilingual announcements
+    and policy receipts, encrypted private HR requests with internal notes and scoped handlers,
+    and asset issue/receipt/return history. Employees use web and mobile; HR manages on web.
+  - **Phase 5 M1 (identity and access):** live session/current-user authorization, explicit
+    custom company grants and sensitive-field controls; Redis-backed atomic security state;
+    EN/BN administration; OIDC web/mobile sign-in and SCIM login/group provisioning with
+    protected emergency recovery. Implemented locally; real-provider activation remains
+    gated. See [M1's record](docs/phases/phase-5.md#m1-implementation-record) and the
+    [identity runbook](docs/ops/identity.md). Historical payroll requires all-company access;
+    M2 below replaces the former timer-runner mechanism.
+  - **Phase 5 M2 (public API and integrations):** owner-bounded machine clients, separate
+    OAuth client credentials, versioned read-only organisation/directory/attendance APIs,
+    signed reference-only webhooks with replay/rotation and durable fenced workers. EN/BN
+    administration and queue/worker health are implemented locally. See the
+    [M2 record](docs/phases/phase-5.md#m2-implementation-record),
+    [public contract](docs/api/public-v1.openapi.json) and [runbook](docs/ops/integrations.md).
+  - **Phase 5 M3 (self-hosted enterprise):** a local candidate with signed offline installation-bound licensing, one-use named MFA activation, isolated install/placement boundaries, encrypted joint recovery and credential reconciliation, historical read keys, signed image-bundle tooling and an offline operator/support contract. See [M3's record](docs/phases/phase-5.md#m3-implementation-record) and the [operator runbook](infra/enterprise/README.md). Docker/Linux clean-host, offline and physical cross-host qualification remain open; no commercial release was published.
+  - **Phase 6 M1 (analytics foundations):** local versioned headcount, joiners and completed leavers with current company/relationship authorization, effective-history quality states, site clocks and source provenance. Explicit feature activation preserves existing plans/licenses. EN/BN and Arabic preview are checked. See [M1's record](docs/phases/phase-6.md#m1-implementation-record) and [ADR 032](docs/adr/032-workforce-analytics.md).
+  - **Phase 6 M2 operating and financial insight** adds closed-month operating reports, reconciled locked payroll cost and encrypted CSV jobs. [M2 implementation record](docs/phases/phase-6.md#m2-implementation-record)
+  - **Phase 6 M3 read-only workspace assistant** adds approved help and policy excerpts, scoped report explanations and citations that verify current access and source versions. [M3 implementation record](docs/phases/phase-6.md#m3-implementation-record)
+  - **Phase 6 M4 explainable anomaly review** adds four deterministic checks, scoped evidence, assignment and source-verified resolution. [M4 implementation record](docs/phases/phase-6.md#m4-implementation-record)
 - **Next:**
+  - **Phase 6 M5 scale and enterprise release** has local workload, worker takeover, rollback and recovery evidence. Production qualification is pending. [M5 local qualification record](docs/phases/m5-scale-release-review.md)
   - Our own organisations go live: [docs/ops/go-live.md](docs/ops/go-live.md).
   - Payroll goes live after three parallel months with a design partner:
     [docs/ops/go-live.md](docs/ops/go-live.md#5-payroll-go-live-phase-2).
@@ -114,8 +146,17 @@ how to get it running again, how a milestone is built, and what comes next.
     the production backups.
   - Before HR relies on improvement plans: the labour lawyer's confirmation of the plan's
     legal note ([docs/phases/phase-4.md](docs/phases/phase-4.md#improvement-plans)).
-  - Phase 4 M3: compensation planning (increments by rating, budgets, approval into payroll).
-    The plan is in [docs/phases/phase-4.md](docs/phases/phase-4.md).
+  - Before RMG annual increments are relied on: labour counsel confirms the increment rule
+    and eligibility, including prior increases recorded outside planning rounds.
+  - **Phase 5 M4 (international foundations):** a local candidate with dated employer/cohort profiles, explicit currency/calendar/zone boundaries, encrypted international identifiers and bank metadata, foreign HR records, Arabic RTL/font preview, and a gated USD/AED candidate price book. AE/SA statutory packs, Hijri conversion, full Arabic/legal review and real merchant checkout remain unqualified. See [M4’s record](docs/phases/phase-5.md#m4-implementation-record). M5 now has a local candidate below. M1–M3 external gates carry forward.
+  - **Phase 5 M5 (UAE):** a local preview/evidence candidate with dated MOHRE coverage, distinct expatriate/GPSSA cohorts, exact AED payroll/leave/settlement examples, immutable encrypted comparisons and a non-uploadable WPS sandbox. Original/local rule review, real pilot and bank acceptance, EN/AR legal documents and actual consumer activation remain open. See [M5’s record](docs/phases/phase-5.md#m5-implementation-record) and [the review dossier](docs/phases/m5-uae-review.md). M6 now also has a local candidate below.
+  - **Phase 5 M6 (Saudi Arabia):** a separate local SAR preview/evidence candidate with explicit GOSI legacy/new/hazards-only histories, a dated contribution-rate change, Saudi leave/resignation settlement examples and an internal non-uploadable WPS reconciliation sandbox. Original/local review, real pilot and bank/sealed-Mudad acceptance, EN/AR statutory documents and country-consumer activation remain open. See [M6's record](docs/phases/phase-5.md#m6-implementation-record) and [the review dossier](docs/phases/m6-saudi-review.md). M7 now supplies local readiness engineering below.
+  - **Phase 5 M7 (assurance and enterprise release):** a restricted Super Admin/MFA readiness console with named-owner controls, encrypted immutable evidence, independent review, findings/exceptions/report metadata, observed operational blockers and source-bound release qualification. The actual program remains blocked by unassigned owners, overdue backup, two moderate dependencies and external qualifications. No CPA report, commercial release or foreign-country activation is asserted. See [M7's record](docs/phases/phase-5.md#m7-implementation-record), [ADR 030](docs/adr/030-assurance-and-enterprise-release.md) and [the closure dossier](docs/phases/m7-assurance-review.md).
+
+Local acceptance tests now need Redis as well as PostgreSQL. The Docker development stack
+provides Redis on 6379; set TEST_REDIS_URL=redis://127.0.0.1:6379 when running pnpm test.
+Without that override the identity suite uses loopback port 6381 (the CI mapping). Production
+requires private authenticated persistent Redis; memory state is development-only.
 
 ## Repository layout
 
@@ -126,7 +167,7 @@ apps/
              accounts and users, notifications, setup checklist, payroll, sign-up, billing,
              production, compliance, maternity, relations, grievances, kiosk, audit report,
              projects, timesheets, group, access scopes, support, support access, status,
-             recruitment, applications, offers, goals, reviews, development
+             recruitment, applications, offers, goals, reviews, development, compensation, learning
   web/       Next.js 16: Super Admin console (/platform) and workspace app (/workspace), en/bn;
              public home, pricing, sign-up, /help, /legal and /status; help and legal texts in
              content/
@@ -191,7 +232,8 @@ pnpm --filter @gp/web dev
 | Paid, payment overdue → read-only                                                                                   | `/login`          | `acme-garments` | `admin@acme-garments.test`   |
 | Trial on the Starter plan                                                                                           | `/login`          | `trial-co`      | `admin@trial-co.test`        |
 
-In development, email, SMS and push are written to the API's log (`EMAIL_DRIVER=log` and so
+Run `BACKGROUND_JOBS=on pnpm worker` in another terminal after building. The API never schedules
+jobs. In development, queued email, SMS and push are written to the worker's log (`EMAIL_DRIVER=log` and so
 on), so a sign-in code for an employee login with a mobile number shows up there.
 
 The seed tracks attendance from 1 October 2026, with device punches for 1–23 October:
@@ -200,7 +242,11 @@ punching from the web. Device user 1010 is left unmatched on purpose, to try cla
 The NGO has seven people at its head office and Kurigram field office, planned shares in
 two projects, and an approved September timesheet whose hours differ from the plan.
 My Group also has an open sewing operator job with candidates (recruitment), a released annual
-review, and a half-year review cycle under way with Rahima's agreed goals (performance).
+review, a half-year review cycle under way with Rahima's agreed goals (performance), and a
+draft compensation round for December 2026. Learning has three demo courses: Rahima has a
+current fire-safety record, an expired health-and-safety record and an upcoming harassment-
+prevention session; HR sees required-training gaps and a recorded drill. Browser walkthroughs may leave submitted rounds
+and approved future demo pay changes in the local database.
 
 After pulling changes that add country-pack defaults (Phase 2 payroll, for example), bring an
 existing dev database up to date with `pnpm db:migrate && pnpm --filter @gp/db provision`, then

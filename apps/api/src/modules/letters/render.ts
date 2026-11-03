@@ -19,7 +19,15 @@ function fonts(): string {
   fontCss ??= [400, 700]
     .flatMap((w) => [fontFace('GP Latin', 'latin', w), fontFace('GP Bengali', 'bengali', w)])
     .join('\n');
-  return fontCss;
+  const arabic = [400, 700]
+    .map((weight) => {
+      const file = require.resolve(
+        `@fontsource/noto-sans-arabic/files/noto-sans-arabic-arabic-${weight}-normal.woff2`,
+      );
+      return `@font-face{font-family:'GP Arabic';font-weight:${weight};src:url(data:font/woff2;base64,${readFileSync(file).toString('base64')}) format('woff2');}`;
+    })
+    .join('');
+  return fontCss + arabic;
 }
 
 export function escapeHtml(text: string): string {
@@ -58,16 +66,16 @@ export function markupToHtml(text: string): string {
 
 const BASE_CSS = `
 *{box-sizing:border-box}
-body{margin:0;font-family:'GP Latin','GP Bengali',sans-serif;color:#111827;font-size:10.5pt;line-height:1.55}
+body{margin:0;font-family:'GP Latin','GP Bengali','GP Arabic',sans-serif;color:#111827;font-size:10.5pt;line-height:1.55}
 mark{background:#fef08a}
 table{border-collapse:collapse;width:100%}
-th,td{border:1px solid #d1d5db;padding:4px 6px;text-align:left;vertical-align:top;font-size:9pt}
+th,td{border:1px solid #d1d5db;padding:4px 6px;text-align:start;vertical-align:top;font-size:9pt}
 th{background:#f3f4f6;font-weight:700}
 `;
 
 /** A complete page with the embedded fonts and base styles; `css` and `body` are the document's own. */
-export function page(lang: LetterLanguage, css: string, body: string): string {
-  return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><style>${fonts()}${BASE_CSS}${css}</style></head><body>${body}</body></html>`;
+export function page(lang: LetterLanguage | 'ar', css: string, body: string): string {
+  return `<!doctype html><html lang="${lang}" dir="${lang === 'ar' ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><style>${fonts()}${BASE_CSS}${css}</style></head><body>${body}</body></html>`;
 }
 
 export interface Letterhead {

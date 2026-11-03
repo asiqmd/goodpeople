@@ -1,10 +1,10 @@
-import type { EmployeeRef, UserLanguage } from '@gp/shared';
+import type { EmployeeRef, } from '@gp/shared';
 import { localDate, type Localized } from '../notifications/notifications.service.js';
 
 // What `performance.task` says for each review step, in English and Bangla. The template adds
 // "Please finish it by {{task.due}}" after the detail.
 
-type Text = Record<UserLanguage, string>;
+type Text = { en: string; bn: string; ar?: string };
 
 const bnNumber = (n: number) => new Intl.NumberFormat('bn-BD').format(n);
 const nameOf = (p: Pick<EmployeeRef, 'fullName' | 'fullNameBn'>): Text => ({

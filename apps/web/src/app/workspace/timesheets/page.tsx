@@ -51,7 +51,7 @@ export default async function MyTimesheetPage({
           </h1>
           <p className="text-sm text-slate-600">{t('intro')}</p>
         </div>
-        {can(user?.role, 'projects.manage') && (
+        {can(user, 'projects.manage') && (
           <Link
             href={`/workspace/timesheets/review?month=${month}`}
             className="text-sm font-medium text-brand-700 hover:underline"

@@ -27,6 +27,7 @@ import {
 import { getFormatter, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { ScopedEmployeeForm } from '@/components/identity/scoped-employee-form';
 import { EmployeeForm } from '@/components/hr/employee-form';
 import {
   AccountList,
@@ -101,11 +102,13 @@ export default async function EmployeePage({
 }: PageProps<'/workspace/employees/[id]'>) {
   const { id } = await params;
   const sp = await searchParams;
-  const role = (await currentTenantUser())?.role;
+  const accessPrincipal = await currentTenantUser();
   const { access } = await load<TenantAccessView>('tenant', '/tenant/access');
   const tabs = TABS.filter(
     (name) =>
-      can(role, TAB_PERMISSION[name]) &&
+      can(accessPrincipal, TAB_PERMISSION[name]) &&
+      (name !== 'payment' || accessPrincipal?.fieldPolicy?.bank.read !== false) &&
+      (name !== 'nominees' || accessPrincipal?.fieldPolicy?.identity.read !== false) &&
       (name !== 'pay' || access.features.includes('payroll')) &&
       (name !== 'performance' || access.features.includes('performance')),
   );
@@ -114,7 +117,8 @@ export default async function EmployeePage({
     typeof tabParam === 'string' ? tabParam : 'profile'
   ) as keyof typeof TAB_PERMISSION;
   const tab =
-    (tabs as string[]).includes(asked) || (asked === 'edit' && can(role, 'employees.write'))
+    (tabs as string[]).includes(asked) ||
+    (asked === 'edit' && can(accessPrincipal, 'employees.write'))
       ? asked
       : 'profile';
   const result = await authedFetch<EmployeeDetail>('tenant', `/tenant/employees/${id}`);
@@ -126,6 +130,8 @@ export default async function EmployeePage({
   const tlc = await getTranslations('lifecycle');
   const tp = await getTranslations('payroll');
   const td = await getTranslations('development.record');
+  const ti = await getTranslations('identity');
+  const tint = await getTranslations('international.employee');
 
   return (
     <>
@@ -135,9 +141,22 @@ export default async function EmployeePage({
         </Link>
         <div className="mt-2">
           <EmployeeHeader employee={employee} />
+          {can(accessPrincipal, 'employees.identity') &&
+            accessPrincipal?.fieldPolicy?.identity.read !== false && (
+              <Link
+                className="mt-2 inline-block text-sm underline"
+                href={'/workspace/international/employees/' + id}
+              >
+                {tint('profiles')}
+              </Link>
+            )}
         </div>
       </div>
 
+      {accessPrincipal?.fieldPolicy &&
+        Object.values(accessPrincipal.fieldPolicy).some((f) => !f.read) && (
+          <p className="rounded-lg bg-slate-50 p-3 text-sm text-slate-600">{ti('hiddenFields')}</p>
+        )}
       <nav className="flex gap-1 border-b border-slate-200">
         {tabs.map((name) => (
           <Link
@@ -169,7 +188,7 @@ export default async function EmployeePage({
 
       {tab === 'profile' && (
         <>
-          {can(role, 'employees.write') && (
+          {can(accessPrincipal, 'employees.write') && (
             <div className="flex justify-end">
               <Link href={`/workspace/employees/${id}?tab=edit`} className={buttonClass.secondary}>
                 {t('detail.edit')}
@@ -179,17 +198,33 @@ export default async function EmployeePage({
           <PersonalDetails employee={employee} />
         </>
       )}
-      {tab === 'edit' && <EmployeeForm mode="edit" employee={employee} />}
+      {tab === 'edit' &&
+        (accessPrincipal?.fieldPolicy &&
+        Object.values(accessPrincipal.fieldPolicy).some((f) => !f.read || !f.write) ? (
+          <ScopedEmployeeForm employee={employee} fields={accessPrincipal.fieldPolicy} />
+        ) : (
+          <EmployeeForm mode="edit" employee={employee} />
+        ))}
       {tab === 'job' && <JobTab employee={employee} />}
-      {tab === 'pay' && <PayTab employee={employee} canEdit={can(role, 'payroll.manage')} />}
+      {tab === 'pay' && (
+        <PayTab employee={employee} canEdit={can(accessPrincipal, 'payroll.manage')} />
+      )}
       {tab === 'nominees' && (
         <Card title={t('detail.nominees')}>
-          <NomineesForm employeeId={id} nominees={employee.nominees} />
+          {accessPrincipal?.fieldPolicy?.identity.write === false ? (
+            <NomineeList employee={employee} />
+          ) : (
+            <NomineesForm employeeId={id} nominees={employee.nominees} />
+          )}
         </Card>
       )}
       {tab === 'payment' && (
         <Card title={t('detail.payment')}>
-          <PaymentAccountsForm employeeId={id} accounts={employee.paymentAccounts} />
+          {accessPrincipal?.fieldPolicy?.bank.write === false ? (
+            <AccountList employee={employee} />
+          ) : (
+            <PaymentAccountsForm employeeId={id} accounts={employee.paymentAccounts} />
+          )}
         </Card>
       )}
       {tab === 'leave' && <LeaveTab employeeId={id} />}
@@ -365,7 +400,7 @@ async function LeaveTab({ employeeId }: { employeeId: string }) {
                     {t(`employee.ledgerKinds.${e.kind}`)}
                     {e.note && <span className="block text-xs text-slate-500">{e.note}</span>}
                   </span>
-                  <span className="text-right">
+                  <span className="text-end">
                     <span className="font-medium">
                       {format.number(e.days, { signDisplay: 'always' })}
                     </span>

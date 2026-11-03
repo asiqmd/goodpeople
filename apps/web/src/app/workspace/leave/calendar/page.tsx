@@ -71,7 +71,7 @@ export default async function TeamCalendarPage({
         <table className="min-w-full border-collapse text-xs">
           <thead>
             <tr>
-              <th className="sticky left-0 bg-white px-3 py-2 text-left font-medium text-slate-500" />
+              <th className="sticky left-0 bg-white px-3 py-2 text-start font-medium text-slate-500" />
               {days.map((d) => (
                 <th
                   key={d}

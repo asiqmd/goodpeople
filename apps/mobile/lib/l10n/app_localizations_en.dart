@@ -3439,4 +3439,634 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get peerErrorDecided =>
       'This peer has already been approved or declined.';
+
+  @override
+  String get learningTitle => 'Learning';
+
+  @override
+  String get learningSubtitle =>
+      'Your training, required courses and completion records.';
+
+  @override
+  String get learningRequirements => 'My required training';
+
+  @override
+  String get learningNoneRequirements => 'No required courses in this view.';
+
+  @override
+  String get learningSessions => 'Sessions';
+
+  @override
+  String get learningNoneSessions => 'No sessions to show.';
+
+  @override
+  String get learningCertificates => 'Completion records';
+
+  @override
+  String get learningNoneCertificates => 'No completion records yet.';
+
+  @override
+  String get learningEnrol => 'Enrol me';
+
+  @override
+  String get learningWithdraw => 'Withdraw enrolment';
+
+  @override
+  String get learningCurrent => 'Current';
+
+  @override
+  String get learningDue => 'Due';
+
+  @override
+  String get learningOverdue => 'Overdue';
+
+  @override
+  String get learningEnrolled => 'Enrolled';
+
+  @override
+  String get learningWithdrawn => 'Withdrawn';
+
+  @override
+  String get learningAttended => 'Attended';
+
+  @override
+  String get learningAbsent => 'Absent';
+
+  @override
+  String get learningRevoked => 'Revoked';
+
+  @override
+  String get learningNoExpiry => 'No expiry';
+
+  @override
+  String get learningExpires => 'Valid through';
+
+  @override
+  String get learningDownload => 'Download English PDF';
+
+  @override
+  String get learningFull => 'This session is full.';
+
+  @override
+  String get learningStarted =>
+      'Self enrolment and withdrawal close when the session starts.';
+
+  @override
+  String get learningFixed =>
+      'Completed or cancelled sessions no longer accept changes.';
+
+  @override
+  String get learningManageOnWeb =>
+      'Manage courses, attendance and fire drills on the web.';
+
+  @override
+  String get learningLoadFailed => 'Could not load training';
+
+  @override
+  String get learningUnknown => 'Recorded';
+
+  @override
+  String get learningExpired => 'Expired';
+
+  @override
+  String get serviceEngagement => 'Engagement';
+
+  @override
+  String get serviceServices => 'Employee services';
+
+  @override
+  String get serviceAnnouncements => 'Announcements';
+
+  @override
+  String get serviceSurveys => 'Surveys and eNPS';
+
+  @override
+  String get serviceRecognition => 'Recognition';
+
+  @override
+  String get serviceRequests => 'HR requests';
+
+  @override
+  String get serviceAssets => 'My issued assets';
+
+  @override
+  String get serviceInventory => 'Company inventory';
+
+  @override
+  String get serviceIntroEngagement =>
+      'Company news, anonymous surveys and appreciation for colleagues.';
+
+  @override
+  String get serviceIntroServices =>
+      'Private requests to your HR team and your issued assets.';
+
+  @override
+  String get serviceNoEmployee =>
+      'An active employee record is needed to submit or acknowledge. HR tools are available below.';
+
+  @override
+  String get serviceEmpty => 'Nothing to show yet.';
+
+  @override
+  String get serviceSaved => 'Saved.';
+
+  @override
+  String get serviceHelp => 'Help';
+
+  @override
+  String get serviceHrOnWeb =>
+      'HR authoring and management are available on the web.';
+
+  @override
+  String get serviceNewSurvey => 'Create survey';
+
+  @override
+  String get serviceNewAnnouncement => 'Create announcement';
+
+  @override
+  String get serviceNewRecognition => 'Recognize a colleague';
+
+  @override
+  String get serviceNewRequest => 'Open HR request';
+
+  @override
+  String get serviceNewAsset => 'Register asset';
+
+  @override
+  String get serviceAllRequests => 'HR service queue';
+
+  @override
+  String get serviceMyRequests => 'My requests';
+
+  @override
+  String get serviceCompany => 'Company';
+
+  @override
+  String get serviceEmployee => 'Employee';
+
+  @override
+  String get serviceEmployeeCode => 'Employee code';
+
+  @override
+  String get serviceTitle => 'Title (English)';
+
+  @override
+  String get serviceTitleBn => 'Title (Bangla)';
+
+  @override
+  String get serviceDescription => 'Description (English)';
+
+  @override
+  String get serviceDescriptionBn => 'Description (Bangla)';
+
+  @override
+  String get serviceBody => 'Text (English)';
+
+  @override
+  String get serviceBodyBn => 'Text (Bangla)';
+
+  @override
+  String get serviceClosesAt => 'Closes at (Dhaka time)';
+
+  @override
+  String get serviceThreshold => 'Minimum responses for results';
+
+  @override
+  String get serviceAnonymousNote =>
+      'Anonymous: no individual answers are stored. HR sees only the fixed cohort’s totals after closing and at least five responses. There are no subgroup reports.';
+
+  @override
+  String get serviceCohortNote =>
+      'Publishing freezes the company’s active employee audience. People without logins cannot respond by proxy.';
+
+  @override
+  String get serviceEnpsQuestion =>
+      'How likely are you to recommend this company as a place to work?';
+
+  @override
+  String get serviceEnpsScale => '0 = not at all likely; 10 = extremely likely';
+
+  @override
+  String get servicePulseScale => '1 = strongly disagree; 5 = strongly agree';
+
+  @override
+  String get servicePulseQuestions => 'Pulse questions (optional, maximum 10)';
+
+  @override
+  String get serviceQuestion => 'Question (English)';
+
+  @override
+  String get serviceQuestionBn => 'Question (Bangla)';
+
+  @override
+  String get serviceAddQuestion => 'Add question';
+
+  @override
+  String get serviceRemove => 'Remove';
+
+  @override
+  String get serviceChoose => 'Choose';
+
+  @override
+  String get serviceSaveDraft => 'Save draft';
+
+  @override
+  String get serviceEditDraft => 'Edit draft';
+
+  @override
+  String get servicePublish => 'Publish';
+
+  @override
+  String get serviceCloseSurvey => 'Close survey';
+
+  @override
+  String get serviceSubmitSurvey => 'Submit anonymous response';
+
+  @override
+  String get serviceAlreadyResponded =>
+      'Your anonymous response has been recorded.';
+
+  @override
+  String get serviceResults => 'Survey results';
+
+  @override
+  String serviceResultsProtected(Object minimum) {
+    return 'Results are protected until the survey closes and at least $minimum people respond. No response count is disclosed before then.';
+  }
+
+  @override
+  String get serviceResultsEmployee =>
+      'Individual responses and survey results are not shown to employees.';
+
+  @override
+  String get serviceEnps => 'eNPS';
+
+  @override
+  String get serviceResponses => 'Responses';
+
+  @override
+  String get serviceEligible => 'Eligible employees';
+
+  @override
+  String get servicePromoters => 'Promoters (9–10)';
+
+  @override
+  String get servicePassives => 'Passives (7–8)';
+
+  @override
+  String get serviceDetractors => 'Detractors (0–6)';
+
+  @override
+  String get serviceMean => 'Mean';
+
+  @override
+  String get serviceDistribution => 'Counts for scores 1–5';
+
+  @override
+  String get serviceClosed => 'This survey is closed.';
+
+  @override
+  String get serviceFixed =>
+      'Published wording is fixed. For a correction, retire this notice and publish a replacement.';
+
+  @override
+  String get serviceRequiresAcknowledgement =>
+      'Require a policy acknowledgement';
+
+  @override
+  String get serviceDueOn => 'Due on';
+
+  @override
+  String get serviceExpiresOn => 'Expires after';
+
+  @override
+  String get servicePolicyNote =>
+      'Acknowledgement records that you read this notice. It is not agreement to changed employment terms or an electronic signature.';
+
+  @override
+  String get serviceAcknowledge => 'I have read this notice';
+
+  @override
+  String get serviceAcknowledged => 'Acknowledged';
+
+  @override
+  String get serviceOutstanding => 'Outstanding';
+
+  @override
+  String get serviceRetire => 'Retire';
+
+  @override
+  String get serviceReason => 'Reason';
+
+  @override
+  String get serviceReceipts => 'Policy acknowledgement register';
+
+  @override
+  String get serviceExpired => 'Expired';
+
+  @override
+  String get servicePending => 'Pending';
+
+  @override
+  String get serviceValue => 'Value';
+
+  @override
+  String get serviceMessage => 'Message';
+
+  @override
+  String get serviceRecognitionNote =>
+      'Your name and message will be visible to colleagues in your company.';
+
+  @override
+  String get serviceWithdrawRecognition => 'Withdraw / moderate';
+
+  @override
+  String get serviceFrom => 'From';
+
+  @override
+  String get serviceTo => 'To';
+
+  @override
+  String get serviceCategory => 'Category';
+
+  @override
+  String get servicePriority => 'Priority';
+
+  @override
+  String get serviceSubject => 'Subject';
+
+  @override
+  String get serviceRequestBody => 'Your request';
+
+  @override
+  String get serviceRequestPrivacy =>
+      'Visible only to you and authorized HR handlers of this company. Managers do not inherit access. For a statutory grievance or harassment concern, use the dedicated grievance channel.';
+
+  @override
+  String get serviceGrievances => 'Grievance channel';
+
+  @override
+  String get serviceStatus => 'Status';
+
+  @override
+  String get serviceAssignee => 'HR handler';
+
+  @override
+  String get serviceUnassigned => 'Unassigned';
+
+  @override
+  String get serviceUpdateRequest => 'Update request';
+
+  @override
+  String get serviceReply => 'Send reply';
+
+  @override
+  String get serviceReplyBody => 'Reply';
+
+  @override
+  String get serviceInternal => 'HR-only internal note';
+
+  @override
+  String get serviceInternalLabel => 'Internal note — HR only';
+
+  @override
+  String get serviceResolve => 'Resolve request';
+
+  @override
+  String get serviceCloseRequest => 'Close resolved request';
+
+  @override
+  String get serviceReopen => 'Reopen request';
+
+  @override
+  String get serviceCreatedAt => 'Opened';
+
+  @override
+  String get serviceUpdatedAt => 'Updated';
+
+  @override
+  String get serviceRequestClosed =>
+      'This request is closed. Reopen it to continue.';
+
+  @override
+  String get serviceTag => 'Asset tag';
+
+  @override
+  String get serviceName => 'Name (English)';
+
+  @override
+  String get serviceNameBn => 'Name (Bangla)';
+
+  @override
+  String get serviceKind => 'Kind';
+
+  @override
+  String get serviceSerialNumber => 'Serial number';
+
+  @override
+  String get serviceIssueAsset => 'Issue asset';
+
+  @override
+  String get serviceIssuedOn => 'Issued on';
+
+  @override
+  String get serviceCondition => 'Condition / notes';
+
+  @override
+  String get serviceIssueCondition => 'Condition when issued';
+
+  @override
+  String get serviceReturnCondition => 'Condition when returned';
+
+  @override
+  String get serviceReturnedOn => 'Returned on';
+
+  @override
+  String get serviceReturnAsset => 'Record return';
+
+  @override
+  String get serviceAcknowledgeAsset => 'I received this asset';
+
+  @override
+  String get serviceAssetNote =>
+      'Receipt only; no automatic payroll deduction. HR records returns and corrections.';
+
+  @override
+  String get serviceOverdue => 'Overdue';
+
+  @override
+  String get serviceIssued => 'Issued';
+
+  @override
+  String get serviceAvailable => 'Available';
+
+  @override
+  String get serviceHistory => 'Issue history';
+
+  @override
+  String get serviceStatesDraft => 'Draft';
+
+  @override
+  String get serviceStatesOpen => 'Open';
+
+  @override
+  String get serviceStatesInProgress => 'In progress';
+
+  @override
+  String get serviceStatesResolved => 'Resolved';
+
+  @override
+  String get serviceStatesClosed => 'Closed';
+
+  @override
+  String get serviceStatesPublished => 'Published';
+
+  @override
+  String get serviceStatesRetired => 'Retired';
+
+  @override
+  String get serviceValuesTeamwork => 'Teamwork';
+
+  @override
+  String get serviceValuesService => 'Service';
+
+  @override
+  String get serviceValuesQuality => 'Quality';
+
+  @override
+  String get serviceValuesInitiative => 'Initiative';
+
+  @override
+  String get serviceCategoriesLetters => 'Letters';
+
+  @override
+  String get serviceCategoriesPay => 'Pay';
+
+  @override
+  String get serviceCategoriesLeave => 'Leave';
+
+  @override
+  String get serviceCategoriesBenefits => 'Benefits';
+
+  @override
+  String get serviceCategoriesOther => 'Other';
+
+  @override
+  String get servicePrioritiesNormal => 'Normal';
+
+  @override
+  String get servicePrioritiesUrgent => 'Urgent';
+
+  @override
+  String get serviceKindsLaptop => 'Laptop';
+
+  @override
+  String get serviceKindsPhone => 'Phone';
+
+  @override
+  String get serviceKindsIdCard => 'ID card';
+
+  @override
+  String get serviceKindsVehicle => 'Vehicle';
+
+  @override
+  String get serviceKindsEquipment => 'Equipment';
+
+  @override
+  String get serviceKindsOther => 'Other';
+
+  @override
+  String get serviceErrorsServiceEmployeeRequired =>
+      'An active employee record is required.';
+
+  @override
+  String get serviceErrorsSurveyDates => 'Choose a future closing time.';
+
+  @override
+  String get serviceErrorsSurveyCohort =>
+      'This company’s audience is smaller than the minimum reporting threshold.';
+
+  @override
+  String get serviceErrorsSurveyFixed => 'Published surveys are fixed.';
+
+  @override
+  String get serviceErrorsSurveyClosed => 'The survey is closed.';
+
+  @override
+  String get serviceErrorsSurveySubmitted => 'You already responded.';
+
+  @override
+  String get serviceErrorsSurveyAnswers => 'Answer every question.';
+
+  @override
+  String get serviceErrorsAnnouncementDates =>
+      'Choose a valid current or future date.';
+
+  @override
+  String get serviceErrorsAnnouncementFixed =>
+      'This notice is fixed or no longer accepts acknowledgements.';
+
+  @override
+  String get serviceErrorsRecognitionSelf =>
+      'Recognize a colleague, not yourself.';
+
+  @override
+  String get serviceErrorsRecognitionHidden =>
+      'This recognition was already withdrawn.';
+
+  @override
+  String get serviceErrorsHrHandler =>
+      'Choose an active HR handler with access to this company.';
+
+  @override
+  String get serviceErrorsHrRequestClosed =>
+      'Reopen the request before replying or changing it.';
+
+  @override
+  String get serviceErrorsHrRequestTransition =>
+      'This status change is not available.';
+
+  @override
+  String get serviceErrorsAssetRetired => 'This asset is retired.';
+
+  @override
+  String get serviceErrorsAssetIssued =>
+      'This asset is already issued. Record its return first.';
+
+  @override
+  String get serviceErrorsAssetReturned => 'This issue was already returned.';
+
+  @override
+  String get serviceErrorsAssetDates =>
+      'Check the issue, due and return dates. Recorded events cannot be future dated.';
+
+  @override
+  String get serviceErrorsAssetEmployeeScope =>
+      'The employee must work for this company on the issue date.';
+
+  @override
+  String get serviceUnknown => 'Not available';
+
+  @override
+  String get serviceCancel => 'Cancel';
+
+  @override
+  String get serviceFieldRequired => 'Complete this field.';
+
+  @override
+  String get ssoMethod => 'Organisation';
+
+  @override
+  String get ssoContinue => 'Continue with single sign-on';
+
+  @override
+  String get ssoFinish => 'Finish browser sign-in';
+
+  @override
+  String get ssoBrowserHint =>
+      'Sign in through your organisation in the browser, then return here and finish.';
+
+  @override
+  String get ssoPending =>
+      'Browser sign-in is not complete yet. Finish there, then try again.';
 }

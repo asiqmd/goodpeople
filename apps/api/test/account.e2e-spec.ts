@@ -131,7 +131,7 @@ describe('accounts, sign-in and notifications', () => {
     const id = list.body.items[0].id as string;
     const detail = (await api(app).get(`/tenant/employees/${id}`).set(bearer(token)).expect(200))
       .body as EmployeeDetail;
-    const nid = detail.identity.nid;
+    const nid = detail.identity!.nid;
     if (nid) expect(nid).toMatch(/^••••/);
     // Cannot change people, leave or logins.
     await api(app)
@@ -230,6 +230,31 @@ describe('accounts, sign-in and notifications', () => {
 
   // ── Sign-in by SMS code ────────────────────────────────────────────────────
 
+  it('rejects an outstanding SMS proof after its login phone changes', async () => {
+    const phone = uniquePhone(),
+      user = await createUser({ phone, role: 'employee' }),
+      replacement = uniquePhone();
+    await api(app).post('/auth/otp/request').send({ tenant: 'my-group', phone }).expect(202);
+    const oldCode = /\d{6}/.exec(sms.sent.at(-1)!.text)![0];
+    await api(app)
+      .patch(`/tenant/users/${user.id}`)
+      .set(bearer(admin))
+      .send({ phone: replacement })
+      .expect(200);
+    await api(app)
+      .post('/auth/otp/verify')
+      .send({ tenant: 'my-group', phone, code: oldCode })
+      .expect(401);
+    await api(app)
+      .post('/auth/otp/request')
+      .send({ tenant: 'my-group', phone: replacement })
+      .expect(202);
+    const code = /\d{6}/.exec(sms.sent.at(-1)!.text)![0];
+    await api(app)
+      .post('/auth/otp/verify')
+      .send({ tenant: 'my-group', phone: replacement, code })
+      .expect(200);
+  });
   it('signs an employee in with a code sent by SMS', async () => {
     const phone = uniquePhone();
     await createUser({ phone, role: 'employee' });

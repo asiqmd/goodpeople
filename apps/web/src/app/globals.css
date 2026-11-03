@@ -19,3 +19,21 @@ body {
 :lang(bn) {
   line-height: 1.7;
 }
+
+html[lang='ar'] body {
+  font-family: var(--font-arabic), var(--font-latin), sans-serif;
+}
+html[dir='rtl'] input[type='email'],
+html[dir='rtl'] input[type='number'],
+html[dir='rtl'] input[type='date'],
+html[dir='rtl'] code,
+html[dir='rtl'] .font-mono {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+html[dir='rtl'] .text-left {
+  text-align: start;
+}
+html[dir='rtl'] .text-right {
+  text-align: end;
+}

@@ -13,6 +13,9 @@ import 'api_models.dart';
 /// `tool/gen_api.sh` in Phase 0. Every method throws [ApiException] on
 /// failure. Tests replace this with a fake through [goodPeopleApiProvider].
 abstract interface class GoodPeopleApi {
+  Future<SsoStart> startSso({required String tenant,required String binding});
+  Future<LoginOutcome?> exchangeSso({required String flowId,required String verifier});
+
   /// `POST /auth/login`. [tenant] is the workspace slug. A login with
   /// two-step sign-in answers a [TwoStepChallenge] instead of a session.
   /// Too many wrong passwords get a 429 with code `too_many_attempts`.
@@ -401,6 +404,59 @@ abstract interface class GoodPeopleApi {
 
   /// `GET /tenant/performance/me`: what waits for the login, their goals in
   /// numbers and their reviews.
+  Future<EngagementOverview> fetchEngagement(String accessToken);
+  Future<EmployeeServicesOverview> fetchEmployeeServices(String accessToken);
+  Future<HrServiceRequest> fetchHrRequest(String accessToken, String id);
+  Future<void> respondToSurvey(
+    String accessToken,
+    String id, {
+    required int enps,
+    required List<int> scores,
+  });
+  Future<void> acknowledgeAnnouncement(String accessToken, String id);
+  Future<void> recognizeColleague(
+    String accessToken, {
+    required String employeeCode,
+    required String value,
+    required String message,
+  });
+  Future<void> withdrawRecognition(
+    String accessToken,
+    String id,
+    String reason,
+  );
+  Future<HrServiceRequest> createHrRequest(
+    String accessToken, {
+    required String subject,
+    required String body,
+    required String category,
+    required String priority,
+  });
+  Future<HrServiceRequest> replyToHrRequest(
+    String accessToken,
+    String id,
+    String body,
+  );
+  Future<HrServiceRequest> moveHrRequest(
+    String accessToken,
+    String id, {
+    required String status,
+    required String reason,
+  });
+  Future<void> acknowledgeAsset(String accessToken, String id);
+
+  Future<LearningMe> fetchLearningMe(String accessToken);
+  Future<void> moveLearningEnrolment(
+    String accessToken,
+    String sessionId, {
+    required bool enrol,
+  });
+  Future<FileDownload> downloadLearningCertificate(
+    String accessToken,
+    String id, {
+    required LetterLanguage language,
+  });
+
   Future<PerformanceMe> fetchPerformanceMe(String accessToken);
 
   /// `GET /tenant/performance/goals/mine`. Empty for a login with no
@@ -508,6 +564,18 @@ class DioGoodPeopleApi implements GoodPeopleApi {
   );
 
   final Dio _dio;
+
+  @override
+  Future<SsoStart> startSso({required String tenant,required String binding})=>_call(
+    ()=>_dio.post<Object?>('/auth/sso/start',data:{'tenant':tenant,'binding':binding,'client':'mobile'}),SsoStart.fromJson);
+  @override
+  Future<LoginOutcome?> exchangeSso({required String flowId,required String verifier})=>_call(
+    ()=>_dio.post<Object?>('/auth/sso/exchange',data:{'flowId':flowId,'verifier':verifier}),(json){
+      if(json['pending']==true)return null;
+      final result=json['result'];
+      if(result is! Json)throw const FormatException('Missing sign-in response');
+      return LoginOutcome.fromJson(result);
+    });
 
   @override
   Future<LoginOutcome> login({
@@ -1154,6 +1222,171 @@ class DioGoodPeopleApi implements GoodPeopleApi {
     () => _dio.get<List<int>>(
       '/tenant/recruitment/applications/'
       '${Uri.encodeComponent(applicationId)}/cv',
+      options: _fileOptions(accessToken),
+    ),
+  );
+
+  @override
+  Future<EngagementOverview> fetchEngagement(String accessToken) => _call(
+    () => _dio.get<Object?>(
+      '/tenant/engagement/me',
+      options: _bearer(accessToken),
+    ),
+    EngagementOverview.fromJson,
+  );
+  @override
+  Future<EmployeeServicesOverview> fetchEmployeeServices(String accessToken) =>
+      _call(
+        () => _dio.get<Object?>(
+          '/tenant/employee-services/me',
+          options: _bearer(accessToken),
+        ),
+        EmployeeServicesOverview.fromJson,
+      );
+  @override
+  Future<HrServiceRequest> fetchHrRequest(String accessToken, String id) =>
+      _call(
+        () => _dio.get<Object?>(
+          '/tenant/employee-services/requests/${Uri.encodeComponent(id)}',
+          options: _bearer(accessToken),
+        ),
+        HrServiceRequest.fromJson,
+      );
+  @override
+  Future<void> respondToSurvey(
+    String accessToken,
+    String id, {
+    required int enps,
+    required List<int> scores,
+  }) => _send(
+    () => _dio.post<Object?>(
+      '/tenant/engagement/surveys/${Uri.encodeComponent(id)}/respond',
+      data: {'enps': enps, 'scores': scores},
+      options: _bearer(accessToken),
+    ),
+    (_) {},
+  );
+  @override
+  Future<void> acknowledgeAnnouncement(String accessToken, String id) => _send(
+    () => _dio.post<Object?>(
+      '/tenant/engagement/announcements/${Uri.encodeComponent(id)}/acknowledge',
+      data: <String, Object?>{},
+      options: _bearer(accessToken),
+    ),
+    (_) {},
+  );
+  @override
+  Future<void> recognizeColleague(
+    String accessToken, {
+    required String employeeCode,
+    required String value,
+    required String message,
+  }) => _send(
+    () => _dio.post<Object?>(
+      '/tenant/engagement/recognition',
+      data: {'employeeCode': employeeCode, 'value': value, 'message': message},
+      options: _bearer(accessToken),
+    ),
+    (_) {},
+  );
+  @override
+  Future<void> withdrawRecognition(
+    String accessToken,
+    String id,
+    String reason,
+  ) => _send(
+    () => _dio.post<Object?>(
+      '/tenant/engagement/recognition/${Uri.encodeComponent(id)}/hide',
+      data: {'reason': reason},
+      options: _bearer(accessToken),
+    ),
+    (_) {},
+  );
+  @override
+  Future<HrServiceRequest> createHrRequest(
+    String accessToken, {
+    required String subject,
+    required String body,
+    required String category,
+    required String priority,
+  }) => _call(
+    () => _dio.post<Object?>(
+      '/tenant/employee-services/requests',
+      data: {
+        'subject': subject,
+        'body': body,
+        'category': category,
+        'priority': priority,
+      },
+      options: _bearer(accessToken),
+    ),
+    HrServiceRequest.fromJson,
+  );
+  @override
+  Future<HrServiceRequest> replyToHrRequest(
+    String accessToken,
+    String id,
+    String body,
+  ) => _call(
+    () => _dio.post<Object?>(
+      '/tenant/employee-services/requests/${Uri.encodeComponent(id)}/replies',
+      data: {'body': body},
+      options: _bearer(accessToken),
+    ),
+    HrServiceRequest.fromJson,
+  );
+  @override
+  Future<HrServiceRequest> moveHrRequest(
+    String accessToken,
+    String id, {
+    required String status,
+    required String reason,
+  }) => _call(
+    () => _dio.patch<Object?>(
+      '/tenant/employee-services/requests/${Uri.encodeComponent(id)}',
+      data: {'status': status, 'reason': reason},
+      options: _bearer(accessToken),
+    ),
+    HrServiceRequest.fromJson,
+  );
+  @override
+  Future<void> acknowledgeAsset(String accessToken, String id) => _send(
+    () => _dio.post<Object?>(
+      '/tenant/employee-services/issues/${Uri.encodeComponent(id)}/acknowledge',
+      data: <String, Object?>{},
+      options: _bearer(accessToken),
+    ),
+    (_) {},
+  );
+
+  @override
+  Future<LearningMe> fetchLearningMe(String accessToken) => _call(
+    () =>
+        _dio.get<Object?>('/tenant/learning/me', options: _bearer(accessToken)),
+    LearningMe.fromJson,
+  );
+  @override
+  Future<void> moveLearningEnrolment(
+    String accessToken,
+    String sessionId, {
+    required bool enrol,
+  }) => _send(
+    () => _dio.post<Object?>(
+      '/tenant/learning/sessions/${Uri.encodeComponent(sessionId)}/${enrol ? 'enrol' : 'withdraw'}',
+      data: <String, Object?>{},
+      options: _bearer(accessToken),
+    ),
+    (_) {},
+  );
+  @override
+  Future<FileDownload> downloadLearningCertificate(
+    String accessToken,
+    String id, {
+    required LetterLanguage language,
+  }) => _download(
+    () => _dio.get<List<int>>(
+      '/tenant/learning/certificates/${Uri.encodeComponent(id)}/file',
+      queryParameters: {'language': language.wire},
       options: _fileOptions(accessToken),
     ),
   );

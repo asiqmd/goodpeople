@@ -11,6 +11,9 @@ import '../interviews/interview_providers.dart';
 import '../interviews/interviews_screen.dart';
 import '../l10n/app_localizations.dart';
 import '../leave/leave_screen.dart';
+import '../learning/learning_screen.dart';
+import '../employee_services/engagement_screen.dart';
+import '../employee_services/employee_services_screen.dart';
 import '../notifications/inbox_screen.dart';
 import '../notifications/notification_providers.dart';
 import '../payslips/my_pay_screen.dart';
@@ -44,6 +47,9 @@ class HomeScreen extends ConsumerWidget {
   static const timesheetKey = ValueKey('home-timesheet');
   static const interviewsKey = ValueKey('home-interviews');
   static const interviewsBadgeKey = ValueKey('home-interviews-badge');
+  static const engagementKey = ValueKey('home-engagement');
+  static const employeeServicesKey = ValueKey('home-employee-services');
+  static const learningKey = ValueKey('home-learning');
   static const performanceKey = ValueKey('home-performance');
   static const performanceBadgeKey = ValueKey('home-performance-badge');
   static const accountKey = ValueKey('home-account');
@@ -281,6 +287,35 @@ class _AccessDetails extends ConsumerWidget {
                   )
                 : null,
             onTap: () => Navigator.of(context).push(PerformanceScreen.route()),
+          ),
+        ],
+        if (view.access.hasFeature('core_hr')) ...[
+          const SizedBox(height: 12),
+          _ShortcutCard(
+            key: HomeScreen.engagementKey,
+            icon: Icons.forum_outlined,
+            title: l10n.serviceEngagement,
+            subtitle: l10n.serviceIntroEngagement,
+            onTap: () => Navigator.of(context).push(EngagementScreen.route()),
+          ),
+          const SizedBox(height: 12),
+          _ShortcutCard(
+            key: HomeScreen.employeeServicesKey,
+            icon: Icons.support_agent_outlined,
+            title: l10n.serviceServices,
+            subtitle: l10n.serviceIntroServices,
+            onTap: () =>
+                Navigator.of(context).push(EmployeeServicesScreen.route()),
+          ),
+        ],
+        if (view.access.hasFeature('lms')) ...[
+          const SizedBox(height: 12),
+          _ShortcutCard(
+            key: HomeScreen.learningKey,
+            icon: Icons.school_outlined,
+            title: l10n.learningTitle,
+            subtitle: l10n.learningSubtitle,
+            onTap: () => Navigator.of(context).push(LearningScreen.route()),
           ),
         ],
         if (view.access.hasFeature('payroll')) ...[

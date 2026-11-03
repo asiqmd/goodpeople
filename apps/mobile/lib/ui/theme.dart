@@ -7,6 +7,7 @@ const _seedColor = Color(0xFF006A4E);
 /// as Bangla. All ship with the OS: Noto Sans Bengali on Android, Kohinoor
 /// Bangla and Bangla Sangam MN on iOS. No font assets are bundled.
 const appFontFamilyFallback = [
+  'GPArabic',
   'Noto Sans Bengali',
   'Noto Sans',
   'Kohinoor Bangla',

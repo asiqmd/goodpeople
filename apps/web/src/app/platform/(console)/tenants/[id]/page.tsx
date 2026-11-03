@@ -64,7 +64,7 @@ export default async function TenantPage({ params }: PageProps<'/platform/tenant
             {LIMIT_KEYS.map((key) => (
               <div key={key} className="contents">
                 <dt className="text-slate-500">{tl(key)}</dt>
-                <dd className="text-right font-medium">{limit(tenant.access.limits[key])}</dd>
+                <dd className="text-end font-medium">{limit(tenant.access.limits[key])}</dd>
               </div>
             ))}
           </dl>

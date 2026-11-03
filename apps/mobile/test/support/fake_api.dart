@@ -359,6 +359,287 @@ Map<String, Object?> leaveCalendarJson(
 
 /// In-memory [GoodPeopleApi] that records calls.
 class FakeGoodPeopleApi implements GoodPeopleApi {
+  String? ssoTenant;
+  String? ssoBinding;
+  String? ssoVerifier;
+  LoginOutcome? ssoOutcome;
+  @override
+  Future<SsoStart> startSso({required String tenant,required String binding}) async {
+    ssoTenant=tenant;ssoBinding=binding;
+    return SsoStart(url:Uri.parse('https://identity.example.test/authorize'),flowId:'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+  }
+  @override
+  Future<LoginOutcome?> exchangeSso({required String flowId,required String verifier}) async {
+    ssoVerifier=verifier;return ssoOutcome;
+  }
+
+  Json engagement = {
+    'employee': null,
+    'manage': false,
+    'surveys': <Json>[],
+    'announcements': <Json>[],
+    'recognition': <Json>[],
+  };
+  Json employeeServices = {
+    'employee': null,
+    'manage': false,
+    'requests': <Json>[],
+    'issues': <Json>[],
+  };
+  Object? serviceError;
+  final serviceCalls = <({String path, Json body})>[];
+  void _serviceCall(String path, Json body) {
+    if (serviceError case final error?) throw error;
+    serviceCalls.add((path: path, body: body));
+  }
+
+  @override
+  Future<EngagementOverview> fetchEngagement(String accessToken) async {
+    if (serviceError case final error?) throw error;
+    return EngagementOverview.fromJson(engagement);
+  }
+
+  @override
+  Future<EmployeeServicesOverview> fetchEmployeeServices(
+    String accessToken,
+  ) async {
+    if (serviceError case final error?) throw error;
+    return EmployeeServicesOverview.fromJson(employeeServices);
+  }
+
+  @override
+  Future<HrServiceRequest> fetchHrRequest(String accessToken, String id) async {
+    if (serviceError case final error?) throw error;
+    return HrServiceRequest.fromJson(
+      (employeeServices['requests']! as List).cast<Json>().firstWhere(
+        (r) => r['id'] == id,
+      ),
+    );
+  }
+
+  @override
+  Future<void> respondToSurvey(
+    String accessToken,
+    String id, {
+    required int enps,
+    required List<int> scores,
+  }) async {
+    _serviceCall('survey/$id', {'enps': enps, 'scores': scores});
+    engagement = {
+      ...engagement,
+      'surveys': [
+        for (final item in (engagement['surveys']! as List).cast<Json>())
+          item['id'] == id ? {...item, 'submitted': true} : item,
+      ],
+    };
+  }
+
+  @override
+  Future<void> acknowledgeAnnouncement(String accessToken, String id) async {
+    _serviceCall('notice/$id', {});
+    engagement = {
+      ...engagement,
+      'announcements': [
+        for (final item in (engagement['announcements']! as List).cast<Json>())
+          item['id'] == id
+              ? {
+                  ...item,
+                  'acknowledgedAt': '2026-11-01T12:00:00Z',
+                  'canAcknowledge': false,
+                }
+              : item,
+      ],
+    };
+  }
+
+  @override
+  Future<void> recognizeColleague(
+    String accessToken, {
+    required String employeeCode,
+    required String value,
+    required String message,
+  }) async {
+    _serviceCall('recognition', {
+      'employeeCode': employeeCode,
+      'value': value,
+      'message': message,
+    });
+  }
+
+  @override
+  Future<void> withdrawRecognition(
+    String accessToken,
+    String id,
+    String reason,
+  ) async {
+    _serviceCall('hide/$id', {'reason': reason});
+    engagement = {
+      ...engagement,
+      'recognition': [
+        for (final item in (engagement['recognition']! as List).cast<Json>())
+          if (item['id'] != id) item,
+      ],
+    };
+  }
+
+  @override
+  Future<HrServiceRequest> createHrRequest(
+    String accessToken, {
+    required String subject,
+    required String body,
+    required String category,
+    required String priority,
+  }) async {
+    _serviceCall('request', {
+      'subject': subject,
+      'body': body,
+      'category': category,
+      'priority': priority,
+    });
+    final person = employeeServices['employee']! as Json;
+    final row = <String, Object?>{
+      'id': 'new-request',
+      'subject': subject,
+      'category': category,
+      'priority': priority,
+      'status': 'open',
+      'employee': person,
+      'messages': [
+        <String, Object?>{
+          'id': 'first',
+          'authorName': person['fullName'],
+          'body': body,
+          'internal': false,
+        },
+      ],
+    };
+    employeeServices = {
+      ...employeeServices,
+      'requests': [...employeeServices['requests']! as List, row],
+    };
+    return HrServiceRequest.fromJson(row);
+  }
+
+  @override
+  Future<HrServiceRequest> replyToHrRequest(
+    String accessToken,
+    String id,
+    String body,
+  ) async {
+    _serviceCall('reply/$id', {'body': body});
+    employeeServices = {
+      ...employeeServices,
+      'requests': [
+        for (final item in (employeeServices['requests']! as List).cast<Json>())
+          item['id'] == id
+              ? {
+                  ...item,
+                  'messages': [
+                    ...item['messages']! as List,
+                    <String, Object?>{
+                      'id': 'reply-${serviceCalls.length}',
+                      'authorName': 'Employee',
+                      'body': body,
+                      'internal': false,
+                    },
+                  ],
+                }
+              : item,
+      ],
+    };
+    return fetchHrRequest(accessToken, id);
+  }
+
+  @override
+  Future<HrServiceRequest> moveHrRequest(
+    String accessToken,
+    String id, {
+    required String status,
+    required String reason,
+  }) async {
+    _serviceCall('status/$id', {'status': status, 'reason': reason});
+    employeeServices = {
+      ...employeeServices,
+      'requests': [
+        for (final item in (employeeServices['requests']! as List).cast<Json>())
+          item['id'] == id ? {...item, 'status': status} : item,
+      ],
+    };
+    return fetchHrRequest(accessToken, id);
+  }
+
+  @override
+  Future<void> acknowledgeAsset(String accessToken, String id) async {
+    _serviceCall('asset/$id', {});
+    employeeServices = {
+      ...employeeServices,
+      'issues': [
+        for (final item in (employeeServices['issues']! as List).cast<Json>())
+          item['id'] == id
+              ? {
+                  ...item,
+                  'acknowledgedAt': '2026-11-01T12:00:00Z',
+                  'canAcknowledge': false,
+                }
+              : item,
+      ],
+    };
+  }
+
+  Json learningMe = {
+    'manage': false,
+    'sessions': <Json>[],
+    'certificates': <Json>[],
+    'requirements': <Json>[],
+  };
+  Exception? learningError;
+  final learningMoves = <({String id, bool enrol})>[];
+  final learningDownloads = <({String id, LetterLanguage language})>[];
+  @override
+  Future<LearningMe> fetchLearningMe(String token) async {
+    if (learningError case final e?) throw e;
+    return LearningMe.fromJson(learningMe);
+  }
+
+  @override
+  Future<void> moveLearningEnrolment(
+    String token,
+    String sessionId, {
+    required bool enrol,
+  }) async {
+    if (learningError case final e?) throw e;
+    learningMoves.add((id: sessionId, enrol: enrol));
+    learningMe = {
+      ...learningMe,
+      'sessions': [
+        for (final s in learningMe['sessions']! as List)
+          if ((s as Json)['id'] == sessionId)
+            {
+              ...s,
+              'myStatus': enrol ? 'enrolled' : 'cancelled',
+              'canEnrol': !enrol,
+              'canWithdraw': enrol,
+            }
+          else
+            s,
+      ],
+    };
+  }
+
+  @override
+  Future<FileDownload> downloadLearningCertificate(
+    String token,
+    String id, {
+    required LetterLanguage language,
+  }) async {
+    learningDownloads.add((id: id, language: language));
+    return FileDownload(
+      bytes: Uint8List.fromList('%PDF-1.4 demo'.codeUnits),
+      contentType: 'application/pdf',
+      fileName: 'training-$id.pdf',
+    );
+  }
+
   /// A session, or a [TwoStepChallenge].
   LoginOutcome loginResponse = LoginResponse.fromJson(loginJson);
 

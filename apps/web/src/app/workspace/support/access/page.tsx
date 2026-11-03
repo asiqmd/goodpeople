@@ -36,7 +36,7 @@ const STATUS_TONE: Record<ReturnType<typeof statusOf>, Tone> = {
 export default async function SupportAccessPage() {
   const t = await getTranslations('supportAccess');
   const user = await currentTenantUser();
-  if (!can(user?.role, 'support.manage')) {
+  if (!can(user, 'support.manage')) {
     return <Banner tone="slate">{t('notAllowed')}</Banner>;
   }
   const format = await getFormatter();
@@ -72,7 +72,7 @@ export default async function SupportAccessPage() {
         ) : (
           <div className="-mx-5 overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+              <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="px-5 py-2 font-medium">{t('grants.given')}</th>
                   <th className="px-5 py-2 font-medium">{t('grants.until')}</th>
@@ -100,7 +100,7 @@ export default async function SupportAccessPage() {
                         {grant.ticketId && grant.ticketNumber && (
                           <Link
                             href={`/workspace/support/${grant.ticketId}`}
-                            className="mr-1 font-medium text-brand-700 hover:underline"
+                            className="me-1 font-medium text-brand-700 hover:underline"
                           >
                             {ticketLabel(grant.ticketNumber)}
                           </Link>
@@ -126,7 +126,7 @@ export default async function SupportAccessPage() {
                       <td className="px-5 py-3">
                         <Badge tone={STATUS_TONE[status]}>{t(`grants.${status}`)}</Badge>
                       </td>
-                      <td className="px-5 py-3 text-right">
+                      <td className="px-5 py-3 text-end">
                         {grant.active && <RevokeAccessButton grantId={grant.id} />}
                       </td>
                     </tr>
@@ -145,7 +145,7 @@ export default async function SupportAccessPage() {
         ) : (
           <div className="-mx-5 overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+              <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="px-5 py-2 font-medium">{t('activity.when')}</th>
                   <th className="px-5 py-2 font-medium">{t('activity.who')}</th>

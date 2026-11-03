@@ -207,7 +207,7 @@ export class CareersService {
     // A filled hidden field is a bot: it gets the same answer and nothing is kept.
     if (input.website) return { received: true };
     const email = input.email.trim().toLowerCase();
-    this.limiter.hit(
+    await this.limiter.hit(
       `careers:apply-email:${ws.id}:${email}`,
       LIMITS.applyEmail.limit,
       LIMITS.applyEmail.windowMs,
@@ -294,7 +294,7 @@ export class CareersService {
   private async open(slug: string, ip: string, kind: 'view' | 'apply'): Promise<Workspace> {
     const wanted = slug.trim().toLowerCase();
     const { limit, windowMs } = LIMITS[kind];
-    this.limiter.hit(`careers:${kind}:${ip}`, limit, windowMs);
+    await this.limiter.hit(`careers:${kind}:${ip}`, limit, windowMs);
     const [row] = await this.db
       .select({ id: tenants.id, name: tenants.name, slug: tenants.slug, status: tenants.status })
       .from(tenants)

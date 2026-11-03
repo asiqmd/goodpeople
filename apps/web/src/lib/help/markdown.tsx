@@ -235,7 +235,7 @@ export function Markdown({ source }: { source: string }): ReactNode {
               <Tag
                 key={i}
                 // Bangla pages number their steps in Bangla digits.
-                className={`space-y-1 pl-6 ${
+                className={`space-y-1 ps-6 ${
                   block.ordered
                     ? 'list-decimal [&:lang(bn)]:[list-style-type:bengali]'
                     : 'list-disc'

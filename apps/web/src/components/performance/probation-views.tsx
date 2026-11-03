@@ -37,7 +37,7 @@ export async function ProbationTable({
   return (
     <div className="-mx-5 overflow-x-auto">
       <table className="min-w-full text-sm">
-        <thead className="text-left text-xs text-slate-500">
+        <thead className="text-start text-xs text-slate-500">
           <tr>
             <th className="px-5 py-2 font-medium">{t('columns.person')}</th>
             <th className="px-5 py-2 font-medium">{t('columns.manager')}</th>
@@ -74,7 +74,7 @@ export async function ProbationTable({
                 {r.recommendation ? t(`recommendations.${r.recommendation}`) : '–'}
               </td>
               {actions && (
-                <td className="px-5 py-2 text-right whitespace-nowrap">
+                <td className="px-5 py-2 text-end whitespace-nowrap">
                   <Link
                     href={`/workspace/employees/${r.employee.id}?tab=job`}
                     className="text-xs font-medium text-brand-700 hover:underline"

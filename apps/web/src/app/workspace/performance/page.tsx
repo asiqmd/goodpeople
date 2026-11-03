@@ -11,6 +11,7 @@ import { authedFetch } from '@/lib/api';
 /** What waits for the login, their goals, and their reviews by cycle. */
 export default async function PerformancePage() {
   const t = await getTranslations('reviews');
+  const tc = await getTranslations('compensation');
   const format = await getFormatter();
   const locale = await getLocale();
   const result = await authedFetch<PerformanceMe>('tenant', '/tenant/performance/me');
@@ -51,6 +52,9 @@ export default async function PerformancePage() {
           <p className="text-sm text-slate-600">{t('intro')}</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Link href="/workspace/performance/compensation" className={buttonClass.secondary}>
+            {tc('title')}
+          </Link>
           {me.manager && (
             <Link href="/workspace/performance/team" className={buttonClass.secondary}>
               {t('team.title')}

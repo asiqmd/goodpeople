@@ -17,7 +17,7 @@ const STEPS: { key: string; from: SetupStepKey; href: string; payroll?: boolean 
 
 export default async function WelcomePage() {
   const user = await currentTenantUser();
-  if (!can(user?.role, 'org.manage')) redirect('/workspace');
+  if (!can(user, 'org.manage')) redirect('/workspace');
   const t = await getTranslations('welcome');
   const ti = await getTranslations('industries');
   const [access, checklist] = await Promise.all([

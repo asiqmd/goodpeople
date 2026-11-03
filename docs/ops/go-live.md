@@ -280,9 +280,79 @@ Before a company runs its first review cycle (HR, its managers, its counsel):
 - [ ] **Probation end dates** are right on people's jobs, so managers are asked for probation
       reviews three weeks before (s.4).
 
+## 12. Compensation planning (Phase 4 M3)
+
+Before the first increment round (HR, finance and labour counsel):
+
+- [ ] Agree monthly gross grade ranges, the increment matrix and the company/unit budgets.
+      Budgets are additional monthly gross cost, not the entire salary bill.
+- [ ] Finish and release the source reviews. Confirm current managers and company scopes;
+      managers see only direct reports and cannot propose their own pay.
+- [ ] For an RMG annual round, counsel confirms the effective-dated basic increment rule and
+      eligibility; HR verifies prior increments, including those outside planning rounds.
+- [ ] Reconcile submitted proposals and budget subtotals before sending. If source pay or jobs
+      changed, cancel and rebuild; no part of a failed export is saved.
+- [ ] Finance knows that each exported pay change needs a second person's approval, even if
+      ordinary one-person payroll is enabled. Verify the effective date and the next run.
+- [ ] Keep promotions as separate approved job changes. Rejected or withdrawn pay proposals
+      are reconsidered in a new round, without editing the exported round.
+
+## 13. Learning (Phase 4 M4)
+
+Before required training is relied on (HR and the safety lead):
+
+- [ ] Agree bilingual course descriptions, renewal periods and required courses by company
+      and designation. These policies do not replace applicable legal or buyer requirements.
+- [ ] Confirm current jobs/managers and company scopes, then check an HR officer, manager and
+      employee view. Workers without logins remain in HR's coverage and attendance records.
+- [ ] Schedule sessions in Dhaka time, check trainer/venue/capacity and keep the signed register.
+      HR records all attendees and absences only after the session ends.
+- [ ] Sample an EN/BN completion PDF and its expiry. Know how to revoke an incorrect record;
+      a revoked or expired certificate cannot satisfy required training.
+- [ ] Confirm reminder channels and notification links in web/mobile. Employee enrolment and
+      withdrawal close at the session start; HR can enter historical attendance.
+- [ ] The safety lead confirms the site's drill interval, licence and buyer conditions, and
+      maintains required registers/notices. Record findings, corrective actions and next date;
+      no automatically generated label declares a site legally compliant.
+- [ ] Compare buyer-audit training coverage at the period end with the records. Validate company
+      and site filters, and retain the report alongside physical evidence where required.
+
+## 14. Engagement and employee services (Phase 4 M5)
+
+Before opening these services to employees (HR and the workspace admin):
+
+- [ ] Check company scopes and HR handler roles. Managers and platform support must not
+      obtain private HR requests; test an employee, a manager and an HR officer from another
+      company. Notifications must contain no request subject or message text.
+- [ ] Explain anonymous surveys accurately: no individual answers, a frozen company audience,
+      at least five responses, results only after closing, and no subgroup reports. Verify a
+      below-threshold report stays suppressed. Closing reminders go to the whole audience;
+      their delivery logs must not disclose who responded.
+- [ ] Provide an appropriate separate channel for workers without logins. Do not enter survey
+      answers, policy receipts or asset acknowledgements on their behalf.
+- [ ] Approve both languages of each policy notice before publication. Explain that receipt
+      records reading, not agreement to changed employment terms. Check its frozen audience,
+      due date and outstanding register; issue a new notice for later joiners or corrections.
+- [ ] Explain that recognition is named and company-visible, and confirm the reasoned
+      withdrawal/moderation process.
+- [ ] Set up HR service handlers and teach public replies versus internal notes. Use the
+      existing grievance/harassment channel for those cases. Exercise progress, resolution,
+      employee closure and reopening; a status-only change must keep the current handler.
+- [ ] Reconcile inventory tags and outstanding issues with physical stock. Sample issue,
+      employee receipt, return and retirement; dates and conditions must match the record.
+      Asset receipts never automatically deduct salary.
+- [ ] Test web/mobile notification links, local-language forms, retry behavior and read-only
+      access. Agree how HR will monitor outstanding policy receipts and overdue assets.
+
 ## If it goes wrong
 
 The old register stays readable and can be reopened for new entries. Going back is a
 decision for the go/no-go group, for a problem that cannot be fixed within two working days.
 Good People keeps running read-only so nothing recorded is lost, and the switch back is
 announced the same way as the cut-over.
+
+## Phase 6 M1 analytics activation
+
+The 6.1.0-local workforce slice is locally verified; it is not production release approval. Before a real pilot, assign an accountable metric/data reviewer, reconcile the approved companies' historical assignments and definitions, approve the company/relationship roles and explicitly grant analytics with core_hr. Existing plans and installed licenses remain unchanged; self-hosted activation also needs a compatible signed license.
+
+Keep missing/overlapping history visible as incomplete, confirm business clocks and current authority, and use the normal HR workflow for corrections. Current-day counts are provisional. No pay/demographic reports, exported employee data or model provider is enabled by M1. Extend M7 evidence and resolve the carried backup/owner/dependency/independent/provider/host/country gates before production activation. See the [M1 record](../phases/phase-6.md#m1-implementation-record); M2 operating/financial insight is next.

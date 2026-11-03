@@ -206,7 +206,7 @@ function CompanyRows({
   return (
     <>
       <tr className="align-top">
-        <th scope="row" className="px-5 py-2 text-left font-medium">
+        <th scope="row" className="px-5 py-2 text-start font-medium">
           {company.legalEntity.name}
           <span className="mt-1 block">
             {company.override ? (
@@ -229,7 +229,7 @@ function CompanyRows({
             )}
           </td>
         ))}
-        <td className="whitespace-nowrap px-5 py-2 text-right">
+        <td className="whitespace-nowrap px-5 py-2 text-end">
           <span className="flex flex-col items-end gap-1">
             <button
               type="button"
@@ -275,7 +275,7 @@ export function PolicyTable({ policy }: { policy: PolicyView }) {
   return (
     <div className="-mx-5 overflow-x-auto">
       <table className="min-w-full text-sm">
-        <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+        <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
           <tr>
             <th scope="col" className="px-5 py-2 font-medium">
               {t('company')}
@@ -292,7 +292,7 @@ export function PolicyTable({ policy }: { policy: PolicyView }) {
         </thead>
         <tbody className="divide-y divide-slate-100">
           <tr className="bg-slate-50">
-            <th scope="row" className="px-5 py-2 text-left font-semibold">
+            <th scope="row" className="px-5 py-2 text-start font-semibold">
               {t('group')}
             </th>
             {fields.map((field) => (

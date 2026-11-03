@@ -17,9 +17,9 @@ const TONE: Record<LoanView['status'], Tone> = {
 };
 
 export default async function LoansPage({ searchParams }: PageProps<'/workspace/payroll/loans'>) {
-  const role = (await currentTenantUser())?.role;
-  if (!can(role, 'payroll.view')) redirect('/workspace');
-  const canManage = can(role, 'payroll.manage');
+  const accessPrincipal = await currentTenantUser();
+  if (!can(accessPrincipal, 'payroll.view')) redirect('/workspace');
+  const canManage = can(accessPrincipal, 'payroll.manage');
   const t = await getTranslations('payroll');
   const tl = await getTranslations('payroll.loans');
   const format = await getFormatter();

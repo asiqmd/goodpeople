@@ -40,6 +40,7 @@ export const entityPolicyOverrides = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     tenantId: tenantId(),
+    currency: text('currency').notNull().default('BDT'),
     legalEntityId: uuid('legal_entity_id').notNull(),
     area: text('area').$type<PolicyArea>().notNull(),
     /** The leave type for `leave_type`; null for the other areas. */

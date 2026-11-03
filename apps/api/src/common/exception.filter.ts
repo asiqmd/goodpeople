@@ -35,6 +35,14 @@ const isHttpError = (error: unknown): error is HttpError =>
  * paths) reaches the caller.
  */
 function errorResponse(exception: unknown, requestId: string): ErrorBody {
+  if (exception instanceof Error && exception.message === 'explicit_time_zone_required')
+    return {
+      statusCode: 409,
+      error: 'Conflict',
+      message: 'Choose an explicit company or site time zone for this operation.',
+      code: 'explicit_time_zone_required',
+      requestId,
+    };
   let status = 500;
   let code = 'internal_error';
   if (exception instanceof HttpException) {
@@ -66,6 +74,34 @@ function errorResponse(exception: unknown, requestId: string): ErrorBody {
       };
     }
   }
+  if (
+    exception instanceof Error &&
+    /^(saudi_|uae_|country_|cohort_|reviewed_hijri_|explicit_time_zone_required|ambiguous_local_time|nonexistent_local_time)/.test(
+      exception.message,
+    )
+  )
+    return {
+      statusCode: 409,
+      error: 'Conflict',
+      message: 'Choose a supported company, date, calendar and currency context.',
+      code: exception.message,
+      requestId,
+    };
+  const cause = (exception as { cause?: { code?: string; message?: string } })?.cause;
+  if (
+    cause?.code === 'P0001' &&
+    /saudi_|uae_|country_|currency_|statutory_|legal_profile|profile_|cross_country|cross_employer|calendar_|context_|pay_structure|run_group|employment_profile|bank_|cohort_|overlapping_|unsupported_calendar|new_jurisdiction/.test(
+      cause.message ?? '',
+    )
+  )
+    return {
+      statusCode: 409,
+      error: 'Conflict',
+      message:
+        'Explicit supported country, calendar and currency context is required; review the company profile.',
+      code: 'international_context_blocked',
+      requestId,
+    };
   return {
     statusCode: status,
     error: STATUS_CODES[status] ?? 'Internal Server Error',
@@ -106,6 +142,35 @@ export class ApiExceptionFilter implements ExceptionFilter {
       res.end();
       return;
     }
-    res.status(status).type('application/json').json(body);
+    if (/^\/scim\/v2(?:\/|$)/.test(req.path)) {
+      res
+        .status(status)
+        .type('application/scim+json')
+        .json({
+          schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+          status: String(status),
+          detail:
+            status >= 500
+              ? 'Provisioning is temporarily unavailable'
+              : 'Invalid provisioning request',
+        });
+    } else if (/^\/public\/v1(?:\/|$)/.test(req.path) || req.path === '/oauth/token') {
+      const code =
+        status === 404
+          ? 'not_found'
+          : status >= 500
+            ? 'temporarily_unavailable'
+            : 'invalid_request';
+      const message =
+        status >= 500 ? 'Temporarily unavailable' : (STATUS_CODES[status] ?? 'Request refused');
+      res
+        .status(status)
+        .type('application/json')
+        .json(
+          req.path === '/oauth/token'
+            ? { error: code, error_description: message, request_id: requestId }
+            : { error: { code, message, request_id: requestId } },
+        );
+    } else res.status(status).type('application/json').json(body);
   }
 }

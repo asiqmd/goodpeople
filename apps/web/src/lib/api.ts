@@ -12,7 +12,7 @@ export type ApiResult<T> = { ok: true; data: T } | { ok: false; status: number; 
 /** Server-side call to the API. Never cached: every page here is per user. */
 export async function apiFetch<T>(
   path: string,
-  init: { method?: string; body?: unknown; token?: string } = {},
+  init: { method?: string; body?: unknown; token?: string; signal?: AbortSignal } = {},
 ): Promise<ApiResult<T>> {
   const res = await fetch(`${API_URL}${path}`, {
     method: init.method ?? 'GET',
@@ -23,6 +23,7 @@ export async function apiFetch<T>(
     },
     body: init.body === undefined ? undefined : JSON.stringify(init.body),
     cache: 'no-store',
+    signal: init.signal,
   });
   return toResult<T>(res);
 }
@@ -81,7 +82,7 @@ const LOGIN = { platform: '/platform/login', tenant: '/login' } as const;
 export async function authedFetch<T>(
   kind: SessionKind,
   path: string,
-  init: { method?: string; body?: unknown } = {},
+  init: { method?: string; body?: unknown; signal?: AbortSignal } = {},
 ): Promise<ApiResult<T>> {
   const token = (await cookies()).get(cookieNames(kind).access)?.value;
   if (!token) redirect(`${LOGIN[kind]}?expired=1`);
@@ -107,16 +108,20 @@ export async function load<T>(kind: SessionKind, path: string): Promise<T> {
  * The signed-in workspace user, read from their access token. For choosing what to show only:
  * the API checks the token's signature and the role on every request.
  */
-export async function currentTenantUser(): Promise<{ id: string; role: TenantRole } | null> {
-  const token = (await cookies()).get(cookieNames('tenant').access)?.value;
-  const payload = token?.split('.')[1];
-  if (!payload) return null;
-  try {
-    const claims = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
-    return { id: claims.sub, role: claims.role };
-  } catch {
-    return null;
-  }
+export async function currentTenantUser(): Promise<{
+  id: string;
+  role: TenantRole;
+  permissions: import('@gp/shared').Permission[];
+  fieldPolicy?: import('@gp/shared').FieldPolicy;
+} | null> {
+  const result = await authedFetch<import('@gp/shared').AccountView>('tenant', '/account');
+  if (!result.ok || result.data.kind !== 'tenant') return null;
+  return {
+    id: result.data.id,
+    role: result.data.role as TenantRole,
+    permissions: result.data.permissions,
+    fieldPolicy: result.data.fieldPolicy,
+  };
 }
 
 /** Sends a form with files (multipart) as the signed-in user. */

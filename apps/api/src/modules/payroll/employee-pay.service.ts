@@ -184,113 +184,120 @@ export class EmployeePayService implements ApprovalSubjectHandler<PayRecordView>
     employeeId: string,
     input: PayChangeInput,
   ): Promise<PayRecordView> {
-    const id = await this.tenantDb.run(async (tx) => {
-      // One change at a time per person, decided against the latest approved pay.
-      const [employee] = await tx
-        .select()
-        .from(employees)
-        .where(eq(employees.id, employeeId))
-        .for('update');
-      if (!employee) throw new NotFoundException('Employee not found');
-      if (employee.status !== 'active') {
-        throw badRequest('separated', 'Pay can only change for active employees');
-      }
-      if (input.effectiveFrom < employee.joinedOn) {
-        throw badRequest(
-          'before_joining',
-          `Pay cannot start before joining (${employee.joinedOn})`,
-        );
-      }
-      const structure = await this.structureOf(tx, input.structureId);
-      if (!structure.isActive)
-        throw badRequest('structure_inactive', 'This structure is not in use');
-      const [group] = await tx.select().from(payGroups).where(eq(payGroups.id, input.payGroupId));
-      if (!group?.isActive) throw badRequest('pay_group_inactive', 'Choose an active pay group');
-
-      const existing = await tx
-        .select({ status: employeePay.status, effectiveFrom: employeePay.effectiveFrom })
-        .from(employeePay)
-        .where(
-          and(
-            eq(employeePay.employeeId, employeeId),
-            inArray(employeePay.status, ['approved', 'pending']),
-          ),
-        );
-      if (existing.some((r) => r.status === 'pending')) {
-        throw conflict(
-          'pay_change_pending',
-          'A pay change for this person is already waiting for approval',
-        );
-      }
-      const latest = existing
-        .map((r) => r.effectiveFrom)
-        .toSorted()
-        .at(-1);
-      if (latest && input.effectiveFrom < latest) {
-        throw badRequest(
-          'pay_backdated',
-          `Pay is approved from ${latest}; a change must start on that date or later (arrears come with payroll runs)`,
-        );
-      }
-
-      const components = await componentsOf(tx);
-      const result = workOutPay(structure, components, input.amount, input.fixed);
-      if (result.problems.length) throw payProblems(result.problems);
-      this.checkMinimumWage(structure, input.wageGrade ?? null, input.effectiveFrom, result);
-
-      const settings = await payrollSettingsOf(tx);
-      const [row] = await tx
-        .insert(employeePay)
-        .values({
-          tenantId: currentTenantId(),
-          employeeId,
-          effectiveFrom: input.effectiveFrom,
-          status: 'pending',
-          structureId: structure.id,
-          payGroupId: group.id,
-          amountsEnc: this.encrypt({ amount: input.amount, fixed: input.fixed }),
-          wageGrade: input.wageGrade ?? null,
-          reason: input.reason,
-          requestedBy: actor.id,
-        })
-        .returning();
-      await this.audit.record(tx, {
-        actorUserId: actor.id,
-        action: 'payroll.pay.propose',
-        entityType: 'compensation',
-        entityId: row!.id,
-        // Which pay, not how much: amounts stay encrypted.
-        after: {
-          employeeId,
-          effectiveFrom: input.effectiveFrom,
-          structure: structure.code,
-          payGroup: group.code,
-          wageGrade: input.wageGrade ?? null,
-          fixedComponents: Object.keys(input.fixed),
-        },
-      });
-      if (settings.makerChecker) {
-        await tx.insert(approvalSteps).values({
-          tenantId: currentTenantId(),
-          subjectType: 'compensation',
-          subjectId: row!.id,
-          stepNo: 1,
-          kind: 'payroll',
-          status: 'pending',
-        });
-        await noticeRequested(
-          tx,
-          this.notifications,
-          { type: 'compensation', id: row!.id },
-          await this.summarize(tx, row!.id),
-        );
-      } else {
-        // One-person payroll: the change stands as made, and the audit log shows who made it.
-        await this.finalize(tx, row!.id, 'approved', actor.id);
-      }
-      return row!.id;
-    });
+    const id = await this.tenantDb.run((tx) =>
+      this.proposeInTransaction(tx, actor, employeeId, input),
+    );
     return this.view(id);
+  }
+
+  /** Shared by compensation rounds: all proposals commit together, using the same checks. */
+  async proposeInTransaction(
+    tx: Tx,
+    actor: AuthUser,
+    employeeId: string,
+    input: PayChangeInput,
+    forceMakerChecker = false,
+  ): Promise<string> {
+    // One change at a time per person, decided against the latest approved pay.
+    const [employee] = await tx
+      .select()
+      .from(employees)
+      .where(eq(employees.id, employeeId))
+      .for('update');
+    if (!employee) throw new NotFoundException('Employee not found');
+    if (employee.status !== 'active') {
+      throw badRequest('separated', 'Pay can only change for active employees');
+    }
+    if (input.effectiveFrom < employee.joinedOn) {
+      throw badRequest('before_joining', `Pay cannot start before joining (${employee.joinedOn})`);
+    }
+    const structure = await this.structureOf(tx, input.structureId);
+    if (!structure.isActive) throw badRequest('structure_inactive', 'This structure is not in use');
+    const [group] = await tx.select().from(payGroups).where(eq(payGroups.id, input.payGroupId));
+    if (!group?.isActive) throw badRequest('pay_group_inactive', 'Choose an active pay group');
+
+    const existing = await tx
+      .select({ status: employeePay.status, effectiveFrom: employeePay.effectiveFrom })
+      .from(employeePay)
+      .where(
+        and(
+          eq(employeePay.employeeId, employeeId),
+          inArray(employeePay.status, ['approved', 'pending']),
+        ),
+      );
+    if (existing.some((r) => r.status === 'pending')) {
+      throw conflict(
+        'pay_change_pending',
+        'A pay change for this person is already waiting for approval',
+      );
+    }
+    const latest = existing
+      .map((r) => r.effectiveFrom)
+      .toSorted()
+      .at(-1);
+    if (latest && input.effectiveFrom < latest) {
+      throw badRequest(
+        'pay_backdated',
+        `Pay is approved from ${latest}; a change must start on that date or later (arrears come with payroll runs)`,
+      );
+    }
+
+    const components = await componentsOf(tx);
+    const result = workOutPay(structure, components, input.amount, input.fixed);
+    if (result.problems.length) throw payProblems(result.problems);
+    this.checkMinimumWage(structure, input.wageGrade ?? null, input.effectiveFrom, result);
+
+    const settings = await payrollSettingsOf(tx);
+    const [row] = await tx
+      .insert(employeePay)
+      .values({
+        tenantId: currentTenantId(),
+        employeeId,
+        effectiveFrom: input.effectiveFrom,
+        status: 'pending',
+        structureId: structure.id,
+        payGroupId: group.id,
+        amountsEnc: this.encrypt({ amount: input.amount, fixed: input.fixed }),
+        wageGrade: input.wageGrade ?? null,
+        reason: input.reason,
+        requestedBy: actor.id,
+      })
+      .returning();
+    await this.audit.record(tx, {
+      actorUserId: actor.id,
+      action: 'payroll.pay.propose',
+      entityType: 'compensation',
+      entityId: row!.id,
+      // Which pay, not how much: amounts stay encrypted.
+      after: {
+        employeeId,
+        effectiveFrom: input.effectiveFrom,
+        structure: structure.code,
+        payGroup: group.code,
+        wageGrade: input.wageGrade ?? null,
+        fixedComponents: Object.keys(input.fixed),
+      },
+    });
+    if (forceMakerChecker || settings.makerChecker) {
+      await tx.insert(approvalSteps).values({
+        tenantId: currentTenantId(),
+        subjectType: 'compensation',
+        subjectId: row!.id,
+        stepNo: 1,
+        kind: 'payroll',
+        status: 'pending',
+      });
+      await noticeRequested(
+        tx,
+        this.notifications,
+        { type: 'compensation', id: row!.id },
+        await this.summarize(tx, row!.id),
+      );
+    } else {
+      // One-person payroll: the change stands as made, and the audit log shows who made it.
+      await this.finalize(tx, row!.id, 'approved', actor.id);
+    }
+    return row!.id;
   }
 
   /** Withdraws a change still waiting for approval. */

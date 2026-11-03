@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:math';
+import 'package:crypto/crypto.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -118,10 +121,33 @@ class AuthController extends Notifier<AuthState> {
   static String _slug(String workspace) => workspace.trim().toLowerCase();
 
   Future<void> _start(LoginResponse session) async {
+    cancelSso();
     await _tokens.write(session.tokens);
     _deviceToken = null;
     state = SignedIn(user: session.user, tenant: session.tenant);
   }
+
+  SsoStart? _ssoFlow;
+  String? _ssoVerifier;
+  Future<SsoStart> startSso(String workspace) async {
+    final random=Random.secure();
+    final verifier=base64UrlEncode(List<int>.generate(32,(_)=>random.nextInt(256))).replaceAll('=','');
+    final binding=base64UrlEncode(sha256.convert(utf8.encode(verifier)).bytes).replaceAll('=','');
+    final flow=await _api.startSso(tenant:_slug(workspace),binding:binding);
+    _ssoFlow=flow;_ssoVerifier=verifier;return flow;
+  }
+  Future<({bool pending,TwoStepChallenge? challenge})> finishSso() async {
+    final flow=_ssoFlow,verifier=_ssoVerifier;
+    if(flow==null||verifier==null)throw const FormatException('Start sign-in again');
+    final outcome=await _api.exchangeSso(flowId:flow.flowId,verifier:verifier);
+    if(outcome==null)return (pending:true,challenge:null);
+    cancelSso();
+    switch(outcome){
+      case LoginResponse():await _start(outcome);return (pending:false,challenge:null);
+      case TwoStepChallenge():return (pending:false,challenge:outcome);
+    }
+  }
+  void cancelSso(){_ssoFlow=null;_ssoVerifier=null;}
 
   Future<void> signOut({bool sessionExpired = false}) async {
     final tokens = await _tokens.read();
@@ -417,6 +443,73 @@ class AuthController extends Notifier<AuthState> {
 
   // ── Performance ───────────────────────────────────────────────────────────
   // Same refresh-once rule.
+
+  Future<EngagementOverview> fetchEngagement() =>
+      _withSession((token) => _api.fetchEngagement(token));
+  Future<EmployeeServicesOverview> fetchEmployeeServices() =>
+      _withSession((token) => _api.fetchEmployeeServices(token));
+  Future<HrServiceRequest> fetchHrRequest(String id) =>
+      _withSession((token) => _api.fetchHrRequest(token, id));
+  Future<void> respondToSurvey(
+    String id, {
+    required int enps,
+    required List<int> scores,
+  }) => _withSession(
+    (token) => _api.respondToSurvey(token, id, enps: enps, scores: scores),
+  );
+  Future<void> acknowledgeAnnouncement(String id) =>
+      _withSession((token) => _api.acknowledgeAnnouncement(token, id));
+  Future<void> recognizeColleague({
+    required String employeeCode,
+    required String value,
+    required String message,
+  }) => _withSession(
+    (token) => _api.recognizeColleague(
+      token,
+      employeeCode: employeeCode,
+      value: value,
+      message: message,
+    ),
+  );
+  Future<void> withdrawRecognition(String id, String reason) =>
+      _withSession((token) => _api.withdrawRecognition(token, id, reason));
+  Future<HrServiceRequest> createHrRequest({
+    required String subject,
+    required String body,
+    required String category,
+    required String priority,
+  }) => _withSession(
+    (token) => _api.createHrRequest(
+      token,
+      subject: subject,
+      body: body,
+      category: category,
+      priority: priority,
+    ),
+  );
+  Future<HrServiceRequest> replyToHrRequest(String id, String body) =>
+      _withSession((token) => _api.replyToHrRequest(token, id, body));
+  Future<HrServiceRequest> moveHrRequest(
+    String id, {
+    required String status,
+    required String reason,
+  }) => _withSession(
+    (token) => _api.moveHrRequest(token, id, status: status, reason: reason),
+  );
+  Future<void> acknowledgeAsset(String id) =>
+      _withSession((token) => _api.acknowledgeAsset(token, id));
+
+  Future<LearningMe> fetchLearningMe() => _withSession(_api.fetchLearningMe);
+  Future<void> moveLearningEnrolment(String id, {required bool enrol}) =>
+      _withSession(
+        (token) => _api.moveLearningEnrolment(token, id, enrol: enrol),
+      );
+  Future<FileDownload> downloadLearningCertificate(
+    String id, {
+    required LetterLanguage language,
+  }) => _withSession(
+    (token) => _api.downloadLearningCertificate(token, id, language: language),
+  );
 
   Future<PerformanceMe> fetchPerformanceMe() =>
       _withSession(_api.fetchPerformanceMe);

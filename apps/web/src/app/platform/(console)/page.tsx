@@ -21,7 +21,7 @@ export default async function TenantsPage() {
     <Card title={t('tenants')} action={<AssignCompanyDialog plans={plans} />}>
       <div className="-mx-5 overflow-x-auto">
         <table className="min-w-full text-sm">
-          <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+          <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
             <tr>
               <th className="px-5 py-2 font-medium">{t('company')}</th>
               <th className="px-5 py-2 font-medium">{t('billingMode')}</th>

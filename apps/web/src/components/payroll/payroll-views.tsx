@@ -60,15 +60,15 @@ export async function PayBreakdown({ lines, gross }: { lines: PayLineView[]; gro
             <td className="py-1.5 text-slate-700">
               {name(l)} <span className="font-mono text-xs text-slate-400">{l.code}</span>
               {!l.inGross && (
-                <span className="ml-1 text-xs text-slate-400">({t('pay.notInGross')})</span>
+                <span className="ms-1 text-xs text-slate-400">({t('pay.notInGross')})</span>
               )}
             </td>
-            <td className="py-1.5 text-right tabular-nums">{taka(format, l.amount)}</td>
+            <td className="py-1.5 text-end tabular-nums">{taka(format, l.amount)}</td>
           </tr>
         ))}
         <tr className="font-semibold">
           <td className="py-2">{t('pay.gross')}</td>
-          <td className="py-2 text-right tabular-nums">{taka(format, gross)}</td>
+          <td className="py-2 text-end tabular-nums">{taka(format, gross)}</td>
         </tr>
       </tbody>
     </table>
@@ -132,29 +132,29 @@ export async function CompensationItem({ item }: { item: CompensationApprovalIte
         </p>
       </div>
       <table className="w-full max-w-md text-sm">
-        <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+        <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
           <tr>
             <th className="py-1 font-medium" />
-            <th className="py-1 text-right font-medium">{t('pay.now')}</th>
-            <th className="py-1 text-right font-medium">{t('pay.proposed')}</th>
+            <th className="py-1 text-end font-medium">{t('pay.now')}</th>
+            <th className="py-1 text-end font-medium">{t('pay.proposed')}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
           {change.lines.map((l) => (
             <tr key={l.code}>
               <td className="py-1 text-slate-700">{l.name}</td>
-              <td className="py-1 text-right tabular-nums text-slate-500">
+              <td className="py-1 text-end tabular-nums text-slate-500">
                 {before.has(l.code) ? taka(format, before.get(l.code)!) : '—'}
               </td>
-              <td className="py-1 text-right tabular-nums">{taka(format, l.amount)}</td>
+              <td className="py-1 text-end tabular-nums">{taka(format, l.amount)}</td>
             </tr>
           ))}
           <tr className="font-semibold">
             <td className="py-1.5">{t('pay.gross')}</td>
-            <td className="py-1.5 text-right tabular-nums text-slate-500">
+            <td className="py-1.5 text-end tabular-nums text-slate-500">
               {previous ? taka(format, previous.gross) : '—'}
             </td>
-            <td className="py-1.5 text-right tabular-nums">{taka(format, change.gross)}</td>
+            <td className="py-1.5 text-end tabular-nums">{taka(format, change.gross)}</td>
           </tr>
         </tbody>
       </table>
@@ -266,11 +266,11 @@ export async function RunTotalsTable({
   return (
     <table className="w-full max-w-md self-start text-sm">
       {previous && (
-        <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+        <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
           <tr>
             <th className="py-1 font-medium" />
-            <th className="py-1 text-right font-medium">{t('lastMonth')}</th>
-            <th className="py-1 text-right font-medium">{t('thisRun')}</th>
+            <th className="py-1 text-end font-medium">{t('lastMonth')}</th>
+            <th className="py-1 text-end font-medium">{t('thisRun')}</th>
           </tr>
         </thead>
       )}
@@ -279,11 +279,11 @@ export async function RunTotalsTable({
           <tr key={key} className={key === 'net' ? 'font-semibold' : undefined}>
             <td className="py-1.5 text-slate-700">{t(`totals.${key}`)}</td>
             {previous && (
-              <td className="py-1.5 text-right tabular-nums text-slate-500">
+              <td className="py-1.5 text-end tabular-nums text-slate-500">
                 {before ? taka(format, before) : '—'}
               </td>
             )}
-            <td className="py-1.5 text-right tabular-nums">{taka(format, now)}</td>
+            <td className="py-1.5 text-end tabular-nums">{taka(format, now)}</td>
           </tr>
         ))}
       </tbody>
@@ -394,13 +394,13 @@ export async function BatchLines({
   return (
     <div className="overflow-x-auto">
       <table className={`w-full text-sm ${compact ? '' : 'min-w-[32rem]'}`}>
-        <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+        <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
           <tr>
             <th className="py-1 font-medium">{t('person')}</th>
-            {!compact && <th className="py-1 text-right font-medium">{t('basicBefore')}</th>}
-            {!compact && <th className="py-1 text-right font-medium">{t('basicAfter')}</th>}
-            <th className="py-1 text-right font-medium">{t('grossBefore')}</th>
-            <th className="py-1 text-right font-medium">{t('grossAfter')}</th>
+            {!compact && <th className="py-1 text-end font-medium">{t('basicBefore')}</th>}
+            {!compact && <th className="py-1 text-end font-medium">{t('basicAfter')}</th>}
+            <th className="py-1 text-end font-medium">{t('grossBefore')}</th>
+            <th className="py-1 text-end font-medium">{t('grossAfter')}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
@@ -411,27 +411,27 @@ export async function BatchLines({
                 <span className="font-mono text-xs text-slate-400">{l.employee.employeeCode}</span>
               </td>
               {!compact && (
-                <td className="py-1 text-right tabular-nums text-slate-500">
+                <td className="py-1 text-end tabular-nums text-slate-500">
                   {taka(format, l.basicBefore)}
                 </td>
               )}
               {!compact && (
-                <td className="py-1 text-right tabular-nums">{taka(format, l.basicAfter)}</td>
+                <td className="py-1 text-end tabular-nums">{taka(format, l.basicAfter)}</td>
               )}
-              <td className="py-1 text-right tabular-nums text-slate-500">
+              <td className="py-1 text-end tabular-nums text-slate-500">
                 {taka(format, l.grossBefore)}
               </td>
-              <td className="py-1 text-right tabular-nums">{taka(format, l.grossAfter)}</td>
+              <td className="py-1 text-end tabular-nums">{taka(format, l.grossAfter)}</td>
             </tr>
           ))}
           <tr className="font-semibold">
             <td className="py-1.5">{t('everyone')}</td>
             {!compact && <td />}
             {!compact && <td />}
-            <td className="py-1.5 text-right tabular-nums text-slate-500">
+            <td className="py-1.5 text-end tabular-nums text-slate-500">
               {taka(format, preview.grossBefore)}
             </td>
-            <td className="py-1.5 text-right tabular-nums">{taka(format, preview.grossAfter)}</td>
+            <td className="py-1.5 text-end tabular-nums">{taka(format, preview.grossAfter)}</td>
           </tr>
         </tbody>
       </table>
@@ -495,7 +495,7 @@ export async function FundStatement({ statement }: { statement: PfStatement }) {
                     <td className="px-5 py-2">{t(`kinds.${e.kind}`)}</td>
                     <td className="px-5 py-2 text-slate-600">{t(`accounts.${e.account}`)}</td>
                     <td
-                      className={`px-5 py-2 text-right tabular-nums ${Number(e.amount) < 0 ? 'text-red-700' : ''}`}
+                      className={`px-5 py-2 text-end tabular-nums ${Number(e.amount) < 0 ? 'text-red-700' : ''}`}
                     >
                       {taka(format, e.amount)}
                     </td>
@@ -533,14 +533,14 @@ export async function TaxWorking({ working }: { working: RunTaxWorking }) {
           {rows.map(([key, value]) => (
             <tr key={key} className={key === 'tax' ? 'font-semibold' : undefined}>
               <td className="py-1 text-slate-600">{t(key)}</td>
-              <td className="py-1 text-right tabular-nums">{value}</td>
+              <td className="py-1 text-end tabular-nums">{value}</td>
             </tr>
           ))}
           <tr className="font-semibold">
             <td className="py-1.5">
               {t('thisMonth', { months: format.number(working.monthsLeft) })}
             </td>
-            <td className="py-1.5 text-right tabular-nums">{taka(format, working.thisMonth)}</td>
+            <td className="py-1.5 text-end tabular-nums">{taka(format, working.thisMonth)}</td>
           </tr>
         </tbody>
       </table>
@@ -589,22 +589,20 @@ export async function TaxYear({ year, certificate }: { year: TaxYearView; certif
       )}
       {(year.months.length > 0 || year.opening) && (
         <table className="w-full max-w-xl text-sm">
-          <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+          <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
             <tr>
               <th className="py-1 font-medium">{tr('period')}</th>
-              <th className="py-1 text-right font-medium">{t('salary')}</th>
-              <th className="py-1 text-right font-medium">{t('taxColumn')}</th>
-              <th className="py-1 pl-4 font-medium">{t('challan')}</th>
+              <th className="py-1 text-end font-medium">{t('salary')}</th>
+              <th className="py-1 text-end font-medium">{t('taxColumn')}</th>
+              <th className="py-1 ps-4 font-medium">{t('challan')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {year.opening && (
               <tr>
                 <td className="py-1 text-slate-600">{t('openingRow')}</td>
-                <td className="py-1 text-right tabular-nums">
-                  {taka(format, year.opening.salary)}
-                </td>
-                <td className="py-1 text-right tabular-nums">{taka(format, year.opening.tax)}</td>
+                <td className="py-1 text-end tabular-nums">{taka(format, year.opening.salary)}</td>
+                <td className="py-1 text-end tabular-nums">{taka(format, year.opening.tax)}</td>
                 <td />
               </tr>
             )}
@@ -613,12 +611,12 @@ export async function TaxYear({ year, certificate }: { year: TaxYearView; certif
                 <td className="py-1">
                   {runPeriod(format, m.month, m.periodEnd)}
                   {m.kind !== 'regular' && (
-                    <span className="ml-1 text-xs text-slate-500">({tr(`kinds.${m.kind}`)})</span>
+                    <span className="ms-1 text-xs text-slate-500">({tr(`kinds.${m.kind}`)})</span>
                   )}
                 </td>
-                <td className="py-1 text-right tabular-nums">{taka(format, m.salary)}</td>
-                <td className="py-1 text-right tabular-nums">{taka(format, m.tax)}</td>
-                <td className="py-1 pl-4 text-slate-500">{m.challanNo ?? '—'}</td>
+                <td className="py-1 text-end tabular-nums">{taka(format, m.salary)}</td>
+                <td className="py-1 text-end tabular-nums">{taka(format, m.tax)}</td>
+                <td className="py-1 ps-4 text-slate-500">{m.challanNo ?? '—'}</td>
               </tr>
             ))}
           </tbody>
@@ -701,7 +699,7 @@ export async function SettlementBox({ working }: { working: SettlementWorking })
           {rows.map(([k, v]) => (
             <tr key={k}>
               <td className="py-1 text-slate-600">{k}</td>
-              <td className="py-1 text-right tabular-nums">{v}</td>
+              <td className="py-1 text-end tabular-nums">{v}</td>
             </tr>
           ))}
         </tbody>

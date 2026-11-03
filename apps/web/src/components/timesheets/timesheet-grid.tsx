@@ -120,12 +120,12 @@ export function TimesheetGrid({ view }: { view: TimesheetView }) {
       )}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="text-left text-xs text-slate-500">
+          <thead className="text-start text-xs text-slate-500">
             <tr>
-              <th className="py-2 pr-3 font-medium">{t('day')}</th>
-              <th className="py-2 pr-3 text-right font-medium">{t('attendance')}</th>
+              <th className="py-2 pe-3 font-medium">{t('day')}</th>
+              <th className="py-2 pe-3 text-end font-medium">{t('attendance')}</th>
               {columns.map((p) => (
-                <th key={p?.id ?? 'none'} className="min-w-24 py-2 pr-2 align-bottom font-medium">
+                <th key={p?.id ?? 'none'} className="min-w-24 py-2 pe-2 align-bottom font-medium">
                   {p ? (
                     <>
                       <span className="block font-mono text-slate-700">{p.code}</span>
@@ -143,7 +143,7 @@ export function TimesheetGrid({ view }: { view: TimesheetView }) {
                   )}
                 </th>
               ))}
-              <th className="py-2 text-right font-medium">{t('dayTotal')}</th>
+              <th className="py-2 text-end font-medium">{t('dayTotal')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -152,7 +152,7 @@ export function TimesheetGrid({ view }: { view: TimesheetView }) {
               const dayTotal = sumOf(names);
               return (
                 <tr key={d.date} className={d.offDay || d.leave ? 'bg-slate-50' : undefined}>
-                  <td className="py-1 pr-3 whitespace-nowrap">
+                  <td className="py-1 pe-3 whitespace-nowrap">
                     <span className="font-medium">
                       {format.dateTime(new Date(`${d.date}T00:00:00Z`), {
                         day: 'numeric',
@@ -175,11 +175,11 @@ export function TimesheetGrid({ view }: { view: TimesheetView }) {
                       </Badge>
                     )}
                   </td>
-                  <td className="py-1 pr-3 text-right tabular-nums text-slate-400">
+                  <td className="py-1 pe-3 text-end tabular-nums text-slate-400">
                     {d.workedHours ? hours(format, d.workedHours) : ''}
                   </td>
                   {names.map((name, column) => (
-                    <td key={name} className="py-1 pr-2">
+                    <td key={name} className="py-1 pe-2">
                       <input
                         ref={(el) => {
                           if (el) inputs.current.set(`${row}:${column}`, el);
@@ -202,14 +202,14 @@ export function TimesheetGrid({ view }: { view: TimesheetView }) {
                           }),
                           project: projectName(columns[column]?.id ?? null),
                         })}
-                        className={`${inputClass} w-20 text-right tabular-nums ${
+                        className={`${inputClass} w-20 text-end tabular-nums ${
                           isChanged(name) ? 'bg-amber-50' : ''
                         }`}
                       />
                     </td>
                   ))}
                   <td
-                    className={`py-1 text-right tabular-nums ${dayTotal > 24 ? 'font-semibold text-red-700' : ''}`}
+                    className={`py-1 text-end tabular-nums ${dayTotal > 24 ? 'font-semibold text-red-700' : ''}`}
                   >
                     {dayTotal ? hours(format, dayTotal) : ''}
                   </td>
@@ -219,10 +219,10 @@ export function TimesheetGrid({ view }: { view: TimesheetView }) {
           </tbody>
           <tfoot className="border-t border-slate-200 text-sm font-semibold">
             <tr>
-              <td className="py-2 pr-3">{t('total')}</td>
+              <td className="py-2 pe-3">{t('total')}</td>
               <td />
               {columnTotals.map((h, i) => (
-                <td key={columns[i]?.id ?? 'none'} className="py-2 pr-2 text-right tabular-nums">
+                <td key={columns[i]?.id ?? 'none'} className="py-2 pe-2 text-end tabular-nums">
                   {hours(format, h)}
                   <span className="block text-xs font-normal text-slate-500">
                     {format.number(total ? h / total : 0, {
@@ -232,7 +232,7 @@ export function TimesheetGrid({ view }: { view: TimesheetView }) {
                   </span>
                 </td>
               ))}
-              <td className="py-2 text-right tabular-nums">{hours(format, total)}</td>
+              <td className="py-2 text-end tabular-nums">{hours(format, total)}</td>
             </tr>
           </tfoot>
         </table>

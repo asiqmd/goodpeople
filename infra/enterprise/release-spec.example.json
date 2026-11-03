@@ -1,0 +1,20 @@
+{
+  "version": "5.3.0",
+  "platform": "linux/amd64",
+  "upgradeFrom": ["5.2.0"],
+  "nodeRuntimeArchive": "/supplier/verified/node-v24.15.0-linux-x64.tar.xz",
+  "images": {
+    "api": "good-people-api:5.3.0",
+    "web": "good-people-web:5.3.0",
+    "postgres": "docker.io/library/postgres:17-bookworm@sha256:839fbb5a4942a7758dd93e18b42ea5649807491a0545b5eeeb8f0b8bb11857a5",
+    "redis": "docker.io/library/redis:7.4-bookworm@sha256:b6b6e3dc0c0952737748e55d5d885272840c7e42ba41ab1d5489f693419882f5",
+    "caddy": "docker.io/library/caddy:2-alpine@sha256:e70b164da81ef698b3ad19af799ea6086ce6d9e48ed4079eb9fe26f6fbf14ee5"
+  },
+  "source": {
+    "commit": "REPLACE_WITH_source_COMMAND_OUTPUT",
+    "treeSha256": "REPLACE_WITH_source_COMMAND_OUTPUT",
+    "dirty": true
+  },
+  "nodeRuntimeVersion": "24.15.0",
+  "nodeRuntimeSha256": "REPLACE_WITH_INDEPENDENTLY_VERIFIED_OFFICIAL_SHA256"
+}

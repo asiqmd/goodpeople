@@ -13,7 +13,19 @@ export interface TemplateText {
  * The built-in wording, which a workspace may replace per event and language. Placeholders
  * are filled from what happened; one without a value becomes empty.
  */
-export const DEFAULT_TEMPLATES: Record<NotificationEvent, Record<UserLanguage, TemplateText>> = {
+const BASE_TEMPLATES: Record<NotificationEvent, { en: TemplateText; bn: TemplateText }> = {
+  'identity.emergency_used': {
+    en: {
+      title: 'Emergency administrator signed in',
+      body: '{{person.name}} used emergency local access. Review the identity access audit.',
+      sms: 'Good People: emergency local administrator signed in. Review the access audit.',
+    },
+    bn: {
+      title: 'জরুরি প্রশাসক লগইন করেছেন',
+      body: '{{person.name}} জরুরি স্থানীয় প্রবেশাধিকার ব্যবহার করেছেন। পরিচয় ও প্রবেশাধিকারের নিরীক্ষা দেখুন।',
+      sms: 'গুড পিপল: জরুরি প্রশাসক লগইন করেছেন। প্রবেশাধিকারের নিরীক্ষা দেখুন।',
+    },
+  },
   'approval.requested': {
     en: {
       title: '{{person.name}} is waiting for your decision',
@@ -268,6 +280,42 @@ export const DEFAULT_TEMPLATES: Record<NotificationEvent, Record<UserLanguage, T
       sms: 'Good People: {{cycle.name}}-এর আপনার মূল্যায়ন পড়ার জন্য প্রস্তুত।',
     },
   },
+  'learning.notice': {
+    en: {
+      title: '{{learning.title}}',
+      body: '{{learning.detail}}',
+      sms: 'Good People: {{learning.title}}',
+    },
+    bn: {
+      title: '{{learning.title}}',
+      body: '{{learning.detail}}',
+      sms: 'Good People: {{learning.title}}',
+    },
+  },
+  'engagement.notice': {
+    en: {
+      title: '{{service.title}}',
+      body: '{{service.detail}}',
+      sms: 'Good People: {{service.title}}',
+    },
+    bn: {
+      title: '{{service.title}}',
+      body: '{{service.detail}}',
+      sms: 'Good People: {{service.title}}',
+    },
+  },
+  'services.notice': {
+    en: {
+      title: '{{service.title}}',
+      body: '{{service.detail}}',
+      sms: 'Good People: {{service.title}}',
+    },
+    bn: {
+      title: '{{service.title}}',
+      body: '{{service.detail}}',
+      sms: 'Good People: {{service.title}}',
+    },
+  },
   'auth.otp': {
     en: {
       title: 'Your sign-in code',
@@ -283,7 +331,22 @@ export const DEFAULT_TEMPLATES: Record<NotificationEvent, Record<UserLanguage, T
 };
 
 /** The placeholders each event fills, listed for HR in the template editor. */
+export const DEFAULT_TEMPLATES = Object.fromEntries(
+  Object.entries(BASE_TEMPLATES).map(([event, text]) => [
+    event,
+    {
+      ...text,
+      ar: {
+        title: 'إشعار من Good People',
+        body: 'المحتوى غير المراجع بالإنجليزية: ' + text.en.body,
+        sms: text.en.sms,
+      },
+    },
+  ]),
+) as Record<NotificationEvent, Record<UserLanguage, TemplateText>>;
+
 export const TEMPLATE_PLACEHOLDERS: Record<NotificationEvent, string[]> = {
+  'identity.emergency_used': ['person.name'],
   'approval.requested': ['person.name', 'request.summary'],
   'approval.decided': ['request.summary', 'decision.outcome', 'decision.by', 'decision.note'],
   'document.expiring': ['person.name', 'document.title', 'document.when', 'document.expiresOn'],
@@ -311,5 +374,8 @@ export const TEMPLATE_PLACEHOLDERS: Record<NotificationEvent, string[]> = {
   'recruitment.offer': ['candidate.name', 'opening.title', 'offer.outcome', 'offer.note'],
   'performance.task': ['task.title', 'task.detail', 'task.due'],
   'performance.released': ['cycle.name'],
+  'learning.notice': ['learning.title', 'learning.detail'],
+  'engagement.notice': ['service.title', 'service.detail'],
+  'services.notice': ['service.title', 'service.detail'],
   'auth.otp': ['otp.code', 'otp.minutes', 'workspace.name'],
 };

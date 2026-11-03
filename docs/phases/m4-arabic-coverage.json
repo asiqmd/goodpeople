@@ -1,0 +1,11 @@
+{
+  "status": "technical_preview",
+  "webStringsTotal": 5998,
+  "webStringsDifferentFromEnglish": 554,
+  "englishFallbackAnnounced": true,
+  "internationalModule": "EN/BN/AR authored; human review pending",
+  "legacyTranslation": "partial; not approved for a complete Arabic rollout",
+  "notifications": "safe English fallback; full Arabic wording review pending",
+  "statutoryArabic": "disabled pending content and legal review",
+  "mobile": "Arabic resources, bundled OFL font, RTL and LTR credential input; partial translation"
+}

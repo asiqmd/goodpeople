@@ -1,0 +1,10 @@
+{
+  "status": "technical_preview",
+  "measuredOn": "2026-11-03",
+  "webStringsTotal": 6421,
+  "webStringsDifferentFromEnglish": 977,
+  "newSaudiStrings": 220,
+  "englishFallbackAnnounced": true,
+  "arabicLegalReviewed": false,
+  "notes": "Saudi forms authored in EN/BN/AR; source references/rule codes and legacy content may remain English. Original Arabic/legal and full translation review remain open."
+}

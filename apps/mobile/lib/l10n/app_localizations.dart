@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 
+import 'app_localizations_ar.dart';
 import 'app_localizations_bn.dart';
 import 'app_localizations_en.dart';
 
@@ -94,6 +95,7 @@ abstract class AppLocalizations {
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
+    Locale('ar'),
     Locale('bn'),
     Locale('en'),
   ];
@@ -4968,6 +4970,1194 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This peer has already been approved or declined.'**
   String get peerErrorDecided;
+
+  /// No description provided for @learningTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Learning'**
+  String get learningTitle;
+
+  /// No description provided for @learningSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your training, required courses and completion records.'**
+  String get learningSubtitle;
+
+  /// No description provided for @learningRequirements.
+  ///
+  /// In en, this message translates to:
+  /// **'My required training'**
+  String get learningRequirements;
+
+  /// No description provided for @learningNoneRequirements.
+  ///
+  /// In en, this message translates to:
+  /// **'No required courses in this view.'**
+  String get learningNoneRequirements;
+
+  /// No description provided for @learningSessions.
+  ///
+  /// In en, this message translates to:
+  /// **'Sessions'**
+  String get learningSessions;
+
+  /// No description provided for @learningNoneSessions.
+  ///
+  /// In en, this message translates to:
+  /// **'No sessions to show.'**
+  String get learningNoneSessions;
+
+  /// No description provided for @learningCertificates.
+  ///
+  /// In en, this message translates to:
+  /// **'Completion records'**
+  String get learningCertificates;
+
+  /// No description provided for @learningNoneCertificates.
+  ///
+  /// In en, this message translates to:
+  /// **'No completion records yet.'**
+  String get learningNoneCertificates;
+
+  /// No description provided for @learningEnrol.
+  ///
+  /// In en, this message translates to:
+  /// **'Enrol me'**
+  String get learningEnrol;
+
+  /// No description provided for @learningWithdraw.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdraw enrolment'**
+  String get learningWithdraw;
+
+  /// No description provided for @learningCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Current'**
+  String get learningCurrent;
+
+  /// No description provided for @learningDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Due'**
+  String get learningDue;
+
+  /// No description provided for @learningOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get learningOverdue;
+
+  /// No description provided for @learningEnrolled.
+  ///
+  /// In en, this message translates to:
+  /// **'Enrolled'**
+  String get learningEnrolled;
+
+  /// No description provided for @learningWithdrawn.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawn'**
+  String get learningWithdrawn;
+
+  /// No description provided for @learningAttended.
+  ///
+  /// In en, this message translates to:
+  /// **'Attended'**
+  String get learningAttended;
+
+  /// No description provided for @learningAbsent.
+  ///
+  /// In en, this message translates to:
+  /// **'Absent'**
+  String get learningAbsent;
+
+  /// No description provided for @learningRevoked.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoked'**
+  String get learningRevoked;
+
+  /// No description provided for @learningNoExpiry.
+  ///
+  /// In en, this message translates to:
+  /// **'No expiry'**
+  String get learningNoExpiry;
+
+  /// No description provided for @learningExpires.
+  ///
+  /// In en, this message translates to:
+  /// **'Valid through'**
+  String get learningExpires;
+
+  /// No description provided for @learningDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Download English PDF'**
+  String get learningDownload;
+
+  /// No description provided for @learningFull.
+  ///
+  /// In en, this message translates to:
+  /// **'This session is full.'**
+  String get learningFull;
+
+  /// No description provided for @learningStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Self enrolment and withdrawal close when the session starts.'**
+  String get learningStarted;
+
+  /// No description provided for @learningFixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed or cancelled sessions no longer accept changes.'**
+  String get learningFixed;
+
+  /// No description provided for @learningManageOnWeb.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage courses, attendance and fire drills on the web.'**
+  String get learningManageOnWeb;
+
+  /// No description provided for @learningLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load training'**
+  String get learningLoadFailed;
+
+  /// No description provided for @learningUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded'**
+  String get learningUnknown;
+
+  /// No description provided for @learningExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get learningExpired;
+
+  /// No description provided for @serviceEngagement.
+  ///
+  /// In en, this message translates to:
+  /// **'Engagement'**
+  String get serviceEngagement;
+
+  /// No description provided for @serviceServices.
+  ///
+  /// In en, this message translates to:
+  /// **'Employee services'**
+  String get serviceServices;
+
+  /// No description provided for @serviceAnnouncements.
+  ///
+  /// In en, this message translates to:
+  /// **'Announcements'**
+  String get serviceAnnouncements;
+
+  /// No description provided for @serviceSurveys.
+  ///
+  /// In en, this message translates to:
+  /// **'Surveys and eNPS'**
+  String get serviceSurveys;
+
+  /// No description provided for @serviceRecognition.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognition'**
+  String get serviceRecognition;
+
+  /// No description provided for @serviceRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'HR requests'**
+  String get serviceRequests;
+
+  /// No description provided for @serviceAssets.
+  ///
+  /// In en, this message translates to:
+  /// **'My issued assets'**
+  String get serviceAssets;
+
+  /// No description provided for @serviceInventory.
+  ///
+  /// In en, this message translates to:
+  /// **'Company inventory'**
+  String get serviceInventory;
+
+  /// No description provided for @serviceIntroEngagement.
+  ///
+  /// In en, this message translates to:
+  /// **'Company news, anonymous surveys and appreciation for colleagues.'**
+  String get serviceIntroEngagement;
+
+  /// No description provided for @serviceIntroServices.
+  ///
+  /// In en, this message translates to:
+  /// **'Private requests to your HR team and your issued assets.'**
+  String get serviceIntroServices;
+
+  /// No description provided for @serviceNoEmployee.
+  ///
+  /// In en, this message translates to:
+  /// **'An active employee record is needed to submit or acknowledge. HR tools are available below.'**
+  String get serviceNoEmployee;
+
+  /// No description provided for @serviceEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to show yet.'**
+  String get serviceEmpty;
+
+  /// No description provided for @serviceSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved.'**
+  String get serviceSaved;
+
+  /// No description provided for @serviceHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Help'**
+  String get serviceHelp;
+
+  /// No description provided for @serviceHrOnWeb.
+  ///
+  /// In en, this message translates to:
+  /// **'HR authoring and management are available on the web.'**
+  String get serviceHrOnWeb;
+
+  /// No description provided for @serviceNewSurvey.
+  ///
+  /// In en, this message translates to:
+  /// **'Create survey'**
+  String get serviceNewSurvey;
+
+  /// No description provided for @serviceNewAnnouncement.
+  ///
+  /// In en, this message translates to:
+  /// **'Create announcement'**
+  String get serviceNewAnnouncement;
+
+  /// No description provided for @serviceNewRecognition.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognize a colleague'**
+  String get serviceNewRecognition;
+
+  /// No description provided for @serviceNewRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Open HR request'**
+  String get serviceNewRequest;
+
+  /// No description provided for @serviceNewAsset.
+  ///
+  /// In en, this message translates to:
+  /// **'Register asset'**
+  String get serviceNewAsset;
+
+  /// No description provided for @serviceAllRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'HR service queue'**
+  String get serviceAllRequests;
+
+  /// No description provided for @serviceMyRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'My requests'**
+  String get serviceMyRequests;
+
+  /// No description provided for @serviceCompany.
+  ///
+  /// In en, this message translates to:
+  /// **'Company'**
+  String get serviceCompany;
+
+  /// No description provided for @serviceEmployee.
+  ///
+  /// In en, this message translates to:
+  /// **'Employee'**
+  String get serviceEmployee;
+
+  /// No description provided for @serviceEmployeeCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Employee code'**
+  String get serviceEmployeeCode;
+
+  /// No description provided for @serviceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Title (English)'**
+  String get serviceTitle;
+
+  /// No description provided for @serviceTitleBn.
+  ///
+  /// In en, this message translates to:
+  /// **'Title (Bangla)'**
+  String get serviceTitleBn;
+
+  /// No description provided for @serviceDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description (English)'**
+  String get serviceDescription;
+
+  /// No description provided for @serviceDescriptionBn.
+  ///
+  /// In en, this message translates to:
+  /// **'Description (Bangla)'**
+  String get serviceDescriptionBn;
+
+  /// No description provided for @serviceBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Text (English)'**
+  String get serviceBody;
+
+  /// No description provided for @serviceBodyBn.
+  ///
+  /// In en, this message translates to:
+  /// **'Text (Bangla)'**
+  String get serviceBodyBn;
+
+  /// No description provided for @serviceClosesAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Closes at (Dhaka time)'**
+  String get serviceClosesAt;
+
+  /// No description provided for @serviceThreshold.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum responses for results'**
+  String get serviceThreshold;
+
+  /// No description provided for @serviceAnonymousNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Anonymous: no individual answers are stored. HR sees only the fixed cohort’s totals after closing and at least five responses. There are no subgroup reports.'**
+  String get serviceAnonymousNote;
+
+  /// No description provided for @serviceCohortNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Publishing freezes the company’s active employee audience. People without logins cannot respond by proxy.'**
+  String get serviceCohortNote;
+
+  /// No description provided for @serviceEnpsQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'How likely are you to recommend this company as a place to work?'**
+  String get serviceEnpsQuestion;
+
+  /// No description provided for @serviceEnpsScale.
+  ///
+  /// In en, this message translates to:
+  /// **'0 = not at all likely; 10 = extremely likely'**
+  String get serviceEnpsScale;
+
+  /// No description provided for @servicePulseScale.
+  ///
+  /// In en, this message translates to:
+  /// **'1 = strongly disagree; 5 = strongly agree'**
+  String get servicePulseScale;
+
+  /// No description provided for @servicePulseQuestions.
+  ///
+  /// In en, this message translates to:
+  /// **'Pulse questions (optional, maximum 10)'**
+  String get servicePulseQuestions;
+
+  /// No description provided for @serviceQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Question (English)'**
+  String get serviceQuestion;
+
+  /// No description provided for @serviceQuestionBn.
+  ///
+  /// In en, this message translates to:
+  /// **'Question (Bangla)'**
+  String get serviceQuestionBn;
+
+  /// No description provided for @serviceAddQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Add question'**
+  String get serviceAddQuestion;
+
+  /// No description provided for @serviceRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get serviceRemove;
+
+  /// No description provided for @serviceChoose.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose'**
+  String get serviceChoose;
+
+  /// No description provided for @serviceSaveDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Save draft'**
+  String get serviceSaveDraft;
+
+  /// No description provided for @serviceEditDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit draft'**
+  String get serviceEditDraft;
+
+  /// No description provided for @servicePublish.
+  ///
+  /// In en, this message translates to:
+  /// **'Publish'**
+  String get servicePublish;
+
+  /// No description provided for @serviceCloseSurvey.
+  ///
+  /// In en, this message translates to:
+  /// **'Close survey'**
+  String get serviceCloseSurvey;
+
+  /// No description provided for @serviceSubmitSurvey.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit anonymous response'**
+  String get serviceSubmitSurvey;
+
+  /// No description provided for @serviceAlreadyResponded.
+  ///
+  /// In en, this message translates to:
+  /// **'Your anonymous response has been recorded.'**
+  String get serviceAlreadyResponded;
+
+  /// No description provided for @serviceResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Survey results'**
+  String get serviceResults;
+
+  /// No description provided for @serviceResultsProtected.
+  ///
+  /// In en, this message translates to:
+  /// **'Results are protected until the survey closes and at least {minimum} people respond. No response count is disclosed before then.'**
+  String serviceResultsProtected(Object minimum);
+
+  /// No description provided for @serviceResultsEmployee.
+  ///
+  /// In en, this message translates to:
+  /// **'Individual responses and survey results are not shown to employees.'**
+  String get serviceResultsEmployee;
+
+  /// No description provided for @serviceEnps.
+  ///
+  /// In en, this message translates to:
+  /// **'eNPS'**
+  String get serviceEnps;
+
+  /// No description provided for @serviceResponses.
+  ///
+  /// In en, this message translates to:
+  /// **'Responses'**
+  String get serviceResponses;
+
+  /// No description provided for @serviceEligible.
+  ///
+  /// In en, this message translates to:
+  /// **'Eligible employees'**
+  String get serviceEligible;
+
+  /// No description provided for @servicePromoters.
+  ///
+  /// In en, this message translates to:
+  /// **'Promoters (9–10)'**
+  String get servicePromoters;
+
+  /// No description provided for @servicePassives.
+  ///
+  /// In en, this message translates to:
+  /// **'Passives (7–8)'**
+  String get servicePassives;
+
+  /// No description provided for @serviceDetractors.
+  ///
+  /// In en, this message translates to:
+  /// **'Detractors (0–6)'**
+  String get serviceDetractors;
+
+  /// No description provided for @serviceMean.
+  ///
+  /// In en, this message translates to:
+  /// **'Mean'**
+  String get serviceMean;
+
+  /// No description provided for @serviceDistribution.
+  ///
+  /// In en, this message translates to:
+  /// **'Counts for scores 1–5'**
+  String get serviceDistribution;
+
+  /// No description provided for @serviceClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'This survey is closed.'**
+  String get serviceClosed;
+
+  /// No description provided for @serviceFixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Published wording is fixed. For a correction, retire this notice and publish a replacement.'**
+  String get serviceFixed;
+
+  /// No description provided for @serviceRequiresAcknowledgement.
+  ///
+  /// In en, this message translates to:
+  /// **'Require a policy acknowledgement'**
+  String get serviceRequiresAcknowledgement;
+
+  /// No description provided for @serviceDueOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Due on'**
+  String get serviceDueOn;
+
+  /// No description provided for @serviceExpiresOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires after'**
+  String get serviceExpiresOn;
+
+  /// No description provided for @servicePolicyNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Acknowledgement records that you read this notice. It is not agreement to changed employment terms or an electronic signature.'**
+  String get servicePolicyNote;
+
+  /// No description provided for @serviceAcknowledge.
+  ///
+  /// In en, this message translates to:
+  /// **'I have read this notice'**
+  String get serviceAcknowledge;
+
+  /// No description provided for @serviceAcknowledged.
+  ///
+  /// In en, this message translates to:
+  /// **'Acknowledged'**
+  String get serviceAcknowledged;
+
+  /// No description provided for @serviceOutstanding.
+  ///
+  /// In en, this message translates to:
+  /// **'Outstanding'**
+  String get serviceOutstanding;
+
+  /// No description provided for @serviceRetire.
+  ///
+  /// In en, this message translates to:
+  /// **'Retire'**
+  String get serviceRetire;
+
+  /// No description provided for @serviceReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason'**
+  String get serviceReason;
+
+  /// No description provided for @serviceReceipts.
+  ///
+  /// In en, this message translates to:
+  /// **'Policy acknowledgement register'**
+  String get serviceReceipts;
+
+  /// No description provided for @serviceExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get serviceExpired;
+
+  /// No description provided for @servicePending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get servicePending;
+
+  /// No description provided for @serviceValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Value'**
+  String get serviceValue;
+
+  /// No description provided for @serviceMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Message'**
+  String get serviceMessage;
+
+  /// No description provided for @serviceRecognitionNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Your name and message will be visible to colleagues in your company.'**
+  String get serviceRecognitionNote;
+
+  /// No description provided for @serviceWithdrawRecognition.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdraw / moderate'**
+  String get serviceWithdrawRecognition;
+
+  /// No description provided for @serviceFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get serviceFrom;
+
+  /// No description provided for @serviceTo.
+  ///
+  /// In en, this message translates to:
+  /// **'To'**
+  String get serviceTo;
+
+  /// No description provided for @serviceCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get serviceCategory;
+
+  /// No description provided for @servicePriority.
+  ///
+  /// In en, this message translates to:
+  /// **'Priority'**
+  String get servicePriority;
+
+  /// No description provided for @serviceSubject.
+  ///
+  /// In en, this message translates to:
+  /// **'Subject'**
+  String get serviceSubject;
+
+  /// No description provided for @serviceRequestBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your request'**
+  String get serviceRequestBody;
+
+  /// No description provided for @serviceRequestPrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Visible only to you and authorized HR handlers of this company. Managers do not inherit access. For a statutory grievance or harassment concern, use the dedicated grievance channel.'**
+  String get serviceRequestPrivacy;
+
+  /// No description provided for @serviceGrievances.
+  ///
+  /// In en, this message translates to:
+  /// **'Grievance channel'**
+  String get serviceGrievances;
+
+  /// No description provided for @serviceStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get serviceStatus;
+
+  /// No description provided for @serviceAssignee.
+  ///
+  /// In en, this message translates to:
+  /// **'HR handler'**
+  String get serviceAssignee;
+
+  /// No description provided for @serviceUnassigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Unassigned'**
+  String get serviceUnassigned;
+
+  /// No description provided for @serviceUpdateRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Update request'**
+  String get serviceUpdateRequest;
+
+  /// No description provided for @serviceReply.
+  ///
+  /// In en, this message translates to:
+  /// **'Send reply'**
+  String get serviceReply;
+
+  /// No description provided for @serviceReplyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply'**
+  String get serviceReplyBody;
+
+  /// No description provided for @serviceInternal.
+  ///
+  /// In en, this message translates to:
+  /// **'HR-only internal note'**
+  String get serviceInternal;
+
+  /// No description provided for @serviceInternalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Internal note — HR only'**
+  String get serviceInternalLabel;
+
+  /// No description provided for @serviceResolve.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolve request'**
+  String get serviceResolve;
+
+  /// No description provided for @serviceCloseRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Close resolved request'**
+  String get serviceCloseRequest;
+
+  /// No description provided for @serviceReopen.
+  ///
+  /// In en, this message translates to:
+  /// **'Reopen request'**
+  String get serviceReopen;
+
+  /// No description provided for @serviceCreatedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Opened'**
+  String get serviceCreatedAt;
+
+  /// No description provided for @serviceUpdatedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated'**
+  String get serviceUpdatedAt;
+
+  /// No description provided for @serviceRequestClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'This request is closed. Reopen it to continue.'**
+  String get serviceRequestClosed;
+
+  /// No description provided for @serviceTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Asset tag'**
+  String get serviceTag;
+
+  /// No description provided for @serviceName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name (English)'**
+  String get serviceName;
+
+  /// No description provided for @serviceNameBn.
+  ///
+  /// In en, this message translates to:
+  /// **'Name (Bangla)'**
+  String get serviceNameBn;
+
+  /// No description provided for @serviceKind.
+  ///
+  /// In en, this message translates to:
+  /// **'Kind'**
+  String get serviceKind;
+
+  /// No description provided for @serviceSerialNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Serial number'**
+  String get serviceSerialNumber;
+
+  /// No description provided for @serviceIssueAsset.
+  ///
+  /// In en, this message translates to:
+  /// **'Issue asset'**
+  String get serviceIssueAsset;
+
+  /// No description provided for @serviceIssuedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Issued on'**
+  String get serviceIssuedOn;
+
+  /// No description provided for @serviceCondition.
+  ///
+  /// In en, this message translates to:
+  /// **'Condition / notes'**
+  String get serviceCondition;
+
+  /// No description provided for @serviceIssueCondition.
+  ///
+  /// In en, this message translates to:
+  /// **'Condition when issued'**
+  String get serviceIssueCondition;
+
+  /// No description provided for @serviceReturnCondition.
+  ///
+  /// In en, this message translates to:
+  /// **'Condition when returned'**
+  String get serviceReturnCondition;
+
+  /// No description provided for @serviceReturnedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Returned on'**
+  String get serviceReturnedOn;
+
+  /// No description provided for @serviceReturnAsset.
+  ///
+  /// In en, this message translates to:
+  /// **'Record return'**
+  String get serviceReturnAsset;
+
+  /// No description provided for @serviceAcknowledgeAsset.
+  ///
+  /// In en, this message translates to:
+  /// **'I received this asset'**
+  String get serviceAcknowledgeAsset;
+
+  /// No description provided for @serviceAssetNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt only; no automatic payroll deduction. HR records returns and corrections.'**
+  String get serviceAssetNote;
+
+  /// No description provided for @serviceOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get serviceOverdue;
+
+  /// No description provided for @serviceIssued.
+  ///
+  /// In en, this message translates to:
+  /// **'Issued'**
+  String get serviceIssued;
+
+  /// No description provided for @serviceAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Available'**
+  String get serviceAvailable;
+
+  /// No description provided for @serviceHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Issue history'**
+  String get serviceHistory;
+
+  /// No description provided for @serviceStatesDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft'**
+  String get serviceStatesDraft;
+
+  /// No description provided for @serviceStatesOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get serviceStatesOpen;
+
+  /// No description provided for @serviceStatesInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'In progress'**
+  String get serviceStatesInProgress;
+
+  /// No description provided for @serviceStatesResolved.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolved'**
+  String get serviceStatesResolved;
+
+  /// No description provided for @serviceStatesClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed'**
+  String get serviceStatesClosed;
+
+  /// No description provided for @serviceStatesPublished.
+  ///
+  /// In en, this message translates to:
+  /// **'Published'**
+  String get serviceStatesPublished;
+
+  /// No description provided for @serviceStatesRetired.
+  ///
+  /// In en, this message translates to:
+  /// **'Retired'**
+  String get serviceStatesRetired;
+
+  /// No description provided for @serviceValuesTeamwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Teamwork'**
+  String get serviceValuesTeamwork;
+
+  /// No description provided for @serviceValuesService.
+  ///
+  /// In en, this message translates to:
+  /// **'Service'**
+  String get serviceValuesService;
+
+  /// No description provided for @serviceValuesQuality.
+  ///
+  /// In en, this message translates to:
+  /// **'Quality'**
+  String get serviceValuesQuality;
+
+  /// No description provided for @serviceValuesInitiative.
+  ///
+  /// In en, this message translates to:
+  /// **'Initiative'**
+  String get serviceValuesInitiative;
+
+  /// No description provided for @serviceCategoriesLetters.
+  ///
+  /// In en, this message translates to:
+  /// **'Letters'**
+  String get serviceCategoriesLetters;
+
+  /// No description provided for @serviceCategoriesPay.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay'**
+  String get serviceCategoriesPay;
+
+  /// No description provided for @serviceCategoriesLeave.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave'**
+  String get serviceCategoriesLeave;
+
+  /// No description provided for @serviceCategoriesBenefits.
+  ///
+  /// In en, this message translates to:
+  /// **'Benefits'**
+  String get serviceCategoriesBenefits;
+
+  /// No description provided for @serviceCategoriesOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get serviceCategoriesOther;
+
+  /// No description provided for @servicePrioritiesNormal.
+  ///
+  /// In en, this message translates to:
+  /// **'Normal'**
+  String get servicePrioritiesNormal;
+
+  /// No description provided for @servicePrioritiesUrgent.
+  ///
+  /// In en, this message translates to:
+  /// **'Urgent'**
+  String get servicePrioritiesUrgent;
+
+  /// No description provided for @serviceKindsLaptop.
+  ///
+  /// In en, this message translates to:
+  /// **'Laptop'**
+  String get serviceKindsLaptop;
+
+  /// No description provided for @serviceKindsPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get serviceKindsPhone;
+
+  /// No description provided for @serviceKindsIdCard.
+  ///
+  /// In en, this message translates to:
+  /// **'ID card'**
+  String get serviceKindsIdCard;
+
+  /// No description provided for @serviceKindsVehicle.
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle'**
+  String get serviceKindsVehicle;
+
+  /// No description provided for @serviceKindsEquipment.
+  ///
+  /// In en, this message translates to:
+  /// **'Equipment'**
+  String get serviceKindsEquipment;
+
+  /// No description provided for @serviceKindsOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get serviceKindsOther;
+
+  /// No description provided for @serviceErrorsServiceEmployeeRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'An active employee record is required.'**
+  String get serviceErrorsServiceEmployeeRequired;
+
+  /// No description provided for @serviceErrorsSurveyDates.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a future closing time.'**
+  String get serviceErrorsSurveyDates;
+
+  /// No description provided for @serviceErrorsSurveyCohort.
+  ///
+  /// In en, this message translates to:
+  /// **'This company’s audience is smaller than the minimum reporting threshold.'**
+  String get serviceErrorsSurveyCohort;
+
+  /// No description provided for @serviceErrorsSurveyFixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Published surveys are fixed.'**
+  String get serviceErrorsSurveyFixed;
+
+  /// No description provided for @serviceErrorsSurveyClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'The survey is closed.'**
+  String get serviceErrorsSurveyClosed;
+
+  /// No description provided for @serviceErrorsSurveySubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'You already responded.'**
+  String get serviceErrorsSurveySubmitted;
+
+  /// No description provided for @serviceErrorsSurveyAnswers.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer every question.'**
+  String get serviceErrorsSurveyAnswers;
+
+  /// No description provided for @serviceErrorsAnnouncementDates.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a valid current or future date.'**
+  String get serviceErrorsAnnouncementDates;
+
+  /// No description provided for @serviceErrorsAnnouncementFixed.
+  ///
+  /// In en, this message translates to:
+  /// **'This notice is fixed or no longer accepts acknowledgements.'**
+  String get serviceErrorsAnnouncementFixed;
+
+  /// No description provided for @serviceErrorsRecognitionSelf.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognize a colleague, not yourself.'**
+  String get serviceErrorsRecognitionSelf;
+
+  /// No description provided for @serviceErrorsRecognitionHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'This recognition was already withdrawn.'**
+  String get serviceErrorsRecognitionHidden;
+
+  /// No description provided for @serviceErrorsHrHandler.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an active HR handler with access to this company.'**
+  String get serviceErrorsHrHandler;
+
+  /// No description provided for @serviceErrorsHrRequestClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Reopen the request before replying or changing it.'**
+  String get serviceErrorsHrRequestClosed;
+
+  /// No description provided for @serviceErrorsHrRequestTransition.
+  ///
+  /// In en, this message translates to:
+  /// **'This status change is not available.'**
+  String get serviceErrorsHrRequestTransition;
+
+  /// No description provided for @serviceErrorsAssetRetired.
+  ///
+  /// In en, this message translates to:
+  /// **'This asset is retired.'**
+  String get serviceErrorsAssetRetired;
+
+  /// No description provided for @serviceErrorsAssetIssued.
+  ///
+  /// In en, this message translates to:
+  /// **'This asset is already issued. Record its return first.'**
+  String get serviceErrorsAssetIssued;
+
+  /// No description provided for @serviceErrorsAssetReturned.
+  ///
+  /// In en, this message translates to:
+  /// **'This issue was already returned.'**
+  String get serviceErrorsAssetReturned;
+
+  /// No description provided for @serviceErrorsAssetDates.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the issue, due and return dates. Recorded events cannot be future dated.'**
+  String get serviceErrorsAssetDates;
+
+  /// No description provided for @serviceErrorsAssetEmployeeScope.
+  ///
+  /// In en, this message translates to:
+  /// **'The employee must work for this company on the issue date.'**
+  String get serviceErrorsAssetEmployeeScope;
+
+  /// No description provided for @serviceUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Not available'**
+  String get serviceUnknown;
+
+  /// No description provided for @serviceCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get serviceCancel;
+
+  /// No description provided for @serviceFieldRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete this field.'**
+  String get serviceFieldRequired;
+
+  /// No description provided for @ssoMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Organisation'**
+  String get ssoMethod;
+
+  /// No description provided for @ssoContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with single sign-on'**
+  String get ssoContinue;
+
+  /// No description provided for @ssoFinish.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish browser sign-in'**
+  String get ssoFinish;
+
+  /// No description provided for @ssoBrowserHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in through your organisation in the browser, then return here and finish.'**
+  String get ssoBrowserHint;
+
+  /// No description provided for @ssoPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Browser sign-in is not complete yet. Finish there, then try again.'**
+  String get ssoPending;
 }
 
 class _AppLocalizationsDelegate
@@ -4981,7 +6171,7 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) =>
-      <String>['bn', 'en'].contains(locale.languageCode);
+      <String>['ar', 'bn', 'en'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -4990,6 +6180,8 @@ class _AppLocalizationsDelegate
 AppLocalizations lookupAppLocalizations(Locale locale) {
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
+    case 'ar':
+      return AppLocalizationsAr();
     case 'bn':
       return AppLocalizationsBn();
     case 'en':

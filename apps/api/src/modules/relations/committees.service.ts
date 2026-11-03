@@ -1,3 +1,4 @@
+import { userCan } from '../../common/roles.js';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import {
   committeeMeetings,
@@ -8,7 +9,6 @@ import {
   type Tx,
 } from '@gp/db';
 import {
-  can,
   todayIn,
   type CommitteeInput,
   type CommitteeMeetingInput,
@@ -51,7 +51,7 @@ export async function employeeByRef(tx: Tx, ref: { employeeId?: string; employee
  * compliance keeps the other committees and every committee's meetings.
  */
 function mustAdministerComplaint(actor: AuthUser, kind: CommitteeInput['kind']) {
-  if (kind !== 'complaint' || (actor.kind === 'tenant' && can(actor.role, 'users.manage'))) return;
+  if (kind !== 'complaint' || (actor.kind === 'tenant' && userCan(actor, 'users.manage'))) return;
   throw forbidden(
     'role_not_allowed',
     'Only the workspace admin can change the complaint committee (s.332A)',

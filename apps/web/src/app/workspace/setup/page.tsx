@@ -14,7 +14,7 @@ const TONE: Record<SetupStep['status'], Tone> = {
 
 export default async function SetupPage() {
   const user = await currentTenantUser();
-  if (!can(user?.role, 'org.manage')) notFound();
+  if (!can(user, 'org.manage')) notFound();
   const t = await getTranslations('setup');
   const checklist = await load<SetupChecklist>('tenant', '/tenant/setup-checklist');
   return (

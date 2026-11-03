@@ -42,7 +42,7 @@ export default async function GrievancePosterPage() {
 
   const column = (lang: typeof bn, big: boolean) => (
     <div lang={lang.locale} className="space-y-4">
-      <ol className={`list-decimal space-y-2 pl-6 ${big ? 'text-xl' : 'text-base'}`}>
+      <ol className={`list-decimal space-y-2 ps-6 ${big ? 'text-xl' : 'text-base'}`}>
         <li>{lang.t('poster.step1')}</li>
         <li>{lang.t('poster.step2')}</li>
         <li>{lang.t('poster.step3')}</li>

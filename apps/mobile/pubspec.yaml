@@ -8,6 +8,7 @@ environment:
   sdk: ^3.13.5
 
 dependencies:
+  crypto: ^3.0.8
   dio: ^5.11.1
   # Push notifications. Set up from --dart-defines (see FirebaseConfig), so
   # there is no google-services.json or GoogleService-Info.plist; without
@@ -41,3 +42,10 @@ flutter:
   # Runs `flutter gen-l10n` (configured in l10n.yaml) on pub get and build.
   generate: true
   uses-material-design: true
+
+  assets:
+    - assets/fonts/OFL-NotoSansArabic.txt
+  fonts:
+    - family: GPArabic
+      fonts:
+        - asset: assets/fonts/NotoSansArabic.ttf

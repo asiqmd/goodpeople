@@ -18,6 +18,49 @@ const inProduction = () => process.env.NODE_ENV === 'production';
 
 const configSchema = z
   .object({
+    DEPLOYMENT_MODE: z.enum(['managed', 'self_hosted', 'dedicated']).default('managed'),
+    INSTALLATION_ID: z.uuid().optional(),
+    INSTALLATION_TENANT_ID: z.uuid().optional(),
+    LICENSE_PUBLIC_KEYS_JSON: z
+      .string()
+      .default('{}')
+      .transform((raw, ctx) => {
+        try {
+          const value = JSON.parse(raw);
+          if (
+            !value ||
+            Array.isArray(value) ||
+            typeof value !== 'object' ||
+            Object.keys(value).length > 8 ||
+            Object.entries(value).some(
+              ([k, v]) =>
+                !/^[a-zA-Z0-9_-]{1,64}$/.test(k) || typeof v !== 'string' || v.length > 1000,
+            )
+          )
+            throw new Error();
+          return value as Record<string, string>;
+        } catch {
+          ctx.addIssue({
+            code: 'custom',
+            message: 'Invalid offline license public-key trust store',
+          });
+          return z.NEVER;
+        }
+      }),
+    RELEASE_VERSION: z
+      .string()
+      .regex(/^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?$/)
+      .default('6.5.0-local'),
+    PROCESS_ROLE: z.enum(['api', 'worker']).default('api'),
+    PUBLIC_TOKEN_TTL_SECONDS: z.coerce.number().int().min(60).max(900).default(300),
+    PUBLIC_RATE_LIMIT: z.coerce.number().int().min(1).max(600).default(120),
+    PUBLIC_DAILY_QUOTA: z.coerce.number().int().min(1).default(20000),
+    WEBHOOK_PRIVATE_HOSTS: z.string().default(''),
+    WEBHOOK_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(20).default(8),
+    WEBHOOK_RETENTION_DAYS: z.coerce.number().int().min(1).max(90).default(14),
+    WEBHOOK_QUEUE_LIMIT: z.coerce.number().int().min(1).max(1000000).default(10000),
+    WORKER_CONCURRENCY: z.coerce.number().int().min(1).max(8).default(4),
+    JOB_LEASE_SECONDS: z.coerce.number().int().min(10).max(600).default(60),
     PORT: z.coerce.number().int().positive().default(4000),
     WEB_ORIGIN: z.string().default('http://localhost:3000'),
     /** Proxies in front of the API (Caddy: 1), so rate limits see the visitor's address. */
@@ -35,8 +78,50 @@ const configSchema = z
       .default(() => (process.env.NODE_ENV === 'test' ? 'error' : 'info')),
     DATABASE_URL: z.string().min(1),
     JWT_ACCESS_SECRET: z.string().min(32, 'JWT_ACCESS_SECRET must be at least 32 characters'),
+    JWT_ACCESS_KEY_ID: z
+      .string()
+      .regex(/^[a-zA-Z0-9_-]{1,64}$/)
+      .default('v1'),
+    JWT_PREVIOUS_ACCESS_SECRET: z.string().min(32).optional(),
+    JWT_PREVIOUS_KEY_ID: z.string().optional(),
+    JWT_PREVIOUS_VALID_UNTIL: z.iso.datetime().optional(),
+    SECURITY_STORE: z
+      .enum(['memory', 'redis'])
+      .default(() => (inProduction() ? 'redis' : 'memory')),
+    REDIS_URL: z.url().optional(),
+    SECURITY_NAMESPACE: z.string().min(1).max(100).default('gp:security:v1'),
+    OIDC_PRIVATE_HOSTS: z.string().default(''),
     ACCESS_TOKEN_TTL_SECONDS: z.coerce.number().int().positive().default(900),
     REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(30),
+    FIELD_ENCRYPTION_ACTIVE_KEY_ID: z
+      .string()
+      .regex(/^[a-zA-Z0-9_-]{1,32}$/)
+      .optional(),
+    FIELD_ENCRYPTION_KEYS_JSON: z
+      .string()
+      .default('{}')
+      .transform((raw, ctx) => {
+        try {
+          const keys = JSON.parse(raw);
+          if (
+            !keys ||
+            Array.isArray(keys) ||
+            typeof keys !== 'object' ||
+            Object.keys(keys).length > 8 ||
+            Object.entries(keys).some(
+              ([id, key]) =>
+                !/^[a-zA-Z0-9_-]{1,32}$/.test(id) ||
+                typeof key !== 'string' ||
+                Buffer.from(key, 'base64').length !== 32,
+            )
+          )
+            throw new Error();
+          return keys as Record<string, string>;
+        } catch {
+          ctx.addIssue({ code: 'custom', message: 'Invalid retained encryption-key ring' });
+          return z.NEVER;
+        }
+      }),
     FIELD_ENCRYPTION_KEY: z
       .string()
       .min(40, 'FIELD_ENCRYPTION_KEY must be 32 bytes, base64-encoded'),
@@ -97,7 +182,7 @@ const configSchema = z
       .default('on')
       .transform((v) => v === 'on'),
     /** Where notifications go. `log` writes them to the API log instead of sending them. */
-    EMAIL_DRIVER: z.enum(['log', 'smtp']).default('log'),
+    EMAIL_DRIVER: z.enum(['log', 'smtp', 'disabled']).default('log'),
     /** Lets a production server (a staging box) keep the `log` e-mail and SMS drivers. */
     ALLOW_LOG_SENDERS: z
       .enum(['on', 'off'])
@@ -107,16 +192,61 @@ const configSchema = z
     EMAIL_FROM: z.string().default('Good People <no-reply@goodpeople.local>'),
     /** Good People's support team: told of every new ticket and every customer reply. */
     SUPPORT_INBOX_EMAIL: z.email().default('support@goodpeople.example'),
-    SMS_DRIVER: z.enum(['log', 'sslwireless']).default('log'),
+    SMS_DRIVER: z.enum(['log', 'sslwireless', 'disabled']).default('log'),
     SSLWIRELESS_URL: z.url().default('https://smsplus.sslwireless.com/api/v3/send-sms'),
     SSLWIRELESS_API_TOKEN: z.string().optional(),
     SSLWIRELESS_SID: z.string().optional(),
-    PUSH_DRIVER: z.enum(['log', 'fcm']).default('log'),
+    PUSH_DRIVER: z.enum(['log', 'fcm', 'disabled']).default('log'),
     FCM_PROJECT_ID: z.string().optional(),
     FCM_CLIENT_EMAIL: z.string().optional(),
     /** The service account's private key; `\n` in the value stands for line breaks. */
     FCM_PRIVATE_KEY: z.string().optional(),
   })
+  .refine(
+    (c) =>
+      c.DEPLOYMENT_MODE === 'managed' ||
+      c.EMAIL_DRIVER !== 'smtp' ||
+      c.SUPPORT_INBOX_EMAIL !== 'support@goodpeople.example',
+    { message: 'Installed SMTP requires an explicit customer SUPPORT_INBOX_EMAIL' },
+  )
+  .refine(
+    (c) =>
+      !c.FIELD_ENCRYPTION_ACTIVE_KEY_ID ||
+      !!c.FIELD_ENCRYPTION_KEYS_JSON[c.FIELD_ENCRYPTION_ACTIVE_KEY_ID],
+    { message: 'Active encryption key is missing' },
+  )
+  .refine(
+    (c) =>
+      c.DEPLOYMENT_MODE === 'managed' ||
+      (!isExampleSecret(c.JWT_ACCESS_SECRET) && !isExampleSecret(c.FIELD_ENCRYPTION_KEY)),
+    { message: 'Installed deployments refuse published demo secrets' },
+  )
+  .refine(
+    (c) =>
+      c.DEPLOYMENT_MODE === 'managed' ||
+      (!!c.INSTALLATION_ID &&
+        !!c.INSTALLATION_TENANT_ID &&
+        c.REQUIRE_ADMIN_MFA &&
+        !c.SIGNUP_ENABLED),
+    {
+      message:
+        'Installed deployments require installation/tenant UUIDs, MFA and SIGNUP_ENABLED=off',
+    },
+  )
+  .refine((c) => c.SECURITY_STORE !== 'redis' || !!c.REDIS_URL, {
+    message: 'Redis security state requires REDIS_URL',
+  })
+  .refine((c) => !inProduction() || c.SECURITY_STORE === 'redis', {
+    message: 'Production security state requires Redis',
+  })
+  .refine(
+    (c) =>
+      !c.JWT_PREVIOUS_ACCESS_SECRET ||
+      (!!c.JWT_PREVIOUS_KEY_ID &&
+        !!c.JWT_PREVIOUS_VALID_UNTIL &&
+        c.JWT_PREVIOUS_KEY_ID !== c.JWT_ACCESS_KEY_ID),
+    { message: 'Previous signing key needs a different ID and explicit overlap end' },
+  )
   .refine(
     (c) =>
       c.STORAGE_DRIVER !== 's3' || (c.S3_BUCKET && c.S3_ACCESS_KEY_ID && c.S3_SECRET_ACCESS_KEY),
@@ -161,5 +291,9 @@ export const APP_CONFIG = Symbol('APP_CONFIG');
 
 export function loadConfig(overrides: Partial<Record<keyof AppConfig, string>> = {}): AppConfig {
   loadRootEnv();
-  return configSchema.parse({ ...process.env, ...overrides });
+  const values = { ...process.env, ...overrides };
+  if (values.DEPLOYMENT_MODE && values.DEPLOYMENT_MODE !== 'managed')
+    for (const channel of ['EMAIL_DRIVER', 'SMS_DRIVER', 'PUSH_DRIVER'] as const)
+      if (!values[channel]) values[channel] = 'disabled';
+  return configSchema.parse(values);
 }

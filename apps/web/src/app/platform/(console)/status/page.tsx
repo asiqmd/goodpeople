@@ -110,7 +110,7 @@ async function Incident({ incident }: { incident: IncidentView }) {
         <summary className="cursor-pointer text-sm font-medium text-slate-700">
           {t('updates')} ({format.number(incident.updates.length)})
         </summary>
-        <ol className="mt-2 space-y-3 border-l-2 border-slate-200 pl-4">
+        <ol className="mt-2 space-y-3 border-s-2 border-slate-200 ps-4">
           {incident.updates.map((u) => (
             <li key={u.id} className="text-sm">
               <p>

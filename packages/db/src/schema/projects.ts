@@ -69,6 +69,7 @@ export const projects = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     tenantId: tenantId(),
+    currency: text('currency').notNull().default('BDT'),
     legalEntityId: uuid('legal_entity_id').notNull(),
     code: text('code').notNull(),
     name: text('name').notNull(),
@@ -107,6 +108,7 @@ export const employeeAllocations = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     tenantId: tenantId(),
+    currency: text('currency').notNull().default('BDT'),
     employeeId: uuid('employee_id').notNull(),
     projectId: uuid('project_id').notNull(),
     percent: numeric('percent', { precision: 5, scale: 2 }).notNull(),
@@ -130,6 +132,7 @@ export const timesheets = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     tenantId: tenantId(),
+    currency: text('currency').notNull().default('BDT'),
     employeeId: uuid('employee_id').notNull(),
     /** The first day of the month. */
     month: isoDate('month').notNull(),

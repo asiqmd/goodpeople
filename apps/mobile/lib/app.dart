@@ -25,6 +25,24 @@ class GoodPeopleApp extends ConsumerWidget {
       locale: ref.watch(localeProvider),
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
+      builder: (context, child) => Column(
+        children: [
+          if (Localizations.localeOf(context).languageCode == 'ar')
+            const SafeArea(
+              bottom: false,
+              child: Material(
+                color: Color(0xfffff8e1),
+                child: Padding(
+                  padding: EdgeInsets.all(8),
+                  child: Text(
+                    'معاينة عربية — المحتوى غير المراجع بالإنجليزية. المستندات القانونية قيد المراجعة.',
+                  ),
+                ),
+              ),
+            ),
+          Expanded(child: child ?? const SizedBox.shrink()),
+        ],
+      ),
       home: const AuthGate(),
     );
   }

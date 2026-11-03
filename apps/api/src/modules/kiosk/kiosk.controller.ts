@@ -147,8 +147,8 @@ export class KioskDeviceController {
   @ReadsOnly()
   @HttpCode(204)
   @UseGuards(KioskSessionGuard)
-  end(@CurrentWorker() worker: KioskWorker): void {
-    this.auth.end(worker);
+  end(@CurrentWorker() worker: KioskWorker): Promise<void> {
+    return this.auth.end(worker);
   }
 
   @Get('me')

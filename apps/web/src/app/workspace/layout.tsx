@@ -41,14 +41,16 @@ export default async function WorkspaceLayout({ children }: LayoutProps<'/worksp
   const te = await getTranslations('errors');
   const result = await authedFetch<TenantAccessView>('tenant', '/tenant/access');
   const user = await currentTenantUser();
-  const may = (permission: Permission) => can(user?.role, permission);
+  const may = (permission: Permission) => can(user, permission);
   const hasLeave = result.ok && result.data.access.features.includes('leave');
   const hasAttendance = result.ok && result.data.access.features.includes('attendance');
   const hasPayroll = result.ok && result.data.access.features.includes('payroll');
   const hasProduction = result.ok && result.data.access.features.includes('production');
   const hasProjects = result.ok && result.data.access.features.includes('projects');
+  const hasAnalytics = result.ok && result.data.access.features.includes('analytics');
   const hasGroup = result.ok && result.data.access.features.includes('multi_entity');
   const hasRecruitment = result.ok && result.data.access.features.includes('recruitment');
+  const hasLearning = result.ok && result.data.access.features.includes('lms');
   const hasPerformance = result.ok && result.data.access.features.includes('performance');
   // Resignations need approval in every workspace; leave and corrections where enabled.
   const [approvals, inbox, hiring, performance] = result.ok
@@ -70,6 +72,14 @@ export default async function WorkspaceLayout({ children }: LayoutProps<'/worksp
 
   const links = [
     { href: '/workspace', label: tn('home') },
+    ...(user?.role === 'tenant_admin' && may('users.manage')
+      ? [
+          { href: '/workspace/identity', label: tw('identity') },
+          { href: '/workspace/integrations', label: tw('integrations') },
+          { href: '/workspace/international', label: tw('international') },
+          { href: '/workspace/enterprise', label: tw('enterprise') },
+        ]
+      : []),
     ...(hasAttendance
       ? [
           { href: '/workspace/attendance', label: ta('attendance') },
@@ -88,6 +98,30 @@ export default async function WorkspaceLayout({ children }: LayoutProps<'/worksp
       : []),
     { href: '/workspace/approvals', label: tl('approvals'), badge: waiting },
     ...(may('employees.read') ? [{ href: '/workspace/employees', label: tn('employees') }] : []),
+    ...(hasAnalytics && may('analytics.view') && may('employees.read')
+      ? [{ href: '/workspace/analytics', label: tw('analytics') }]
+      : []),
+    ...(hasAnalytics &&
+    result.ok &&
+    result.data.access.features.includes('analytics_insights') &&
+    may('analytics.view') &&
+    may('employees.read')
+      ? [{ href: '/workspace/analytics/insights', label: tw('insights') }]
+      : []),
+    ...(hasAnalytics &&
+    result.ok &&
+    result.data.access.features.includes('analytics_insights') &&
+    result.data.access.features.includes('anomaly_review') &&
+    user?.role !== 'support' &&
+    may('analytics.view') &&
+    may('employees.read')
+      ? [{ href: '/workspace/analytics/anomalies', label: tw('anomalies') }]
+      : []),
+    ...(result.ok &&
+    result.data.access.features.includes('workspace_assistant') &&
+    user?.role !== 'support'
+      ? [{ href: '/workspace/assistant', label: tw('assistant') }]
+      : []),
     ...(hasGroup && may('employees.read')
       ? [{ href: '/workspace/group', label: tw('group'), match: ['/workspace/group'] }]
       : []),
@@ -109,6 +143,12 @@ export default async function WorkspaceLayout({ children }: LayoutProps<'/worksp
               (p) => `/workspace/attendance/${p}`,
             ),
           },
+        ]
+      : []),
+    ...(hasPayroll && may('payroll.view') && may('employees.identity')
+      ? [
+          { href: '/workspace/uae', label: tw('uae'), match: ['/workspace/uae'] },
+          { href: '/workspace/saudi', label: tw('saudi'), match: ['/workspace/saudi'] },
         ]
       : []),
     ...(may('payroll.view') && hasPayroll
@@ -151,6 +191,15 @@ export default async function WorkspaceLayout({ children }: LayoutProps<'/worksp
           },
         ]
       : []),
+    ...(result.ok && result.data.access.features.includes('core_hr')
+      ? [
+          { href: '/workspace/engagement', label: tw('engagement') },
+          { href: '/workspace/employee-services', label: tw('employeeServices') },
+        ]
+      : []),
+    ...(hasLearning
+      ? [{ href: '/workspace/learning', label: tw('learning'), match: ['/workspace/learning'] }]
+      : []),
     ...(recruitment && recruitment.interviews > 0
       ? [
           {
@@ -175,7 +224,7 @@ export default async function WorkspaceLayout({ children }: LayoutProps<'/worksp
   return (
     <>
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-4">
           <div className="flex items-center gap-4">
             <Logo />
             {result.ok && (
@@ -249,6 +298,14 @@ export default async function WorkspaceLayout({ children }: LayoutProps<'/worksp
           <main className="min-w-0 flex-1 space-y-6">
             {user?.role === 'support' && <SupportSessionBanner />}
             <StatusBanner />
+            {result.data.access.reason === 'license_recovery_pending' && (
+              <Banner tone="amber">
+                {tr('license_recovery_pending')}{' '}
+                <Link href="/workspace/enterprise" className="underline">
+                  {tw('enterprise')}
+                </Link>
+              </Banner>
+            )}
             {result.data.access.accessState === 'read_only' && (
               <Banner tone="amber">
                 {t('readOnly')} ({tr(result.data.access.reason)})

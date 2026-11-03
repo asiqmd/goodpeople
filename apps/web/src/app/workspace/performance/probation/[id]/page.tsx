@@ -20,7 +20,7 @@ export default async function ProbationReviewPage({
   const t = await getTranslations('development.probation');
   const locale = await getLocale();
   const day = await dhakaDay();
-  const role = (await currentTenantUser())?.role;
+  const accessPrincipal = await currentTenantUser();
   const result = await authedFetch<ProbationReviewView>(
     'tenant',
     `/tenant/performance/probation/${id}`,
@@ -138,7 +138,7 @@ export default async function ProbationReviewPage({
           {r.manage && (
             <Card title={t('hrTitle')}>
               <p className="mb-3 text-sm text-slate-600">{t('hrHint')}</p>
-              {can(role, 'employees.write') && r.state !== 'acted' && (
+              {can(accessPrincipal, 'employees.write') && r.state !== 'acted' && (
                 <Link
                   href={`/workspace/employees/${r.employee.id}?tab=job`}
                   className={buttonClass.secondary}

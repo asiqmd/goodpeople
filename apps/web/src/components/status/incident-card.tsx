@@ -43,7 +43,7 @@ export async function IncidentCard({ incident }: { incident: IncidentView }) {
           </>
         )}
       </p>
-      <ol className="mt-4 space-y-3 border-l-2 border-slate-200 pl-4">
+      <ol className="mt-4 space-y-3 border-s-2 border-slate-200 ps-4">
         {incident.updates.map((u) => (
           <li key={u.id}>
             <p className="text-sm">

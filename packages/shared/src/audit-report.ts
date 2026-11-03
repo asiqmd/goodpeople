@@ -1,3 +1,4 @@
+import type { TrainingAuditSection } from './learning.js';
 import { z } from 'zod';
 import type { CommitteeKind } from './relations.js';
 import type { ComplianceAlertKind } from './compliance.js';
@@ -24,6 +25,7 @@ export const auditReportQuerySchema = z
 export type AuditReportQuery = z.infer<typeof auditReportQuerySchema>;
 
 export interface AuditReportView {
+  training?: TrainingAuditSection;
   from: string;
   to: string;
   establishment: { entity: string | null; location: string | null };

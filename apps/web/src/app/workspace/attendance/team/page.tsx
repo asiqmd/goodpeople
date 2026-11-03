@@ -126,22 +126,22 @@ export default async function TeamAttendancePage({
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="text-left text-xs text-slate-500">
+              <thead className="text-start text-xs text-slate-500">
                 <tr>
-                  <th className="py-2 pr-3 font-medium">{t('team.employee')}</th>
-                  <th className="py-2 pr-3 font-medium">{t('table.status')}</th>
-                  <th className="py-2 pr-3 font-medium">{t('table.shift')}</th>
-                  <th className="py-2 pr-3 font-medium">{t('table.in')}</th>
-                  <th className="py-2 pr-3 font-medium">{t('table.out')}</th>
-                  <th className="py-2 pr-3 text-right font-medium">{t('table.worked')}</th>
-                  <th className="py-2 pr-3 text-right font-medium">{t('table.overtime')}</th>
+                  <th className="py-2 pe-3 font-medium">{t('team.employee')}</th>
+                  <th className="py-2 pe-3 font-medium">{t('table.status')}</th>
+                  <th className="py-2 pe-3 font-medium">{t('table.shift')}</th>
+                  <th className="py-2 pe-3 font-medium">{t('table.in')}</th>
+                  <th className="py-2 pe-3 font-medium">{t('table.out')}</th>
+                  <th className="py-2 pe-3 text-end font-medium">{t('table.worked')}</th>
+                  <th className="py-2 pe-3 text-end font-medium">{t('table.overtime')}</th>
                   <th className="py-2 font-medium">{t('table.notes')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {rows.map(({ employee, timeZone, day: d }) => (
                   <tr key={employee.id}>
-                    <td className="py-2 pr-3">
+                    <td className="py-2 pe-3">
                       {isHr ? (
                         <Link
                           href={`/workspace/employees/${employee.id}?tab=attendance`}
@@ -156,18 +156,18 @@ export default async function TeamAttendancePage({
                         {employee.employeeCode}
                       </span>
                     </td>
-                    <td className="py-2 pr-3">
+                    <td className="py-2 pe-3">
                       <StatusBadge day={d} />
                     </td>
-                    <td className="py-2 pr-3 text-slate-600">
+                    <td className="py-2 pe-3 text-slate-600">
                       {d.dayType === 'working' ? d.shift?.code : ''}
                     </td>
-                    <td className="py-2 pr-3">{clock(format, d.firstIn, timeZone)}</td>
-                    <td className="py-2 pr-3">{clock(format, d.lastOut, timeZone)}</td>
-                    <td className="py-2 pr-3 text-right tabular-nums">
+                    <td className="py-2 pe-3">{clock(format, d.firstIn, timeZone)}</td>
+                    <td className="py-2 pe-3">{clock(format, d.lastOut, timeZone)}</td>
+                    <td className="py-2 pe-3 text-end tabular-nums">
                       {d.workedMinutes ? hm(format, d.workedMinutes) : ''}
                     </td>
-                    <td className="py-2 pr-3 text-right tabular-nums">
+                    <td className="py-2 pe-3 text-end tabular-nums">
                       {d.overtimeMinutes ? hm(format, d.overtimeMinutes) : ''}
                     </td>
                     <td className="py-2 text-xs text-slate-500">

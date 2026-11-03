@@ -1,0 +1,2 @@
+ALTER TABLE "employee_payment_accounts" ADD COLUMN "country_code" text DEFAULT 'BD' NOT NULL;--> statement-breakpoint
+ALTER TABLE "commercial_prices" ADD CONSTRAINT "commercial_price_effective_uq" UNIQUE("plan_code","currency","effective_from");

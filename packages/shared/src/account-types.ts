@@ -55,6 +55,7 @@ export interface AccountView {
   /** Recovery codes not yet used. */
   recoveryCodesLeft: number;
   permissions: Permission[];
+  fieldPolicy?: import('./identity.js').FieldPolicy;
 }
 
 export interface WorkspaceUserView {

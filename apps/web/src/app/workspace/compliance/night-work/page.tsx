@@ -67,19 +67,19 @@ export default async function ComplianceNightWorkPage({
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="text-left text-xs text-slate-500">
+              <thead className="text-start text-xs text-slate-500">
                 <tr>
-                  <th className="py-2 pr-3 font-medium">{t('nightWork.employee')}</th>
-                  <th className="py-2 pr-3 text-right font-medium">{t('nightWork.nights')}</th>
-                  <th className="py-2 pr-3 font-medium">{t('nightWork.lastNight')}</th>
-                  <th className="py-2 pr-3 font-medium">{t('nightWork.alerts')}</th>
+                  <th className="py-2 pe-3 font-medium">{t('nightWork.employee')}</th>
+                  <th className="py-2 pe-3 text-end font-medium">{t('nightWork.nights')}</th>
+                  <th className="py-2 pe-3 font-medium">{t('nightWork.lastNight')}</th>
+                  <th className="py-2 pe-3 font-medium">{t('nightWork.alerts')}</th>
                   <th className="py-2 font-medium">{t('nightWork.consent')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 align-top">
                 {view.rows.map((r) => (
                   <tr key={r.employee.id}>
-                    <td className="py-2 pr-3">
+                    <td className="py-2 pe-3">
                       <Link
                         href={`/workspace/employees/${r.employee.id}?tab=attendance`}
                         className="font-medium hover:underline"
@@ -91,11 +91,11 @@ export default async function ComplianceNightWorkPage({
                       </span>
                       <span className="block text-xs text-slate-500">{r.location ?? '—'}</span>
                     </td>
-                    <td className="py-2 pr-3 text-right tabular-nums">
+                    <td className="py-2 pe-3 text-end tabular-nums">
                       {format.number(r.nightDays)}
                     </td>
-                    <td className="py-2 pr-3">{r.lastNight ? day(format, r.lastNight) : '—'}</td>
-                    <td className="py-2 pr-3">
+                    <td className="py-2 pe-3">{r.lastNight ? day(format, r.lastNight) : '—'}</td>
+                    <td className="py-2 pe-3">
                       {r.openAlerts > 0 ? (
                         <Link
                           href={`/workspace/compliance/alerts?employee=${r.employee.id}&kind=women_night&status=open`}

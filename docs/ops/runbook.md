@@ -41,10 +41,10 @@ Start with one virtual machine running Docker Compose:
 - **Browsers never call the API.** The web app calls it from its server, over the internal
   network, at `API_URL=http://api:4000`. That includes file downloads, which go through the web
   app's routes under `/workspace/files`.
-- **The API is public only for the mobile app and the Edge Agents.** Caddy hides `/docs`
+- **The API serves phones, Edge Agents, identity providers and approved public integrations.** Caddy hides `/docs`
   (OpenAPI) on the public name. The web app would keep working with the API removed from Caddy,
   but phones and sites would not.
-- **One API process.** It also runs the background jobs (see [Background jobs](#background-jobs)).
+- **Separate API and worker.** The API never schedules jobs; the worker uses durable database leases (see [Background jobs](#background-jobs)).
 - **The same API image runs the database commands.** `pnpm deploy` copies the compiled
   `@gp/db` scripts and the SQL migrations into the image, so `setup`, `migrate` and (for
   staging) `seed` run with plain `node`. No separate migration image is needed.
@@ -231,7 +231,7 @@ means the value is fixed there, not in `infra/.env`.
 
 | Variable                          | Used by       | Meaning                                                                               |
 | --------------------------------- | ------------- | ------------------------------------------------------------------------------------- |
-| `BACKGROUND_JOBS`                 | api (compose) | `on` for exactly one API process. See [Background jobs](#background-jobs).            |
+| `BACKGROUND_JOBS`                 | api (compose) | `off` on API, `on` on the separate worker. See [Background jobs](#background-jobs).   |
 | `ATTENDANCE_JOB_INTERVAL_MINUTES` | api           | How often attendance is processed. Default 15.                                        |
 | `STORAGE_DRIVER`                  | api, scripts  | `local` (default) or `s3`.                                                            |
 | `STORAGE_DIR`                     | api (image)   | `/data/documents`, mounted from `GP_DOCUMENTS_DIR`.                                   |
@@ -431,34 +431,17 @@ in the workspace.
 
 ## Background jobs
 
-The API runs these on timers inside its own process, when `BACKGROUND_JOBS=on`:
+Phase 5 M2 moves all 20 scheduled tasks into the separate `worker` service. API processes
+never schedule, even if the old background switch is on. Start the worker with
+`BACKGROUND_JOBS=on pnpm worker` after building. The production compose bundle runs
+`node dist/worker.js` with shared DB, Redis, encryption keys and storage and no HTTP port.
 
-| Job                                                                       | When                                                                |
-| ------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| Attendance processing: stores `attendance_days`, catching up to 35 days   | Every `ATTENDANCE_JOB_INTERVAL_MINUTES` (15), first 5 s after start |
-| Completing separations whose last working day has passed                  | Hourly, first 10 s after start                                      |
-| Notifications (Phase 1 M5): sending the outbox, and reminders             | Every 30 s and hourly                                               |
-| Status checks (Phase 3 M5); pruning old checks and the stale-backup alert | Every minute, first 15 s after start; hourly                        |
-| Closing support tickets solved more than 7 days ago with no reply         | Hourly                                                              |
-
-**Exactly one process may have them on.** Nothing elects a leader: every process with
-`BACKGROUND_JOBS=on` starts the same timers.
-
-- **Duplicate work.** Attendance takes a per-workspace advisory lock, and the outbox locks its
-  rows, so a second runner mostly repeats work. Reminders and separation completion, though,
-  assume a single runner.
-- **In-memory state.** The sign-in rate limiter keeps its counts in memory, so with two API
-  processes every limit doubles.
-
-The compose file therefore runs one `api` with `BACKGROUND_JOBS=on`.
-
-**To scale out later**, add API copies with `BACKGROUND_JOBS=off` and keep one copy with `on`.
-On the copies with `off`, new notifications wait for the jobs copy's 30-second sweep. Solve the
-rate limiter first: the code notes that it needs a shared store, planned for Phase 2.
-
-**Restarts are safe.** Processing resumes from where it got to, and recomputes days from their
-inputs ([ADR 005](../adr/005-attendance-processing.md)). Stored days can lag the live screens by
-up to one interval.
+The [integration/worker runbook](integrations.md#worker-inventory-and-operation) contains the
+complete inventory, default cadences, lease/concurrency settings, fencing and shutdown
+semantics, cutover steps and monitoring query. Stop the old timer-owning API before starting
+new workers. Existing business idempotency is still required; external effects can repeat.
+Local two-worker checks cover ownership, takeover and stale writes. A production load/failover
+exercise remains an external gate; default compose has one API and one worker.
 
 ## Chrome for PDFs
 
@@ -639,15 +622,12 @@ worked around.
 
 **Scaling**
 
-- **Background jobs and rate limits live in one process.** There is no leader election and no
-  shared rate-limit store. So: one API process (see [Background jobs](#background-jobs)).
-  The kiosk PIN budgets and the record that each two-step code was used once live in its
-  memory too, so a restart forgets them.
+- **Production scaling needs operating evidence.** Shared Redis and durable fenced workers replace the former single-runner mechanism. Run the documented production load/failover drill before changing the default topology.
+  Kiosk/OTP/replay budgets and public API quotas use the shared durable security store.
 
 **Secrets and backups**
 
-- **No key rotation.** `FIELD_ENCRYPTION_KEY` has no re-encryption job, and
-  `JWT_ACCESS_SECRET` cannot overlap two secrets.
+- **Field-key rotation needs an operator migration.** `FIELD_ENCRYPTION_KEY` has no re-encryption job. Access signing keys support an explicit previous-key cutoff; follow the [identity runbook](identity.md).
 - **Up to a day of data can be lost.** Backups are daily logical dumps, with no point-in-time
   recovery for the bundled database.
 - **Off-site copies are not encrypted by the scripts.** Documents and identity numbers inside

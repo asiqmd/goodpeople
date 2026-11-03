@@ -19,9 +19,9 @@ const STATUS_TONE = { differs: 'amber', only_ours: 'blue', only_theirs: 'violet'
 export default async function ReconciliationPage({
   params,
 }: PageProps<'/workspace/payroll/reconciliations/[id]'>) {
-  const role = (await currentTenantUser())?.role;
-  if (!can(role, 'payroll.view')) redirect('/workspace');
-  const canManage = can(role, 'payroll.manage');
+  const accessPrincipal = await currentTenantUser();
+  if (!can(accessPrincipal, 'payroll.view')) redirect('/workspace');
+  const canManage = can(accessPrincipal, 'payroll.manage');
   const { id } = await params;
   const t = await getTranslations('payroll');
   const tr = await getTranslations('payroll.reconcile');
@@ -99,29 +99,27 @@ export default async function ReconciliationPage({
           </div>
           <div className="-mx-5 mt-4 overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+              <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="px-5 py-2 font-medium">{tr('column')}</th>
-                  <th className="px-5 py-2 text-right font-medium">{tr('summary.matched')}</th>
-                  <th className="px-5 py-2 text-right font-medium">{tr('summary.differing')}</th>
-                  <th className="px-5 py-2 text-right font-medium">{tr('ours')}</th>
-                  <th className="px-5 py-2 text-right font-medium">{tr('theirs')}</th>
+                  <th className="px-5 py-2 text-end font-medium">{tr('summary.matched')}</th>
+                  <th className="px-5 py-2 text-end font-medium">{tr('summary.differing')}</th>
+                  <th className="px-5 py-2 text-end font-medium">{tr('ours')}</th>
+                  <th className="px-5 py-2 text-end font-medium">{tr('theirs')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {view.columns.map((c) => (
                   <tr key={c.key}>
                     <td className="px-5 py-2">{name(c.key)}</td>
-                    <td className="px-5 py-2 text-right tabular-nums">
-                      {format.number(c.matched)}
-                    </td>
+                    <td className="px-5 py-2 text-end tabular-nums">{format.number(c.matched)}</td>
                     <td
-                      className={`px-5 py-2 text-right tabular-nums ${c.differing ? 'font-semibold text-amber-700' : ''}`}
+                      className={`px-5 py-2 text-end tabular-nums ${c.differing ? 'font-semibold text-amber-700' : ''}`}
                     >
                       {format.number(c.differing)}
                     </td>
-                    <td className="px-5 py-2 text-right tabular-nums">{num(c.ours)}</td>
-                    <td className="px-5 py-2 text-right tabular-nums">{num(c.theirs)}</td>
+                    <td className="px-5 py-2 text-end tabular-nums">{num(c.ours)}</td>
+                    <td className="px-5 py-2 text-end tabular-nums">{num(c.theirs)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -146,13 +144,13 @@ export default async function ReconciliationPage({
                       {d.lines.map((l) => (
                         <tr key={l.key}>
                           <td className="py-0.5 text-slate-600">{name(l.key)}</td>
-                          <td className="py-0.5 text-right tabular-nums">
+                          <td className="py-0.5 text-end tabular-nums">
                             {tr('oursValue', { value: num(l.ours ?? '0') })}
                           </td>
-                          <td className="py-0.5 text-right tabular-nums">
+                          <td className="py-0.5 text-end tabular-nums">
                             {tr('theirsValue', { value: num(l.theirs ?? '0') })}
                           </td>
-                          <td className="py-0.5 text-right font-medium tabular-nums">
+                          <td className="py-0.5 text-end font-medium tabular-nums">
                             {num(l.difference)}
                           </td>
                         </tr>

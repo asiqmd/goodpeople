@@ -95,7 +95,7 @@ async function Payslips() {
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-5">
-              <span className="text-right">
+              <span className="text-end">
                 <span className="block text-xs text-slate-500">{t('net')}</span>
                 <span className="text-lg font-semibold tabular-nums">{taka(format, p.net)}</span>
               </span>

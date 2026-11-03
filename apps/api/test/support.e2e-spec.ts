@@ -2,11 +2,8 @@ import {
   createDb,
   hashPassword,
   platformUsers,
-  runAsTenant,
   supportAccessGrants,
-  supportAccessSessions,
   supportTickets,
-  tenantUsers,
   type Database,
 } from '@gp/db';
 import {
@@ -20,7 +17,6 @@ import {
   type WorkspaceUserCreated,
 } from '@gp/shared';
 import type { INestApplication } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { eq } from 'drizzle-orm';
 import type { Test } from 'supertest';
 import {
@@ -656,18 +652,6 @@ describe('support tickets', () => {
     const ws = await workspace();
     const ticket = await open(ws.token);
 
-    // The workspace's read-only support login, in a running support session.
-    const [supportLogin] = await runAsTenant(db, ws.id, (tx) =>
-      tx
-        .insert(tenantUsers)
-        .values({
-          tenantId: ws.id,
-          email: `support-${stamp}@${ws.slug}.test`,
-          name: 'Good People support',
-          role: 'support',
-        })
-        .returning({ id: tenantUsers.id }),
-    );
     const agent = await platformUser('support', 'Sadia Islam');
     const [grant] = await db
       .insert(supportAccessGrants)
@@ -678,16 +662,14 @@ describe('support tickets', () => {
         endsAt: new Date(Date.now() + DAY),
       })
       .returning({ id: supportAccessGrants.id });
-    await db.insert(supportAccessSessions).values({
-      grantId: grant!.id,
-      platformUserId: agent.id,
-      platformUserName: 'Sadia Islam',
-      tenantUserId: supportLogin!.id,
-    });
-    const sessionToken = await app
-      .get(JwtService, { strict: false })
-      .signAsync({ sub: supportLogin!.id, kind: 'tenant', role: 'support', tid: ws.id });
-    const asSupport = bearer(sessionToken);
+    const opened = (
+      await api(app)
+        .post('/platform/support/access/sessions')
+        .set(bearer(agent.token))
+        .send({ tenantId: ws.id, grantId: grant!.id })
+        .expect(201)
+    ).body;
+    const asSupport = bearer(opened.accessToken);
     // It can look around the workspace, but has nobody to open a ticket with.
     await api(app).get('/tenant/access').set(asSupport).expect(200);
     for (const path of ['/tenant/support/tickets', `/tenant/support/tickets/${ticket.id}`]) {

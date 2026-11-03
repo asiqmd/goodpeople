@@ -24,8 +24,8 @@ const isMonth = (v: unknown): v is string =>
 export default async function ReportsPage({
   searchParams,
 }: PageProps<'/workspace/payroll/reports'>) {
-  const role = (await currentTenantUser())?.role;
-  if (!can(role, 'payroll.view')) redirect('/workspace');
+  const accessPrincipal = await currentTenantUser();
+  if (!can(accessPrincipal, 'payroll.view')) redirect('/workspace');
   const t = await getTranslations('payroll');
   const tr = await getTranslations('payroll.reports');
   const format = await getFormatter();
@@ -54,9 +54,9 @@ export default async function ReportsPage({
   };
   const cells = (row: CostSummaryRow, strong = false) => (
     <>
-      <td className="px-3 py-2 text-right tabular-nums">{format.number(row.headcount)}</td>
-      <td className="px-3 py-2 text-right tabular-nums">{taka(format, row.gross)}</td>
-      <td className="px-3 py-2 text-right tabular-nums">
+      <td className="px-3 py-2 text-end tabular-nums">{format.number(row.headcount)}</td>
+      <td className="px-3 py-2 text-end tabular-nums">{taka(format, row.gross)}</td>
+      <td className="px-3 py-2 text-end tabular-nums">
         {taka(format, row.overtime)}
         {row.otHours > 0 && (
           <span className="block text-xs text-slate-500">
@@ -64,16 +64,14 @@ export default async function ReportsPage({
           </span>
         )}
       </td>
-      <td className="px-3 py-2 text-right tabular-nums">{taka(format, row.earnings)}</td>
-      <td className="px-3 py-2 text-right tabular-nums">{taka(format, row.deductions)}</td>
-      <td className="px-3 py-2 text-right tabular-nums">{taka(format, row.net)}</td>
-      <td className="px-3 py-2 text-right tabular-nums">{taka(format, row.employerCost)}</td>
-      <td
-        className={`px-3 py-2 text-right tabular-nums ${strong ? 'font-semibold' : 'font-medium'}`}
-      >
+      <td className="px-3 py-2 text-end tabular-nums">{taka(format, row.earnings)}</td>
+      <td className="px-3 py-2 text-end tabular-nums">{taka(format, row.deductions)}</td>
+      <td className="px-3 py-2 text-end tabular-nums">{taka(format, row.net)}</td>
+      <td className="px-3 py-2 text-end tabular-nums">{taka(format, row.employerCost)}</td>
+      <td className={`px-3 py-2 text-end tabular-nums ${strong ? 'font-semibold' : 'font-medium'}`}>
         {taka(format, row.cost)}
       </td>
-      <td className="px-3 py-2 text-right tabular-nums text-slate-600">{change(row)}</td>
+      <td className="px-3 py-2 text-end tabular-nums text-slate-600">{change(row)}</td>
     </>
   );
 
@@ -131,7 +129,7 @@ export default async function ReportsPage({
         ) : (
           <div className="-mx-5 overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+              <thead className="text-start text-xs uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="px-5 py-2 font-medium">{tr(`by.${by}`)}</th>
                   {(
@@ -147,7 +145,7 @@ export default async function ReportsPage({
                       'change',
                     ] as const
                   ).map((k) => (
-                    <th key={k} className="px-3 py-2 text-right font-medium">
+                    <th key={k} className="px-3 py-2 text-end font-medium">
                       {tr(`columns.${k}`)}
                     </th>
                   ))}
@@ -191,8 +189,8 @@ export default async function ReportsPage({
                       timeZone: 'UTC',
                     })}
                   </td>
-                  <td className="py-1 text-right tabular-nums">{format.number(p.headcount)}</td>
-                  <td className="py-1 text-right tabular-nums">{taka(format, p.cost)}</td>
+                  <td className="py-1 text-end tabular-nums">{format.number(p.headcount)}</td>
+                  <td className="py-1 text-end tabular-nums">{taka(format, p.cost)}</td>
                 </tr>
               ))}
             </tbody>

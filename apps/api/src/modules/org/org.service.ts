@@ -1,3 +1,4 @@
+import { COUNTRY_DEFAULTS } from '@gp/shared';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   costCentres,
@@ -38,6 +39,7 @@ import { TenantAuditService } from '../audit/tenant-audit.service.js';
 type Row<T extends { $inferSelect: unknown }> = T['$inferSelect'];
 
 export const toLegalEntityView = (r: Row<typeof legalEntities>): LegalEntityView => ({
+  countryCode: r.countryCode,
   id: r.id,
   name: r.name,
   legalName: r.legalName,
@@ -51,6 +53,8 @@ export const toLegalEntityView = (r: Row<typeof legalEntities>): LegalEntityView
 });
 
 const toLocationView = (r: Row<typeof locations>): LocationView => ({
+  countryCode: r.countryCode,
+  timeZone: r.timeZone,
   id: r.id,
   name: r.name,
   legalEntityId: r.legalEntityId,
@@ -202,9 +206,28 @@ export class OrgService {
 
   createLocation(actor: AuthUser, input: LocationInput): Promise<LocationView> {
     return this.tenantDb.run(async (tx) => {
+      const [employer] = await tx
+        .select()
+        .from(legalEntities)
+        .where(eq(legalEntities.id, input.legalEntityId));
+      if (!employer)
+        throw new BadRequestException({
+          code: 'invalid_reference',
+          message: 'The related employer could not be found',
+        });
+      const country = (input.countryCode ?? employer.countryCode) as keyof typeof COUNTRY_DEFAULTS;
+      if (country !== 'BD' && !input.weeklyOffDays?.length)
+        throw new BadRequestException(
+          'An explicit weekly rest pattern is required for a new international site',
+        );
       const [row] = await tx
         .insert(locations)
-        .values({ tenantId: currentTenantId(), ...input })
+        .values({
+          tenantId: currentTenantId(),
+          ...input,
+          countryCode: input.countryCode ?? country ?? 'BD',
+          timeZone: input.timeZone ?? COUNTRY_DEFAULTS[country]?.zone ?? 'Asia/Dhaka',
+        })
         .returning();
       await this.record(tx, actor, 'org.location.create', 'location', row!.id, input);
       return toLocationView(row!);
