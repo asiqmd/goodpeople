@@ -32,6 +32,7 @@ WORKDIR /repo
 # Packages are fetched from the lockfile alone, so this layer is reused until the lockfile
 # changes. The api and web Dockerfiles share these steps, and so the cached layers.
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY patches ./patches
 RUN pnpm fetch
 
 COPY . .

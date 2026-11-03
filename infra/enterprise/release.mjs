@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { validateAssuranceReadiness } from './assurance-policy.mjs';
+import { readPrivateFile } from './recovery.mjs';
 import { createHash, createPublicKey, createPrivateKey, sign, verify } from 'node:crypto';
 import { createReadStream, createWriteStream } from 'node:fs';
 import { readFile, writeFile, mkdir, readdir, lstat, copyFile, statfs, rm } from 'node:fs/promises';
@@ -137,8 +138,7 @@ export async function pack(spec, out, keyPath) {
     !['linux/amd64', 'linux/arm64'].includes(spec.platform)
   )
     throw new Error('Use a versioned Linux target');
-  if ((await lstat(keyPath)).mode & 0o077)
-    throw new Error('Release private key must have mode 0600');
+  const privateKey = await readPrivateFile(keyPath, 'Release private key');
   const info = await statfs(dirname(resolve(out)));
   if (Number(info.bavail) * Number(info.bsize) < 30 * 1024 ** 3)
     throw new Error('Release packaging requires at least 30 GiB free');
@@ -290,7 +290,7 @@ export async function pack(spec, out, keyPath) {
       images.map((image) => `GP_${image.role.toUpperCase()}_IMAGE_ID=${image.id}`).join('\n') +
         '\n',
     );
-    await signBundle(out, await readFile(keyPath));
+    await signBundle(out, privateKey);
     return manifest;
   } catch (error) {
     await rm(out, { recursive: true, force: true });

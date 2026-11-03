@@ -15,6 +15,7 @@ import {
   type AnomalyEvaluation,
   type AnomalyOutcome,
   type InsightPoint,
+  type TenantWithAccess,
 } from '@gp/shared';
 import type { AuthUser } from '../../common/auth-user.js';
 import { badRequest } from '../../common/errors.js';
@@ -90,6 +91,7 @@ export class AnomalyDetector {
   async evaluate(
     tx: Tx,
     user: AuthUser,
+    tenant: TenantWithAccess,
     definition: AnomalyDefinition,
   ): Promise<AnomalyEvaluation> {
     const { rule, month } = definition;
@@ -124,7 +126,7 @@ export class AnomalyDetector {
       );
     }
     if (rule === 'payroll_movement') {
-      const report = await this.insights.measureAuthorized(tx, { kind: 'payroll', month }, true);
+      const report = await this.insights.measure(tx, user, tenant, { kind: 'payroll', month });
       const relevant = report.points.filter(
         (point) => point.month >= previousMonth(month, ANOMALY_BASELINE_MONTHS),
       );

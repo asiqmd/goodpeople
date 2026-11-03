@@ -29,6 +29,7 @@ WORKDIR /repo
 
 # Same steps as apps/api/Dockerfile, so both images share these cached layers.
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY patches ./patches
 RUN pnpm fetch
 
 COPY . .

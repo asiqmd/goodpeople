@@ -24,6 +24,20 @@ export interface BootstrapInput {
   envelope: string;
   keys: Record<string, string>;
 }
+
+function validAdminEmail(email: string): boolean {
+  if (email.length > 254 || /\s/.test(email)) return false;
+  const [local, domain, extra] = email.split('@');
+  return (
+    !!local &&
+    !!domain &&
+    extra === undefined &&
+    domain.includes('.') &&
+    !domain.startsWith('.') &&
+    !domain.endsWith('.') &&
+    !domain.includes('..')
+  );
+}
 /** Owner-only command. An existing installation is never overwritten or reseeded. */
 export async function bootstrapInstallation(db: Database, input: BootstrapInput) {
   const license = verifyEnterpriseLicense(input.envelope, input.keys, input);
@@ -33,7 +47,7 @@ export async function bootstrapInstallation(db: Database, input: BootstrapInput)
     !/^[a-z0-9][a-z0-9-]{2,62}$/.test(input.slug) ||
     input.name.trim().length < 2 ||
     input.adminName.trim().length < 2 ||
-    !/^\S+@\S+\.\S+$/.test(input.adminEmail)
+    !validAdminEmail(input.adminEmail)
   )
     throw new Error('Named workspace and local administrator are required');
   await upsertPlanCatalog(db);

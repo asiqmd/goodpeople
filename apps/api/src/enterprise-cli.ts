@@ -1,4 +1,5 @@
-import { readFile, writeFile, stat } from 'node:fs/promises';
+import { constants } from 'node:fs';
+import { readFile, writeFile, open } from 'node:fs/promises';
 import { randomUUID, randomBytes, createHash, createPrivateKey } from 'node:crypto';
 import {
   createDb,
@@ -94,13 +95,11 @@ if (command === 'new-installation') {
             .update(enterpriseInstallations)
             .set({ release: config.RELEASE_VERSION })
             .where(eq(enterpriseInstallations.id, binding.installationId));
-          await tx
-            .insert(installationEvents)
-            .values({
-              installationId: binding.installationId,
-              action: 'upgrade_applied',
-              code: config.RELEASE_VERSION,
-            });
+          await tx.insert(installationEvents).values({
+            installationId: binding.installationId,
+            action: 'upgrade_applied',
+            code: config.RELEASE_VERSION,
+          });
         });
       console.log(JSON.stringify({ migrated: true, release: config.RELEASE_VERSION }));
     } else if (command === 'bootstrap') {
@@ -183,9 +182,20 @@ if (command === 'new-installation') {
     } else if (command === 'readiness-receipt') {
       const request = JSON.parse(await readFile(file!, 'utf8'));
       const keyFile = process.env.INSTALLATION_PROOF_PRIVATE_KEY_FILE;
-      if (!keyFile || (await stat(keyFile)).mode & 0o077)
-        throw new Error('Use the private installation proof key with mode 0600');
-      const key = createPrivateKey(await readFile(keyFile));
+      if (!keyFile) throw new Error('Use the private installation proof key with mode 0600');
+      const handle = await open(
+        keyFile,
+        constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK,
+      );
+      let key: ReturnType<typeof createPrivateKey>;
+      try {
+        const info = await handle.stat();
+        if (!info.isFile() || info.mode & 0o077)
+          throw new Error('Use the private installation proof key with mode 0600');
+        key = createPrivateKey(await handle.readFile());
+      } finally {
+        await handle.close();
+      }
       if (key.asymmetricKeyType !== 'ed25519')
         throw new Error('Use an Ed25519 installation proof key');
       const receipt = await installationReadinessReceipt(db, binding, {

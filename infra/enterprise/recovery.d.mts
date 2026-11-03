@@ -16,6 +16,7 @@ export function restore(options: {
   input: string;
   evidenceFile?: string;
 }): Promise<{
+  archiveSha256: string;
   restoreToMaintenanceMs: number;
   rowCountsAndChecksumsMatched: boolean;
   documentChecksumsMatched: boolean;

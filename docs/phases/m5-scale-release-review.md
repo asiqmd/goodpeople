@@ -65,6 +65,8 @@ For version 6.5 and later, qualification and signed bundle verification require 
 
 The production dependency audit went from two moderate advisories to one. ExcelJS now resolves to patched `uuid` 11.1.1 through a package-scoped override. The `minimatch` finding remains open. Its patched release is a major upgrade and the older archive dependencies still use legacy exports. The audit reported zero high and critical findings. [uuid advisory](https://github.com/advisories/GHSA-w5hq-g745-h8pq) · [minimatch advisory](https://github.com/advisories/GHSA-g3hv-75wg-m249)
 
+The production qualification follow-up updated both ExcelJS archive paths to `minimatch` 11.0.1. A small compatibility patch lets `glob` 7 consume the newer matcher. Both container builds include the patch. Workbook and archive round trips, the packaged API smoke check, and the local production dependency audit passed. [Release review draft](https://github.com/asiqmd/goodpeople/pull/1)
+
 ## Repeating the local measurements
 
 Use a disposable database and the existing scale seed with `m5-scale` and `m5-control` slugs. Opt in the four Phase 6 features in that database. Create four completed months with four attendance days per worker per month, 600 minutes per day in the selected month and 420 in each baseline month. Seed reconciled locked runs of BDT 105.50 per worker. The benchmark verifies an authenticated internal fixture before it runs. Its private input holds `origin`, `month`, and `tenant` with the fixture's `id`, `slug`, `size`, `companyId`, `employeeId` and current access `token`. An MFA-backed administrator session is required for payroll. The script emits sanitized timing and reconciliation summaries. [Measurement harness](../../apps/api/scripts/measure-phase6.mjs)

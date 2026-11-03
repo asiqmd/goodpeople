@@ -236,7 +236,7 @@ export class AnomaliesService {
       await this.reserve(user);
       await this.lock(tx, user, definition);
       const filter = sameScope(definition);
-      const evaluation = await this.detector.evaluate(tx, user, definition);
+      const evaluation = await this.detector.evaluate(tx, user, tenant, definition);
       const [current] = await tx
         .select()
         .from(anomalyFindings)
@@ -345,7 +345,7 @@ export class AnomaliesService {
         change.status = 'open';
         change.assigneeId = null;
       } else {
-        const result = await this.detector.evaluate(tx, user, definition);
+        const result = await this.detector.evaluate(tx, user, tenant, definition);
         const stillCurrent =
           !row.supersededAt &&
           result.state === 'detected' &&

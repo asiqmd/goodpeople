@@ -1,5 +1,5 @@
-import { generateKeyPairSync, randomBytes, randomUUID } from 'node:crypto';
-import { mkdtemp, writeFile, readFile, mkdir, rm } from 'node:fs/promises';
+import { createHash, generateKeyPairSync, randomBytes, randomUUID } from 'node:crypto';
+import { mkdtemp, writeFile, readFile, mkdir, rm, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { type INestApplication } from '@nestjs/common';
@@ -358,6 +358,11 @@ describe.skipIf(process.env.GP_ENTERPRISE_DRILLS !== 'on')(
         quiesced: true,
       };
       await expect(snapshot({ ...options, quiesced: false })).rejects.toThrow('quiesced');
+      const linkedKey = join(dir, 'linked.key');
+      await symlink(backupKeyFile, linkedKey);
+      await expect(snapshot({ ...options, backupKeyFile: linkedKey })).rejects.toMatchObject({
+        code: 'ELOOP',
+      });
       const encrypted = await readFile(join(config.STORAGE_DIR!, 'recovery.gpf'));
       await rm(join(config.STORAGE_DIR!, 'recovery.gpf'));
       await expect(snapshot(options)).rejects.toThrow('missing document');
@@ -400,6 +405,11 @@ describe.skipIf(process.env.GP_ENTERPRISE_DRILLS !== 'on')(
       );
       const restoreStarted = performance.now();
       const report = await restore(restoreOptions);
+      expect(report.archiveSha256).toBe(
+        createHash('sha256')
+          .update(await readFile(output))
+          .digest('hex'),
+      );
       let restoredMfaStep = 0;
       expect(report).toMatchObject({
         rowCountsAndChecksumsMatched: true,

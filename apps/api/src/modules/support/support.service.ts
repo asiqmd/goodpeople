@@ -113,8 +113,11 @@ function statusChange(status: TicketStatus, now: Date): Partial<TicketRow> {
 /** Checks a message's files by their bytes and gives each a clean name, before anything is kept. */
 function prepareFiles(files: UploadedAttachment[] | undefined): PreparedFile[] {
   const list = files ?? [];
+  if (!Array.isArray(list)) throw attachmentType();
   if (list.length > SUPPORT_ATTACHMENTS_PER_MESSAGE) throw tooManyAttachments();
   return list.map((file) => {
+    if (!file || !Buffer.isBuffer(file.buffer) || typeof file.originalname !== 'string')
+      throw attachmentType();
     if (file.buffer.length > SUPPORT_ATTACHMENT_MAX_BYTES) throw attachmentTooLarge();
     const type = supportFileType(file.buffer, file.originalname);
     if (!type) throw attachmentType();

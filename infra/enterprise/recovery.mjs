@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { randomBytes, randomUUID, createHash, createCipheriv, createDecipheriv } from 'node:crypto';
-import { createReadStream, createWriteStream } from 'node:fs';
+import { constants, createReadStream, createWriteStream } from 'node:fs';
 import {
   readFile,
   writeFile,
@@ -60,15 +60,28 @@ const pg = (url, bin, args = [], options = {}) =>
   });
 const query = (url, sql) => pg(url, 'psql', ['-XAt', '-v', 'ON_ERROR_STOP=1', '-c', sql]);
 const quote = (value) => '"' + value.replaceAll('"', '""') + '"';
+export async function readPrivateFile(path, label) {
+  const file = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
+  try {
+    const info = await file.stat();
+    if (!info.isFile() || info.mode & 0o077)
+      throw new Error(label + ' must be a regular file with mode 0600');
+    return await file.readFile();
+  } finally {
+    await file.close();
+  }
+}
+
 async function envFile(path) {
-  if ((await lstat(path)).mode & 0o077)
-    throw new Error('Configuration and key files must have mode 0600');
-  const raw = await readFile(path, 'utf8');
+  const raw = (await readPrivateFile(path, 'Configuration')).toString('utf8');
   return path.endsWith('.json') ? JSON.parse(raw) : parseEnv(raw);
 }
+
 async function keyFile(path) {
-  if ((await lstat(path)).mode & 0o077) throw new Error('Backup key file must have mode 0600');
-  const key = Buffer.from((await readFile(path, 'utf8')).trim(), 'base64');
+  const key = Buffer.from(
+    (await readPrivateFile(path, 'Backup key')).toString('utf8').trim(),
+    'base64',
+  );
   if (key.length !== 32) throw new Error('A separate 32-byte backup encryption key is required');
   return key;
 }
@@ -240,16 +253,15 @@ export async function snapshot({
     cipher.setAAD(Buffer.from('Good People recovery v1'));
     const handle = await open(output, 'wx', 0o600);
     outputCreated = true;
-    await handle.write(Buffer.concat([Buffer.from('GPB1'), iv]));
-    await handle.close();
-    await pipeline(
-      createReadStream(archive),
-      cipher,
-      createWriteStream(output, { flags: 'a', mode: 0o600 }),
-    );
-    const end = await open(output, 'a');
-    await end.write(cipher.getAuthTag());
-    await end.close();
+    try {
+      await handle.writeFile(Buffer.concat([Buffer.from('GPB1'), iv]));
+      await pipeline(createReadStream(archive), cipher, async (chunks) => {
+        for await (const chunk of chunks) await handle.writeFile(chunk);
+      });
+      await handle.writeFile(cipher.getAuthTag());
+    } finally {
+      await handle.close();
+    }
     published = true;
     return {
       snapshotId: manifest.id,
@@ -286,25 +298,48 @@ export async function restore({
   await chmod(stage, 0o700);
   let databaseCreated = false;
   try {
-    const info = await stat(input);
-    if (info.size < 32) throw new Error('Invalid recovery archive');
-    const handle = await open(input, 'r'),
-      header = Buffer.alloc(16),
-      tag = Buffer.alloc(16);
-    await handle.read(header, 0, 16, 0);
-    await handle.read(tag, 0, 16, info.size - 16);
-    await handle.close();
-    if (header.subarray(0, 4).toString() !== 'GPB1')
-      throw new Error('Unsupported recovery archive');
-    const decipher = createDecipheriv('aes-256-gcm', key, header.subarray(4));
-    decipher.setAAD(Buffer.from('Good People recovery v1'));
-    decipher.setAuthTag(tag);
     const archive = join(stage, 'payload.tar');
-    await pipeline(
-      createReadStream(input, { start: 16, end: info.size - 17 }),
-      decipher,
-      createWriteStream(archive, { mode: 0o600 }),
+    const handle = await open(
+      input,
+      constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK,
     );
+    let archiveSha256;
+    try {
+      const info = await handle.stat();
+      if (!info.isFile() || info.size <= 32) throw new Error('Invalid recovery archive');
+      const header = Buffer.alloc(16),
+        tag = Buffer.alloc(16);
+      const first = await handle.read(header, 0, 16, 0);
+      const last = await handle.read(tag, 0, 16, info.size - 16);
+      if (first.bytesRead !== 16 || last.bytesRead !== 16)
+        throw new Error('Invalid recovery archive');
+      if (header.subarray(0, 4).toString() !== 'GPB1')
+        throw new Error('Unsupported recovery archive');
+      const hash = createHash('sha256').update(header);
+      const decipher = createDecipheriv('aes-256-gcm', key, header.subarray(4));
+      decipher.setAAD(Buffer.from('Good People recovery v1'));
+      decipher.setAuthTag(tag);
+      await pipeline(
+        async function* () {
+          const end = info.size - tag.length;
+          let offset = header.length;
+          while (offset < end) {
+            const buffer = Buffer.allocUnsafe(Math.min(64 * 1024, end - offset));
+            const { bytesRead } = await handle.read(buffer, 0, buffer.length, offset);
+            if (!bytesRead) throw new Error('Recovery archive ended early');
+            offset += bytesRead;
+            const chunk = buffer.subarray(0, bytesRead);
+            hash.update(chunk);
+            yield chunk;
+          }
+        },
+        decipher,
+        createWriteStream(archive, { mode: 0o600 }),
+      );
+      archiveSha256 = hash.update(tag).digest('hex');
+    } finally {
+      await handle.close();
+    }
     for (const path of command('tar', ['-tf', archive]).split('\n'))
       if (!safe(path.replace(/\/$/, ''))) throw new Error('Unsafe recovery archive path');
     for (const line of command('tar', ['-tvf', archive]).split('\n'))
@@ -397,7 +432,7 @@ export async function restore({
       tenantId: manifest.tenantId,
       sourceRelease: manifest.release,
       snapshotCreatedAt: manifest.createdAt,
-      archiveSha256: await hashFile(input),
+      archiveSha256,
       snapshotId: manifest.id,
       restoredAt: new Date().toISOString(),
       restoreToMaintenanceMs: Date.now() - started,
